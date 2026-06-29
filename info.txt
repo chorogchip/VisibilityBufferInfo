@@ -1,0 +1,939 @@
+
+
+
+
+2013년 Visibility Buffer
+- depth test, primitive ID -> 재질별 surface shader kernel.
+- visibility계산과 surface shading을 분리했다.
+- 전통적 G-buffer는 픽셀당 24바이트, 이건 일반적인 장면에서 4바이트, 큰 장면에서 8바이트
+
+
+2015년 Deferred Attribute Interpolation
+- 삼각형을 변환시켜 별도의 triangle buffer에 저장.
+- 삼각형은 화면 공간으로 변환됨. (버퍼 하나 더 만드니 추가 메모리 트래픽 발생, 보간 쉬워짐)
+
+Triangle Visibility Buffer 1.0
+- 목표: 픽셀 수가 많고 GPU 메모리가 제한된 환경
+- 클러스터별 컬링, GPU compute shader로 삼각형 처리 (indirect draw), draw-call compaction, compute pass
+
+Triangle Visibility Buffer 2.0
+- draw call, hw rasterizatio 제거. GPU만으로 함.
+
+DOOM: The Dark Ages
+- hybrid(hw+sw rasterization) + deferred texturing, material classification/dispatch...
+
+장점: 메모리 대역폭 절감. 재질 계산 제거(아마 g버퍼와 같음). 재질 표현의 유연성(G버퍼의 채널에 고정안됨, 재질별 compute shader 가능). 픽셀별 shading의 빈도 조절 가능.
+
+단점: 속성을 무게중심좌표계로 잘 복원해야함. cache locality문제 (sorting등 필요), SW raster의 한계(큰 삼각형에서 불리)
+
+
+
+Ipotrick/Sandbox
+zeux/niagara: GPU-driven geometry pipeline.
+ConfettiFX/The-Forge : VB 참고자료.
+
+
+여러 축을 생각할 수 있을 것 같다.
+
+Work Generation
+CPU Direct Draw / Indirect / Device-Generated Work
+        ↓
+Geometry Frontend
+Vertex Shader / Compute Culling + VS / Mesh Shader
+        ↓
+Rasterization
+Hardware / Software / Hybrid
+        ↓
+Visibility Buffer
+Instance·Meshlet·Primitive ID + Depth/Barycentrics
+        ↓
+Material Scheduling
+Uber Shader / Tile Classification / Pixel Worklist
+        ↓
+Shading
+Compute 또는 Fullscreen Raster
+
+
+
+
+
+1. 전통적인 Direct Draw
+for object:
+    BindPipeline()
+    BindResources()
+    DrawIndexed()
+장점
+
+가장 구현하기 쉽고 디버깅하기 쉽습니다.
+
+mesh/material별 PSO 전환이 자연스럽다.
+alpha test, two-sided, skinning, WPO 같은 특수 케이스를 분리하기 쉽다.
+RenderDoc이나 PIX에서 draw 단위로 추적하기 쉽다.
+Visibility Buffer의 attribute reconstruction에 집중할 수 있다.
+
+그리고 포트폴리오에서는 direct path가 쓸모없는 코드가 아닙니다. 이후 indirect, mesh shader 경로의 정확성 및 성능 기준점이 됩니다.
+
+단점
+
+오브젝트나 meshlet마다 draw call을 생성하면 CPU submission 비용과 상태 관리 비용이 증가합니다. 특히 CPU가 매 프레임 visibility를 결정하고 command buffer까지 다시 생성하면 대규모 장면으로 확장하기 어렵습니다.
+
+어떤 포트폴리오에 적합한가
+
+Visibility Buffer 자체를 보여주려는 경우입니다.
+
+barycentric reconstruction
+normal/UV 복원
+texture gradient
+G-Buffer와의 비교
+material shading 분리
+
+이쪽이 핵심이라면 굳이 처음부터 indirect를 넣을 필요는 없습니다.
+
+평가
+구현 난이도: 3/10
+포트폴리오 차별화: 4/10
+기준 경로로서의 가치: 매우 높음
+
+반드시 남겨두되 최종 경로로만 제시하지 않는 것이 좋습니다.
+
+2. CPU가 만든 Multi-Draw Indirect
+CPU culling
+    ↓
+CPU fills indirect argument buffer
+    ↓
+DrawIndexedIndirect(...)
+
+Draw call 형식만 indirect로 바꾸고, 실제 visible set과 command를 CPU가 만드는 형태입니다.
+
+장점
+여러 draw를 한 호출로 실행할 수 있다.
+command buffer API 호출 수를 줄일 수 있다.
+기존 vertex/index pipeline을 거의 그대로 사용할 수 있다.
+GPU-generated indirect로 넘어가기 전에 구조를 검증하기 좋다.
+한계
+
+이것만으로는 GPU-driven renderer라고 하기 어렵습니다.
+
+CPU가 여전히 다음을 담당하기 때문입니다.
+
+frustum/occlusion culling
+visible object list 생성
+indirect command 생성
+material binning
+
+따라서 포트폴리오에서 이것만 강조하면 “API batching을 구현했다” 정도로 보일 수 있습니다.
+
+평가
+구현 난이도: 4/10
+확장성: 중간
+포트폴리오 가치: 중간
+
+중간 단계로는 좋지만 최종 목표로는 약합니다.
+
+3. GPU-Generated Indirect Draw
+GPU Scene
+    ↓
+Compute Frustum / Occlusion Culling
+    ↓
+Command Compaction
+    ↓
+Indirect Argument Buffer
+    ↓
+DrawIndexedIndirectCount / ExecuteIndirect
+
+가장 현실적인 modern renderer 선택입니다.
+
+Khronos의 공식 Vulkan 샘플도 GPU에서 frustum culling과 indirect command 생성을 수행해 CPU 사용량을 줄이고, 여러 draw를 한 indirect 호출로 실행하는 구조를 보여줍니다.
+
+장점
+CPU가 개별 오브젝트를 제출하지 않는다.
+instance 수가 증가해도 CPU frame time이 비교적 안정적이다.
+HZB occlusion culling과 연결하기 좋다.
+Visibility Buffer와 궁합이 좋다.
+bindless geometry/material 구조를 자연스럽게 요구한다.
+필요한 구조
+
+GPU-generated indirect를 제대로 하려면 렌더러 데이터 구조도 바뀌어야 합니다.
+
+SceneInstanceBuffer
+MeshMetadataBuffer
+MaterialInstanceBuffer
+GlobalVertexBuffer
+GlobalIndexBuffer
+IndirectCommandBuffer
+VisibleCommandCounter
+
+Visibility Buffer에는 단순한 SV_PrimitiveID만 기록하면 부족할 가능성이 큽니다. primitive ID는 draw 내부에서만 의미가 있을 수 있으므로 보통 다음 중 하나가 필요합니다.
+
+(drawID, primitiveID)
+(instanceID, meshID, primitiveID)
+(meshletID, localPrimitiveID)
+(globalPrimitiveID)
+
+D3D12에서는 indirect command마다 root constant나 resource 주소 등을 전달할 수 있고, 나머지 pipeline state는 command list로부터 상속됩니다.
+
+가장 중요한 제약: 임의의 머티리얼 PSO 전환
+
+일반적인 multi-draw indirect 호출 내부에서는 draw마다 임의의 graphics pipeline을 바꾸기 어렵습니다.
+
+즉 이런 구성은 곤란합니다.
+
+Indirect Draw 0 → Opaque PBR PSO
+Indirect Draw 1 → Masked PSO
+Indirect Draw 2 → WPO PSO
+Indirect Draw 3 → Two-Sided PSO
+
+실용적인 해결책은 raster behavior별 command buffer를 분리하는 것입니다.
+
+Opaque Default Bin
+Masked Bin
+Two-Sided Bin
+WPO Bin
+Skinned Bin
+
+Compute culling 단계에서 visible meshlet이나 draw를 각 bin에 append하고, bin마다 PSO를 한 번 바인딩한 뒤 indirect draw를 실행합니다.
+
+Bind Opaque PSO
+ExecuteIndirect(OpaqueCommands)
+
+Bind Masked PSO
+ExecuteIndirect(MaskedCommands)
+
+Bind WPO PSO
+ExecuteIndirect(WPOCommands)
+평가
+구현 난이도: 6~7/10
+확장성: 높음
+포트폴리오 가치: 매우 높음
+
+현실적인 포트폴리오에서는 가장 추천하는 제출 방식입니다.
+
+4. Device-Generated Commands와 Work Graphs
+
+Indirect draw보다 더 나아가 GPU가 shader나 pipeline 선택까지 포함한 작업 그래프를 생성하는 방향입니다.
+
+Vulkan의 Device Generated Commands 제안도 기존 indirect rendering이 pipeline별 command buffer 분리나 불필요한 메모리 round trip을 요구할 수 있다는 문제를 다룹니다.
+
+장점
+GPU가 작업 생성부터 shader 선택까지 더 많이 담당할 수 있다.
+매우 많은 material/shader permutation을 다루기 좋다.
+scene traversal, LOD, culling, dispatch generation을 완전히 device-driven으로 구성할 수 있다.
+단점
+API와 하드웨어 의존성이 강하다.
+디버깅이 어렵다.
+Visibility Buffer 포트폴리오의 주제가 흐려진다.
+구현량에 비해 시각적으로 설명하기 어렵다.
+평가
+구현 난이도: 9/10
+포트폴리오 위험성: 높음
+연구적 가치: 높음
+
+첫 프로젝트에서는 제외하는 편이 낫습니다.
+
+5. 전통적인 Vertex Shader + Hardware Rasterizer
+Indexed Draw
+    ↓
+Vertex Shader
+    ↓
+Fixed-Function Rasterizer
+    ↓
+Minimal Pixel Shader
+    ↓
+Visibility Buffer
+
+가장 안전하고 현실적인 Visibility Buffer 경로입니다.
+
+장점
+
+하드웨어가 다음을 처리합니다.
+
+clipping
+triangle setup
+fill convention
+sample coverage
+early depth
+MSAA
+hierarchical depth
+viewport/scissor
+primitive interpolation 기반 기능
+
+Visibility pass의 pixel shader는 거의 다음만 수행하면 됩니다.
+
+Visibility = Pack(instanceID, primitiveID);
+
+경우에 따라 barycentric coordinate를 추가로 저장하거나, shading pass에서 screen position과 triangle vertex position으로 복원할 수 있습니다.
+
+단점
+
+극도로 작은 triangle이 많아지면 다음 문제가 생길 수 있습니다.
+
+geometry frontend 처리량
+subpixel triangle setup 비용
+pixel shader quad 생성 낭비
+매우 낮은 triangle-to-pixel 비율
+
+그렇다고 일반 장면에서 software raster가 자동으로 더 빠른 것은 아닙니다. 대표적인 GPU software rasterization 연구에서는 완전한 software pipeline이 테스트 장면 대부분에서 hardware raster보다 느렸고, clipping·binning·coverage·ordering·ROP를 소프트웨어로 재구현하는 데 상당한 비용이 들었습니다.
+
+평가
+구현 난이도: 3/10
+안정성: 매우 높음
+기본 raster path로서의 가치: 최고
+
+포트폴리오의 기본 경로는 HW raster로 잡는 것이 맞습니다.
+
+6. 완전한 GPU Software Rasterizer
+Vertex Transform
+    ↓
+Triangle Setup / Clipping
+    ↓
+Screen-Space Binning
+    ↓
+Coarse Raster
+    ↓
+Fine Raster
+    ↓
+Depth + Visibility Atomic Write
+
+하드웨어 graphics pipeline을 사용하지 않고 compute shader로 coverage와 depth를 계산하는 구조입니다.
+
+실제로 구현해야 할 것
+
+단순히 edge function 세 개를 계산하는 것으로 끝나지 않습니다.
+
+Triangle setup
+back-face culling
+frustum clipping
+near-plane clipping
+degenerate triangle 처리
+fixed-point 또는 정밀도 규칙
+screen-space bounding box
+depth plane equation
+Binning
+triangle이 겹치는 coarse bin 계산
+bin별 triangle list append
+prefix sum 또는 atomic allocation
+overflow 관리
+large triangle fast path
+Fine rasterization
+top-left fill rule
+sample position
+tile coverage
+hierarchical depth
+per-pixel nearest triangle 선택
+depth tie-breaking
+ID write
+
+고성능 software rasterizer 연구도 triangle setup, bin rasterizer, coarse rasterizer, fine rasterizer의 여러 단계로 파이프라인을 구성했습니다.
+
+Visibility Buffer와 결합했을 때의 장점
+
+일반 color rasterizer보다는 범위를 줄일 수 있습니다.
+
+opaque geometry만 처리
+shading은 나중에 수행
+blending 불필요
+visibility ID와 depth만 기록
+작은 triangle에 특화된 fast path 가능
+quad helper lane을 만들지 않아도 됨
+custom LOD/culling과 직접 연결 가능
+그래도 어려운 부분
+Depth atomic
+
+여러 triangle이 동일 픽셀에 접근하므로 atomic comparison이 필요합니다.
+
+보통 다음 중 하나를 사용합니다.
+
+Atomic depth
+Atomic packed depth + primitive ID
+Per-tile local depth followed by global resolve
+
+동일 depth일 때 결과가 흔들리지 않도록 stable tie-break도 필요합니다.
+
+HW와 결과 일치
+raster fill convention
+near-plane clipping
+floating-point precision
+reversed-Z
+viewport transform
+
+이 중 하나만 어긋나도 HW 결과와 경계 픽셀이 달라집니다.
+
+지원 기능
+
+다음을 넣기 시작하면 범위가 폭발합니다.
+
+MSAA
+transparency
+alpha-to-coverage
+conservative raster
+polygon offset
+stencil
+programmable sample position
+현실적 제한 범위
+
+software raster를 만든다면 다음으로 고정하는 편이 좋습니다.
+
+Static opaque meshes
+Single sample
+No blending
+No stencil
+No alpha test
+Reversed-Z 또는 명확한 depth convention
+Visibility + depth only
+평가
+최소 구현 난이도: 8/10
+제품 수준 난이도: 10/10 이상
+연구 포트폴리오 가치: 매우 높음
+완성 실패 위험: 매우 높음
+
+Visibility Buffer 포트폴리오의 기본 경로로 삼기에는 너무 큽니다.
+
+7. HW/SW Hybrid Rasterization
+
+현실적으로 software raster를 넣으려면 완전 대체보다 hybrid가 낫습니다.
+
+Visible Meshlets
+    ↓
+Projected Size Classification
+    ├─ Large / Normal Triangles → HW Raster
+    └─ Micro Triangles         → SW Raster
+분류 기준
+
+다음 데이터를 이용할 수 있습니다.
+
+meshlet projected AABB
+projected triangle average area
+meshlet triangle 수 대비 covered pixel 예상치
+bounding sphere의 screen-space diameter
+LOD error
+depth complexity 예상치
+
+처음에는 meshlet 단위로 분류하는 것이 현실적입니다.
+
+if meshletProjectedArea / triangleCount < threshold:
+    SoftwareRasterBin
+else:
+    HardwareRasterBin
+
+triangle마다 분류하면 정확하지만 scatter와 work generation 비용이 커집니다.
+
+핵심 난제: 두 결과를 어떻게 합칠 것인가
+방법 A. 별도의 depth/visibility를 만든 뒤 resolve
+HWDepth + HWVisibility
+SWDepth + SWVisibility
+        ↓
+Nearest Resolve
+        ↓
+Final Visibility
+
+가장 구현하기 쉽고 디버깅하기 좋습니다.
+
+단점은 buffer가 추가되고 resolve pass가 필요하다는 점입니다.
+
+방법 B. HW 결과를 기준으로 SW만 보충
+HW raster 결과를 만든다.
+SW rasterizer가 HW depth를 읽는다.
+더 가까운 micro triangle만 별도 UAV에 기록한다.
+최종 resolve한다.
+
+SW 경로가 작은 triangle만 담당한다면 꽤 현실적입니다.
+
+방법 C. 완전히 공유되는 atomic visibility surface
+
+HW와 SW가 동일 packed depth/ID representation에 직접 경쟁하도록 만드는 방식입니다.
+
+이론적으로 깔끔해 보이지만 실제 graphics depth attachment와 compute atomic UAV를 완전히 동일한 방식으로 공유하기 어렵고, ordering과 synchronization 문제가 복잡합니다. 포트폴리오에서는 피하는 것이 좋습니다.
+
+hybrid를 평가할 때 보여줘야 하는 것
+
+단일 FPS 숫자가 아니라 triangle screen size에 따른 crossover 그래프가 필요합니다.
+
+X축: 평균 triangle 면적(pixel²)
+Y축: raster time 또는 Mtri/s
+
+HW path
+SW path
+Hybrid path
+
+그래야 threshold가 임의의 숫자가 아니라 측정 결과라는 것을 보여줄 수 있습니다.
+
+평가
+구현 난이도: 9/10
+차별화: 최상
+포트폴리오 리스크: 매우 높음
+
+렌더링 R&D 직군을 강하게 노리지 않는다면 우선순위가 낮습니다.
+
+8. Mesh Shader를 쓸 것인가
+
+Mesh shader는 indirect draw나 software rasterizer를 대체하는 기능이 아닙니다.
+
+Mesh shader는 기존 VS/HS/DS/GS 중심 geometry frontend를 대체하고, threadgroup이 vertex와 primitive 묶음을 직접 생성합니다. meshlet 단위 culling이나 primitive culling을 rasterizer 앞에서 수행할 수 있으며, DispatchMesh도 direct 또는 indirect로 실행할 수 있습니다.
+
+즉 다음 조합이 모두 가능합니다.
+
+Direct DispatchMesh + HW Raster
+Indirect DispatchMesh + HW Raster
+Mesh Shader + Visibility Buffer
+Mesh Shader output을 SW raster 입력으로 사용
+장점
+meshlet 단위 처리에 자연스럽다.
+vertex 공유를 threadgroup shared memory로 제어할 수 있다.
+meshlet 전체를 output 전에 제거할 수 있다.
+cone culling, frustum culling, primitive culling과 잘 맞는다.
+per-primitive attribute로 visibility metadata를 넘기기 편하다.
+비용
+
+mesh shader 하나만 작성하는 것이 아니라 content pipeline도 바뀝니다.
+
+meshlet 생성기
+meshlet vertex remap
+local triangle index
+meshlet bounds
+normal cone
+데이터 압축
+runtime decoding
+non-mesh-shader fallback
+
+Microsoft의 사양도 mesh shader를 사용하려면 geometry를 meshlet 같은 압축된 batch로 재구성하고, 기존 input assembler 경로와 다른 toolchain이 필요하다고 설명합니다.
+
+Amplification Shader까지 필요한가
+
+처음에는 필요 없습니다.
+
+더 현실적인 구조는 다음입니다.
+
+Compute Shader:
+    instance/meshlet culling
+    visible meshlet list 생성
+
+Indirect DispatchMesh:
+    visible meshlet만 mesh shader 처리
+
+Amplification shader까지 넣으면 nested work generation과 payload 설계가 추가됩니다. 기술적으로 멋있지만 포트폴리오 완성에는 도움이 적을 수 있습니다.
+
+가장 좋은 포트폴리오 구성
+
+동일한 meshlet 데이터에 두 개의 경로를 제공합니다.
+
+Path A:
+Compute Culling
+→ Indexed Indirect Draw
+→ Vertex Shader
+→ HW Raster
+
+Path B:
+Compute Culling
+→ Indirect DispatchMesh
+→ Mesh Shader
+→ HW Raster
+
+그러면 “mesh shader를 썼다”가 아니라 다음을 비교할 수 있습니다.
+
+meshlet당 처리 시간
+primitive rejection
+vertex load 수
+geometry pass 시간
+triangle 크기에 따른 성능
+meshlet 크기별 성능
+평가
+구현 난이도: 7~8/10
+실무 관련성: 높음
+SW raster보다 완성 가능성: 훨씬 높음
+
+고급 기능 하나를 선택한다면 hybrid raster보다 mesh shader가 현실적입니다.
+
+9. 머티리얼을 Visibility Pass에서 어떻게 다룰 것인가
+
+여기서는 래스터 단계의 material과 후속 shading 단계의 material을 분리해야 합니다.
+
+9-1. 완전한 Material-Agnostic Visibility Pass
+Vertex Position
+Instance ID
+Primitive ID
+        ↓
+Visibility Buffer
+
+모든 opaque mesh가 동일한 visibility PSO를 사용합니다.
+
+material ID는 visibility buffer에 직접 저장하지 않고 primitive metadata에서 찾습니다.
+
+Visibility ID
+    ↓
+Mesh/Primitive Metadata
+    ↓
+Material Instance ID
+장점
+visibility pass shader permutation이 거의 없다.
+모든 opaque geometry를 큰 indirect batch로 묶기 쉽다.
+visibility buffer bit 수를 아낄 수 있다.
+가장 순수한 Visibility Buffer 구조다.
+
+원래 Visibility Buffer 논문도 triangle ID와 instance ID를 기록하고, 후속 단계에서 visible triangle data와 surface material을 찾아 shading합니다.
+
+적용 가능한 대상
+static opaque
+단순 skinned mesh
+material이 vertex position이나 coverage를 바꾸지 않는 경우
+9-2. Raster Behavior별 Material Pass
+
+일부 material은 visibility 자체에 영향을 줍니다.
+
+alpha mask
+world position offset
+displacement
+pixel depth offset
+two-sided
+custom culling
+procedural geometry
+
+이것들은 default opaque pass와 완전히 동일하게 처리할 수 없습니다.
+
+따라서 material instance별 패스가 아니라 raster behavior category별 패스를 만드는 것이 좋습니다.
+
+RasterCategory 0: Default Opaque
+RasterCategory 1: Two-Sided
+RasterCategory 2: Alpha Masked
+RasterCategory 3: WPO
+RasterCategory 4: Skinned
+
+Epic도 Nanite hardware rasterizer를 material shader 형태로 바꾸면서 WPO, pixel depth offset, masked material 같은 programmable raster 기능을 확장한 바 있습니다.
+
+핵심 원칙
+
+1,000개의 material instance가 있더라도 raster PSO는 1,000개가 아니라 소수여야 합니다.
+
+Material Instance:
+    texture indices
+    scalar parameters
+    colors
+
+Material Shader Category:
+    actual shader code / raster behavior
+10. Visibility 이후 머티리얼 Shading 방식
+방식 A. Fullscreen Uber Shader
+for every pixel:
+    materialID = ResolveMaterial(visibility)
+    switch materialType:
+        case StandardPBR:
+        case ClearCoat:
+        case Foliage:
+        ...
+장점
+가장 구현하기 쉽다.
+classification pass가 필요 없다.
+한 번의 fullscreen compute dispatch로 끝난다.
+단점
+wave 내 material divergence
+큰 shader binary
+많은 resource 접근
+shader permutation 관리가 어려워진다.
+모든 material code가 resident해야 할 수 있다.
+추천 용도
+
+첫 번째 working implementation.
+
+처음에는 이 방식으로 correctness를 완성한 뒤 classification을 추가하는 것이 좋습니다.
+
+방식 B. 머티리얼마다 Fullscreen Pass
+for each material:
+    fullscreen dispatch
+    if pixel.material != currentMaterial:
+        return
+장점
+구현이 단순하다.
+각 material shader를 독립적으로 작성할 수 있다.
+단점
+
+material 수에 따라 화면 전체를 반복해서 스캔합니다.
+
+Cost ≈ ScreenPixels × MaterialCount
+
+material이 두세 개뿐인 데모가 아니라면 좋지 않습니다.
+
+포트폴리오 최종 구조로는 추천하지 않습니다.
+
+방식 C. Material Tile Classification
+Visibility Buffer
+    ↓
+8×8 또는 16×8 Tile Classification
+    ↓
+Material Category별 Tile Worklist
+    ↓
+Material별 Compute Dispatch
+
+예를 들어 한 타일에 Standard PBR과 Clear Coat가 보인다면 해당 타일을 두 worklist에 넣습니다.
+
+StandardPBRTiles = [0, 1, 5, 8, ...]
+ClearCoatTiles   = [5, 12, ...]
+
+각 material shader는 자신이 필요한 tile만 실행합니다.
+
+원래 Visibility Buffer 연구도 surface material마다 shading이 필요한 tile worklist를 만들고, material별 shading kernel을 dispatch하는 방식을 사용했습니다.
+
+장점
+material shader를 분리할 수 있다.
+fullscreen 반복을 피한다.
+픽셀 spatial locality가 유지된다.
+texture gradient와 neighborhood 연산에 상대적으로 유리하다.
+구현 난이도와 성능의 균형이 좋다.
+단점
+
+타일 안에 해당 material 픽셀이 하나뿐이어도 전체 tile thread가 실행될 수 있습니다.
+
+material이 잘게 섞인 장면에서는 여러 material worklist에 동일 타일이 반복해서 들어갑니다. 그래서 Material Complexity per Tile을 시각화하는 것이 좋습니다. Epic의 Nanite 관련 도구도 타일 내 unique material 수를 material coherence 지표로 사용합니다.
+
+포트폴리오 추천도
+
+가장 높음
+
+방식 D. Material별 Pixel List
+Visibility Buffer
+    ↓
+Pixel Classification
+    ↓
+Material별 Pixel Index List
+    ↓
+1 thread = 1 visible pixel
+장점
+실제 material 픽셀만 shading한다.
+타일 단위 over-shading이 없다.
+material coherence가 높아진다.
+단점
+atomic append 또는 prefix sum 필요
+pixel list 메모리 비용
+scatter/gather 접근
+neighboring pixel 관계가 사라진다.
+texture derivative 계산이 더 어렵다.
+후속 screen-space 효과와 locality가 나빠질 수 있다.
+
+특히 Visibility Buffer의 texture gradient 문제가 더 까다로워집니다. adjacent lane이 adjacent pixel이라는 보장이 없기 때문입니다.
+
+추천도
+
+연구 확장에는 좋지만 첫 material scheduling 방식으로는 과합니다.
+
+방식 E. Material Sort
+
+픽셀이나 shading record를 material ID 기준으로 정렬합니다.
+
+(pixelID, materialID)
+        ↓ sort
+material-coherent shading
+장점
+shader divergence를 크게 줄일 수 있다.
+같은 texture와 material 데이터를 연속해서 접근한다.
+단점
+매 프레임 sort 비용
+대규모 intermediate buffer
+screen-space locality 손실
+gradient, quad operation, temporal 데이터 처리 복잡화
+
+실시간 raster renderer 포트폴리오에서는 지나친 선택입니다.
+
+11. 어떤 조합들이 실제로 자연스러운가
+조합 A. Visibility Buffer 학습형
+CPU Direct Draw
+Traditional VS
+Hardware Raster
+Opaque Only
+Fullscreen Uber Compute Shading
+보여주는 것
+Visibility Buffer 기본 원리
+attribute reconstruction
+deferred shading
+G-Buffer 비교
+난이도
+
+4/10
+
+완성 가능성은 높지만 GPU-driven 포트폴리오로 보이지는 않습니다.
+
+조합 B. 가장 추천하는 실전형
+GPU Scene
+    ↓
+Compute Instance + Meshlet Culling
+    ↓
+Raster Category Binning
+    ↓
+GPU-Generated Indexed Indirect Draw
+    ↓
+Traditional VS + Hardware Raster
+    ↓
+Visibility Buffer
+    ↓
+Material Tile Classification
+    ↓
+Category별 Compute Shading
+머티리얼 구성
+Raster categories:
+- Default Opaque
+- Two-Sided
+- Alpha Masked
+
+Shading categories:
+- Standard PBR
+- Clear Coat
+- Unlit
+
+각 category 내부의 material 차이는 bindless texture index와 parameter로 처리합니다.
+
+보여주는 것
+GPU-driven scene submission
+culling
+indirect command generation
+Visibility Buffer
+material coherence
+shader scheduling
+실제적인 엔진 구조
+난이도
+
+7/10
+
+기술적 깊이와 완성 가능성의 균형이 가장 좋습니다.
+
+조합 C. Mesh Shader 비교형
+Common Meshlet Data
+    ├─ Indexed Indirect + VS + HW Raster
+    └─ Indirect DispatchMesh + MS + HW Raster
+                       ↓
+                Visibility Buffer
+                       ↓
+             Tile Material Shading
+보여주는 것
+meshlet 데이터 설계
+mesh shader의 실제 효과
+geometry frontend 비교
+culling granularity 분석
+난이도
+
+8/10
+
+조합 B를 완성한 뒤 추가하기 좋은 확장입니다.
+
+조합 D. Hybrid Raster 연구형
+Hierarchical Cluster Culling
+    ↓
+Projected Triangle Classification
+    ├─ HW Raster
+    └─ SW Micro-Triangle Raster
+            ↓
+       Visibility Resolve
+            ↓
+     Tile Material Shading
+보여주는 것
+raster pipeline 깊은 이해
+screen-space geometry 분석
+software binning
+atomic depth
+HW/SW crossover 분석
+난이도
+
+10/10
+
+이것을 선택하면 mesh shader, 복잡한 material, animation 같은 다른 기능은 상당 부분 포기해야 합니다.
+
+12. 포트폴리오로 실제 추천하는 단계
+1단계: Direct + HW 기준 경로
+Direct Indexed Draw
+Traditional VS
+HW Raster
+Opaque Visibility Buffer
+Fullscreen Compute Shading
+
+이 단계에서 반드시 해결할 것:
+
+global visibility ID
+triangle vertex fetch
+perspective-correct interpolation
+UV/normal reconstruction
+texture gradient
+debug views
+CPU/GPU profiler
+2단계: GPU-Generated Indirect
+Instance Frustum Culling
+Meshlet Frustum/Cone Culling
+Indirect Command Generation
+
+이 단계에서 보여줄 것:
+
+total instances
+visible instances
+total meshlets
+visible meshlets
+generated commands
+CPU submission time
+culling GPU time
+3단계: Material Tile Classification
+
+Fullscreen uber shader와 tile classification을 둘 다 유지하고 비교합니다.
+
+Uber Shading
+vs
+Tile-Classified Material Shading
+
+비교 항목:
+
+material 수
+tile당 unique material 수
+shading thread 수
+classification 비용
+total shading time
+4단계: 고급 기능은 하나만 선택
+취업 범용성과 완성도를 중시한다면
+
+Mesh shader path 추가
+
+렌더링 R&D와 차별화를 중시한다면
+
+Micro-triangle software raster path 추가
+
+두 개를 동시에 하면 프로젝트 범위가 지나치게 커집니다.
+
+최종 권장 아키텍처
+CPU
+└─ Scene update only
+
+GPU
+├─ Instance culling
+├─ Meshlet culling
+├─ Optional HZB occlusion
+├─ Raster category binning
+│   ├─ Opaque commands
+│   ├─ Two-sided commands
+│   └─ Masked commands
+│
+├─ HW Visibility Raster
+│   └─ GPU-generated indexed indirect
+│
+├─ Optional Mesh Shader Visibility Path
+│   └─ 동일 meshlet 데이터 사용
+│
+├─ Visibility Buffer
+│   └─ Instance/Meshlet ID + Local Primitive ID
+│
+├─ Material resolve
+├─ 8×8 tile material classification
+└─ Material category별 compute shading
+
+이 구성에서 기본 구현은 indirect + traditional VS + HW raster로 잡는 것이 좋습니다.
+
+Mesh shader는 대체 경로로 추가하고, software raster는 정말 시간이 남을 때 별도의 micro-triangle 실험으로 제한하는 게 맞습니다.
+
+가장 중요한 판단은 이것입니다.
+
+포트폴리오에서 Nanite와 비슷해 보이는 시스템을 만드는 것이 목표가 아니라, 각 경로의 비용과 이득을 분리해서 측정할 수 있는 렌더러를 만드는 것이 목표여야 합니다.
+
+따라서 우선순위는 다음이 좋습니다.
+
+1. HW Visibility Buffer correctness
+2. GPU-generated indirect
+3. Material tile classification
+4. Meshlet culling
+5. Mesh shader A/B path
+6. HW/SW hybrid raster
+
+Indirect + HW raster + tile-classified material shading까지 완성하면 이미 충분히 강한 포트폴리오입니다. Hybrid software raster는 그 프로젝트를 한 단계 더 깊은 연구물로 바꾸지만, 완성 가능성을 크게 떨어뜨리는 선택입니다.
+
+
+
