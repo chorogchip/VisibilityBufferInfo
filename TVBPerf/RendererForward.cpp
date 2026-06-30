@@ -220,6 +220,7 @@ void RendererForward::create_pso()
     D3D12_RASTERIZER_DESC rasterizer_desc{};
     rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizer_desc.CullMode = D3D12_CULL_MODE_BACK;
+    rasterizer_desc.CullMode = D3D12_CULL_MODE_NONE; // temp
     rasterizer_desc.FrontCounterClockwise = FALSE;
     rasterizer_desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
     rasterizer_desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -278,12 +279,17 @@ void RendererForward::create_pso()
         &pso_desc,
         IID_PPV_ARGS(&m_pipeline_state)));
 }
-
 void RendererForward::create_meshbuffers()
 {
-    MeshGeometry triangle_vertices = MeshGeometry::generate_triangle();
+    MeshGeometry mesh = MeshGeometry::generate_sphere(10);
 
-    const UINT vertex_buffer_size = triangle_vertices.get_buffer_size();
+    const UINT vertex_buffer_size =
+        static_cast<UINT>(mesh.vertices.size() * sizeof(MeshGeometry::Vertex));
+
+    const UINT index_buffer_size =
+        static_cast<UINT>(mesh.indices.size() * sizeof(uint32_t));
+
+    m_index_count = static_cast<UINT>(mesh.indices.size());
 
     D3D12_HEAP_PROPERTIES heap_props{};
     heap_props.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -292,23 +298,22 @@ void RendererForward::create_meshbuffers()
     heap_props.CreationNodeMask = 1;
     heap_props.VisibleNodeMask = 1;
 
-    D3D12_RESOURCE_DESC resource_desc{};
-    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resource_desc.Alignment = 0;
-    resource_desc.Width = vertex_buffer_size;
-    resource_desc.Height = 1;
-    resource_desc.DepthOrArraySize = 1;
-    resource_desc.MipLevels = 1;
-    resource_desc.Format = DXGI_FORMAT_UNKNOWN;
-    resource_desc.SampleDesc.Count = 1;
-    resource_desc.SampleDesc.Quality = 0;
-    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    D3D12_RESOURCE_DESC vertex_resource_desc{};
+    vertex_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    vertex_resource_desc.Width = vertex_buffer_size;
+    vertex_resource_desc.Height = 1;
+    vertex_resource_desc.DepthOrArraySize = 1;
+    vertex_resource_desc.MipLevels = 1;
+    vertex_resource_desc.Format = DXGI_FORMAT_UNKNOWN;
+    vertex_resource_desc.SampleDesc.Count = 1;
+    vertex_resource_desc.SampleDesc.Quality = 0;
+    vertex_resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    vertex_resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     Utils::throw_if_failed(m_device->CreateCommittedResource(
         &heap_props,
         D3D12_HEAP_FLAG_NONE,
-        &resource_desc,
+        &vertex_resource_desc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
         IID_PPV_ARGS(&m_vertex_buffer)));
@@ -320,12 +325,42 @@ void RendererForward::create_meshbuffers()
     read_range.End = 0;
 
     Utils::throw_if_failed(m_vertex_buffer->Map(0, &read_range, &mapped_data));
-    memcpy(mapped_data, triangle_vertices.vertices.data(), vertex_buffer_size);
+    memcpy(mapped_data, mesh.vertices.data(), vertex_buffer_size);
     m_vertex_buffer->Unmap(0, nullptr);
 
     m_vertex_buffer_view.BufferLocation = m_vertex_buffer->GetGPUVirtualAddress();
-    m_vertex_buffer_view.StrideInBytes = triangle_vertices.get_element_size();
+    m_vertex_buffer_view.StrideInBytes = sizeof(MeshGeometry::Vertex);
     m_vertex_buffer_view.SizeInBytes = vertex_buffer_size;
+
+    D3D12_RESOURCE_DESC index_resource_desc{};
+    index_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    index_resource_desc.Width = index_buffer_size;
+    index_resource_desc.Height = 1;
+    index_resource_desc.DepthOrArraySize = 1;
+    index_resource_desc.MipLevels = 1;
+    index_resource_desc.Format = DXGI_FORMAT_UNKNOWN;
+    index_resource_desc.SampleDesc.Count = 1;
+    index_resource_desc.SampleDesc.Quality = 0;
+    index_resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    index_resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    Utils::throw_if_failed(m_device->CreateCommittedResource(
+        &heap_props,
+        D3D12_HEAP_FLAG_NONE,
+        &index_resource_desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_index_buffer)));
+
+    mapped_data = nullptr;
+
+    Utils::throw_if_failed(m_index_buffer->Map(0, &read_range, &mapped_data));
+    memcpy(mapped_data, mesh.indices.data(), index_buffer_size);
+    m_index_buffer->Unmap(0, nullptr);
+
+    m_index_buffer_view.BufferLocation = m_index_buffer->GetGPUVirtualAddress();
+    m_index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
+    m_index_buffer_view.SizeInBytes = index_buffer_size;
 }
 
 void RendererForward::renderer_render()
@@ -376,8 +411,9 @@ void RendererForward::renderer_render()
 
     m_command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_command_list->IASetVertexBuffers(0, 1, &m_vertex_buffer_view);
+    m_command_list->IASetIndexBuffer(&m_index_buffer_view);
 
-    m_command_list->DrawInstanced(3, 1, 0, 0);
+    m_command_list->DrawIndexedInstanced(m_index_count, 1, 0, 0, 0);
 
     D3D12_RESOURCE_BARRIER barrier_to_present{};
     barrier_to_present.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

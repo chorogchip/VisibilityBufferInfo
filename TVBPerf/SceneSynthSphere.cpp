@@ -19,10 +19,11 @@ SceneSynthSphere SceneSynthSphere::generate(const SceneInfo& info) {
 	std::uniform_int_distribution<uint32_t> dist_material{ 0, ret.materials.get_material_count() - 1 };
 
 	assert(info.geometry_count > 0);
+	std::uniform_int_distribution<uint32_t> dist_division{ info.geometry_division_min, info.geometry_division_max };
 	for (uint32_t i = 0; i < info.geometry_count; ++i) {
-		ret.geometries.push_back(MeshGeometry::generate_sphere(info.geometry_division_min, info.geometry_division_max));
+		ret.geometries.push_back(MeshGeometry::generate_sphere(dist_division(gen)));
 	}
-	std::uniform_int_distribution<uint32_t> dist_geometry{ 0, ret.geometries.size() - 1 };
+	std::uniform_int_distribution<uint32_t> dist_geometry{ 0, static_cast<uint32_t>(ret.geometries.size() - 1) };
 
 	assert(info.sphere_count > 0);
 	for (uint32_t i = 0; i < info.sphere_count; ++i) {
@@ -38,3 +39,4 @@ SceneSynthSphere SceneSynthSphere::generate(const SceneInfo& info) {
 
 	return ret;
 }
+

@@ -22,7 +22,7 @@ public:
 	size_t get_buffer_size() const { return vertices.size() * sizeof(vertices[0]); }
 	size_t get_element_size() const { return sizeof(vertices[0]); }
 	static MeshGeometry generate_triangle();
-	static MeshGeometry generate_sphere(int division_min, int division_max);
+	static MeshGeometry generate_sphere(int division);
 };
 
 static_assert(sizeof(MeshGeometry::Vertex) == sizeof(float) * (3 + 3 + 2), "invalid size");

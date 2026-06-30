@@ -55,6 +55,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_vertex_buffer;
     D3D12_VERTEX_BUFFER_VIEW m_vertex_buffer_view{};
 
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_index_buffer;
+    D3D12_INDEX_BUFFER_VIEW m_index_buffer_view{};
+    UINT m_index_count;
+
     Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
     UINT64 m_fence_values[FRAME_COUNT]{};
     HANDLE m_fence_event = nullptr;
