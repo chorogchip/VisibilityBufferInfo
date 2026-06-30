@@ -1,0 +1,129 @@
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Visual Studio build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# C++ build files
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.recipe
+*.log
+*.exp
+*.lib
+*.dll
+*.exe
+*.app
+*.out
+
+# MSBuild
+*.metaproj
+*.metaproj.tmp
+*.projdata
+*.rsuser
+*.VC.db
+*.VC.VC.opendb
+*.opensdf
+*.sdf
+*.cachefile
+
+# Visual C++ project temporary files
+*.aps
+*.ncb
+*.opendb
+*.plg
+*.opt
+*.clw
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+build/
+out/
+
+# DirectX / HLSL shader build outputs
+*.cso
+*.dxil
+*.spv
+*.shaderbin
+*.hlslbin
+
+# PIX / Graphics debugging captures
+*.wpix
+*.pix3
+*.pixrun
+
+# NuGet packages
+packages/
+*.nupkg
+.nuget/
+
+# Windows generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Crash dumps
+*.dmp
+*.mdmp
+
+# Profiling / diagnostic files
+*.vsp
+*.vspx
+*.sap
+
+# ReSharper / Rider
+_ReSharper*/
+*.DotSettings.user
+.idea/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Ignore generated DirectX asset/output folders if used
+Generated/
+GeneratedFiles/
+Intermediate/
