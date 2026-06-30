@@ -7,12 +7,6 @@
 
 using Microsoft::WRL::ComPtr;
 
-struct Vertex
-{
-    float position[3];
-    float color[4];
-};
-
 void RendererForward::renderer_init(HWND hwnd, uint32_t width, uint32_t height)
 {
     m_hwnd = hwnd;
@@ -210,22 +204,16 @@ void RendererForward::create_pso()
     D3D12_INPUT_ELEMENT_DESC input_layout[] =
     {
         {
-            "POSITION",
-            0,
-            DXGI_FORMAT_R32G32B32_FLOAT,
-            0,
-            0,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            0
+            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
         },
         {
-            "COLOR",
-            0,
-            DXGI_FORMAT_R32G32B32A32_FLOAT,
-            0,
-            12,
-            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            0
+            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
+            24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
         }
     };
 
@@ -293,14 +281,9 @@ void RendererForward::create_pso()
 
 void RendererForward::create_meshbuffers()
 {
-    Vertex triangle_vertices[] =
-    {
-        { {  0.0f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-        { {  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-        { { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },
-    };
+    MeshGeometry triangle_vertices = MeshGeometry::generate_triangle();
 
-    const UINT vertex_buffer_size = sizeof(triangle_vertices);
+    const UINT vertex_buffer_size = triangle_vertices.get_buffer_size();
 
     D3D12_HEAP_PROPERTIES heap_props{};
     heap_props.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -337,11 +320,11 @@ void RendererForward::create_meshbuffers()
     read_range.End = 0;
 
     Utils::throw_if_failed(m_vertex_buffer->Map(0, &read_range, &mapped_data));
-    memcpy(mapped_data, triangle_vertices, vertex_buffer_size);
+    memcpy(mapped_data, triangle_vertices.vertices.data(), vertex_buffer_size);
     m_vertex_buffer->Unmap(0, nullptr);
 
     m_vertex_buffer_view.BufferLocation = m_vertex_buffer->GetGPUVirtualAddress();
-    m_vertex_buffer_view.StrideInBytes = sizeof(Vertex);
+    m_vertex_buffer_view.StrideInBytes = triangle_vertices.get_element_size();
     m_vertex_buffer_view.SizeInBytes = vertex_buffer_size;
 }
 

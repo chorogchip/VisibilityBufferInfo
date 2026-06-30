@@ -144,16 +144,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GraphicsUtils.cpp" />
-    <ClCompile Include="MeshData.cpp" />
+    <ClCompile Include="Materials.cpp" />
+    <ClCompile Include="MeshGeometry.cpp" />
     <ClCompile Include="RendererForward.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SceneSynthSphere.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GraphicsUtils.h" />
-    <ClInclude Include="MeshData.h" />
+    <ClInclude Include="Materials.h" />
+    <ClInclude Include="MeshGeometry.h" />
     <ClInclude Include="RendererForward.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />
+    <ClInclude Include="SceneSynthSphere.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>

@@ -23,9 +23,13 @@ MeshGeometry MeshGeometry::generate_triangle() {
 
     ret.indices = { 0, 1, 2 };
 
-    ret.submeshes = {
-        { 0, 3, 0 },
-    };
+    return ret;
+}
+
+MeshGeometry MeshGeometry::generate_sphere(int division_min, int division_max) {
+    MeshGeometry ret{};
+
+    // TODO
 
     return ret;
 }

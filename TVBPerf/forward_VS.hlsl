@@ -1,7 +1,8 @@
 struct VSInput
 {
     float3 position : POSITION;
-    float4 color    : COLOR;
+    float3 normal : NORMAL;
+    float2 texcoord: TEXCOORD;
 };
 
 struct PSInput
@@ -14,6 +15,6 @@ PSInput main(VSInput input)
 {
     PSInput output;
     output.position = float4(input.position, 1.0f);
-    output.color = input.color;
+    output.color = float4(input.texcoord, 0.0f, 0.0f);
     return output;
 }
