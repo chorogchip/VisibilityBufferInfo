@@ -144,11 +144,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GraphicsUtils.cpp" />
+    <ClCompile Include="MeshData.cpp" />
     <ClCompile Include="RendererForward.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GraphicsUtils.h" />
+    <ClInclude Include="MeshData.h" />
     <ClInclude Include="RendererForward.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />

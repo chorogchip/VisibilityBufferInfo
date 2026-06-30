@@ -3,6 +3,7 @@
 #include <string>
 #include "Utils.h"
 #include "GraphicsUtils.h"
+#include "MeshGeometry.h"
 
 using Microsoft::WRL::ComPtr;
 
