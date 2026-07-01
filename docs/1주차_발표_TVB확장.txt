@@ -1,0 +1,104 @@
+
+
+핵심으로 가고 싶은 건
+G-buffer bandwidth 절감
+material 다양성 증가에 대응
+draw call/CPU overhead 감소
+bindless texture/material system과 결합
+forward/deferred hybrid shading
+여기에 집중하고 싶다.
+
+반대로 TVB의 주요 비용은:
+
+```text
+triangle/material indirection
+attribute reconstruction
+shader divergence
+material sorting/binning overhead
+
+-> geometry 쪽으로 올라가면 nanaite, GPU, meshlet 등등에 포커스가 맞춰지고
+-> material 쪽으로 내려가면은 위에 해당하는데
+어느 방향으로 갈지는 갈피를 못잡겠다.
+이건 둘 다 발표에서 말해보자.
+즉 두 가지 실험 확장 방향을 제시함.
+세 번쨰 방법은 TVB에다 알고리즘을 더 붙여 TVB 2.0 같이 레이어 상관없이 고성능을 추구하며 완결된 렌더링 파이프라인을 만드는 것.
+
+즉 뭔가 앞단 뒷단에 알고리즘을 확장하는 것도 좋지만은 살짝 맥락이 확장되면서 수렴하지 못하는 느낌이 나고
+forward/deferred hybrid shading -> 이걸 중점으로 데이터를 더 많이 뽑아보면 어떨까 싶다.
+
+핵심 이유는 네 가지입니다.
+
+geometry 복잡도 증가
+Nanite류 virtualized geometry로 화면에 투영되는 삼각형 수가 증가했습니다.
+material 다양성 증가
+bindless texture, layered material, procedural material 등으로 G-buffer에 모든 속성을 담기 어려워졌습니다.
+메모리 대역폭 압박
+4K, HDR, ray tracing, upscaling, temporal buffers가 많아져 G-buffer 비용이 큽니다.
+하이브리드 렌더링
+raster primary visibility + ray traced secondary effects 구조에서 VisBuffer가 primary hit record로 유용합니다.
+
+
+Work Generation
+CPU Direct Draw / Indirect / Device-Generated Work
+        ↓
+Geometry Frontend
+Vertex Shader / Compute Culling + VS / Mesh Shader
+        ↓
+Rasterization
+Hardware / Software / Hybrid
+        ↓
+Visibility Buffer
+Instance·Meshlet·Primitive ID + Depth/Barycentrics
+        ↓
+Material Scheduling
+Uber Shader / Tile Classification / Pixel Worklist
+        ↓
+Shading
+Compute 또는 Fullscreen Raster
+
+
+Deferred rendering
+- VB는 넓은 게열에서 deferred라고 할 수 있다 (G-buffer보다 적게 저장하는)
+- deferred rendering의 변형이라고 볼 수도
+
+Tiled / Clustered shading
+- 타일에 영향을 주는 조명 목록을 만들어 사용.
+- 직교적이고 둘이 궁합은 좋다. (clustered light list 등)
+
+Bindless resources
+- 직교적이고 궁합이 좋다. material과 texture가 아주 많으면 해당 리소스를 유연하게 접근 가능.
+
+Mesh shaders (- meshlet/cluster 기반 데이터 접근)
+- 이것도 직교적. emsh shader는 기존 VS를 대체하므로. meshlet단위 처리, culling, LOD, amplification, primitive generation등이 관심사.
+- 궁합이 좋다. mesh shader에서 이미 meshlet단위로 geometry를 관리하므로 visibility pass를 만들기 좋다.
+
+Ray tracing / hybrid rendering
+- 직교적이지만 연결점이 있다.
+- ray tracing도 넓은 의미에서 visibility 문제를 다룬다고 할 수 있다.
+- primary를 raster로 계산하고, secondary부터 ray tracing 하는 접근.
+
+Virtualized geometry
+- 직교적이고 강하게 연관됨. 궁합이 좋다.
+- 대표적으로 nanite. 엄청나게 많은 geometry를 어떻게 stream/cull/LOD/rasterize할 것인가?
+- 장면의 triangle 수가 매우 많음. 따라서 material/shading을 미리 계산하면 비효율적. 따라서 visibility만 효울적으로 계산함.
+
+GPU-driven rendering (- GPU indirect draw)
+- 직교적이고 궁합이 좋다.
+- CPU의 draw call대신 GPU가 culling LOD 선택, draw command 생성 등을 함.
+- 같이 쓰면 좋다.
+- visibility buffer는 shading pass에서 GPU 메모리의 scene date를 직접 참조해야 하므로 scene representation자체가 GPU-friendly해야함.
+- 따라서 궁합이 좋다.
+
+Rasterizing
+- sw rasterizer 사용 가능. 매우 단순한 출력을 하기에 구현에 적합하고 meshlet/cluster, virtualized geometry 등등과 잘 맞음.
+- hybrid 가능. 큰 삼각형과 작은 삼각형에서 유리한 방식이 다름.
+
+Material
+- sorting을 통한 branch divergence 완화: 직교적이고 궁합 좋음.
+- 더 강한 버전: material별/모델별로 다른 shader 실행.
+
+
+
+
+
+

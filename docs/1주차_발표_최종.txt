@@ -1,0 +1,165 @@
+
+
+
+
+
+목적: Triangle Visibility Buffer(TVB) 기법이 기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
+
+TVB 소개. 2013 논문 -> 2015 논문 -> GPU Zen 3 -> GPU Zen 4 (DOOM)
+- 대상이 전문가이므로 이론을 설명한다기보다는 연구 배경과 현황 느낌으로 서술.
+- 연관 기술들 (예를 들면 nanaite라던지..? 혹은 deferred texturing 등의 키워드를 잡고 더 넓은 범위에서) 을 언급할 수 있겠다
+	
+질문: TVB가 실제로 유효한가?
+
+성능 모델. 장점과 단점을 언급한다.
+- 이를 관찰/발견/규명하고자 하는 것이 목적임을 밝힌다.
+
+비교 대상 알고리즘을 소개한다.
+
+장면 구성을 소개하고 지오메트리 구조, 모델 구조와 특징을 설명한다.
+
+매트릭 밝힘.
+
+API 밝히며 구현 방향, 코드 스타일 밝힘.
+
+TVB 확장 방향 마지막에 소개.
+
+
+
+_________________________________________________________________________________
+
+세부 구성
+
+목적: Triangle Visibility Buffer(TVB) 기법이 기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
+
+TVB 소개. 2013 논문 -> 2015 논문 -> GPU Zen 3 -> GPU Zen 4 (DOOM)
+- 대상이 전문가이므로 이론을 설명한다기보다는 연구 배경과 현황 느낌으로 서술.
+- 연관 기술들 (예를 들면 nanaite라던지..? 혹은 deferred texturing 등의 키워드를 잡고 더 넓은 범위에서) 을 언급할 수 있겠다
+
+
+2013년 Visibility Buffer
+- depth test, primitive ID -> 재질별 surface shader kernel.
+- visibility계산과 surface shading을 분리했다.
+- 전통적 G-buffer는 픽셀당 24바이트, 이건 일반적인 장면에서 4바이트, 큰 장면에서 8바이트
+
+2015년 Deferred Attribute Interpolation
+- 삼각형을 변환시켜 별도의 triangle buffer에 저장.
+- 삼각형은 화면 공간으로 변환됨. (버퍼 하나 더 만드니 추가 메모리 트래픽 발생, 보간 쉬워짐)
+
+Triangle Visibility Buffer 1.0
+- 목표: 픽셀 수가 많고 GPU 메모리가 제한된 환경
+- 클러스터별 컬링, GPU compute shader로 삼각형 처리 (indirect draw), draw-call compaction, compute pass
+
+Triangle Visibility Buffer 2.0
+- draw call, hw rasterizatio 제거. GPU만으로 함.
+
+DOOM: The Dark Ages
+- hybrid(hw+sw rasterization) + deferred texturing, material classification/dispatch...
+
+TVB 기법은 G-buffer를 저장하는 대신 픽셀마다 보이는 triangle의 정보를 저장합니다.
+- G-buffer에 필요한 메모리 대역폭을 절감할 수 있고 G-buffer 포맷에 덜 종속적으로 material 표현이 가능합니다.
+- 삼각형 데이터에 대한 추가적인 indirect access가 필요하고 cache locality가 저하될 수 있습니다.
+TVB가 다른 방법 대비 유리해지는 지점과 그 성능적 특성을 규명해보려고 합니다.장점: 메모리 대역폭 절감. 재질 계산 제거(아마 g버퍼와 같음). 재질 표현의 유연성(G버퍼의 채널에 고정안됨, 재질별 compute shader 가능). 픽셀별 shading의 빈도 조절 가능.
+
+단점: 속성을 무게중심좌표계로 잘 복원해야함. cache locality문제 (sorting등 필요), SW raster의 한계(큰 삼각형에서 불리)
+
+질문: TVB가 실제로 유효한가?
+
+성능 모델. 장점과 단점을 언급한다.
+- 이를 관찰/발견/규명하고자 하는 것이 목적임을 밝힌다.
+
+- Triangle Visibility Buffer 기법은 G-buffer를 만들기 위한 메모리 대역폭을 낭비하고 샘플링을 미룰 수 있다. 또한 G-buffer 포맷에 구애받지 않고 다양한 형태의 material을 사용할 수 있다.
+- 단 단점으로 indirect access를 해야 하고, triangle buffer사용 시 coherency가 떨어져 성능이 하락할 수 있음.
+- 또한 TVB 등 더 나아가 GPU indirect draw나 meshlet 등의 기법과 결합해 사용하는 경우에도 각 기법의 장단점이 존재.
+
+비교 대상 알고리즘을 소개한다.
+- Naive Forward
+- Forward + Depth Pre-pass
+- Deferred Rendering
+- TVB의 다양한 구현들
+- G-buffer 크기, Material 복잡도, 화면 해상도 등을 각각 파라미터화하여 측정
+
+장면 구성을 소개하고 지오메트리 구조, 모델 구조와 특징을 설명한다.
+- synthetic primitice scene에 대해 forward, deferred, triangle visibility buffer 기법으로 각각 렌더링하고 성능을 비교해보려고 함
+- 구의 개수, 한 구의 삼각형 개수, 구의 크기, G-buffer 크기, material 복잡도 등 여러 파라미터를 탐색해 Triangle Visibility Buffer가 유리해지는 지점을 발견하고, 해당 지점의 성능적 특성을 분석하려고 함.
+
+장면 구성: synthetic primitive scene 사용, 구 여러 개
+- 기본적으로 파라미터에 따라 생성된 구 여러 개의 scene을 사용
+- 구의 개수, 크기, 삼각형 수 등을 파라미터화
+- 사용 이유: 여러 수치들의 파라미터화가 용이
+- 추후 모델 생성 시점에서 displacement mapping 적용 가능
+- 추후 stanford dragon등의 mesh 사용 가능
+- 측정 시 random seed도 포함해 장면을 생성
+
+매트릭 밝힘.
+- Warm-up 후 N프레임 측정 (VSync off)
+- Frame Time (Average, Median, Min, Max, P90, P95, P99, 0.1% low, 0.01% low 등)
+- GPU Timestamp Query
+- NVIDIA Nsight Graphics 혹은 유사 프로파일러로 HW 지표 측정
+- 초기 버전은 일정 시간 대기 후 정지 화면에서 측정
+- 추후 개선: 카메라 자동 이동
+
+API 밝히며 구현 방향, 코드 스타일 밝힘.
+API: Direct3D 12
+- 이유: GPU를 저수준에서 명시적 제어, pass별 GPU timestamp 측정, 크로스 플랫폼은 고려하지 않음
+
+TVB 확장 방향 마지막에 소개.
+- meshlet/cluster 기반 데이터 접근
+- GPU indirect draw
+- compute shader로 software rasterization
+- material sorting을 통한 shader branch divergence 완화
+- material별 work queue를 구성해 별도의 shader 사용
+
+여러 축을 생각할 수 있을 것 같다.
+
+Work Generation
+CPU Direct Draw / Indirect / Device-Generated Work
+        ↓
+Geometry Frontend
+Vertex Shader / Compute Culling + VS / Mesh Shader
+        ↓
+Rasterization
+Hardware / Software / Hybrid
+        ↓
+Visibility Buffer
+Instance·Meshlet·Primitive ID + Depth/Barycentrics
+        ↓
+Material Scheduling
+Uber Shader / Tile Classification / Pixel Worklist
+        ↓
+Shading
+Compute 또는 Fullscreen Raster
+
+최종 권장 아키텍처
+CPU
+└─ Scene update only
+
+GPU
+├─ Instance culling
+├─ Meshlet culling
+├─ Optional HZB occlusion
+├─ Raster category binning
+│   ├─ Opaque commands
+│   ├─ Two-sided commands
+│   └─ Masked commands
+│
+├─ HW Visibility Raster
+│   └─ GPU-generated indexed indirect
+│
+├─ Optional Mesh Shader Visibility Path
+│   └─ 동일 meshlet 데이터 사용
+│
+├─ Visibility Buffer
+│   └─ Instance/Meshlet ID + Local Primitive ID
+│
+├─ Material resolve
+├─ 8×8 tile material classification
+└─ Material category별 compute shading
+
+
+
+
+
+
+
+

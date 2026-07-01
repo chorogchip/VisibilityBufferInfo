@@ -1,0 +1,98 @@
+기초 forward D3D12 renderer + timestamp + benchmark harness 완성
+- 구에서 조정할 파라미터: 삼각형 개수, 머시기 암튼..
+- pos, normal, uv 사용.
+- index buffer 사용. (triangle ID가 명확해짐, meshlet 확장에 유리)
+- uint16_t vs uint32_t : 초기엔 단순성을 위해 32로 통일. (나중에 16 시도 가능)
+- 인스턴싱: 파라미터화. (vertex buffer자체가 작으면 TVB에 유리하므로)
+- material이 다른 submesh는 아직 안 넣음. instance별로 material이 다른 걸로도 비슷한 효과를 구현 가능하다고 판단.
+	단 실제를 더 정확히 묘사하기에 이후 확장 가능.
+
+
+- 구는 Cube Sphere 사용. (구현 난이도 icosphere보다 용이, patch기반 확장 쉬움.
+
+CoordinateSystem = LH
+Projection = Perspective
+NearZ / FarZ
+FOV
+CameraPosition
+CameraTarget
+
+Winding: CCW front
+RasterizerState.FrontCounterClockwise = TRUE
+CullMode = BACK
+
+Normal Z
+DepthFunc = LESS_EQUAL 또는 LESS
+ClearDepth = 1.0
+Near = 0.1
+Far = 1000.0
+
+
+
+struct Material
+{
+    float3 baseColor;
+    float roughness;
+    float metallic;
+    uint shadingMode;
+};
+
+
+
+
+seed 기반 sphere scene generator 구현
+
+
+파라미터:
+Seed
+SphereCount
+SphereRadiusMin
+SphereRadiusMax
+SceneBounds
+TriangleCountPerSphere 또는 SphereResolution
+MaterialCount
+MaterialDistribution
+CameraConfig
+
+OverdrawLevel
+DepthComplexity
+ScreenCoverage
+TriangleSizeDistribution
+MaterialComplexity
+MaterialDiversity
+SpatialDistribution
+
+배치는 박스안에 랜덤.
+
+MaterialComplexity = 0: constant color
+MaterialComplexity = 1: Lambert
+MaterialComplexity = 2: Blinn-Phong
+MaterialComplexity = 3: texture sampling 1~4회
+MaterialComplexity = 4: procedural noise or heavy ALU
+등등 파라미터화
+
+
+
+
+Forward 구현
+
+
+Forward + Depth Pre-pass 구현
+
+
+Deferred 구현
+
+
+TVB basic 구현
+
+
+triangle ID
+instance ID
+barycentric buffer
+fullscreen shading
+validation visualization 구현
+해상도/material/triangle/overdraw 4개 축으로 1차 실험
+TVB compact 구현
+TVB compute shading 구현
+material sorting/work queue 구현
+meshlet/indirect/software rasterization은 후반부 확장으로 진행

@@ -1,0 +1,119 @@
+
+
+
+- Forward Rendering
+dynamic light가 많으면 비쌈 (조명마다 순회해야 하므로)
+-> 알고리즘적으로 바로 보이는 문제라고 판단
+겹치는 픽셀 (overdraw) 에 대해 픽셀 셰이더 비용이 낭비됨
+
+
+- Deferred Rendering
+위를 해결 (씬 복잡도와 light 개수를 무관하게 따로 처리) : shading과 visibility를 분리.
+여러 채널의 G-buffer를 만들어야 해 메모리/대역폭 비용이 큼
+-> 이 문제를 어떻게 관측할 수 있는가? 조사해보기
+MSAA등과 결합이 어려움 (g버퍼당 고정 샘플 해야하니까)
+
+
+- 2013 Visibility Buffer
+G-buffer에 material 대신에 triangle Index를 저장하자. (triangle(primitive) ID + instance ID/draw ID + barycentric coordinate + depth)
+그리고 두 번째 패스 (shading pass)에서 해당 데이터를 사용. 무게중심 좌표로 보간.
+-> GPU의 HW 래스터라이저가 보간 시에는 그냥 다른 코어를 사용하나? 혹은 보간 유닛도 내장돼 있나? 조사해보기
+아무튼 b-buffer bandwidth를 절감할 수 있는 효과. 또한 material이 g-buffer format에 영향받지 않음.
+
+material이 g-buffer format에 영향받지 않는 것에 대해선,
+나는 성능상 비교해보고 싶으므로 해당 장점은 무시하려고 한다.
+가 아니라 예를 들어 어떤 메터리얼이 어떤 필드를 안쓰는데 해당 필드가 g-buffer에 있으면 (예를 들면 emissive) 문제가 되니
+이걸 여러 씬에서 여러 가정을 통해 실험해보면 좋을듯
+실험을 많이 해야하니 구현은 빨리 나와야 함
+
+단점: 1 삼각형 ID와 vertex data 재접근이 random access 성격이 강해서 캐시 효율이 나쁠 수 있음.
+2 텍스쳐 샘플링 시 ddx ddty가 필요한데, 이를 재구성할 때 인접 픽셀이 서로 다른 삼각형을 참조할 경우 계산이 불안정해짐.
+-> 이는 deferred에서 왜 문제가 안되지?
+3 MSAA, alpha 등 처리가 어려워짐.
+
+
+- 2015 Triangle Visibility Buffer
+일단 기여: 1 더 구체화됨.
+
+triangle ID encoding
+barycentric coordinate 저장 또는 재구성
+draw/instance/material indirection
+vertex attribute fetch
+deferred material evaluation
+texture LOD/derivative 처리
+GPU cache 친화적인 batching 고민
+
+2 Deferred Texturing과 결합한 것이 여기서부터. 텍스쳐 샘플링 자체를 미룸.
+-> early z 가 켜져도 deferred rendering에서 텍스쳐 샘플링을 못막나?
+	-> 막을 수 있지만 모두 막을 수 있지는 않다. (렌더 순서 등에 따라)
+-> 아이디어: DOOM등에 쓰인 최신 방법을 구현하는 데 집중하기보다는
+그 기저에서 이 미룸으로 인한 tradeoff를 설명할 수 있는 다양한 상황을 연출해 데이터를 뽑아 논리를 전개하는 식으로 가자.
+나의 정체성대로 암달의 법칙에 집중하자.
+
+3 무게중심 좌표계 기반 보간.
+
+해결하려던 문제는
+1 G_buffer가 너무 커짐. 2. material explosion문제 (1과 일맥상통), 3 visibility와 shading의 분리 (deferred와 일맥상통)
+
+단점: 1 간접 접근 필요. (ID -> draw data -> index buffer -> vertex buffer -> material -> texture)
+즉 성능이 떨어질 수 있다.
+2 작은 삼각형은 quad기반 derivative가 깨지기 쉽고 vertex fetch도 비효율적 -> 더 이해 필요
+3 알파 하면 비싸짐 (디퍼드와 동일). 할수는잇지만 visibility pass에서 알파텍스쳐 샘플링 해야함. -> 이것도 실험해야하나?
+4 하드웨어에서 ID를 관리하기 어려움 (여러 플랫폼에서) -> 중요하게 봐야 하는 문제인듯
+
+
+- TVB 1.0
+실제 첫 번쨰 실용화 형태로 생각.
+
+1. Depth / Visibility Pass
+   - opaque geometry rasterization
+   - depth buffer 생성
+   - pixel마다 triangle/draw/material ID 저장
+
+2. Shading Pass
+   - visibility buffer read
+   - triangle ID로 vertex attributes fetch
+   - barycentric interpolation
+   - material evaluation
+   - lighting
+
+3. Post-processing
+   - TAA, bloom, tone mapping 등
+
+
+TVB shading pass는 compute shader로 구현.
+해결하는 문제: 1 G-buffer bandwidth, 2 material 다양성 3 shading overdraw
+한계: 1 coherence부족 2 texture derivative문제(바운더리에서 -> 보통 상황에선 어케 되는지?)
+3 material shader 실행 모델 (하나의 셰이더로 처리하면 분기가 많다..) 4 투명 처리
+
+
+- TVB 2.0
+여러 최적화들이 붙음.
+1 material/triangle binning: visible pixel 을 material별로 분류해 각 material별 work queue 생성, shading
+-> divergence로 인한 병목 (긴 셰이더 실행시간)을 관측할 필요가 있겠음.
+
+2 여러 compute shader로 더 유연하게 처리.
+3 meshlet/cluster기반 데이터 접근. (mesh shader와 잘 어울림)
+4 GPU-driven rendering과 결합. indirect draw.
+5 derivative / LOD 안정화. (어케 잘 함)
+
+즉 TVB 1.0의 random access를 binning과 cluster로 coherence를 높여 해결.
+또 material divergence를 work list를 만들어 해결.
+대규모 씬에서 강하고
+micro geometry와의 결합 좋아짐. (nanite처럼 micro polygon 등장하며 중요성 커짐)
+
+
+- DOOM
+
+잘 함.
+
+
+
+
+
+
+
+
+
+
+
