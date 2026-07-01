@@ -8,6 +8,7 @@
 class MeshGeometry {
 private:
 	MeshGeometry() = default;
+
 public:
 
 	struct Vertex {
@@ -19,8 +20,6 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	
-	size_t get_buffer_size() const { return vertices.size() * sizeof(vertices[0]); }
-	size_t get_element_size() const { return sizeof(vertices[0]); }
 	static MeshGeometry generate_triangle();
 	static MeshGeometry generate_sphere(int division);
 };

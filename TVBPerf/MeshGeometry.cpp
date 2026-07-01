@@ -29,7 +29,6 @@ MeshGeometry MeshGeometry::generate_triangle() {
     return ret;
 }
 
-
 MeshGeometry MeshGeometry::generate_sphere(int division)
 {
     assert(division > 0);
@@ -42,12 +41,12 @@ MeshGeometry MeshGeometry::generate_sphere(int division)
 
     XMVECTOR dirs[] =
     {
-        XMVectorSet( 1,  0,  0, 0),
-        XMVectorSet(-1,  0,  0, 0),
-        XMVectorSet( 0,  1,  0, 0),
-        XMVectorSet( 0, -1,  0, 0),
-        XMVectorSet( 0,  0,  1, 0),
-        XMVectorSet( 0,  0, -1, 0),
+        XMVectorSet( 1,  0,  0, 0 ),
+        XMVectorSet(-1,  0,  0, 0 ),
+        XMVectorSet( 0,  1,  0, 0 ),
+        XMVectorSet( 0, -1,  0, 0 ),
+        XMVectorSet( 0,  0,  1, 0 ),
+        XMVectorSet( 0,  0, -1, 0 ),
     };
 
     int dir_ind_right[] = { 5, 4, 0, 0, 0, 1 };
@@ -83,8 +82,14 @@ MeshGeometry MeshGeometry::generate_sphere(int division)
                     p.y * std::sqrtf(1.0f - 0.5f * (p2.z + p2.x) + p2.z * p2.x / 3.0f),
                     p.z * std::sqrtf(1.0f - 0.5f * (p2.x + p2.y) + p2.x * p2.y / 3.0f)
                 };
-                
-                ret.vertices.emplace_back(Vertex{ sphere_pos, sphere_pos, XMFLOAT2{ fx, fy } });
+
+                XMVECTOR n = XMLoadFloat3(&sphere_pos);
+                n = XMVector3Normalize(n);
+
+                XMFLOAT3 normal;
+                XMStoreFloat3(&normal, n);
+
+                ret.vertices.emplace_back(Vertex{ sphere_pos, normal, XMFLOAT2{ fx, fy } });
             }
         }
 

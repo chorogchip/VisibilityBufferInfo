@@ -44,14 +44,14 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
         RegisterClassEx(&wc);
 
-        RECT windowRect{};
-        windowRect.left = 0;
-        windowRect.top = 0;
-        windowRect.right = width;
-        windowRect.bottom = height;
+        RECT window_rect{};
+        window_rect.left = 0;
+        window_rect.top = 0;
+        window_rect.right = width;
+        window_rect.bottom = height;
 
         AdjustWindowRect(
-            &windowRect,
+            &window_rect,
             WS_OVERLAPPEDWINDOW,
             FALSE);
 
@@ -62,8 +62,8 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            windowRect.right - windowRect.left,
-            windowRect.bottom - windowRect.top,
+            window_rect.right - window_rect.left,
+            window_rect.bottom - window_rect.top,
             nullptr,
             nullptr,
             hInstance,
@@ -76,7 +76,7 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         ShowWindow(hwnd, nShowCmd);
         UpdateWindow(hwnd);
 
-        g_renderer.renderer_init(hwnd, width, height);
+        g_renderer.init(hwnd, width, height);
 
         MSG msg{};
 
@@ -85,7 +85,7 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             } else {
-                g_renderer.renderer_render();
+                g_renderer.render();
             }
         }
 

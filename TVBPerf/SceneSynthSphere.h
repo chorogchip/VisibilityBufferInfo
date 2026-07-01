@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <cstddef>
+#include <memory>
 #include <DirectXMath.h>
 
 #include "Materials.h"
@@ -11,6 +11,7 @@ class SceneSynthSphere
 {
 private:
 	SceneSynthSphere() = default;
+
 public:
 
 	struct SphereInstance {
@@ -36,14 +37,15 @@ public:
 		float radius_max;
 		uint32_t geometry_division_min;
 		uint32_t geometry_division_max;
-		uint32_t material_float4_count;
+		uint32_t material_float4_count;  // g버퍼 장수	
 	};
 
 	std::vector<SphereInstance> instances;
-	Materials materials;
+	Materials materials{};
 	std::vector<MeshGeometry> geometries;
 
-	static SceneSynthSphere generate(const SceneInfo& info);
+	static std::unique_ptr<SceneSynthSphere> generate(const SceneInfo& info);
+
 };
 
 static_assert(sizeof(SceneSynthSphere::SphereInstance) == 32, "size error");
