@@ -128,7 +128,7 @@ void RendererForward::create_swapchain()
         &swap_chain));
 
     Utils::throw_if_failed(factory_->MakeWindowAssociation(
-        hwnd_,
+            hwnd_,
         DXGI_MWA_NO_ALT_ENTER));
 
     Utils::throw_if_failed(swap_chain.As(&swapchain_));
