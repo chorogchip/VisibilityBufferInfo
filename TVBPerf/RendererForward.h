@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "ProgramArgument.h"
 #include "SceneSynthSphere.h"
 #include "SceneSynthSphereRuntime.h"
 
@@ -20,8 +21,10 @@ private:
     static constexpr UINT FRAME_COUNT = 2;
 
 public:
-    void init(HWND hwnd, uint32_t width, uint32_t height);
+    ~RendererForward();
+    void init(HWND hwnd, const ProgramArgument&);
     void render();
+    bool to_terminate() const { return to_terminate_; }
 
 private:
     void create_device();
@@ -34,8 +37,8 @@ private:
 
     void create_root_signature();
     void create_pso();
-    void create_meshbuffers();
-    void create_constbuffers();
+    void create_meshbuffers(const ProgramArgument& arg);
+    void create_constbuffers(const ProgramArgument& arg);
     void create_instancebuffers();
 
     void wait_for_gpu();
@@ -46,6 +49,11 @@ private:
     uint32_t width_ = 0;
     uint32_t height_ = 0;
 
+    bool to_terminate_;
+    size_t frame_count_;
+    size_t frame_warmup_count_;
+    size_t frame_measure_count_;
+
     ComPtr<IDXGIFactory4> factory_;
     ComPtr<ID3D12Device> device_;
 
@@ -55,7 +63,6 @@ private:
 
     ComPtr<IDXGISwapChain3> swapchain_;
     UINT frame_index_ = 0;
-
 
     constexpr static DXGI_FORMAT depth_stencil_format_ = DXGI_FORMAT_D32_FLOAT;
     ComPtr<ID3D12DescriptorHeap> dsv_heap_;
@@ -79,7 +86,7 @@ private:
     struct ConstBufMatrices {
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
-    } matrix_buf_cpu_;
+    } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_;
 
     ComPtr<ID3D12Resource> buf_instance_;

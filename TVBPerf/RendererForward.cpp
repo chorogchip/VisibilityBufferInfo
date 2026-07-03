@@ -1,17 +1,32 @@
 #include "RendererForward.h"
 
 #include <string>
+
 #include "Utils.h"
+#include "ProgramArgument.h"
 #include "GraphicsUtils.h"
 #include "MeshGeometry.h"
 
 using Microsoft::WRL::ComPtr;
 
-void RendererForward::init(HWND hwnd, uint32_t width, uint32_t height)
-{
+RendererForward::~RendererForward() {
+    if (command_queue_ && fence_ && fence_event_)
+        wait_for_gpu();
+
+    if (fence_event_)
+        CloseHandle(fence_event_);
+}
+
+void RendererForward::init(HWND hwnd, const ProgramArgument& arg) {
+
     hwnd_ = hwnd;
-    width_ = width;
-    height_ = height;
+    width_ = arg.window_width;
+    height_ = arg.window_height;
+
+    to_terminate_ = false;
+    frame_count_ = 0;
+    frame_warmup_count_ = arg.warmup_frames;
+    frame_measure_count_ = arg.measure_frames;
 
     this->create_device();
     this->create_command_objects();
@@ -22,11 +37,11 @@ void RendererForward::init(HWND hwnd, uint32_t width, uint32_t height)
     this->create_depth_stencil_buffer();
     this->create_root_signature();
     this->create_pso();
-    this->create_meshbuffers();
-    this->create_constbuffers();
+    this->create_meshbuffers(arg);
+    this->create_constbuffers(arg);
     this->create_instancebuffers();
 
-    Utils::throw_if_failed(device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_)));
+    Utils::throw_if_failed(device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_)), "create fence");
 
     fence_values_[frame_index_] = 1;
 
@@ -49,7 +64,7 @@ void RendererForward::create_device()
     }
 #endif
 
-    Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(&factory_)));
+    Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(&factory_)), "create DXGI factory");
 
     ComPtr<IDXGIAdapter1> adapter;
 
@@ -71,12 +86,12 @@ void RendererForward::create_device()
     }
 
     ComPtr<IDXGIAdapter> warp_adapter;
-    Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)));
+    Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)), "enumerate adapter");
 
     Utils::throw_if_failed(D3D12CreateDevice(
         warp_adapter.Get(),
         D3D_FEATURE_LEVEL_11_0,
-        IID_PPV_ARGS(&device_)));
+        IID_PPV_ARGS(&device_)), "create device");
 }
 
 void RendererForward::create_command_objects()
@@ -87,13 +102,13 @@ void RendererForward::create_command_objects()
 
     Utils::throw_if_failed(device_->CreateCommandQueue(
         &queue_desc,
-        IID_PPV_ARGS(&command_queue_)));
+        IID_PPV_ARGS(&command_queue_)), "create command queue");
 
     for (UINT i = 0; i < FRAME_COUNT; ++i)
     {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&command_allocator_[i])));
+            IID_PPV_ARGS(&command_allocator_[i])), "create command allocator");
     }
 
     Utils::throw_if_failed(device_->CreateCommandList(
@@ -101,9 +116,9 @@ void RendererForward::create_command_objects()
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         command_allocator_[0].Get(),
         nullptr,
-        IID_PPV_ARGS(&command_list_)));
+        IID_PPV_ARGS(&command_list_)), "create command list");
 
-    Utils::throw_if_failed(command_list_->Close());
+    Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
 
 void RendererForward::create_swapchain()
@@ -125,13 +140,13 @@ void RendererForward::create_swapchain()
         &swap_chain_desc,
         nullptr,
         nullptr,
-        &swap_chain));
+        &swap_chain), "create swapchain");
 
     Utils::throw_if_failed(factory_->MakeWindowAssociation(
             hwnd_,
-        DXGI_MWA_NO_ALT_ENTER));
+        DXGI_MWA_NO_ALT_ENTER), "factory make window association");
 
-    Utils::throw_if_failed(swap_chain.As(&swapchain_));
+    Utils::throw_if_failed(swap_chain.As(&swapchain_), "swapchain as");
 
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 }
@@ -145,7 +160,7 @@ void RendererForward::create_dsv_heap()
 
     Utils::throw_if_failed(device_->CreateDescriptorHeap(
         &dsv_heap_desc,
-        IID_PPV_ARGS(&dsv_heap_)));
+        IID_PPV_ARGS(&dsv_heap_)), "create descriptor heap");
 
     dsv_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
@@ -156,7 +171,7 @@ void RendererForward::create_rtv_heap() {
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-    Utils::throw_if_failed(device_->CreateDescriptorHeap( &rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)));
+    Utils::throw_if_failed(device_->CreateDescriptorHeap( &rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)), "create descriptor heap");
 
     rtv_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
@@ -165,7 +180,7 @@ void RendererForward::create_render_targets() {
     D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
 
     for (UINT i = 0; i < FRAME_COUNT; ++i) {
-        Utils::throw_if_failed(swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])));
+        Utils::throw_if_failed(swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])), "create rtv");
         device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr, rtv_handle);
         rtv_handle.ptr += rtv_descriptor_size_;
     }
@@ -173,7 +188,6 @@ void RendererForward::create_render_targets() {
 
 void RendererForward::create_depth_stencil_buffer()
 {
-
     D3D12_RESOURCE_DESC depth_desc{};
     depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     depth_desc.Alignment = 0;
@@ -205,7 +219,7 @@ void RendererForward::create_depth_stencil_buffer()
         &depth_desc,
         D3D12_RESOURCE_STATE_DEPTH_WRITE,
         &clear_value,
-        IID_PPV_ARGS(&depth_stencil_buffer_)));
+        IID_PPV_ARGS(&depth_stencil_buffer_)), "create depth stencil buf");
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
     dsv_desc.Format = depth_stencil_format_;
@@ -218,7 +232,6 @@ void RendererForward::create_depth_stencil_buffer()
         &dsv_desc,
         dsv_heap_->GetCPUDescriptorHandleForHeapStart());
 }
-
 
 void RendererForward::create_root_signature() {
 
@@ -253,10 +266,10 @@ void RendererForward::create_root_signature() {
     ComPtr<ID3DBlob> error;
 
     Utils::throw_if_failed(D3D12SerializeRootSignature(
-        &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+        &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error), "create root signature");
 
     Utils::throw_if_failed(device_->CreateRootSignature(
-        0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_)));
+        0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_)), "create root signature");
 }
 
 
@@ -345,42 +358,42 @@ void RendererForward::create_pso()
 
     Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
         &pso_desc,
-        IID_PPV_ARGS(&pipeline_state_)));
+        IID_PPV_ARGS(&pipeline_state_)), "create pso");
 }
 
-void RendererForward::create_meshbuffers()
+void RendererForward::create_meshbuffers(const ProgramArgument& arg)
 {
     SceneSynthSphere::SceneInfo gen_info{};
-    gen_info.seed = 0;
-    gen_info.sphere_count = 10000;
-    gen_info.material_count = 1;
-    gen_info.geometry_count = 1;
-    gen_info.z_min = -8.0f;
-    gen_info.z_max = 8.0f;
-    gen_info.xy_min = -5.0f;
-    gen_info.xy_max = 5.0f;
-    gen_info.radius_min = 0.05f;
-    gen_info.radius_max = 0.2f;
-    gen_info.geometry_division_min = 1;
-    gen_info.geometry_division_max = 20;
-    gen_info.material_float4_count = 1;
+    gen_info.seed = arg.seed;
+    gen_info.sphere_count = arg.sphere_count;
+    gen_info.material_count = arg.material_count;
+    gen_info.geometry_count = arg.geometry_count;
+    gen_info.z_min = arg.z_min;
+    gen_info.z_max = arg.z_max;
+    gen_info.xy_min = arg.xy_min;
+    gen_info.xy_max = arg.xy_max;
+    gen_info.radius_min = arg.radius_min;
+    gen_info.radius_max = arg.radius_max;
+    gen_info.geometry_division_min = arg.geometry_div_min;
+    gen_info.geometry_division_max = arg.geometry_div_max;
+    gen_info.material_float4_count = arg.gbuffer_cnt;
 
     scene_raw_ = SceneSynthSphere::generate(gen_info);
     scene_resource_ = SceneSynthSphereRuntime::generate(*scene_raw_, device_.Get());
 }
 
-void RendererForward::create_constbuffers() {
+void RendererForward::create_constbuffers(const ProgramArgument& arg) {
 
-    const auto vec_eye = DirectX::XMVectorSet(0.0f, 0.0f, -10.0f, 0.0f);
-    const auto vec_target = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    const auto vec_eye = DirectX::XMVectorSet(arg.camera_pos_x, arg.camera_pos_y, arg.camera_pos_z, 0.0f);
+    const auto vec_target = DirectX::XMVectorSet(arg.camera_lookat_x, arg.camera_lookat_y, arg.camera_lookat_z, 0.0f);
     const auto vec_up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
     const auto mat_v{ DirectX::XMMatrixLookAtLH(vec_eye, vec_target, vec_up) };
 
-    constexpr float fov_y = DirectX::XMConvertToRadians(45.0f);
+    const float fov_y = DirectX::XMConvertToRadians(arg.camera_fov);
     const float aspect = static_cast<float>(width_) / static_cast<float>(height_);
-    constexpr float near_z = 0.01f;
-    constexpr float far_z = 1000.0f;
+    const float near_z = arg.camera_near_z;
+    const float far_z = arg.camera_far_z;
 
     const auto mat_p{ DirectX::XMMatrixPerspectiveFovLH(fov_y, aspect, near_z, far_z) };
 
@@ -409,12 +422,10 @@ void RendererForward::create_constbuffers() {
     resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     Utils::throw_if_failed(device_->CreateCommittedResource(
-        &heap_props,
-        D3D12_HEAP_FLAG_NONE,
-        &resource_desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
+        &heap_props, D3D12_HEAP_FLAG_NONE,
+        &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&buf_constant_)));
+        IID_PPV_ARGS(&buf_constant_)), "create constant buffer");
 
     void* mappedData = nullptr;
 
@@ -425,7 +436,7 @@ void RendererForward::create_constbuffers() {
     writtenRange.Begin = 0;
     writtenRange.End = sizeof(matrix_buf_cpu_);
 
-    Utils::throw_if_failed(buf_constant_->Map(0, &readRange, &mappedData));
+    Utils::throw_if_failed(buf_constant_->Map(0, &readRange, &mappedData), "map constant buffer");
     memcpy(mappedData, &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
     buf_constant_->Unmap(0, &writtenRange);
 }
@@ -461,7 +472,7 @@ void RendererForward::create_instancebuffers() {
         &resource_desc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&buf_instance_)));
+        IID_PPV_ARGS(&buf_instance_)), "create instance buffer");
 
     void* mappedData = nullptr;
 
@@ -472,18 +483,18 @@ void RendererForward::create_instancebuffers() {
     writtenRange.Begin = 0;
     writtenRange.End = total_sz;
 
-    Utils::throw_if_failed(buf_instance_->Map(0, &readRange, &mappedData));
+    Utils::throw_if_failed(buf_instance_->Map(0, &readRange, &mappedData), "map instance buffer");
     memcpy(mappedData, scene_resource_->instances_datas.data(), total_sz);
     buf_instance_->Unmap(0, &writtenRange);
 }
 
 void RendererForward::render()
 {
-    Utils::throw_if_failed(command_allocator_[frame_index_]->Reset());
+    Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
 
     Utils::throw_if_failed(command_list_->Reset(
         command_allocator_[frame_index_].Get(),
-        pipeline_state_.Get()));
+        pipeline_state_.Get()), "command list reset on render start");
 
     D3D12_RESOURCE_BARRIER barrier_to_rt{};
     barrier_to_rt.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -501,8 +512,6 @@ void RendererForward::render()
     
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
     command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
-
-
 
     D3D12_VIEWPORT viewport{};
     viewport.TopLeftX = 0.0f;
@@ -555,12 +564,12 @@ void RendererForward::render()
 
     command_list_->ResourceBarrier(1, &barrier_to_present);
 
-    Utils::throw_if_failed(command_list_->Close());
+    Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
 
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-    Utils::throw_if_failed(swapchain_->Present(1, 0));
+    Utils::throw_if_failed(swapchain_->Present(1, 0), "swapchain present");
     move_to_next_frame();
 }
 
@@ -570,7 +579,7 @@ void RendererForward::move_to_next_frame()
 
     Utils::throw_if_failed(command_queue_->Signal(
         fence_.Get(),
-        current_fence_value));
+        current_fence_value), "command queue signal waiting next frame");
 
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 
@@ -578,23 +587,29 @@ void RendererForward::move_to_next_frame()
     {
         Utils::throw_if_failed(fence_->SetEventOnCompletion(
             fence_values_[frame_index_],
-            fence_event_));
+            fence_event_), "command queue set event on complete waiting next frame");
 
         WaitForSingleObject(fence_event_, INFINITE);
     }
 
     fence_values_[frame_index_] = current_fence_value + 1;
+
+
+    frame_count_++;
+
+    if (frame_count_ >= frame_warmup_count_ + frame_measure_count_)
+        to_terminate_ = true;
 }
 
 void RendererForward::wait_for_gpu()
 {
     Utils::throw_if_failed(command_queue_->Signal(
         fence_.Get(),
-        fence_values_[frame_index_]));
+        fence_values_[frame_index_]), "command queue signal waiting gpu");
 
     Utils::throw_if_failed(fence_->SetEventOnCompletion(
         fence_values_[frame_index_],
-        fence_event_));
+        fence_event_), "command queue set event on complete waiting gpu");
 
     WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
 

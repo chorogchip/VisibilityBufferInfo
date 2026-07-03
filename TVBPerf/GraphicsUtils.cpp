@@ -25,6 +25,6 @@ void GraphicsUtils::compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR 
         {
             OutputDebugStringA(static_cast<const char*>(error_blob->GetBufferPointer()));
         }
-        Utils::throw_if_failed(hr);
+        Utils::throw_if_failed(hr, "compile shader");
     }
 }
