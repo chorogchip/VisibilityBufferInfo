@@ -10,7 +10,7 @@
     X(std::string, output_filepath, "", output-filepath) \
     X(uint32_t, renderer_variant, 0, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
-    X(uint32_t, warmup_frames, 30, warmup-frames) \
+    X(uint32_t, warmup_frames, 600, warmup-frames) \
     X(uint32_t, measure_frames, 120, measure-frames) \
     X(uint32_t, window_width, 1280, window-width) \
     X(uint32_t, window_height, 720, window-height) \

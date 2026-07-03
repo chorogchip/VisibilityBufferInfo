@@ -1,15 +1,16 @@
-#include "RendererForward.h"
+#include "RendererBase.h"
 
 #include <string>
 
 #include "Utils.h"
+#include "GraphicsUtils.h"
 #include "ProgramArgument.h"
 #include "GraphicsUtils.h"
 #include "MeshGeometry.h"
 
 using Microsoft::WRL::ComPtr;
 
-RendererForward::~RendererForward() {
+RendererBase::~RendererBase() {
     if (command_queue_ && fence_ && fence_event_)
         wait_for_gpu();
 
@@ -17,7 +18,7 @@ RendererForward::~RendererForward() {
         CloseHandle(fence_event_);
 }
 
-void RendererForward::init(HWND hwnd, const ProgramArgument& arg) {
+void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
 
     hwnd_ = hwnd;
     width_ = arg.window_width;
@@ -28,18 +29,19 @@ void RendererForward::init(HWND hwnd, const ProgramArgument& arg) {
     frame_warmup_count_ = arg.warmup_frames;
     frame_measure_count_ = arg.measure_frames;
 
-    this->create_device();
-    this->create_command_objects();
-    this->create_swapchain();
+    GraphicsUtils::create_device(factory_, device_);
+
+    GraphicsUtils::create_command_objects(device_.Get(), command_queue_, command_list_, command_allocator_, FRAME_COUNT);
+
+    GraphicsUtils::create_swapchain(hwnd_, factory_.Get(), device_.Get(), command_queue_.Get(), swapchain_, width_, height_, FRAME_COUNT);
+    frame_index_ = swapchain_->GetCurrentBackBufferIndex();
+
     this->create_dsv_heap();
     this->create_rtv_heap();
     this->create_render_targets();
     this->create_depth_stencil_buffer();
     this->create_root_signature();
     this->create_pso();
-    this->create_meshbuffers(arg);
-    this->create_constbuffers(arg);
-    this->create_instancebuffers();
 
     Utils::throw_if_failed(device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_)), "create fence");
 
@@ -50,108 +52,15 @@ void RendererForward::init(HWND hwnd, const ProgramArgument& arg) {
     {
         throw std::runtime_error("CreateEvent failed");
     }
+
+    this->create_meshbuffers(arg);
+    this->create_constbuffers(arg);
+    this->create_instancebuffers();
+
+    this->create_timestamp_queries();
 }
 
-void RendererForward::create_device()
-{
-#if defined(_DEBUG)
-    {
-        ComPtr<ID3D12Debug> debug_controller;
-        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller))))
-        {
-            debug_controller->EnableDebugLayer();
-        }
-    }
-#endif
-
-    Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(&factory_)), "create DXGI factory");
-
-    ComPtr<IDXGIAdapter1> adapter;
-
-    for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory_->EnumAdapters1(i, &adapter); ++i)
-    {
-        DXGI_ADAPTER_DESC1 desc;
-        adapter->GetDesc1(&desc);
-
-        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-            continue;
-
-        if (SUCCEEDED(D3D12CreateDevice(
-            adapter.Get(),
-            D3D_FEATURE_LEVEL_11_0,
-            IID_PPV_ARGS(&device_))))
-        {
-            return;
-        }
-    }
-
-    ComPtr<IDXGIAdapter> warp_adapter;
-    Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)), "enumerate adapter");
-
-    Utils::throw_if_failed(D3D12CreateDevice(
-        warp_adapter.Get(),
-        D3D_FEATURE_LEVEL_11_0,
-        IID_PPV_ARGS(&device_)), "create device");
-}
-
-void RendererForward::create_command_objects()
-{
-    D3D12_COMMAND_QUEUE_DESC queue_desc{};
-    queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-
-    Utils::throw_if_failed(device_->CreateCommandQueue(
-        &queue_desc,
-        IID_PPV_ARGS(&command_queue_)), "create command queue");
-
-    for (UINT i = 0; i < FRAME_COUNT; ++i)
-    {
-        Utils::throw_if_failed(device_->CreateCommandAllocator(
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&command_allocator_[i])), "create command allocator");
-    }
-
-    Utils::throw_if_failed(device_->CreateCommandList(
-        0,
-        D3D12_COMMAND_LIST_TYPE_DIRECT,
-        command_allocator_[0].Get(),
-        nullptr,
-        IID_PPV_ARGS(&command_list_)), "create command list");
-
-    Utils::throw_if_failed(command_list_->Close(), "command list close");
-}
-
-void RendererForward::create_swapchain()
-{
-    DXGI_SWAP_CHAIN_DESC1 swap_chain_desc{};
-    swap_chain_desc.BufferCount = FRAME_COUNT;
-    swap_chain_desc.Width = width_;
-    swap_chain_desc.Height = height_;
-    swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swap_chain_desc.SampleDesc.Count = 1;
-
-    ComPtr<IDXGISwapChain1> swap_chain;
-
-    Utils::throw_if_failed(factory_->CreateSwapChainForHwnd(
-        command_queue_.Get(),
-        hwnd_,
-        &swap_chain_desc,
-        nullptr,
-        nullptr,
-        &swap_chain), "create swapchain");
-
-    Utils::throw_if_failed(factory_->MakeWindowAssociation(
-            hwnd_,
-        DXGI_MWA_NO_ALT_ENTER), "factory make window association");
-
-    Utils::throw_if_failed(swap_chain.As(&swapchain_), "swapchain as");
-
-    frame_index_ = swapchain_->GetCurrentBackBufferIndex();
-}
-
-void RendererForward::create_dsv_heap()
+void RendererBase::create_dsv_heap()
 {
     D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
     dsv_heap_desc.NumDescriptors = 1;
@@ -165,7 +74,7 @@ void RendererForward::create_dsv_heap()
     dsv_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
-void RendererForward::create_rtv_heap() {
+void RendererBase::create_rtv_heap() {
     D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
     rtv_heap_desc.NumDescriptors = FRAME_COUNT;
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -176,7 +85,7 @@ void RendererForward::create_rtv_heap() {
     rtv_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void RendererForward::create_render_targets() {
+void RendererBase::create_render_targets() {
     D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
 
     for (UINT i = 0; i < FRAME_COUNT; ++i) {
@@ -186,7 +95,7 @@ void RendererForward::create_render_targets() {
     }
 }
 
-void RendererForward::create_depth_stencil_buffer()
+void RendererBase::create_depth_stencil_buffer()
 {
     D3D12_RESOURCE_DESC depth_desc{};
     depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -233,7 +142,7 @@ void RendererForward::create_depth_stencil_buffer()
         dsv_heap_->GetCPUDescriptorHandleForHeapStart());
 }
 
-void RendererForward::create_root_signature() {
+void RendererBase::create_root_signature() {
 
     // b0 (constant buffer)
     D3D12_ROOT_PARAMETER root_parameters[3]{};
@@ -273,7 +182,7 @@ void RendererForward::create_root_signature() {
 }
 
 
-void RendererForward::create_pso()
+void RendererBase::create_pso()
 {
     ComPtr<ID3DBlob> vertex_shader;
     ComPtr<ID3DBlob> pixel_shader;
@@ -361,7 +270,7 @@ void RendererForward::create_pso()
         IID_PPV_ARGS(&pipeline_state_)), "create pso");
 }
 
-void RendererForward::create_meshbuffers(const ProgramArgument& arg)
+void RendererBase::create_meshbuffers(const ProgramArgument& arg)
 {
     SceneSynthSphere::SceneInfo gen_info{};
     gen_info.seed = arg.seed;
@@ -380,9 +289,58 @@ void RendererForward::create_meshbuffers(const ProgramArgument& arg)
 
     scene_raw_ = SceneSynthSphere::generate(gen_info);
     scene_resource_ = SceneSynthSphereRuntime::generate(*scene_raw_, device_.Get());
+    
+    ComPtr<ID3D12Resource> vb_default, ib_default;
+    GraphicsUtils::create_buffer(vb_default, device_.Get(), scene_resource_->vertex_buffer_size, 1,
+        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
+    GraphicsUtils::create_buffer(ib_default, device_.Get(), scene_resource_->index_buffer_size, 1,
+        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
+
+    Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
+    command_list_->CopyBufferRegion(vb_default.Get(), 0,
+        scene_resource_->vertex_buffer.Get(), 0, scene_resource_->vertex_buffer_size);
+    command_list_->CopyBufferRegion(ib_default.Get(), 0,
+        scene_resource_->index_buffer.Get(), 0, scene_resource_->index_buffer_size);
+
+    D3D12_RESOURCE_BARRIER barrier[2]{};
+    barrier[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier[0].Transition.pResource = vb_default.Get();
+    barrier[0].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    barrier[0].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier[0].Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    barrier[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier[1].Transition.pResource = ib_default.Get();
+    barrier[1].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    barrier[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier[1].Transition.StateAfter = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+
+    command_list_->ResourceBarrier(2, barrier);
+    Utils::throw_if_failed(command_list_->Close(), "cpy");
+
+    ID3D12CommandList* command_lists[] = { command_list_.Get() };
+    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
+
+    wait_for_gpu();
+
+    using Vertex = decltype(scene_raw_->geometries[0].vertices)::value_type;
+    using Index = decltype(scene_raw_->geometries[0].indices)::value_type;
+
+    scene_resource_->vertex_buffer_view.BufferLocation = vb_default->GetGPUVirtualAddress();
+    scene_resource_->vertex_buffer_view.StrideInBytes = sizeof(Vertex);
+    scene_resource_->vertex_buffer_view.SizeInBytes = scene_resource_->vertex_buffer_size;
+
+    scene_resource_->index_buffer_view.BufferLocation = ib_default->GetGPUVirtualAddress();
+    scene_resource_->index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
+    scene_resource_->index_buffer_view.SizeInBytes = scene_resource_->index_buffer_size;
+
+    scene_resource_->vertex_buffer = std::move(vb_default);
+    scene_resource_->index_buffer = std::move(ib_default);
+    
 }
 
-void RendererForward::create_constbuffers(const ProgramArgument& arg) {
+void RendererBase::create_constbuffers(const ProgramArgument& arg) {
 
     const auto vec_eye = DirectX::XMVectorSet(arg.camera_pos_x, arg.camera_pos_y, arg.camera_pos_z, 0.0f);
     const auto vec_target = DirectX::XMVectorSet(arg.camera_lookat_x, arg.camera_lookat_y, arg.camera_lookat_z, 0.0f);
@@ -400,101 +358,88 @@ void RendererForward::create_constbuffers(const ProgramArgument& arg) {
     DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_, DirectX::XMMatrixTranspose(mat_v));
     DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_proj_, DirectX::XMMatrixTranspose(mat_p));
 
-    constexpr size_t matrix_buf_size = Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
+    constexpr size_t matrix_buf_size_aligned = Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
 
-    D3D12_HEAP_PROPERTIES heap_props{};
-    heap_props.Type = D3D12_HEAP_TYPE_UPLOAD;  // TODO switch to DEFAULT
-    heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heap_props.CreationNodeMask = 1;
-    heap_props.VisibleNodeMask = 1;
+    GraphicsUtils::create_buffer(buf_constant_, device_.Get(), matrix_buf_size_aligned, 1,
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-    D3D12_RESOURCE_DESC resource_desc{};
-    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resource_desc.Width = matrix_buf_size;
-    resource_desc.Height = 1;
-    resource_desc.DepthOrArraySize = 1;
-    resource_desc.MipLevels = 1;
-    resource_desc.Format = DXGI_FORMAT_UNKNOWN;
-    resource_desc.SampleDesc.Count = 1;
-    resource_desc.SampleDesc.Quality = 0;
-    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    Utils::throw_if_failed(device_->CreateCommittedResource(
-        &heap_props, D3D12_HEAP_FLAG_NONE,
-        &resource_desc, D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&buf_constant_)), "create constant buffer");
-
-    void* mappedData = nullptr;
-
-    D3D12_RANGE readRange = {};
-    readRange.Begin = 0;
-    readRange.End = 0;
-    D3D12_RANGE writtenRange = {};
-    writtenRange.Begin = 0;
-    writtenRange.End = sizeof(matrix_buf_cpu_);
-
-    Utils::throw_if_failed(buf_constant_->Map(0, &readRange, &mappedData), "map constant buffer");
-    memcpy(mappedData, &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
-    buf_constant_->Unmap(0, &writtenRange);
+    GraphicsUtils::copy_cpu_to_upload(buf_constant_.Get(), &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
 }
 
-void RendererForward::create_instancebuffers() {
+void RendererBase::create_instancebuffers() {
 
+    ComPtr<ID3D12Resource> buf_instance_upload;
     const size_t total_sz = scene_resource_->instances_datas.size() * sizeof(scene_resource_->instances_datas[0]);
     assert(total_sz > 0);
 
-    D3D12_HEAP_PROPERTIES heap_props{};
-    heap_props.Type = D3D12_HEAP_TYPE_UPLOAD;  // TODO switch to DEFAULT
-    heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heap_props.CreationNodeMask = 1;
-    heap_props.VisibleNodeMask = 1;
+    GraphicsUtils::create_buffer(buf_instance_upload, device_.Get(), total_sz, 1,
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-    D3D12_RESOURCE_DESC resource_desc{};
-    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resource_desc.Alignment = 0;
-    resource_desc.Width = total_sz;
-    resource_desc.Height = 1;
-    resource_desc.DepthOrArraySize = 1;
-    resource_desc.MipLevels = 1;
-    resource_desc.Format = DXGI_FORMAT_UNKNOWN;
-    resource_desc.SampleDesc.Count = 1;
-    resource_desc.SampleDesc.Quality = 0;
-    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    GraphicsUtils::create_buffer(buf_instance_, device_.Get(), total_sz, 1,
+        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
+
+    GraphicsUtils::copy_cpu_to_upload(buf_instance_upload.Get(), scene_resource_->instances_datas.data(), total_sz);
+
+    Utils::throw_if_failed(command_list_->Reset(
+        command_allocator_[frame_index_].Get(),
+        pipeline_state_.Get()), "command list reset on indeg buffer gen");
+    command_list_->CopyBufferRegion(buf_instance_.Get(), 0, buf_instance_upload.Get(), 0, total_sz);
     
-    Utils::throw_if_failed(device_->CreateCommittedResource(
-        &heap_props,
-        D3D12_HEAP_FLAG_NONE,
-        &resource_desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&buf_instance_)), "create instance buffer");
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = buf_instance_.Get();
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
-    void* mappedData = nullptr;
+    command_list_->ResourceBarrier(1, &barrier);
+    Utils::throw_if_failed(command_list_->Close(), "close instance upload command list");
 
-    D3D12_RANGE readRange = {};
-    readRange.Begin = 0;
-    readRange.End = 0;
-    D3D12_RANGE writtenRange = {};
-    writtenRange.Begin = 0;
-    writtenRange.End = total_sz;
+    ID3D12CommandList* command_lists[] = { command_list_.Get() };
+    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
 
-    Utils::throw_if_failed(buf_instance_->Map(0, &readRange, &mappedData), "map instance buffer");
-    memcpy(mappedData, scene_resource_->instances_datas.data(), total_sz);
-    buf_instance_->Unmap(0, &writtenRange);
+    wait_for_gpu();
+    buf_instance_upload = nullptr;
 }
 
-void RendererForward::render()
+void RendererBase::create_timestamp_queries() {
+    
+    D3D12_QUERY_HEAP_DESC query_heap_desc{};
+    query_heap_desc.Count = FRAME_COUNT * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
+    query_heap_desc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+    query_heap_desc.NodeMask = 0;
+
+    Utils::throw_if_failed(device_->CreateQueryHeap(
+        &query_heap_desc,
+        IID_PPV_ARGS(&frame_time.timestamp_query_heap_)),
+        "create timestamp query heap");
+
+    const UINT64 readback_buffer_size =
+        sizeof(UINT64) * FRAME_COUNT * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
+
+    GraphicsUtils::create_buffer(frame_time.timestamp_readback_buffer_, device_.Get(), readback_buffer_size, 1,
+        D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
+
+    Utils::throw_if_failed(command_queue_->GetTimestampFrequency(
+        &frame_time.timestamp_frequency_), "get timestamp frequency");
+}
+
+
+
+void RendererBase::render()
 {
     Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
 
     Utils::throw_if_failed(command_list_->Reset(
         command_allocator_[frame_index_].Get(),
         pipeline_state_.Get()), "command list reset on render start");
+
+    const UINT timestamp_base = frame_index_ * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
+    const UINT timestamp_start_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_START;
+    const UINT timestamp_end_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_END;
+
+    command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);
 
     D3D12_RESOURCE_BARRIER barrier_to_rt{};
     barrier_to_rt.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -564,16 +509,26 @@ void RendererForward::render()
 
     command_list_->ResourceBarrier(1, &barrier_to_present);
 
+    command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_end_index);
+    command_list_->ResolveQueryData(
+        frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+        timestamp_start_index, GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME,
+        frame_time.timestamp_readback_buffer_.Get(), sizeof(UINT64) * timestamp_base);
+
+    frame_time.timestamp_frame_valid_[frame_index_] = true;
+
     Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
 
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-    Utils::throw_if_failed(swapchain_->Present(1, 0), "swapchain present");
+    Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
     move_to_next_frame();
 }
 
-void RendererForward::move_to_next_frame()
+
+
+void RendererBase::move_to_next_frame()
 {
     const UINT64 current_fence_value = fence_values_[frame_index_];
 
@@ -592,16 +547,19 @@ void RendererForward::move_to_next_frame()
         WaitForSingleObject(fence_event_, INFINITE);
     }
 
-    fence_values_[frame_index_] = current_fence_value + 1;
+    read_gpu_timestamp_for_frame(frame_index_);
 
+    const double gpu_ms = frame_time.gpu_frame_ms_[frame_index_]; // TODO
+
+    fence_values_[frame_index_] = current_fence_value + 1;
 
     frame_count_++;
 
-    if (frame_count_ >= frame_warmup_count_ + frame_measure_count_)
+    if (frame_count_ >= frame_warmup_count_ + frame_measure_count_ + 10)
         to_terminate_ = true;
 }
 
-void RendererForward::wait_for_gpu()
+void RendererBase::wait_for_gpu()
 {
     Utils::throw_if_failed(command_queue_->Signal(
         fence_.Get(),
@@ -614,4 +572,44 @@ void RendererForward::wait_for_gpu()
     WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
 
     fence_values_[frame_index_]++;
+}
+
+
+
+void RendererBase::read_gpu_timestamp_for_frame(UINT frame_index)
+{
+    if (!frame_time.timestamp_frame_valid_[frame_index])
+        return;
+
+    const UINT timestamp_base = frame_index * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
+
+    UINT64* mapped_data = nullptr;
+
+    D3D12_RANGE read_range{};
+    read_range.Begin = sizeof(UINT64) * timestamp_base;
+    read_range.End = sizeof(UINT64) * (timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME);
+
+    Utils::throw_if_failed(frame_time.timestamp_readback_buffer_->Map(
+        0,
+        &read_range,
+        reinterpret_cast<void**>(&mapped_data)),
+        "map timestamp readback");
+
+    const UINT64 start = mapped_data[timestamp_base + 0];
+    const UINT64 end = mapped_data[timestamp_base + 1];
+
+    D3D12_RANGE write_range{};
+    write_range.Begin = 0;
+    write_range.End = 0;
+
+    frame_time.timestamp_readback_buffer_->Unmap(0, &write_range);
+
+    if (end > start && frame_time.timestamp_frequency_ != 0)
+    {
+        const double elapsed_ms =
+            static_cast<double>(end - start) * 1000.0 /
+            static_cast<double>(frame_time.timestamp_frequency_);
+
+        frame_time.gpu_frame_ms_[frame_index] = elapsed_ms;
+    }
 }

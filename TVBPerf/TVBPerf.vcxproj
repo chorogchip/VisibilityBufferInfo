@@ -152,7 +152,7 @@
     <ClCompile Include="GraphicsUtils.cpp" />
     <ClCompile Include="Materials.cpp" />
     <ClCompile Include="MeshGeometry.cpp" />
-    <ClCompile Include="RendererForward.cpp" />
+    <ClCompile Include="RendererBase.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SceneSynthSphereRuntime.cpp" />
     <ClCompile Include="SceneSynthSphere.cpp" />
@@ -160,11 +160,12 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="ArgParser.h" />
+    <ClInclude Include="GPUFrameTime.h" />
     <ClInclude Include="GraphicsUtils.h" />
     <ClInclude Include="Materials.h" />
     <ClInclude Include="MeshGeometry.h" />
     <ClInclude Include="ProgramArgument.h" />
-    <ClInclude Include="RendererForward.h" />
+    <ClInclude Include="RendererBase.h" />
     <ClInclude Include="SceneSynthSphereRuntime.h" />
     <ClInclude Include="SceneSynthSphere.h" />
     <ClInclude Include="Utils.h" />

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <windows.h>
+#include <Windows.h>
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -11,25 +11,22 @@
 #include "ProgramArgument.h"
 #include "SceneSynthSphere.h"
 #include "SceneSynthSphereRuntime.h"
+#include "GPUFrameTime.h"
 
-class RendererForward
+class RendererBase
 {
     template <typename T>
     using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-private:
+public:
     static constexpr UINT FRAME_COUNT = 2;
 
-public:
-    ~RendererForward();
+    ~RendererBase();
     void init(HWND hwnd, const ProgramArgument&);
     void render();
     bool to_terminate() const { return to_terminate_; }
 
 private:
-    void create_device();
-    void create_command_objects();
-    void create_swapchain();
     void create_dsv_heap();
     void create_rtv_heap();
     void create_render_targets();
@@ -41,8 +38,11 @@ private:
     void create_constbuffers(const ProgramArgument& arg);
     void create_instancebuffers();
 
+    void create_timestamp_queries();
+
     void wait_for_gpu();
     void move_to_next_frame();
+    void read_gpu_timestamp_for_frame(UINT frame_index);
 
 private:
     HWND hwnd_ = nullptr;
@@ -90,4 +90,8 @@ private:
     ComPtr<ID3D12Resource> buf_constant_;
 
     ComPtr<ID3D12Resource> buf_instance_;
+
+    GpuFrameTime<FRAME_COUNT> frame_time;
+
+
 };

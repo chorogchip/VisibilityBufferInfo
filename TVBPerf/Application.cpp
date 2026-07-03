@@ -7,11 +7,11 @@
 
 #include "Utils.h"
 #include "ArgParser.h"
-#include "RendererForward.h"
+#include "RendererBase.h"
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static std::unique_ptr<RendererForward> gp_renderer;
+static std::unique_ptr<RendererBase> gp_renderer;
 
 void Application::parse_args() {
     std::vector<std::string> args;
@@ -60,7 +60,7 @@ void Application::init(HINSTANCE h_instance, int n_show_cmd) {
     ShowWindow(hwnd, n_show_cmd);
     UpdateWindow(hwnd);
 
-    gp_renderer = std::unique_ptr<RendererForward>(new RendererForward{});
+    gp_renderer = std::unique_ptr<RendererBase>(new RendererBase{});
     gp_renderer->init(hwnd, program_argument);
 }
 
