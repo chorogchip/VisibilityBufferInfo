@@ -1,0 +1,36 @@
+[프로젝트 개요]
+
+목적: Triangle Visibility Buffer(TVB) 기법이 기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
+
+장면 구성: synthetic primitive scene 사용, 구 여러 개
+- 기본적으로 파라미터에 따라 생성된 구 여러 개의 scene을 사용
+- 구의 개수, 크기, 삼각형 수 등을 파라미터화
+- 사용 이유: 여러 수치들의 파라미터화가 용이
+- 추후 모델 생성 시점에서 displacement mapping 적용 가능
+- 추후 stanford dragon등의 mesh 사용 가능
+- 측정 시 random seed도 포함해 장면을 생성
+
+API: Direct3D 12
+- 이유: GPU를 저수준에서 명시적 제어, pass별 GPU timestamp 측정, 크로스 플랫폼은 고려하지 않음
+
+비교 대상
+- Naive Forward
+- Forward + Depth Pre-pass
+- Deferred Rendering
+- TVB의 다양한 구현들
+- G-buffer 크기, Material 복잡도, 화면 해상도 등을 각각 파라미터화하여 측정
+
+매트릭
+- Warm-up 후 N프레임 측정 (VSync off)
+- Frame Time (Average, Median, Min, Max, P90, P95, P99, 0.1% low, 0.01% low 등)
+- GPU Timestamp Query
+- NVIDIA Nsight Graphics 혹은 유사 프로파일러로 HW 지표 측정
+- 초기 버전은 일정 시간 대기 후 정지 화면에서 측정
+- 추후 개선: 카메라 자동 이동
+
+TVB 구현 확장 방향
+- meshlet/cluster 기반 데이터 접근
+- GPU indirect draw
+- compute shader로 software rasterization
+- material sorting을 통한 shader branch divergence 완화
+- material별 work queue를 구성해 별도의 shader 사용

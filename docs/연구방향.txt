@@ -1,0 +1,769 @@
+## 총평
+
+이 프로젝트는 **연구 주제로 충분히 가치가 있습니다.** 목표가 “TVB가 무조건 빠르다는 것을 보이는 것”이 아니라, **어떤 병목과 장면 특성에서 TVB가 Forward·Deferred보다 유리해지는지 경계 조건을 찾는 것**이기 때문입니다.
+
+다만 현재 설계대로 구현하면 다음과 같은 결과로 끝날 위험이 있습니다.
+
+> “특정 GPU에서 구 장면을 렌더링했더니 TVB가 몇 % 빨랐다.”
+
+이 결과는 구현 사례로는 의미가 있지만, “TVB가 유리한 조건 규명”이라는 연구 목적에는 부족합니다. 핵심 개선 방향은 다음 세 가지입니다.
+
+1. 장면 파라미터를 단순한 오브젝트 수가 아니라 **실제 GPU 병목을 설명하는 변수**로 바꿀 것
+2. TVB와 비교군에 동일한 최적화 조건을 제공할 것
+3. 단순 평균 성능이 아니라 **성능 교차점과 원인을 분석할 것**
+
+Visibility Buffer는 G-buffer 대신 triangle/instance ID만 기록하여 메모리 트래픽을 줄이는 대신, shading 단계에서 인덱스·정점 로드, attribute interpolation, gradient 계산 등을 다시 수행하는 구조입니다. 초기 연구에서도 4바이트 수준의 visibility sample을 사용할 수 있지만, 그 대가로 정점 데이터 접근과 보간 계산이 추가된다고 설명합니다. ([Journal of Computer Graphics Techniques][1])
+
+---
+
+# 1. 연구 질문을 더 정확하게 정의해야 합니다
+
+현재 목적은 다음과 같이 구체화하는 것이 좋습니다.
+
+> 화면 해상도, visibility sampling rate, G-buffer 크기, overdraw, 화면상 삼각형 크기, geometry locality, material 다양성 및 shading 복잡도가 변화할 때 TVB와 Forward·Deferred 렌더링 사이의 성능 교차점은 어디에 존재하는가?
+
+단순히 “구의 개수와 삼각형 수”를 독립 변수로 삼으면 결과 해석이 어렵습니다. GPU 비용은 삼각형 총개수보다 다음 값에 더 직접적으로 영향을 받습니다.
+
+* 제출된 삼각형 수
+* rasterized triangle 수
+* 최종적으로 보이는 unique triangle 수
+* 평균 화면상 삼각형 면적
+* triangle당 covered pixel 수
+* pixel당 overdraw
+* visible pixel당 정점 데이터 로드량
+* tile 또는 wave 안의 material 다양성
+* G-buffer 및 TVB의 bytes per sample
+* visibility sample 수와 shading sample 수
+
+예를 들어 삼각형이 백만 개여도 대부분 프러스텀 밖에 있거나 subpixel이라면, 삼각형 수가 같은 다른 장면과 전혀 다른 병목이 발생합니다.
+
+## 간단한 비용 모델
+
+실험 전에 다음과 같은 모델을 세워두면 결과를 해석하기 쉽습니다.
+
+[
+T_{Deferred} \approx T_{geometry}
+
+* T_{GBufferWrite}
+* T_{GBufferRead}
+* T_{lighting}
+  ]
+
+[
+T_{TVB} \approx T_{visibility}
+
+* T_{IDWrite}
+* T_{classification}
+* T_{vertexGather}
+* T_{interpolation}
+* T_{materialShading}
+  ]
+
+따라서 TVB의 성능 우위는 대략 다음 관계로 설명할 수 있습니다.
+
+[
+\text{절약된 G-buffer 트래픽}
+
+>
+
+\text{추가 정점 접근}+\text{보간}+\text{분류 비용}
+]
+
+이 관계를 검증하는 것이 프로젝트의 중심이 되어야 합니다.
+
+---
+
+# 2. 구 장면은 좋지만 TVB에 유리한 편향이 생길 수 있습니다
+
+합성 구 장면은 첫 번째 실험 장면으로 적합합니다.
+
+* 삼각형 수와 LOD 조절이 쉽습니다.
+* 화면 점유율과 overdraw 조절이 쉽습니다.
+* 동일 메시 instancing과 unique geometry를 비교하기 쉽습니다.
+* random seed를 통한 재현이 가능합니다.
+* displacement나 tessellation 실험으로 확장할 수 있습니다.
+
+하지만 **동일한 sphere mesh를 반복 인스턴싱하는 장면은 TVB의 vertex gather cache locality를 비현실적으로 좋게 만들 수 있습니다.** 실제로 Visibility Buffer 초기 논문에서도 sphere cloud를 “unique geometry는 적고 조명 부하는 있는 인위적인 장면”으로 따로 분류했습니다. 해당 장면은 760개의 unique triangle을 92,720회 rasterize하는 식으로 높은 geometry reuse를 갖습니다. ([Journal of Computer Graphics Techniques][1])
+
+따라서 sphere scene에는 최소한 다음 모드를 넣어야 합니다.
+
+| 장면 변수                       | 목적                        |
+| --------------------------- | ------------------------- |
+| Shared mesh instancing      | 최상의 geometry cache reuse  |
+| Unique mesh per sphere      | geometry working set 증가   |
+| 동일 LOD                      | 규칙적인 triangle size        |
+| 무작위 LOD                     | triangle size 다양성         |
+| 규칙적 grid 배치                 | 높은 공간적 coherence          |
+| 무작위 배치                      | 불규칙한 접근 패턴                |
+| 깊이 방향 밀집                    | overdraw 증가               |
+| 화면상 비중첩 배치                  | overdraw 제거               |
+| material spatial clustering | tile 내 material coherence |
+| material random assignment  | branch 및 queue 분산 증가      |
+
+## 구 외에 필요한 합성 장면
+
+적어도 다음 두 장면을 추가하는 것이 좋습니다.
+
+### Screen-space triangle scene
+
+삼각형을 직접 생성하여 평균 화면 크기를 제어합니다.
+
+* 0.25 pixel/triangle
+* 1 pixel/triangle
+* 4 pixels/triangle
+* 16 pixels/triangle
+* 64 pixels/triangle
+
+이 장면은 TVB에서 가장 중요한 **pixels per visible triangle**을 직접 제어할 수 있습니다.
+
+### Layered occluder scene
+
+카메라 앞에 겹치는 층을 배치하여 overdraw를 조절합니다.
+
+* overdraw 1×
+* 2×
+* 4×
+* 8×
+* 16×
+
+단순 Forward와 Depth Pre-pass, Deferred, TVB의 visibility 비용을 분리하는 데 유용합니다.
+
+## 실제 메시 장면
+
+합성 장면만으로 결론을 내리면 외적 타당성이 약합니다. 마지막 검증 단계에는 다음과 같이 서로 다른 특성의 모델을 넣는 것이 좋습니다.
+
+* Stanford Dragon: 높은 geometry density, 낮은 material 다양성
+* Sponza 계열: 공간적 occlusion과 다수의 표면
+* San Miguel 계열: 높은 geometry 및 texture 복잡도
+* 자체적으로 material이 많은 scene
+
+Dragon 하나만 추가하는 것은 충분하지 않습니다. Dragon은 geometry 실험에는 좋지만 material divergence와 texture locality 실험에는 적합하지 않습니다.
+
+---
+
+# 3. 비교 대상에 Forward+ 또는 Clustered Forward가 필요합니다
+
+현재 비교군은 다음과 같습니다.
+
+* Naive Forward
+* Forward + Depth Pre-pass
+* Deferred
+* TVB
+
+여기서 Naive Forward는 유용한 하한선이지만, 현대적인 비교군으로는 약합니다. 많은 조명을 사용한다면 다음을 추가해야 합니다.
+
+* **Tiled Forward 또는 Clustered Forward**
+* **Tiled/Clustered Deferred**
+* 필요하면 Deferred + Depth Pre-pass
+
+그렇지 않으면 TVB와 Deferred에는 화면 타일별 light list를 사용하면서 Forward에는 모든 light를 순회시키는 식의 불공정한 비교가 될 수 있습니다.
+
+## 반드시 공유해야 하는 요소
+
+모든 렌더러는 가능한 한 다음 코드를 공유해야 합니다.
+
+* vertex/index buffer
+* instance 데이터
+* culling 결과
+* LOD 선택
+* light list 생성
+* BRDF 함수
+* texture 및 sampler
+* shadow 입력
+* 최종 HDR target 포맷
+* depth 포맷과 depth convention
+* tone mapping 이전의 출력
+* DXC 버전과 컴파일 옵션
+
+TVB만 meshlet culling과 GPU indirect draw를 사용하고, Forward와 Deferred는 CPU draw call을 사용한다면 그것은 **TVB shading architecture 비교가 아니라 전체 렌더링 시스템 비교**가 됩니다.
+
+따라서 결과를 두 가지로 분리하는 것이 좋습니다.
+
+1. **Shading architecture comparison**
+   모든 렌더러에 동일한 culling과 submission 경로 적용
+
+2. **Full pipeline comparison**
+   각 구조에 가장 적합한 culling, indirect, material queue까지 적용
+
+이 둘을 섞으면 TVB의 어느 요소가 성능 향상의 원인인지 알 수 없습니다.
+
+---
+
+# 4. TVB 구현은 단계적으로 분리하는 것이 좋습니다
+
+제시한 확장 방향은 좋지만, 한 번에 구현하면 변수가 너무 많아집니다.
+
+## TVB-0: 최소 구현
+
+* 하드웨어 rasterization
+* depth + `R32_UINT` visibility target
+* instance ID와 primitive ID packing
+* 하나의 generic compute shading pass
+* 정점·인덱스 재로드
+* barycentric 및 attribute 재구성
+
+이 구현을 Deferred와 비교하여 **visibility representation 자체의 효과**를 봅니다.
+
+## TVB-1: Buffer format 변형
+
+* 32-bit packed ID
+* 64-bit instance/primitive ID
+* ID + barycentric
+* ID + 압축 barycentric
+* ID + material ID
+* ID + derivative 보조 데이터
+
+TVB의 장점은 buffer가 작다는 데 있으므로, TVB 포맷 자체를 독립 변수로 삼아야 합니다.
+
+## TVB-2: Material dispatch 변형
+
+* Mega shader + dynamic branch
+* Tile classification + material별 dispatch
+* Pixel work queue + material별 dispatch
+* Material group별 shader variant
+* Material sorting 없이 bindless 접근
+
+초기 Visibility Buffer 연구도 material별 tile worklist를 만든 후 material shading kernel을 실행하는 구조를 사용했습니다. ([Journal of Computer Graphics Techniques][1])
+
+중요한 측정 변수는 단순 material 개수가 아니라 다음입니다.
+
+* 화면에 보이는 material 수
+* tile당 material 수
+* material당 pixel 수
+* material ID의 공간적 entropy
+* 하나의 wave 안에서 발생한 material branch 수
+
+material 100개가 있어도 화면 영역별로 잘 뭉쳐 있으면 쉽습니다. 반대로 material 4개만 무작위 checkerboard로 배치해도 divergence는 심할 수 있습니다.
+
+## TVB-3: Meshlet 및 GPU-driven culling
+
+* meshlet frustum culling
+* cone culling
+* occlusion culling
+* indirect draw/dispatch
+* cluster-relative primitive ID
+
+이 단계에서는 기본 렌더링 방식 비교와 별도로 결과를 내는 것이 좋습니다.
+
+## TVB-4: Software rasterization
+
+Compute shader software rasterization은 TVB의 단순 확장이 아니라 사실상 별개의 연구 주제입니다.
+
+* binning
+* tile rasterization
+* atomic depth
+* primitive ordering
+* coverage rule
+* subpixel precision
+* early rejection
+* load balancing
+* hardware rasterizer 대비 primitive 크기별 교차점
+
+따라서 초기 프로젝트 범위에는 포함시키지 말고, **후속 연구 단계**로 두는 것이 현실적입니다.
+
+---
+
+# 5. Texture gradient와 attribute interpolation이 핵심 변수입니다
+
+TVB 구현에서 가장 쉽게 과소평가되는 부분입니다.
+
+TVB compute shading에서는 다음 값들을 직접 복원해야 합니다.
+
+* world position
+* normal 및 tangent
+* texture coordinates
+* perspective-correct barycentric
+* texture coordinate derivatives
+* motion vector
+* 필요하면 previous-frame attributes
+
+Shader Model 6.6부터 compute shader에서도 일정한 thread-group 배치 조건 아래 quad 기반 derivative 연산을 사용할 수 있습니다. 하지만 서로 다른 triangle이나 material에 속한 인접 lane을 그대로 이용하면 경계에서 잘못된 gradient가 발생할 수 있습니다. ([Microsoft GitHub][2])
+
+따라서 gradient 구현도 비교 변형으로 두는 것이 좋습니다.
+
+* quad derivative 사용
+* analytic UV gradient 계산
+* neighbor triangle 검증 후 fallback
+* barycentric 또는 derivative를 visibility buffer에 저장
+* `SampleGrad`로 명시적 gradient 전달
+
+이 부분을 생략하고 단순 texture sampling만 사용하면 material texture 비용을 제대로 비교하기 어렵습니다.
+
+또한 각 렌더러의 영상이 동일한지를 확인해야 합니다.
+
+* reference image와 PSNR 또는 SSIM 비교
+* normal, UV, depth, motion vector 디버그 출력
+* triangle edge에서 mip 선택 비교
+* anisotropic filtering 결과 비교
+
+성능이 빠르더라도 다른 mip을 선택하고 있다면 공정한 비교가 아닙니다.
+
+---
+
+# 6. Material 복잡도를 한 개의 숫자로 정의하면 안 됩니다
+
+“Material complexity”를 단순 ALU loop 횟수로 표현하면 실제 병목과 다를 수 있습니다. 컴파일러가 계산을 제거할 수도 있고, ALU와 texture workload의 특성이 완전히 다르기 때문입니다.
+
+다음과 같이 직교하는 material workload를 준비하는 것이 좋습니다.
+
+| Material 유형             | 조절 변수                             |
+| ----------------------- | --------------------------------- |
+| ALU-bound               | dependent arithmetic 횟수           |
+| Texture-bound           | texture sample 수                  |
+| Latency-bound           | dependent texture chain           |
+| Bandwidth-bound         | 서로 다른 texture 및 buffer 읽기         |
+| Register-pressure-bound | live temporary 수                  |
+| Branch-bound            | 조건 분기 및 material divergence       |
+| Simple PBR              | 현실적인 기준 material                  |
+| Complex PBR             | normal, ORM, detail, clear coat 등 |
+
+각 synthetic 연산은 최종 출력에 실제로 영향을 주도록 해야 DXC가 제거하지 않습니다.
+
+Material 복잡도가 높다고 무조건 TVB가 유리한 것도 아닙니다.
+
+* Forward에서 overdraw가 크면 TVB가 불필요한 material shading을 피할 수 있습니다.
+* Deferred와 Forward+Depth에서는 이미 visible fragment 중심으로 shading하므로 차이가 줄어듭니다.
+* shading 비용이 지나치게 크면 모든 방식에서 material cost가 지배적이 되어 TVB와 Deferred의 상대적 차이가 작아집니다.
+* TVB의 mega shader divergence가 심하면 material이 복잡할수록 손실도 커질 수 있습니다.
+
+---
+
+# 7. 해상도뿐 아니라 MSAA와 visibility sample rate가 중요합니다
+
+현재 파라미터에 MSAA 또는 visibility sampling rate가 명시되어 있지 않은데, 반드시 포함하는 것이 좋습니다.
+
+* 1×
+* 2×
+* 4×
+* 8×
+
+Visibility Buffer의 고전적인 강점은 sample당 큰 G-buffer를 기록하지 않는다는 점입니다. 초기 연구에서는 낮은 sample 수에서는 이득이 거의 없고, sample rate가 높으며 memory bandwidth가 제한적인 환경에서 이득이 커졌습니다. ([Journal of Computer Graphics Techniques][1])
+
+다만 다음 두 조건을 구분해야 합니다.
+
+* visibility sample마다 shading
+* pixel 내 동일 triangle sample을 묶어 한 번만 shading
+
+후자는 sample deduplication 또는 decoupled shading 효과까지 포함하므로, 단순 buffer 표현 방식 이상의 차이가 됩니다.
+
+해상도는 최소한 다음 정도가 좋습니다.
+
+* 1280×720
+* 1920×1080
+* 2560×1440
+* 3840×2160
+
+가능하면 pixel 수를 연속 변수처럼 분석하기 위해 추가적인 중간 해상도도 사용할 수 있습니다.
+
+---
+
+# 8. Displacement와 tessellation은 분리해서 다뤄야 합니다
+
+“모델 생성 시점의 displacement”가 CPU 또는 offline mesh generation을 뜻한다면 문제가 없습니다. 생성된 삼각형에 안정적인 primitive ID를 부여할 수 있기 때문입니다.
+
+반면 runtime tessellation이나 procedural displacement는 상황이 다릅니다.
+
+* 생성된 triangle이 원본 vertex/index buffer에 존재하지 않습니다.
+* TVB shading 단계에서 triangle을 재구성하려면 hull/domain 계산을 다시 수행해야 할 수 있습니다.
+* 또는 생성 triangle 데이터를 별도 buffer에 기록해야 합니다.
+* 이 경우 TVB bandwidth 절감과 triangle buffer 비용 사이에 새로운 교환관계가 생깁니다.
+
+관련 연구에서도 tessellated geometry를 지원하기 위해 visible triangle을 별도 buffer에 저장하는 방식이 검토되었고, 낮은 해상도에서는 Deferred보다 느리지만 해상도가 증가하면 경쟁력이 생기는 사례가 보고되었습니다. ([CG KIT][3])
+
+따라서 첫 버전에서는 다음처럼 명시하는 편이 좋습니다.
+
+> 초기 범위는 사전에 생성된 정적 triangle geometry로 한정한다. Runtime tessellation과 procedural geometry는 별도 실험으로 분리한다.
+
+---
+
+# 9. 측정 방식은 평균 프레임 시간보다 실험 반복이 중요합니다
+
+현재 메트릭 목록은 풍부하지만 일부는 정적 GPU 벤치마크에 큰 의미가 없습니다.
+
+## 권장 주요 메트릭
+
+* GPU render time 평균
+* median
+* P90
+* P95
+* P99
+* P99.9
+* 표준편차
+* 95% 신뢰구간
+* 반복 실행 간 변동
+* pass별 GPU time
+* CPU recording/submission time
+* peak transient memory
+* 평균 및 최대 GPU memory 사용량
+
+## 0.1% low와 0.01% low
+
+이 표현은 일반적으로 FPS 벤치마크에서 사용됩니다. frame time 데이터라면 다음과 같이 직접 표현하는 편이 명확합니다.
+
+* 0.1% low FPS → P99.9 frame time
+* 0.01% low FPS → P99.99 frame time
+
+특히 0.01% 통계를 안정적으로 얻으려면 매우 많은 프레임이 필요합니다. 10,000프레임을 측정해도 하위 0.01%는 사실상 한 프레임뿐입니다. 정지 화면 GPU 벤치마크에서는 OS scheduling이나 background process가 tail을 지배할 가능성도 있으므로 초기 분석의 중심 메트릭으로 삼지 않는 편이 좋습니다.
+
+## Warm-up
+
+“일정 시간 대기”보다 안정 상태를 조건으로 삼는 것이 좋습니다.
+
+* GPU clock 안정
+* GPU temperature 안정
+* shader 및 PSO 생성 완료
+* texture residency 안정
+* frame time 이동 평균 안정
+
+구성별 테스트 순서는 무작위화해야 합니다. 항상 Forward → Deferred → TVB 순서로 실행하면 후반 테스트가 온도와 전력 제한의 영향을 받을 수 있습니다.
+
+## 독립 반복
+
+한 번에 10,000프레임을 측정하는 것보다 다음 방식이 좋습니다.
+
+* 구성마다 5~10회의 독립 run
+* 각 run마다 warm-up
+* run당 수백~수천 프레임
+* run median과 신뢰구간 보고
+* configuration 실행 순서 randomization
+
+프레임들은 시간적으로 상관되어 있으므로 단순히 수만 프레임을 독립 표본처럼 취급하면 신뢰구간을 지나치게 좁게 계산할 수 있습니다.
+
+---
+
+# 10. GPU Timestamp 사용 시 주의점
+
+D3D12 timestamp query는 적절한 선택입니다. Timestamp tick은 command queue의 timestamp frequency를 이용해 시간으로 변환해야 하며, query 결과는 GPU 작업이 끝난 뒤 resolve buffer에서 읽어야 합니다. CPU와 GPU 시간선을 맞춰야 할 경우에는 clock calibration도 사용할 수 있습니다. ([Microsoft Learn][4])
+
+Pass 구분은 다음 정도로 세분화하는 것이 좋습니다.
+
+### Forward
+
+* culling
+* depth pre-pass
+* opaque shading
+* lighting list 생성
+* postprocess 제외 또는 별도
+
+### Deferred
+
+* depth 또는 geometry pass
+* G-buffer fill
+* light list 생성
+* deferred lighting
+* resolve
+
+### TVB
+
+* culling
+* visibility raster
+* material classification
+* work queue 생성
+* attribute reconstruction
+* material shading
+* lighting
+* resolve
+
+Async compute를 사용하면 pass 시간의 합이 전체 GPU frame time과 일치하지 않을 수 있습니다. 이 경우 다음을 모두 보고해야 합니다.
+
+* 각 queue의 pass duration
+* queue 사이의 overlap
+* 실제 critical path
+* frame 시작부터 최종 완료까지의 시간
+
+---
+
+# 11. Nsight 측정 항목을 사전에 정해야 합니다
+
+Nsight Graphics GPU Trace는 GPU 하드웨어 유닛의 activity와 utilization을 timeline에서 분석할 수 있습니다. ([NVIDIA Docs][5])
+
+프로파일러를 실행한 뒤 눈에 보이는 수치를 임의로 선택하기보다, 연구 가설에 맞는 counter를 미리 정해야 합니다.
+
+## 메모리 관련
+
+* DRAM throughput
+* L2 read/write throughput
+* L2 hit rate
+* texture cache hit rate
+* bytes read/write
+* render target write throughput
+
+## Shader 관련
+
+* SM 또는 shader core utilization
+* wave occupancy
+* register pressure
+* active warps/waves
+* ALU utilization
+* texture unit utilization
+* memory dependency stall
+* branch divergence
+
+## Geometry 및 raster 관련
+
+* primitive throughput
+* rasterizer utilization
+* depth test throughput
+* early-Z rejection
+* pixel shader invocation 수
+* average pixels per primitive
+* clipped 또는 culled primitive 수
+
+D3D12 pipeline statistics query도 IA vertex/primitive 수, VS invocation, PS invocation 등 기본적인 pipeline activity를 수집할 수 있습니다. ([Microsoft Learn][6])
+
+프로파일러 캡처는 일반 timing run과 분리해야 합니다. Hardware counter 수집은 추가 pass나 replay를 요구할 수 있어 원래 성능을 교란할 수 있기 때문입니다.
+
+---
+
+# 12. 장면 자체의 진단 메트릭도 기록해야 합니다
+
+성능 결과 CSV에 GPU 시간만 기록하지 말고, 해당 장면이 실제로 어떤 workload였는지도 기록해야 합니다.
+
+권장 필드:
+
+```text
+seed
+resolution
+sample_count
+object_count
+submitted_triangles
+rasterized_triangles
+visible_unique_triangles
+covered_pixels
+overdraw_mean
+overdraw_p95
+pixels_per_visible_triangle_mean
+pixels_per_visible_triangle_median
+unique_geometry_bytes
+material_count
+visible_material_count
+materials_per_tile_mean
+materials_per_tile_p95
+gbuffer_bytes_per_sample
+visibility_bytes_per_sample
+vertex_bytes_per_pixel
+texture_samples_per_pixel
+alu_operations_class
+```
+
+특히 다음 네 개가 연구 결과 설명에 매우 중요합니다.
+
+* `pixels_per_visible_triangle`
+* `overdraw`
+* `materials_per_tile`
+* `bytes_per_sample`
+
+“구 1만 개에서 TVB가 빠르다”보다 다음 결론이 훨씬 일반화 가능합니다.
+
+> 평균 12 pixels/visible-triangle 이상이고, G-buffer가 24 bytes/sample 이상이며, tile당 material 수가 2 이하일 때 TVB가 Deferred보다 유리해졌다.
+
+---
+
+# 13. 전체 조합을 무작정 전수 조사하지 않는 것이 좋습니다
+
+파라미터가 많기 때문에 완전한 Cartesian product는 빠르게 폭발합니다.
+
+예를 들어 다음만 곱해도:
+
+* 해상도 4
+* triangle density 5
+* overdraw 5
+* material 수 5
+* material 복잡도 5
+* G-buffer 포맷 4
+* 렌더러 6
+* seed 5
+
+총 300,000개 이상의 실행 구성이 나옵니다.
+
+다음 방식이 현실적입니다.
+
+## 1단계: 단일 변수 microbenchmark
+
+한 번에 한 변수만 변화시켜 기본 곡선을 확인합니다.
+
+* 해상도
+* overdraw
+* triangle size
+* G-buffer 크기
+* material complexity
+
+## 2단계: 핵심 변수 factorial design
+
+중요한 상호작용을 봅니다.
+
+* 해상도 × G-buffer 크기
+* triangle size × geometry reuse
+* overdraw × material cost
+* material 수 × material 배치 방식
+* sample count × buffer 크기
+
+## 3단계: Latin hypercube 또는 무작위 sampling
+
+넓은 파라미터 공간에서 성능 교차 영역을 찾습니다.
+
+## 4단계: 경계 영역 집중 sampling
+
+TVB와 Deferred가 비슷한 성능을 보이는 영역을 더 촘촘히 측정합니다.
+
+최종 분석에서는 다음을 사용할 수 있습니다.
+
+* speedup heatmap
+* interaction plot
+* 다중 회귀
+* decision tree
+* feature importance
+* crossover contour
+
+연구 목적상 최고 FPS보다 **`TVB speedup > 1`이 되는 결정 경계**가 더 중요한 결과입니다.
+
+---
+
+# 14. 예상되는 결과 가설
+
+실험 전에 다음 가설을 명시해두면 결과 선택 편향을 줄일 수 있습니다.
+
+| 조건                                    | 예상                          |
+| ------------------------------------- | --------------------------- |
+| 낮은 해상도, 1× sampling, compact G-buffer | TVB 이점 작음 또는 손해             |
+| 높은 해상도, 큰 G-buffer                    | TVB 유리 가능성 증가               |
+| 높은 MSAA/visibility sample 수           | TVB 유리 가능성 증가               |
+| 높은 overdraw, 복잡한 material             | Naive Forward 대비 TVB 유리     |
+| Forward + 완전한 depth pre-pass          | TVB 우위 감소 가능                |
+| 큰 화면상 triangle                        | TVB gather locality 개선      |
+| subpixel/microtriangle 다수             | TVB gather 및 geometry 비용 증가 |
+| 동일 mesh의 반복 instancing                | TVB에 유리한 cache reuse 가능     |
+| unique geometry working set 증가        | TVB의 vertex gather 비용 증가    |
+| material이 공간적으로 군집                    | material queue 방식 유리        |
+| material이 pixel 단위로 무작위               | divergence 및 queue 비용 증가    |
+| 높은 bandwidth와 약한 general cache        | TVB 이점 감소 가능                |
+| bandwidth 제한과 효과적인 cache              | TVB 이점 증가 가능                |
+
+기존 연구에서도 높은 sample rate, 제한된 DRAM bandwidth, 유용한 cache hierarchy가 TVB에 유리한 조건으로 관찰되었습니다. ([Journal of Computer Graphics Techniques][1])
+
+---
+
+# 15. 권장 개발 순서
+
+## Phase 1: 공통 프레임워크
+
+* deterministic scene generator
+* scene manifest와 seed 저장
+* 공통 geometry/material/light 시스템
+* GPU timestamp
+* CSV 또는 JSON 자동 출력
+* 이미지 correctness comparison
+
+## Phase 2: 최소 비교군
+
+* Naive Forward
+* Forward + Depth Pre-pass
+* Tiled/Clustered Forward
+* Deferred
+* TVB-0
+
+이 단계에서는 1× sampling, opaque static geometry, 단일 queue만 사용합니다.
+
+## Phase 3: 핵심 파라미터 sweep
+
+* resolution
+* G-buffer 크기
+* overdraw
+* screen-space triangle size
+* unique geometry size
+* material complexity
+
+## Phase 4: Material 처리
+
+* mega shader
+* tile classification
+* material work queue
+* material별 dispatch
+
+## Phase 5: Sampling 및 temporal 요소
+
+* MSAA
+* camera path
+* static hot-cache mode
+* moving camera streaming mode
+* motion vector
+
+정지 화면은 반드시 유지하되, 카메라 이동을 “추후 선택 기능”이 아니라 주요 실험 모드로 넣는 것이 좋습니다. 정지 화면 반복은 vertex, texture 및 material 데이터가 여러 프레임에 걸쳐 cache에 남는 최상의 조건을 만들 수 있습니다.
+
+## Phase 6: GPU-driven geometry
+
+* meshlet
+* indirect
+* GPU occlusion
+* cluster-relative IDs
+
+## Phase 7: 별도 연구
+
+* runtime tessellation
+* displacement
+* software rasterization
+* transparency
+* alpha-tested geometry
+
+---
+
+# 최종 개선점 요약
+
+1 - 연구 목표를 단순 성능 비교가 아니라 TVB와 비교군의 **성능 교차 조건 규명**으로 명문화한다.
+
+2 - 구의 개수와 삼각형 수 외에 overdraw, 화면상 triangle 크기, visible unique triangle 수, geometry working set을 독립 변수로 추가한다.
+
+3 - 동일 sphere mesh 인스턴싱이 TVB cache locality에 유리한 편향을 만들 수 있으므로 shared geometry와 unique geometry 모드를 분리한다.
+
+4 - 구 장면 외에 screen-space triangle scene과 layered overdraw scene을 추가한다.
+
+5 - 최종 검증에는 geometry 중심 모델과 material 중심 실제 장면을 각각 포함한다.
+
+6 - Naive Forward 외에 Tiled 또는 Clustered Forward를 비교군에 추가한다.
+
+7 - 모든 방식이 동일한 culling, LOD, light list, BRDF, texture와 컴파일 조건을 공유하도록 한다.
+
+8 - TVB만 meshlet과 indirect draw를 사용하는 비교는 기본 shading architecture 비교와 분리한다.
+
+9 - TVB 구현을 기본 hardware-raster 버전, material dispatch 버전, meshlet 버전, software raster 버전으로 단계화한다.
+
+10 - Visibility Buffer의 32-bit·64-bit ID, barycentric 포함 여부, material ID 포함 여부를 별도의 실험 변수로 둔다.
+
+11 - Texture gradient와 perspective-correct attribute interpolation을 명시적으로 구현하고 영상 동일성을 검증한다.
+
+12 - Material 복잡도를 ALU, texture, latency, bandwidth, register pressure, divergence로 분리한다.
+
+13 - 해상도뿐 아니라 1×·2×·4×·8× visibility sampling 또는 MSAA를 핵심 변수로 추가한다.
+
+14 - Offline displacement와 runtime tessellation을 구분하고, runtime-generated geometry는 별도 실험으로 분리한다.
+
+15 - 평균·최솟값·최댓값보다 median, P95, P99, P99.9와 독립 run의 신뢰구간을 중심으로 보고한다.
+
+16 - 0.1% low와 0.01% low는 frame-time percentile로 명확히 표현하고 충분한 표본이 없으면 제외한다.
+
+17 - Warm-up을 고정 시간이 아니라 GPU clock, 온도, frame time이 안정되는 조건으로 정의한다.
+
+18 - 테스트 구성 실행 순서를 무작위화하여 온도와 전력 제한에 의한 편향을 줄인다.
+
+19 - GPU timestamp pass를 visibility, classification, reconstruction, shading 등으로 세분화한다.
+
+20 - Async compute를 사용할 경우 pass 시간의 단순 합이 아니라 queue overlap과 critical path를 보고한다.
+
+21 - Nsight 분석에서는 DRAM throughput, L2 hit rate, shader utilization, divergence, occupancy, raster 및 depth 처리량을 사전에 지정한다.
+
+22 - Profiler 실행과 일반 timing 측정을 분리하여 counter 수집 오버헤드가 결과에 개입하지 않도록 한다.
+
+23 - 성능 결과와 함께 pixels per triangle, overdraw, materials per tile, bytes per sample 등의 workload 진단값을 저장한다.
+
+24 - 정지 화면은 hot-cache 실험으로 명시하고, 카메라 이동 장면을 별도의 핵심 실험 모드로 포함한다.
+
+25 - 전체 파라미터 조합을 전수 실행하기보다 microbenchmark, factorial design, 넓은 탐색, 경계 집중 측정 순으로 진행한다.
+
+26 - 최종 결과를 단순 FPS 표가 아니라 speedup heatmap과 TVB가 우세해지는 결정 경계 형태로 제시한다.
+
+[1]: https://jcgt.org/published/0002/02/04/paper.pdf "The Visibility Buffer: A Cache-Friendly Approach to Deferred Shading"
+[2]: https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_Derivatives.html?utm_source=chatgpt.com "HLSL Derivative Operations in Compute, Mesh and ..."
+[3]: https://cg.ivd.kit.edu/publications/2015/dais/DAIS.pdf "Deferred Attribute Interpolation for Memory-Efficient Deferred Shading"
+[4]: https://learn.microsoft.com/en-us/windows/win32/direct3d12/timing?utm_source=chatgpt.com "Timing (Direct3D 12 Graphics) - Win32 apps"
+[5]: https://docs.nvidia.com/nsight-graphics/UserGuide/gpu-trace-overview.html?utm_source=chatgpt.com "GPU Trace Overview — Nsight Graphics"
+[6]: https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_data_pipeline_statistics?utm_source=chatgpt.com "D3D12_QUERY_DATA_PIPELIN..."
