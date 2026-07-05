@@ -1,0 +1,954 @@
+0. 공통 데이터 구조
+struct Vertex {
+    float3 position;
+    uint   packedNormal;
+    uint   packedTangent;
+    float2 uv;
+};
+
+struct Mesh {
+    uint vertexOffset;
+    uint indexOffset;
+    uint triangleCount;
+};
+
+struct Instance {
+    uint meshID;
+    uint materialID;
+    uint transformID;
+};
+
+struct VisibleTriangle {
+    uint instanceID;
+    uint originalTriangleID;
+};
+
+// 작은 장면
+// [ instance:8 | triangle:24 ] 등으로 R32_UINT에 패킹
+
+// 큰 장면
+struct Visibility64 {
+    uint triangleID;
+    uint instanceOrSurfaceID;
+}; // RG32_UINT
+
+2013년 방식은 일반적인 경우 픽셀당 32비트, 더 큰 장면이나 tessellation을 포함하면 64비트를 사용하는 구성을 설명합니다. 이후 엔진들은 대개 triangleID + surface/instanceID 형태의 64비트 visibility entry를 사용합니다.
+
+공통 barycentric 복원
+
+Visibility Buffer에는 보통 barycentric 자체가 없으므로, 원본 삼각형을 다시 변환한 후 화면 공간에서 계산합니다.
+
+float Edge(float2 a, float2 b, float2 p)
+{
+    return (p.x - a.x) * (b.y - a.y)
+         - (p.y - a.y) * (b.x - a.x);
+}
+
+float3 PerspectiveBarycentrics(
+    float2 pixel,
+    float4 clip0,
+    float4 clip1,
+    float4 clip2)
+{
+    float2 p0 = NdcToPixel(clip0.xy / clip0.w);
+    float2 p1 = NdcToPixel(clip1.xy / clip1.w);
+    float2 p2 = NdcToPixel(clip2.xy / clip2.w);
+
+    float area = Edge(p0, p1, p2);
+
+    // 화면 공간의 선형 barycentric
+    float3 lambda;
+    lambda.x = Edge(p1, p2, pixel) / area;
+    lambda.y = Edge(p2, p0, pixel) / area;
+    lambda.z = 1.0 - lambda.x - lambda.y;
+
+    // perspective correction
+    float3 corrected = lambda * float3(
+        rcp(clip0.w),
+        rcp(clip1.w),
+        rcp(clip2.w));
+
+    return corrected / dot(corrected, 1.0.xxx);
+}
+
+Compute shader에서 texture LOD가 올바르게 동작하려면 SampleGrad에 넣을 ddx/ddy도 복원해야 합니다. 가장 단순한 검증용 구현은 인접 픽셀에서 barycentric을 한 번씩 더 계산하는 것입니다.
+
+float3 b   = PerspectiveBarycentrics(pixel,       c0, c1, c2);
+float3 bx  = PerspectiveBarycentrics(pixel + X1,  c0, c1, c2);
+float3 by  = PerspectiveBarycentrics(pixel + Y1,  c0, c1, c2);
+
+float2 uv   = Interpolate(b,  uv0, uv1, uv2);
+float2 uvDx = Interpolate(bx, uv0, uv1, uv2) - uv;
+float2 uvDy = Interpolate(by, uv0, uv1, uv2) - uv;
+
+float4 albedo = AlbedoTexture.SampleGrad(sampler, uv, uvDx, uvDy);
+
+실제 제품에서는 barycentric과 속성의 analytical derivative를 계산하여 중복 연산을 줄이는 편이 좋습니다.
+
+1. 2013 Visibility Buffer
+
+원 논문의 핵심 구조는 다음과 같습니다.
+
+첫 pass에서 depth와 primitive/instance ID만 기록
+화면을 타일로 나누어 어떤 surface shader가 필요한지 조사
+(shader, tile) 작업 목록 생성 및 정렬
+재질별 compute shader가 원본 정점을 가져와 속성을 복원하고 셰이딩
+
+원 구현은 DirectX 11 pixel/compute shader 기반이며, 16×8 타일의 재질 작업 목록을 생성하는 구조를 사용했습니다.
+
+API 측 의사코드
+// Pass 1: visibility
+BeginRenderPass(depthBuffer, visibilityBuffer);
+BindPipeline(VisibilityPipeline);
+DrawAllOpaqueGeometry();
+EndRenderPass();
+
+Barrier(
+    visibilityBuffer,
+    RenderTargetWrite,
+    ComputeShaderRead);
+
+// Pass 2: tile/material classification
+BindComputePipeline(ClassifyTilesCS);
+Dispatch(ceil(width / 16), ceil(height / 8), 1);
+
+Barrier(TileMaterialList, UAVWrite, IndirectArgumentRead);
+
+// Pass 3: material별 shading
+for (MaterialShader shader : activeMaterialShaders) {
+    BindComputePipeline(shader.computePipeline);
+    DispatchIndirect(shader.dispatchArgs);
+}
+실제 API 대응
+D3D11:
+  DrawIndexed
+  CSSetUnorderedAccessViews
+  Dispatch / DispatchIndirect
+
+D3D12:
+  DrawIndexedInstanced
+  ResourceBarrier
+  ExecuteIndirect 또는 Dispatch
+
+Vulkan:
+  vkCmdDrawIndexed
+  vkCmdPipelineBarrier2
+  vkCmdDispatchIndirect
+
+OpenGL:
+  glDrawElements*
+  glMemoryBarrier
+  glDispatchCompute / glDispatchComputeIndirect
+Visibility pass
+struct PSInput {
+    float4 position : SV_Position;
+    nointerpolation uint instanceID : INSTANCE_ID;
+    uint primitiveID : SV_PrimitiveID;
+};
+
+uint VisibilityPS(PSInput input) : SV_Target0
+{
+    return PackVisibility(input.instanceID, input.primitiveID);
+}
+
+OpenGL GLSL에서는 fragment shader의 gl_PrimitiveID, Vulkan GLSL에서도 대응되는 primitive ID를 사용합니다.
+
+타일 분류
+[numthreads(16, 8, 1)]
+void ClassifyTilesCS(
+    uint3 groupID  : SV_GroupID,
+    uint3 localID  : SV_GroupThreadID,
+    uint3 dispatch : SV_DispatchThreadID)
+{
+    groupshared uint materialMask[MATERIAL_WORDS];
+
+    ClearSharedMask(materialMask);
+    GroupMemoryBarrierWithGroupSync();
+
+    uint vis = Visibility.Load(dispatch.xy);
+
+    if (vis != INVALID_VISIBILITY) {
+        uint instanceID = DecodeInstance(vis);
+        uint materialID = Instances[instanceID].materialID;
+
+        InterlockedOr(
+            materialMask[materialID >> 5],
+            1u << (materialID & 31));
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    if (Flatten(localID) == 0) {
+        for each materialID present in materialMask {
+            uint dst = AtomicAppend(TileMaterialCount);
+            TileMaterialList[dst] = {
+                materialID,
+                groupID.xy
+            };
+        }
+    }
+}
+재질별 surface shader
+[numthreads(16, 8, 1)]
+void ShadeMaterial42CS(
+    uint3 groupID : SV_GroupID,
+    uint3 tid     : SV_GroupThreadID)
+{
+    TileWork work = Material42TileList[groupID.x];
+    uint2 pixel = work.tile * uint2(16, 8) + tid.xy;
+
+    uint vis = Visibility[pixel];
+    if (vis == INVALID_VISIBILITY)
+        return;
+
+    uint instanceID = DecodeInstance(vis);
+    Instance instance = Instances[instanceID];
+
+    if (instance.materialID != 42)
+        return;
+
+    uint triangleID = DecodeTriangle(vis);
+    Triangle tri = LoadTriangle(instance.meshID, triangleID);
+
+    TransformedTriangle t =
+        TransformTriangle(tri, instance.transformID);
+
+    float3 bary = PerspectiveBarycentrics(
+        pixel + 0.5, t.clip0, t.clip1, t.clip2);
+
+    Surface surface = InterpolateSurface(tri, bary);
+    HDR[pixel] = ShadeMaterial42(surface);
+}
+API 판단
+D3D11: 원 논문 수준 그대로 구현 가능
+OpenGL 4.3 이상: compute shader, SSBO, integer render target로 가능
+OpenGL 4.5/4.6: 더 편리하고 실용적
+D3D12/Vulkan: 가능하지만 이 단순 버전에는 필수 아님
+Metal: 동일한 구조로 가능
+2. 2015 Deferred Attribute Interpolation
+
+DAIS의 차이는 원본 정점을 shading 시점마다 다시 변환하는 대신, rasterization 시점에 화면 공간으로 변환된 삼각형 정보를 Triangle Buffer에 한 번 저장한다는 점입니다.
+
+논문 구현은 OpenGL 4.5였으며, Triangle Buffer에 샘플 지점의 속성, 1/w, 화면 공간 x/y 방향 미분값 등을 기록합니다. Visibility Buffer는 Triangle Buffer의 entry를 참조합니다.
+
+패스 구성
+1. Z prepass
+2. Visibility + Triangle Buffer 생성
+3. Triangle derivative 계산
+4. Compute shading
+GPU 측 Triangle Buffer 할당
+// GLSL 형태의 의사코드
+
+layout(binding = 0, r32ui) uniform uimage2D visibility;
+layout(std430, binding = 1) buffer TriangleBuffer {
+    TriangleData triangles[];
+};
+
+layout(std430, binding = 2) buffer TriangleCache {
+    uint triangleToSlot[];
+};
+
+layout(binding = 0, offset = 0)
+uniform atomic_uint triangleAllocator;
+
+void main()
+{
+    uint originalTriangle = gl_PrimitiveID;
+    uint slot = triangleToSlot[originalTriangle];
+
+    if (slot == INVALID_SLOT) {
+        uint candidate = atomicCounterIncrement(triangleAllocator);
+
+        uint old = atomicCompSwap(
+            triangleToSlot[originalTriangle],
+            INVALID_SLOT,
+            candidate);
+
+        if (old == INVALID_SLOT) {
+            slot = candidate;
+            triangles[slot] =
+                BuildScreenSpaceTriangleData();
+        } else {
+            slot = old;
+        }
+    }
+
+    imageStore(
+        visibility,
+        ivec2(gl_FragCoord.xy),
+        uvec4(slot, 0, 0, 0));
+}
+
+실제로는 allocator에서 경쟁으로 낭비된 slot을 방지하거나 회수할 구조가 필요합니다. 보통 hash table 또는 primitive→slot 매핑을 별도 pass에서 만드는 쪽이 구현하기 쉽습니다.
+
+미분 데이터 생성
+
+각 속성 a에 대해 다음을 저장합니다.
+
+struct DeferredAttribute {
+    float4 valueOverWAtOrigin;
+    float4 dValueOverWdx;
+    float4 dValueOverWdy;
+
+    float invWAtOrigin;
+    float dInvWdx;
+    float dInvWdy;
+};
+
+struct TriangleData {
+    float2 screenOrigin;
+    DeferredAttribute uv;
+    DeferredAttribute normal;
+    uint materialID;
+};
+
+복원은 다음과 같습니다.
+
+float4 EvaluateAttribute(
+    DeferredAttribute a,
+    float2 delta)
+{
+    float4 numerator =
+        a.valueOverWAtOrigin +
+        delta.x * a.dValueOverWdx +
+        delta.y * a.dValueOverWdy;
+
+    float denominator =
+        a.invWAtOrigin +
+        delta.x * a.dInvWdx +
+        delta.y * a.dInvWdy;
+
+    return numerator / denominator;
+}
+[numthreads(8, 8, 1)]
+void ShadeCS(uint3 id : SV_DispatchThreadID)
+{
+    uint triangleSlot = Visibility[id.xy];
+
+    if (triangleSlot == INVALID_SLOT)
+        return;
+
+    TriangleData tri = TriangleBuffer[triangleSlot];
+
+    float2 delta = id.xy + 0.5 - tri.screenOrigin;
+
+    float2 uv = EvaluateAttribute(tri.uv, delta).xy;
+    float3 normal =
+        normalize(EvaluateAttribute(tri.normal, delta).xyz);
+
+    HDR[id.xy] = Shade(tri.materialID, uv, normal);
+}
+장단점
+
+장점
+
+shading 단계에서 정점 셰이더를 다시 실행하지 않아도 됨
+보간이 단순한 선형식이 됨
+동일 삼각형이 많은 픽셀을 차지할수록 Triangle Buffer 비용이 잘 상각됨
+
+단점
+
+Triangle Buffer를 작성하고 다시 읽는 메모리 트래픽
+아주 작은 삼각형이 많으면 삼각형당 저장 비용이 커짐
+tessellation/geometry expansion 후 primitive ID 관리가 복잡함
+clipping된 primitive와 원본 primitive 사이의 대응을 관리해야 함
+API 판단
+OpenGL 4.5: 원 논문 구현 API이므로 충분
+D3D11: UAV, atomics, compute shader로 가능
+D3D12/Vulkan: 충분하며 synchronization 관리가 더 명확
+Geometry shader가 필수는 아님: tessellation 후 새 primitive ID가 필요한 경우에만 별도 번호 부여 과정 필요
+3. Triangle Visibility Buffer 1.0
+
+TVB 1.0은 Visibility Buffer 앞에 GPU-driven geometry filtering을 넣습니다.
+
+Instance culling
+    ↓
+Cluster culling
+    ↓
+Triangle filtering / index compaction
+    ↓
+Indirect draw
+    ↓
+Hardware rasterized Visibility Buffer
+    ↓
+Shading
+
+The Forge의 초기 TVB는 compute shader로 cluster와 triangle을 필터링하고 compacted index buffer와 indirect draw를 만든 뒤 hardware rasterization을 실행했습니다. 이후 버전에서는 DrawID 의존성을 줄이고 더 통합된 draw 구조로 개선되었습니다.
+
+Cluster 구조
+struct Cluster {
+    float3 sphereCenter;
+    float  sphereRadius;
+
+    float3 coneAxis;
+    float  coneCutoff;
+
+    uint firstTriangle;
+    uint triangleCount;
+
+    uint meshID;
+    uint instanceID;
+};
+
+struct FilteredTriangle {
+    uint instanceID;
+    uint originalTriangleID;
+};
+Cluster/triangle filtering
+[numthreads(64, 1, 1)]
+void FilterClustersCS(uint3 id : SV_DispatchThreadID)
+{
+    Cluster cluster = Clusters[id.x];
+
+    if (!SphereInFrustum(cluster.sphereCenter,
+                         cluster.sphereRadius))
+        return;
+
+    if (BackfaceConeCulled(cluster))
+        return;
+
+    if (HiZOccluded(cluster))
+        return;
+
+    uint visibleCount = 0;
+    bool visible[MAX_CLUSTER_TRIANGLES];
+
+    for (uint i = LocalLane; i < cluster.triangleCount; i += 64) {
+        Triangle tri = LoadTriangle(cluster, i);
+
+        visible[i] =
+            !TriangleBackfaceCulled(tri) &&
+            !TriangleTooSmallOrDegenerate(tri);
+
+        visibleCount += WaveActiveCountBits(visible[i]);
+    }
+
+    uint outputBase =
+        AllocateFilteredTriangles(visibleCount);
+
+    for each visible triangle {
+        uint dst = outputBase + PrefixCountWithinCluster();
+
+        FilteredTriangles[dst] = {
+            cluster.instanceID,
+            cluster.firstTriangle + localTriangleID
+        };
+
+        // hardware rasterizer가 읽을 compact index buffer
+        FilteredIndices[dst * 3 + 0] = index0;
+        FilteredIndices[dst * 3 + 1] = index1;
+        FilteredIndices[dst * 3 + 2] = index2;
+    }
+}
+Indirect command 생성
+[numthreads(1, 1, 1)]
+void BuildDrawArgumentsCS()
+{
+    DrawArgs.IndexCountPerInstance = FilteredTriangleCount * 3;
+    DrawArgs.InstanceCount = 1;
+    DrawArgs.StartIndexLocation = 0;
+    DrawArgs.BaseVertexLocation = 0;
+    DrawArgs.StartInstanceLocation = 0;
+}
+Dispatch(FilterClustersCS);
+
+Barrier(FilteredIndices,
+        ComputeWrite,
+        IndexBufferRead);
+
+Barrier(DrawArgs,
+        ComputeWrite,
+        IndirectArgumentRead);
+
+DrawIndexedIndirect(DrawArgs);
+
+API별 실제 호출은 다음과 같습니다.
+
+D3D12:
+  ExecuteIndirect(commandSignature, ...)
+
+Vulkan:
+  vkCmdDrawIndexedIndirect(...)
+  vkCmdDrawIndexedIndirectCount(...)
+
+OpenGL:
+  glDrawElementsIndirect(...)
+  glMultiDrawElementsIndirect(...)
+
+Metal:
+  indirect command buffer 또는 indirect draw
+
+OpenGL에는 multi-draw indirect와 shader draw parameter가 존재하므로 TVB 1.0 구조를 구현할 수 있습니다. 다만 bindless texture는 선택적 확장이므로, 지원되지 않는 GPU에서는 texture array 또는 material atlas 같은 대안이 필요합니다.
+
+Visibility raster
+
+Compaction 후의 primitive ID가 원래 mesh의 triangle ID와 같지 않으므로 매핑 테이블이 필요합니다.
+
+uint2 VisibilityPS(PSInput input) : SV_Target0
+{
+    FilteredTriangle tri =
+        FilteredTriangles[input.primitiveID];
+
+    return uint2(
+        tri.originalTriangleID,
+        tri.instanceID);
+}
+주의사항
+한 draw 안에서 SV_PrimitiveID가 어떤 범위로 증가하는지 정확히 맞춰야 함
+multi-draw에서는 DrawID, BaseInstance, draw별 offset 관리 필요
+index compaction이 너무 비싸면 cluster 단위만 compact하고 cluster 내부 삼각형은 그대로 그리는 절충안이 유리할 수 있음
+이전 프레임 Hi-Z를 사용하면 latency와 false occlusion 처리 필요
+alpha-tested geometry는 visibility pass에서도 texture sampling이 필요할 수 있음
+4. Triangle Visibility Buffer 2.0
+
+TVB 2.0은 filtered index buffer와 indirect hardware draw까지 제거하고 compute shader가 depth와 visibility를 직접 rasterize합니다.
+
+The Forge는 TVB 2.0을 draw call 없이 compute shader invocation들로 depth/visibility를 채우는 구조로 설명하고 있으며, 최신 계열에서는 indirect draw들을 큰 compute 작업으로 대체합니다.
+
+권장 패스 구조
+1. Instance/cluster culling
+2. Triangle setup
+3. Screen tile binning
+4. Compute rasterization
+5. Material classification
+6. Compute shading
+
+삼각형마다 모든 픽셀을 직접 순회하면 큰 삼각형에서 매우 비효율적이므로 tile binning이 사실상 필수입니다.
+
+Triangle setup
+struct RasterTriangle {
+    float2 p0, p1, p2;
+
+    // edge equation: A*x + B*y + C
+    float3 edgeA;
+    float3 edgeB;
+    float3 edgeC;
+
+    float3 depthPlane;
+    int4 pixelBounds;
+
+    uint visibleTriangleID;
+};
+
+[numthreads(64, 1, 1)]
+void SetupTrianglesCS(uint3 id : SV_DispatchThreadID)
+{
+    VisibleTriangle src = CulledTriangles[id.x];
+
+    float4 c0, c1, c2;
+    LoadAndTransform(src, c0, c1, c2);
+
+    if (RequiresNearPlaneClipping(c0, c1, c2)) {
+        ClipAndEmitTriangles(src, c0, c1, c2);
+        return;
+    }
+
+    RasterTriangle tri;
+    tri.p0 = NdcToPixel(c0.xy / c0.w);
+    tri.p1 = NdcToPixel(c1.xy / c1.w);
+    tri.p2 = NdcToPixel(c2.xy / c2.w);
+
+    if (BackfacingOrDegenerate(tri))
+        return;
+
+    tri.pixelBounds = ConservativePixelBounds(tri);
+    BuildTopLeftEdgeEquations(tri);
+    BuildPerspectiveDepthPlane(tri);
+
+    uint rasterID = AtomicAppend(RasterTriangleCount);
+    RasterTriangles[rasterID] = tri;
+
+    EmitTriangleToOverlappingTiles(
+        rasterID,
+        tri.pixelBounds);
+}
+Tile binning
+[numthreads(64, 1, 1)]
+void BinTrianglesCS(uint3 id : SV_DispatchThreadID)
+{
+    RasterTriangle tri = RasterTriangles[id.x];
+
+    int2 minTile = tri.pixelBounds.xy / TILE_SIZE;
+    int2 maxTile = tri.pixelBounds.zw / TILE_SIZE;
+
+    for (int y = minTile.y; y <= maxTile.y; ++y) {
+        for (int x = minTile.x; x <= maxTile.x; ++x) {
+            uint tileID = x + y * TileCountX;
+            uint dst = atomicAdd(TileTriangleCount[tileID], 1);
+            TileTriangleList[tileID * MAX_PER_TILE + dst] = id.x;
+        }
+    }
+}
+
+실전에서는 고정 MAX_PER_TILE보다 count → prefix sum → scatter의 3단계가 안전합니다.
+
+Compute raster
+
+64비트 atomic이 충분히 빠르고 지원된다면 depth와 triangle ID를 하나의 key로 패킹하는 방식이 편리합니다.
+
+uint64_t PackDepthVisibility(float depth, uint triangleID)
+{
+    uint depthBits = EncodeDepthForAtomicOrdering(depth);
+
+    // reversed-Z라면 ordering과 atomic 연산 방향을 반대로 맞춤
+    return (uint64_t(depthBits) << 32) | triangleID;
+}
+[numthreads(8, 8, 1)]
+void RasterTileCS(
+    uint3 groupID : SV_GroupID,
+    uint3 tid     : SV_GroupThreadID)
+{
+    uint2 pixel = groupID.xy * 8 + tid.xy;
+    uint tileID = groupID.x + groupID.y * TileCountX;
+
+    uint count = TileTriangleCount[tileID];
+
+    for (uint i = 0; i < count; ++i) {
+        uint triID = TileTriangleList[
+            TileTriangleOffset[tileID] + i];
+
+        RasterTriangle tri = RasterTriangles[triID];
+
+        float2 p = pixel + 0.5;
+
+        float3 e = EvaluateEdges(tri, p);
+
+        if (PassesTopLeftRule(e)) {
+            float depth = EvaluateDepth(tri, p);
+            uint64_t key =
+                PackDepthVisibility(depth, tri.visibleTriangleID);
+
+            InterlockedMin(
+                PackedDepthVisibility[pixel],
+                key);
+        }
+    }
+}
+
+64비트 image atomic이 불편한 API에서는 다음 대안을 사용할 수 있습니다.
+
+tile의 shared memory에서 depth/ID를 결정한 뒤 한 번만 global write
+32비트 안에 축소된 depth와 triangle ID를 함께 패킹
+depth atomic pass와 owner resolve pass를 분리
+visibility를 tile-local ID로 저장하고 별도 indirection 사용
+큰 삼각형 문제
+
+Software rasterization은 대체로 작은 삼각형에서 유리하고, 화면 대부분을 덮는 삼각형은 hardware rasterizer가 유리합니다. 실용적인 hybrid는 다음과 같습니다.
+
+if (trianglePixelArea < SoftwareThreshold)
+    AppendToSoftwareRasterList();
+else
+    AppendToHardwareRasterList();
+Small triangles → compute raster
+Large triangles → indirect hardware raster
+Both outputs    → 동일한 depth/visibility 표현으로 merge
+
+단, hardware depth와 software atomic depth가 동일한 포맷과 ordering을 공유하기 어렵다면 pass를 분리해 merge해야 합니다.
+
+반드시 처리해야 하는 항목
+near-plane clipping
+viewport/scissor clipping
+top-left fill convention
+perspective-correct depth
+reversed-Z ordering
+MSAA sample position
+conservative bounds
+depth tie-breaking
+alpha test
+two-sided material
+primitive ordering이 필요한 transparency
+
+특히 transparency는 단일 visibility ID와 맞지 않으므로 Forward+, weighted OIT, per-pixel list 같은 별도 경로가 필요합니다.
+
+5. DOOM: The Dark Ages 스타일
+
+발표 내용 기준 구조는 다음과 같이 보는 것이 적절합니다.
+
+Hardware depth/visibility raster
+    ↓
+Material/shader classification
+    ↓
+Pixel command buffer 생성
+    ↓
+Deferred barycentric/derivative 계산
+    ↓
+재질별 compute dispatch
+    ↓
+Forward+/Deferred fallback
+
+발표에서는 visibility를 64비트 triangle index + surface/instance index로 기록하고, 픽셀을 shader/tile/material별로 세어 prefix sum과 scatter를 거쳐 pixel command buffer를 생성하는 구조를 설명합니다.
+
+Visibility pass
+layout(location = 0) out uvec2 outVisibility;
+
+void main()
+{
+    outVisibility = uvec2(
+        uint(gl_PrimitiveID),
+        surfaceInstanceID);
+}
+재질 분류: Count
+[numthreads(8, 8, 1)]
+void CountPixelsCS(
+    uint3 groupID : SV_GroupID,
+    uint3 tid     : SV_GroupThreadID,
+    uint3 did     : SV_DispatchThreadID)
+{
+    uint2 pixel = did.xy;
+    uint2 vis = Visibility[pixel];
+
+    if (IsInvalid(vis))
+        return;
+
+    uint surfaceID = vis.y;
+    uint materialID = Surfaces[surfaceID].materialID;
+    uint shaderID = Materials[materialID].shaderID;
+    uint tileID = groupID.x + groupID.y * TileCountX;
+
+    uint key = BuildClassificationKey(
+        shaderID,
+        tileID,
+        materialID);
+
+    InterlockedAdd(PixelCounts[key], 1);
+}
+Prefix sum 후 Scatter
+[numthreads(8, 8, 1)]
+void ScatterPixelsCS(uint3 did : SV_DispatchThreadID)
+{
+    uint2 pixel = did.xy;
+    uint2 vis = Visibility[pixel];
+
+    if (IsInvalid(vis))
+        return;
+
+    ClassificationKey key = Classify(vis, pixel);
+
+    uint localOffset;
+    InterlockedAdd(PixelCursors[key], 1, localOffset);
+
+    uint dst = PixelOffsets[key] + localOffset;
+
+    PixelCommands[dst] = PackPixelCommand(
+        PixelWithinTile(pixel),
+        key.tileID,
+        vis);
+}
+
+GPU wave 크기에 맞춰 각 재질 작업을 padding하면 하나의 wave 안에서 다른 재질 셰이더가 섞이는 것을 피할 수 있습니다.
+
+Deferred interpolation pass
+struct InterpolatedPixel {
+    half2 barycentrics;
+    PackedBaryDerivatives derivatives;
+    half4 tangentFrame;
+};
+
+[numthreads(64, 1, 1)]
+void InterpolatePixelsCS(uint3 id : SV_DispatchThreadID)
+{
+    PixelCommand cmd = PixelCommands[id.x];
+
+    if (!cmd.valid)
+        return;
+
+    Triangle tri = LoadSourceTriangle(cmd.visibility);
+
+    float3 bary =
+        PerspectiveBarycentrics(cmd.pixel, tri.clip0,
+                                           tri.clip1,
+                                           tri.clip2);
+
+    InterpolatedPixel outData;
+    outData.barycentrics = half2(bary.xy);
+    outData.derivatives =
+        ComputePackedBaryDerivatives(tri);
+    outData.tangentFrame =
+        ComputeTangentFrame(tri, bary);
+
+    InterpolationBuffer[cmd.pixel] = outData;
+}
+재질별 dispatch
+// Pipeline 자체가 MaterialShader_Foliage에 해당
+[numthreads(64, 1, 1)]
+void ShadeFoliageCS(
+    uint3 groupID : SV_GroupID,
+    uint lane : SV_GroupThreadID)
+{
+    uint commandIndex =
+        MaterialDispatchBase + groupID.x * 64 + lane;
+
+    PixelCommand cmd = PixelCommands[commandIndex];
+
+    if (!cmd.valid)
+        return;
+
+    uint2 pixel = DecodePixel(cmd);
+    uint2 vis = Visibility[pixel];
+
+    SurfaceRecord surface = Surfaces[vis.y];
+    Triangle tri = LoadSourceTriangle(vis);
+
+    InterpolatedPixel interp =
+        InterpolationBuffer[pixel];
+
+    SurfaceAttributes attr =
+        EvaluateAttributes(tri, interp);
+
+    HDR[pixel] = ShadeFoliage(surface, attr);
+}
+Dispatch 방식
+
+D3D12
+
+ExecuteIndirect(
+    MaterialDispatchSignature,
+    activeShaderCount,
+    DispatchCommandBuffer,
+    0,
+    nullptr,
+    0);
+
+D3D12는 command signature와 ExecuteIndirect를 이용해 GPU가 생성한 draw/dispatch 명령을 실행할 수 있고, Shader Model 6.6의 descriptor heap 직접 인덱싱을 활용하면 bindless material 시스템을 구성하기 좋습니다.
+
+Vulkan
+
+for (uint shader = 0; shader < activeShaderCount; ++shader) {
+    vkCmdBindPipeline(
+        cmd,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        materialPipelines[shader]);
+
+    vkCmdDispatchIndirect(
+        cmd,
+        dispatchArgumentBuffer,
+        shader * sizeof(VkDispatchIndirectCommand));
+}
+
+기본 Vulkan의 vkCmdDispatchIndirect는 한 번에 하나의 dispatch command를 읽으므로, CPU가 pipeline별 command를 기록하거나 device-generated commands 확장, shader object/mega-kernel 같은 설계를 고려해야 합니다. Vulkan은 descriptor indexing, indirect draw count, indirect compute dispatch 및 명시적 barrier를 제공해 GPU-driven 구조에 적합합니다.
+
+OpenGL
+
+for (MaterialPipeline p : activePipelines) {
+    glUseProgram(p.program);
+    glDispatchComputeIndirect(p.argumentOffset);
+}
+
+OpenGL에서도 가능하지만, 서로 다른 compute program을 GPU가 완전히 자율적으로 바꾸며 다중 dispatch하는 기능은 제한적입니다. 따라서 보통 다음 중 하나를 선택합니다.
+
+CPU가 활성 shader 목록만 읽어 program별 dispatch
+재질별 여러 glDispatchComputeIndirect
+하나의 mega-kernel 안에서 material type으로 분기
+재질을 소수의 shader family로 통합
+API별 가능성
+
+범례:
+
+◎: 실용적이고 권장
+○: 충분히 구현 가능
+△: 가능하지만 제약이나 우회가 큼
+API	2013 VB	DAIS	TVB 1.0	TVB 2.0	DOOM식 분류/셰이딩
+D3D11	◎	○	△	△	△
+OpenGL 4.5/4.6	◎	◎	○	△	○
+D3D12	◎	◎	◎	◎	◎
+Vulkan 1.2+	◎	◎	◎	◎	◎
+Metal	○	○	◎	○~◎	◎
+OpenGL ES 3.1+	○	△	△	△	△
+OpenGL에서 어디까지 가능한가
+
+TVB 2.0까지 알고리즘적으로 가능합니다. OpenGL이라고 hardware rasterization만 사용해야 하는 것은 아닙니다. Compute shader가 SSBO/image와 atomic operation을 사용해 rasterizer를 구현할 수 있습니다.
+
+다만 다음 문제 때문에 D3D12/Vulkan보다 제품화가 까다롭습니다.
+
+bindless texture가 core 기능이 아니라 확장 의존적
+subgroup 기능과 동작이 GPU/확장에 따라 달라짐
+64비트 image atomic 지원 및 성능 차이
+resource state와 synchronization이 D3D12/Vulkan보다 덜 명시적
+다수의 서로 다른 compute pipeline을 GPU가 직접 dispatch하기 어려움
+vendor별 driver overhead와 MDI 동작 편차
+
+OpenGL의 fragment barycentric 확장을 사용할 수도 있지만 필수는 아닙니다. 지원되지 않으면 앞에서 보인 화면 공간 삼각형 기반 계산으로 복원하면 됩니다.
+
+D3D12/Vulkan을 써야 하는 경우
+
+다음 목표가 있다면 사실상 D3D12/Vulkan/Metal이 맞습니다.
+
+수천~수만 cluster의 완전한 GPU-driven culling
+draw/dispatch argument를 GPU에서 생성
+bindless material/texture
+async compute와 graphics overlap
+대규모 UAV/SSBO synchronization
+TVB 2.0 software raster
+재질별 compute pipeline dispatch
+여러 플랫폼에서 예측 가능한 barrier와 메모리 모델
+
+단순히 Visibility Buffer 자체를 배우거나 구현하는 목적이라면 OpenGL 4.5가 더 빠르게 시작할 수 있습니다.
+
+필수 기능 체크리스트
+2013 Visibility Buffer
+필수:
+- integer render target
+- primitive ID
+- compute shader
+- storage buffer/UAV
+- atomic append/counter
+
+선택:
+- indirect dispatch
+- bindless texture
+- subgroup operations
+DAIS
+추가 필수:
+- Triangle Buffer
+- atomic allocation/cache
+- 화면 공간 derivative 생성
+TVB 1.0
+추가 필수:
+- indirect indexed draw
+- GPU index buffer 작성
+- draw argument buffer
+- cluster/triangle prefix sum 및 compaction
+TVB 2.0
+추가 필수:
+- storage image/buffer atomics
+- tile binning
+- software clipping/raster rules
+- 가능하면 64-bit atomics
+- 가능하면 subgroup/shared-memory 최적화
+DOOM식 material dispatch
+추가 필수:
+- count / prefix sum / scatter
+- material별 pixel command buffer
+- pipeline별 indirect dispatch
+- descriptor indexing 또는 bindless
+- explicit texture gradient 복원
+현실적인 구현 순서
+
+가장 안전한 개발 순서는 다음과 같습니다.
+
+64비트 Visibility Buffer
+hardware raster
+triangleID + instanceID
+compute fullscreen shading
+Analytical barycentric 및 texture gradient
+normal, tangent, UV 검증
+mip level 차이를 G-buffer 결과와 비교
+Material classification
+처음에는 8×8 tile bitmask
+이후 count/scan/scatter pixel list
+TVB 1.0
+instance → cluster → triangle filtering
+compacted index buffer
+indirect hardware draw
+DAIS 비교 구현
+Triangle Buffer bandwidth와 정점 재실행 비용 비교
+TVB 2.0
+작은 opaque triangle만 software raster
+큰 삼각형과 alpha-test는 hardware fallback
+완전한 hybrid
+opaque visibility
+complex material fallback
+transparent Forward+
+decal/particle 별도 경로
+
+처음부터 TVB 2.0을 구현하면 barycentric 오류인지, clipping 오류인지, atomic depth 오류인지 분리하기 어렵습니다. hardware-rasterized Visibility Buffer를 기준 구현으로 먼저 확보한 뒤 TVB 1.0과 TVB 2.0을 붙이는 방식이 디버깅과 성능 비교 모두에서 가장 효율적입니다.
