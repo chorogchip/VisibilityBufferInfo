@@ -8,7 +8,7 @@
 	단 실제를 더 정확히 묘사하기에 이후 확장 가능.
 
 
-- 구는 Cube Sphere 사용. (구현 난이도 icosphere보다 용이, patch기반 확장 쉬움.
+- 구는 Cube Sphere 사용. (구현 난이도 icosphere보다 용이, patch기반 확장 쉬움.)
 
 CoordinateSystem = LH
 Projection = Perspective
