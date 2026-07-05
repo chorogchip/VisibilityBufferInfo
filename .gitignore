@@ -127,3 +127,7 @@ _ReSharper*/
 Generated/
 GeneratedFiles/
 Intermediate/
+
+# Local third-party source/build trees
+external/assimp-src/
+external/assimp-build/
