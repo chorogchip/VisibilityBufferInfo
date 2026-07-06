@@ -172,3 +172,27 @@ void GraphicsUtils::copy_cpu_to_upload(ID3D12Resource* dest, const void* src, si
     memcpy(mapped_data, src, sz);
     dest->Unmap(0, nullptr);
 }
+
+void* GraphicsUtils::get_mapped_address(ID3D12Resource* dest) {
+    void* mapped_data = nullptr;
+
+    D3D12_RANGE readRange = {};
+    readRange.Begin = 0;
+    readRange.End = 0;
+
+    Utils::throw_if_failed(dest->Map(0, &readRange, &mapped_data), "map instance buffer");
+    return mapped_data;
+}
+
+void GraphicsUtils::record_transition(ID3D12GraphicsCommandList* p_list, ID3D12Resource* p_resource, D3D12_RESOURCE_STATES state_before, D3D12_RESOURCE_STATES state_after) {
+
+    D3D12_RESOURCE_BARRIER barrier[1]{};
+    barrier[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier[0].Transition.pResource = p_resource;
+    barrier[0].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    barrier[0].Transition.StateBefore = state_before;
+    barrier[0].Transition.StateAfter = state_after;
+
+    p_list->ResourceBarrier(1, barrier);
+}

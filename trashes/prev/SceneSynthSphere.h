@@ -6,6 +6,7 @@
 
 #include "scene/Materials.h"
 #include "scene/Meshgeometry.h"
+#include "scene/SceneInfoSphere.h"
 
 class SceneSynthSphere
 {
@@ -24,27 +25,11 @@ public:
 		uint32_t flags;
 	};
 
-	struct SceneInfo {
-		uint32_t seed;
-		uint32_t sphere_count;
-		uint32_t material_count;
-		uint32_t geometry_count;
-		float z_min;
-		float z_max;
-		float xy_min;
-		float xy_max;
-		float radius_min;
-		float radius_max;
-		uint32_t geometry_division_min;
-		uint32_t geometry_division_max;
-		uint32_t material_float4_count;  // g버퍼 장수	
-	};
-
 	std::vector<SphereInstance> instances;
 	Materials materials{};
 	std::vector<MeshGeometry> geometries;
 
-	static std::unique_ptr<SceneSynthSphere> generate(const SceneInfo& info);
+	static std::unique_ptr<SceneSynthSphere> generate(const scene::SceneInfoSphere& info);
 
 };
 

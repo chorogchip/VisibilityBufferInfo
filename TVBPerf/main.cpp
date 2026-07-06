@@ -13,6 +13,10 @@ int WINAPI WinMain(
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    Application app{};
+    app.run(hInstance, nShowCmd);
+
+    /*
     try {
 
         Application app{};
@@ -23,7 +27,7 @@ int WINAPI WinMain(
         MessageBoxA(nullptr, (std::string("Fatal error:\n") + e.what()).c_str(), "Error", MB_OK | MB_ICONERROR);
         return -1;
 
-    }
+    }*/
 
     return 0;
 }

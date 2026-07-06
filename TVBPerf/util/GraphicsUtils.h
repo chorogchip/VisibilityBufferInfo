@@ -20,4 +20,8 @@ public:
 	static void create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height, D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state);
 	
 	static void copy_cpu_to_upload(ID3D12Resource* dest, const void* src, size_t sz);
+	static void* get_mapped_address(ID3D12Resource* dest);
+
+	static void record_transition(ID3D12GraphicsCommandList* p_list, ID3D12Resource* p_resource,
+		D3D12_RESOURCE_STATES state_before, D3D12_RESOURCE_STATES state_after);
 };

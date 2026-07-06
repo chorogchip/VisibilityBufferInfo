@@ -5,34 +5,26 @@
 #include "util/Utils.h"
 #include "util/GraphicsUtils.h"
 
+
 namespace rndr {
 
-    using Microsoft::WRL::ComPtr;
+    void RendererForward::render() {
 
-    void RendererForward::render()
-    {
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
-
-        Utils::throw_if_failed(command_list_->Reset(
-            command_allocator_[frame_index_].Get(),
+        Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
             pipeline_state_.Get()), "command list reset on render start");
-
+        
+        this->copy_camera_data();
+        /*
         const UINT timestamp_base = frame_index_ * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
         const UINT timestamp_start_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_START;
         const UINT timestamp_end_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_END;
 
-        command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);
+        // command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);*/
 
-        D3D12_RESOURCE_BARRIER barrier_to_rt{};
-        barrier_to_rt.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier_to_rt.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier_to_rt.Transition.pResource = render_targets_[frame_index_].Get();
-        barrier_to_rt.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-        barrier_to_rt.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier_to_rt.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-        command_list_->ResourceBarrier(1, &barrier_to_rt);
-
+        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        
         D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
             rtv_heap_->GetCPUDescriptorHandleForHeapStart();
         rtv_handle.ptr += static_cast<SIZE_T>(frame_index_) * rtv_descriptor_size_;
@@ -40,22 +32,8 @@ namespace rndr {
         D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
         command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
 
-        D3D12_VIEWPORT viewport{};
-        viewport.TopLeftX = 0.0f;
-        viewport.TopLeftY = 0.0f;
-        viewport.Width = static_cast<float>(width_);
-        viewport.Height = static_cast<float>(height_);
-        viewport.MinDepth = 0.0f;
-        viewport.MaxDepth = 1.0f;
-
-        D3D12_RECT scissor_rect{};
-        scissor_rect.left = 0;
-        scissor_rect.top = 0;
-        scissor_rect.right = static_cast<LONG>(width_);
-        scissor_rect.bottom = static_cast<LONG>(height_);
-
-        command_list_->RSSetViewports(1, &viewport);
-        command_list_->RSSetScissorRects(1, &scissor_rect);
+        command_list_->RSSetViewports(1, &viewport_);
+        command_list_->RSSetScissorRects(1, &scissor_rect_);
 
         const float clear_color[] = { 0.1f, 0.1f, 0.15f, 1.0f };
         command_list_->ClearRenderTargetView(rtv_handle, clear_color, 0, nullptr);
@@ -63,46 +41,39 @@ namespace rndr {
 
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_->GetGPUVirtualAddress());
-        command_list_->SetGraphicsRootShaderResourceView(1, buf_instance_->GetGPUVirtualAddress());
+        command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        command_list_->IASetVertexBuffers(0, 1, &scene_resource_->vertex_buffer_view);
-        command_list_->IASetIndexBuffer(&scene_resource_->index_buffer_view);
+        command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
+        command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
 
         int inst_num = 0;
-        for (const auto& instance : scene_raw_->instances) {
-            const auto& geom_handle = scene_resource_->geometries_handles[instance.geometry_id];
+        for (const auto& obj : scene_cpu_->objects) {
+            const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
+            const auto& material = scene_cpu_->materials[obj.material_index];
 
             command_list_->SetGraphicsRoot32BitConstant(2, inst_num, 0);
 
-            command_list_->DrawIndexedInstanced(geom_handle.index_count, 1,
-                geom_handle.start_index_offset, geom_handle.base_vertex_offset, 0);
+            command_list_->DrawIndexedInstanced(mesh.index_count, 1,
+                mesh.index_start, 0, 0);
 
             ++inst_num;
         }
 
-        D3D12_RESOURCE_BARRIER barrier_to_present{};
-        barrier_to_present.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier_to_present.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier_to_present.Transition.pResource = render_targets_[frame_index_].Get();
-        barrier_to_present.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier_to_present.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-        barrier_to_present.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-        command_list_->ResourceBarrier(1, &barrier_to_present);
-
+        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        /*
         command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_end_index);
         command_list_->ResolveQueryData(
             frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
             timestamp_start_index, GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME,
             frame_time.timestamp_readback_buffer_.Get(), sizeof(UINT64) * timestamp_base);
 
-        frame_time.timestamp_frame_valid_[frame_index_] = true;
+        frame_time.timestamp_frame_valid_[frame_index_] = true;*/
 
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
         ID3D12CommandList* command_lists[] = { command_list_.Get() };
-
         command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
         Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
 
@@ -138,8 +109,8 @@ namespace rndr {
         root_sig_desc.pStaticSamplers = nullptr;
         root_sig_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-        ComPtr<ID3DBlob> signature;
-        ComPtr<ID3DBlob> error;
+        Microsoft::WRL::ComPtr<ID3DBlob> signature;
+        Microsoft::WRL::ComPtr<ID3DBlob> error;
 
         Utils::throw_if_failed(D3D12SerializeRootSignature(
             &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error), "create root signature");
@@ -150,8 +121,8 @@ namespace rndr {
     
     void RendererForward::create_pso()
     {
-        ComPtr<ID3DBlob> vertex_shader;
-        ComPtr<ID3DBlob> pixel_shader;
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
+        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
 
         GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
         GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0");

@@ -5,7 +5,11 @@
 #include "util/Utils.h"
 #include "util/GraphicsUtils.h"
 #include "util/ProgramArgument.h"
-#include "util/SceneAssimpImporter.h"
+
+#include "scene/SceneInfo.h"
+#include "scene/SceneBuilder.h"
+#include "scene/SceneAssimpImporter.h"
+#include "scene/SceneResourceBuilder.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -44,9 +48,20 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
 
     this->create_meshbuffers(arg);
     this->create_constbuffers(arg);
-    this->create_instancebuffers();
 
-    this->create_timestamp_queries();
+    //this->create_timestamp_queries();
+
+    viewport_.TopLeftX = 0.0f;
+    viewport_.TopLeftY = 0.0f;
+    viewport_.Width = static_cast<float>(width_);
+    viewport_.Height = static_cast<float>(height_);
+    viewport_.MinDepth = 0.0f;
+    viewport_.MaxDepth = 1.0f;
+
+    scissor_rect_.left = 0;
+    scissor_rect_.top = 0;
+    scissor_rect_.right = static_cast<LONG>(width_);
+    scissor_rect_.bottom = static_cast<LONG>(height_);
 }
 
 void RendererBase::create_dsv_heap()
@@ -133,142 +148,59 @@ void RendererBase::create_depth_stencil_buffer()
 
 void RendererBase::create_meshbuffers(const ProgramArgument& arg)
 {
-    SceneSynthSphere::SceneInfo gen_info{};
+    scene::SceneInfoSphere gen_info{};
     gen_info.seed = arg.seed;
-    gen_info.sphere_count = arg.sphere_count;
     gen_info.material_count = arg.material_count;
-    gen_info.geometry_count = arg.geometry_count;
+    gen_info.mesh_count = arg.geometry_count;
+    gen_info.sphere_count = arg.sphere_count;
     gen_info.z_min = arg.z_min;
     gen_info.z_max = arg.z_max;
-    gen_info.xy_min = arg.xy_min;
-    gen_info.xy_max = arg.xy_max;
-    gen_info.radius_min = arg.radius_min;
-    gen_info.radius_max = arg.radius_max;
-    gen_info.geometry_division_min = arg.geometry_div_min;
-    gen_info.geometry_division_max = arg.geometry_div_max;
-    gen_info.material_float4_count = arg.gbuffer_cnt;
-
-
-    auto imported_scene = load_imported_scene_with_assimp(
-        std::filesystem::current_path() / "assets/scenes/unpacked/hairball/hairball.obj");
-    scene_resource_ = SceneSynthSphereRuntime::generate(*imported_scene, device_.Get());
-
-    //scene_raw_ = SceneSynthSphere::generate(gen_info);
-    //scene_resource_ = SceneSynthSphereRuntime::generate(*scene_raw_, device_.Get());
+    gen_info.xy_minmax = arg.xy_minmax;
+    gen_info.radius = arg.radius;
+    gen_info.mesh_division = arg.geometry_div;
+    gen_info.gbuffer_resource_count = arg.gbuffer_cnt;
     
-    ComPtr<ID3D12Resource> vb_default, ib_default;
-    GraphicsUtils::create_buffer(vb_default, device_.Get(), scene_resource_->vertex_buffer_size, 1,
-        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
-    GraphicsUtils::create_buffer(ib_default, device_.Get(), scene_resource_->index_buffer_size, 1,
-        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
+    //scene_cpu_ = scene::SceneBuilder::build(gen_info);
+    scene_cpu_ = scene::SceneAssimpImporter::load(std::filesystem::current_path() /
+        "assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx");
 
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
     Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
-    command_list_->CopyBufferRegion(vb_default.Get(), 0,
-        scene_resource_->vertex_buffer.Get(), 0, scene_resource_->vertex_buffer_size);
-    command_list_->CopyBufferRegion(ib_default.Get(), 0,
-        scene_resource_->index_buffer.Get(), 0, scene_resource_->index_buffer_size);
 
-    D3D12_RESOURCE_BARRIER barrier[2]{};
-    barrier[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier[0].Transition.pResource = vb_default.Get();
-    barrier[0].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    barrier[0].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    barrier[0].Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    barrier[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier[1].Transition.pResource = ib_default.Get();
-    barrier[1].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    barrier[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    barrier[1].Transition.StateAfter = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    scene_gpu_ = scene::SceneResourceBuilder::build(*scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps);
 
-    command_list_->ResourceBarrier(2, barrier);
-    Utils::throw_if_failed(command_list_->Close(), "cpy");
-
+    Utils::throw_if_failed(command_list_->Close(), "close list on resource creation");
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-
     fence_.wait_for_gpu();
-
-    using Vertex = decltype(scene_raw_->geometries[0].vertices)::value_type;
-    using Index = decltype(scene_raw_->geometries[0].indices)::value_type;
-
-    scene_resource_->vertex_buffer_view.BufferLocation = vb_default->GetGPUVirtualAddress();
-    scene_resource_->vertex_buffer_view.StrideInBytes = sizeof(Vertex);
-    assert(scene_resource_->vertex_buffer_size < static_cast<size_t>(UINT_MAX));
-    scene_resource_->vertex_buffer_view.SizeInBytes = static_cast<UINT>(scene_resource_->vertex_buffer_size);
-
-    scene_resource_->index_buffer_view.BufferLocation = ib_default->GetGPUVirtualAddress();
-    scene_resource_->index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
-    assert(scene_resource_->index_buffer_size < static_cast<size_t>(UINT_MAX));
-    scene_resource_->index_buffer_view.SizeInBytes = static_cast<UINT>(scene_resource_->index_buffer_size);
-
-    scene_resource_->vertex_buffer = std::move(vb_default);
-    scene_resource_->index_buffer = std::move(ib_default);
-    
 }
 
 void RendererBase::create_constbuffers(const ProgramArgument& arg) {
 
-    const auto vec_eye = DirectX::XMVectorSet(arg.camera_pos_x, arg.camera_pos_y, arg.camera_pos_z, 0.0f);
-    const auto vec_target = DirectX::XMVectorSet(arg.camera_lookat_x, arg.camera_lookat_y, arg.camera_lookat_z, 0.0f);
-    const auto vec_up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    camera_.set_pos(arg.camera_pos_x, arg.camera_pos_y, arg.camera_pos_z);
+    camera_.lookat(arg.camera_lookat_x, arg.camera_lookat_y, arg.camera_lookat_z);
+    camera_.set_fovy_nearz_farz(arg.camera_fov, arg.camera_near_z, arg.camera_far_z);
 
-    const auto mat_v{ DirectX::XMMatrixLookAtLH(vec_eye, vec_target, vec_up) };
-
-    const float fov_y = DirectX::XMConvertToRadians(arg.camera_fov);
-    const float aspect = static_cast<float>(width_) / static_cast<float>(height_);
-    const float near_z = arg.camera_near_z;
-    const float far_z = arg.camera_far_z;
-
-    const auto mat_p{ DirectX::XMMatrixPerspectiveFovLH(fov_y, aspect, near_z, far_z) };
-
-    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_, DirectX::XMMatrixTranspose(mat_v));
-    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_proj_, DirectX::XMMatrixTranspose(mat_p));
+    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_, DirectX::XMMatrixTranspose(
+        camera_.get_mat_view()));
+    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_proj_, DirectX::XMMatrixTranspose(
+        camera_.get_mat_proj(width_, height_)));
 
     constexpr size_t matrix_buf_size_aligned = Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
 
     GraphicsUtils::create_buffer(buf_constant_, device_.Get(), matrix_buf_size_aligned, 1,
         D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-    GraphicsUtils::copy_cpu_to_upload(buf_constant_.Get(), &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
+    
+    buf_constant_mapped_ = GraphicsUtils::get_mapped_address(buf_constant_.Get());
+    this->copy_camera_data();
 }
 
-void RendererBase::create_instancebuffers() {
-
-    ComPtr<ID3D12Resource> buf_instance_upload;
-    const size_t total_sz = scene_resource_->instances_datas.size() * sizeof(scene_resource_->instances_datas[0]);
-    assert(total_sz > 0);
-
-    GraphicsUtils::create_buffer(buf_instance_upload, device_.Get(), total_sz, 1,
-        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-    GraphicsUtils::create_buffer(buf_instance_, device_.Get(), total_sz, 1,
-        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COPY_DEST);
-
-    GraphicsUtils::copy_cpu_to_upload(buf_instance_upload.Get(), scene_resource_->instances_datas.data(), total_sz);
-
-    Utils::throw_if_failed(command_list_->Reset(
-        command_allocator_[frame_index_].Get(),
-        pipeline_state_.Get()), "command list reset on indeg buffer gen");
-    command_list_->CopyBufferRegion(buf_instance_.Get(), 0, buf_instance_upload.Get(), 0, total_sz);
-    
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = buf_instance_.Get();
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-
-    command_list_->ResourceBarrier(1, &barrier);
-    Utils::throw_if_failed(command_list_->Close(), "close instance upload command list");
-
-    ID3D12CommandList* command_lists[] = { command_list_.Get() };
-    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-
-    fence_.wait_for_gpu();
-    buf_instance_upload = nullptr;
+void RendererBase::copy_camera_data() {
+    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_, DirectX::XMMatrixTranspose(
+        camera_.get_mat_view()));
+    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_proj_, DirectX::XMMatrixTranspose(
+        camera_.get_mat_proj(width_, height_)));
+    memcpy(buf_constant_mapped_, &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
 }
 
 void RendererBase::create_timestamp_queries() {

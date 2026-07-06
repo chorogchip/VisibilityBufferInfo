@@ -5,9 +5,9 @@
 #include <cstddef>
 #include <DirectXMath.h>
 
-class MeshGeometry {
+class GenedMesh {
 private:
-	MeshGeometry() = default;
+	GenedMesh() = default;
 
 public:
 
@@ -20,8 +20,8 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	
-	static MeshGeometry generate_triangle();
-	static MeshGeometry generate_sphere(int division);
+	static GenedMesh generate_triangle();
+	static GenedMesh generate_sphere(int division);
 };
 
-static_assert(sizeof(MeshGeometry::Vertex) == sizeof(float) * (3 + 3 + 2), "invalid size");
+static_assert(sizeof(GenedMesh::Vertex) == sizeof(float) * (3 + 3 + 2), "invalid size");

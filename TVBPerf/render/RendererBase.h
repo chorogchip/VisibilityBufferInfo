@@ -12,8 +12,11 @@
 #include "util/GPUFrameTime.h"
 #include "util/FrameCounter.h"
 #include "dx_util/Fence.h"
-#include "scene/SceneSynthSphere.h"
-#include "scene/SceneSynthSphereRuntime.h"
+
+#include "scene/SceneDataCPU.h"
+#include "scene/SceneDataGPU.h"
+
+#include "render/Camera.h"
 
 class RendererBase
 {
@@ -39,13 +42,13 @@ private:
 
     void create_meshbuffers(const ProgramArgument& arg);
     void create_constbuffers(const ProgramArgument& arg);
-    void create_instancebuffers();
 
     void create_timestamp_queries();
 
 protected:
     void move_to_next_frame();
     void read_gpu_timestamp_for_frame(UINT frame_index);
+    void copy_camera_data();
 
 protected:
     HWND hwnd_ = nullptr;
@@ -77,18 +80,21 @@ protected:
     UINT64 fence_values_[FRAME_COUNT]{};
     dxutl::Fence fence_;
 
-    std::unique_ptr<SceneSynthSphere> scene_raw_;
-    std::unique_ptr<SceneSynthSphereRuntime> scene_resource_;
+    std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
+    std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
 
     struct ConstBufMatrices {
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
     } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_;
-
-    ComPtr<ID3D12Resource> buf_instance_;
+    void* buf_constant_mapped_;
 
     GpuFrameTime<FRAME_COUNT> frame_time;
-
     util::FrameCounter frame_counter_;
+    
+    D3D12_VIEWPORT viewport_{};
+    D3D12_RECT scissor_rect_{};
+public:
+    rndr::Camera camera_{};
 };

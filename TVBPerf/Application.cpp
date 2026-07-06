@@ -9,7 +9,14 @@
 #include "util/ArgParser.h"
 #include "render/RendererForward.h"
 
+
+static std::unique_ptr<RendererBase> renderer_;
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+Application::~Application() {
+    renderer_ = nullptr;
+}
 
 void Application::parse_args() {
     std::vector<std::string> args;
@@ -85,11 +92,56 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         return 0;
 
     case WM_KEYDOWN:
+    {
         if (wParam == VK_ESCAPE) {
             PostQuitMessage(0);
             return 0;
         }
+
+        if (!renderer_) {
+            break;
+        }
+
+        constexpr float move_speed = 0.3f;
+        constexpr float turn_speed = 3.0f;
+
+        switch (wParam) {
+        case 'W':
+            renderer_->camera_.move_forward(move_speed);
+            return 0;
+
+        case 'S':
+            renderer_->camera_.move_forward(-move_speed);
+            return 0;
+
+        case 'A':
+            renderer_->camera_.move_right(-move_speed);
+            return 0;
+
+        case 'D':
+            renderer_->camera_.move_right(move_speed);
+            return 0;
+
+        case 'Q':
+            renderer_->camera_.turn(-turn_speed);
+            return 0;
+
+        case 'E':
+            renderer_->camera_.turn(turn_speed);
+            return 0;
+
+        case VK_SPACE:
+            renderer_->camera_.move_pos(0.0f, move_speed, 0.0f);
+            return 0;
+
+        case VK_SHIFT:
+            renderer_->camera_.move_pos(0.0f, -move_speed, 0.0f);
+            return 0;
+        }
+
         break;
+    }
+
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);

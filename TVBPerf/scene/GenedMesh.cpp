@@ -1,11 +1,11 @@
-#include "MeshGeometry.h"
+#include "GenedMesh.h"
 
 #include <cassert>
 #include <cmath>
 #include <DirectXMath.h>
 
-MeshGeometry MeshGeometry::generate_triangle() {
-    MeshGeometry ret{};
+GenedMesh GenedMesh::generate_triangle() {
+    GenedMesh ret{};
 
     ret.vertices = {
         {
@@ -29,11 +29,11 @@ MeshGeometry MeshGeometry::generate_triangle() {
     return ret;
 }
 
-MeshGeometry MeshGeometry::generate_sphere(int division)
+GenedMesh GenedMesh::generate_sphere(int division)
 {
     assert(division > 0);
 
-    MeshGeometry ret{};
+    GenedMesh ret{};
 
     const float inv_division = 1.0f / static_cast<float>(division);
 

@@ -12,6 +12,10 @@ cbuffer DrawCB : register(b1)
 
 struct InstanceData
 {
+    uint object_id;
+    uint material_index;
+    uint mesh_index;
+    uint flags;
     float4x4 World;
 };
 
@@ -42,7 +46,7 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     float4 pos_homo = mul(pos_view, gProj);
     
     output.position = pos_homo;
-    output.color = float4(input.texcoord, 0.0f, 1.0f);
+    output.color = float4(input.normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
         
     return output;
 }

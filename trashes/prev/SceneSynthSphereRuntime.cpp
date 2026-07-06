@@ -61,13 +61,3 @@ std::unique_ptr<SceneSynthSphereRuntime> SceneSynthSphereRuntime::generate(const
 
     return ret;
 }
-
-
-std::unique_ptr<SceneSynthSphereRuntime> SceneSynthSphereRuntime::generate(const ImportedScene& scene, ID3D12Device* p_device) {
-
-    std::unique_ptr<SceneSynthSphereRuntime> ret{ new SceneSynthSphereRuntime() };
-
-
-
-    return ret;
-}
