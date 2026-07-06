@@ -129,7 +129,7 @@ void GraphicsUtils::create_swapchain(HWND hwnd, IDXGIFactory4* p_factory, ID3D12
     Utils::throw_if_failed(swap_chain.As(&swapchain), "swapchain as");
 }
 
-void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT64 height, D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state) {
+void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height, D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state) {
 
     D3D12_HEAP_PROPERTIES heap_props{};
     heap_props.Type = heap_type;

@@ -8,10 +8,10 @@
 #include <cstdint>
 #include <memory>
 
-#include "ProgramArgument.h"
-#include "SceneSynthSphere.h"
-#include "SceneSynthSphereRuntime.h"
-#include "GPUFrameTime.h"
+#include "util/ProgramArgument.h"
+#include "util/GPUFrameTime.h"
+#include "scene/SceneSynthSphere.h"
+#include "scene/SceneSynthSphereRuntime.h"
 
 class RendererBase
 {

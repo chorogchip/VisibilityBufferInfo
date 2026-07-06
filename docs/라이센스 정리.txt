@@ -1,0 +1,110 @@
+Intel: Creative Commons Attribution 라이선스
+
+- Jungle Ruins Scene (JungleRuins)
+- Sponza Base Scene (sponza)
+- Ivy (ivy1)
+- Emissive Candles (10k candles)
+
+원저작자를 표시하면 비교적 자유롭게 사용할 수 있는 라이선스입니다.
+반드시 지켜야 할 조건: 핵심 조건은 Attribution, 즉 저작자 표시입니다.
+
+보통 다음 정보를 함께 표시해야 합니다.
+
+원저작자 또는 제공자 이름
+자료 제목
+출처 링크
+라이선스 이름 및 링크
+수정 여부
+
+예시는 다음과 같습니다.
+“Sample Asset Name” by Creator Name, licensed under CC BY 4.0.
+Modified from original.
+https://creativecommons.org/licenses/by/4.0/
+
+
+
+
+NVIDIA Open Research Content Archive (NVIDIA ORCA)
+
+- Amazon Lumberyard Bistro
+License:
+Creative Commons CC-BY 4.0
+
+  @misc{ORCAAmazonBistro,
+   title = {Amazon Lumberyard Bistro, Open Research Content Archive (ORCA)},
+   author = {Amazon Lumberyard},
+   year = {2017},
+   month = {July},
+   note = {\small \texttt{http://developer.nvidia.com/orca/amazon-lumberyard-bistro}},
+   url = {http://developer.nvidia.com/orca/amazon-lumberyard-bistro}
+}
+
+- NVIDIA Emerald Square City Scene
+License:
+Creative Commons CC BY-NC-SA 3.0
+
+  @misc{ORCANVIDIAEmeraldSquare,
+   title = {NVIDIA Emerald Square, Open Research Content Archive (ORCA)},
+   author = {Nicholas Hull, Kate Anderson and Nir Benty},
+   year = {2017},
+   month = {July},
+   note = {\small \texttt{http://developer.nvidia.com/orca/nvidia-emerald-square}},
+   url = {http://developer.nvidia.com/orca/nvidia-emerald-square }
+}
+
+
+- UE4 Sun Temple
+License:
+Creative Commons CC BY-NC-SA 4.0
+
+  @misc{OrcaUE4SunTemple,
+   title = {Unreal Engine Sun Temple, Open Research Content Archive (ORCA)},
+   author = {Epic Games},
+   year = {2017},
+   month = {October},
+   note = {\small \texttt{http://developer.nvidia.com/orca/epic-games-sun-temple}},
+   url = {http://developer.nvidia.com/orca/epic-games-sun-temple}
+}
+
+
+
+
+
+
+
+McGuire Computer Graphics Archive
+
+
+- Breakfast Room
+License: CC BY 3.0
+
+- Stanford Bunny
+License: Stanford Scan
+
+- Cornell Box
+License: CC BY 3.0
+
+- Hairball
+License: CC BY 3.0
+
+- San Miguel 2.0
+License: CC BY 3.0
+
+
+
+
+
+
+
+
+Assimp
+
+License
+Our license is based on the modified, 3-clause BSD-License.
+
+An informal summary is: do whatever you want, but include Assimp's license text with your product - and don't sue us if our code doesn't work. Note that, unlike LGPLed code, you may link statically to Assimp. For the legal details, see the LICENSE file.
+
+
+
+
+

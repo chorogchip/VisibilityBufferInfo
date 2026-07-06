@@ -1,5 +1,5 @@
 #include "SceneAssimpImporter.h"
-
+/*
 #include <assimp/Importer.hpp>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
@@ -187,3 +187,4 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
     result.scene = std::move(scene);
     return result;
 }
+*/

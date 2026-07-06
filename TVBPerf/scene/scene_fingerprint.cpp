@@ -1,3 +1,5 @@
+/*
+
 #include <assimp/Importer.hpp>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
@@ -623,3 +625,4 @@ int main(int argc, char** argv)
 
     return had_failure ? 1 : 0;
 }
+*/

@@ -5,9 +5,9 @@
 #include <string>
 #include <memory>
 
-#include "Utils.h"
-#include "ArgParser.h"
-#include "RendererBase.h"
+#include "util/Utils.h"
+#include "util/ArgParser.h"
+#include "render/RendererBase.h"
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

@@ -3,8 +3,8 @@
 #include <cassert>
 #include <DirectXMath.h>
 
-#include "Utils.h"
-#include "GraphicsUtils.h"
+#include "util/Utils.h"
+#include "util/GraphicsUtils.h"
 
 std::unique_ptr<SceneSynthSphereRuntime> SceneSynthSphereRuntime::generate(const SceneSynthSphere& scene, ID3D12Device* p_device) {
     std::unique_ptr<SceneSynthSphereRuntime> ret{ new SceneSynthSphereRuntime() };
@@ -28,9 +28,12 @@ std::unique_ptr<SceneSynthSphereRuntime> SceneSynthSphereRuntime::generate(const
 
     for (const auto& geom : scene.geometries) {
         MeshBufferHandle handle{};
-        handle.index_count = geom.indices.size();
-        handle.start_index_offset = index_buffer_cpu.size();
-        handle.base_vertex_offset = vertex_buffer_cpu.size();
+        assert(geom.indices.size() < static_cast<size_t>(UINT_MAX));
+        handle.index_count = static_cast<uint32_t>(geom.indices.size());
+        assert(index_buffer_cpu.size() < static_cast<size_t>(UINT_MAX));
+        handle.start_index_offset = static_cast<uint32_t>(index_buffer_cpu.size());
+        assert(vertex_buffer_cpu.size() < static_cast<size_t>(UINT_MAX));
+        handle.base_vertex_offset = static_cast<uint32_t>(vertex_buffer_cpu.size());
         ret->geometries_handles.push_back(handle);
 
         for (const auto& v : geom.vertices) vertex_buffer_cpu.push_back(v);

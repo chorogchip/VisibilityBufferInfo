@@ -2,11 +2,9 @@
 
 #include <string>
 
-#include "Utils.h"
-#include "GraphicsUtils.h"
-#include "ProgramArgument.h"
-#include "GraphicsUtils.h"
-#include "MeshGeometry.h"
+#include "util/Utils.h"
+#include "util/GraphicsUtils.h"
+#include "util/ProgramArgument.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -187,8 +185,8 @@ void RendererBase::create_pso()
     ComPtr<ID3DBlob> vertex_shader;
     ComPtr<ID3DBlob> pixel_shader;
 
-    GraphicsUtils::compile_shader(&vertex_shader, L"forward_VS.hlsl", "vs_5_0");
-    GraphicsUtils::compile_shader(&pixel_shader, L"forward_PS.hlsl", "ps_5_0");
+    GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
+    GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0");
 
     D3D12_INPUT_ELEMENT_DESC input_layout[] =
     {
@@ -329,11 +327,13 @@ void RendererBase::create_meshbuffers(const ProgramArgument& arg)
 
     scene_resource_->vertex_buffer_view.BufferLocation = vb_default->GetGPUVirtualAddress();
     scene_resource_->vertex_buffer_view.StrideInBytes = sizeof(Vertex);
-    scene_resource_->vertex_buffer_view.SizeInBytes = scene_resource_->vertex_buffer_size;
+    assert(scene_resource_->vertex_buffer_size < static_cast<size_t>(UINT_MAX));
+    scene_resource_->vertex_buffer_view.SizeInBytes = static_cast<UINT>(scene_resource_->vertex_buffer_size);
 
     scene_resource_->index_buffer_view.BufferLocation = ib_default->GetGPUVirtualAddress();
     scene_resource_->index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
-    scene_resource_->index_buffer_view.SizeInBytes = scene_resource_->index_buffer_size;
+    assert(scene_resource_->index_buffer_size < static_cast<size_t>(UINT_MAX));
+    scene_resource_->index_buffer_view.SizeInBytes = static_cast<UINT>(scene_resource_->index_buffer_size);
 
     scene_resource_->vertex_buffer = std::move(vb_default);
     scene_resource_->index_buffer = std::move(ib_default);

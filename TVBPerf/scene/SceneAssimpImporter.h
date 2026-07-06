@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ImportedScene.h"
+#include "scene/ImportedScene.h"
 
 #include <filesystem>
 

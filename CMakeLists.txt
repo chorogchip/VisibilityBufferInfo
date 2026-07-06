@@ -1,0 +1,180 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(TVBPerf LANGUAGES CXX RC)
+
+# C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Visual Studio 폴더 정리용
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# 경로
+set(TVBPERF_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TVBPerf)
+set(TVBPERF_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
+
+# ------------------------------------------------------------
+# 소스 자동 수집
+# ------------------------------------------------------------
+file(GLOB_RECURSE TVBPERF_CPP_FILES
+    CONFIGURE_DEPENDS
+    ${TVBPERF_SRC_DIR}/*.cpp
+)
+
+file(GLOB_RECURSE TVBPERF_HEADER_FILES
+    CONFIGURE_DEPENDS
+    ${TVBPERF_SRC_DIR}/*.h
+    ${TVBPERF_SRC_DIR}/*.hpp
+)
+
+# RC 파일 자동 수집
+file(GLOB_RECURSE TVBPERF_RC_FILES
+    CONFIGURE_DEPENDS
+    ${TVBPERF_SRC_DIR}/*.rc
+)
+
+# 셰이더 자동 수집
+# 런타임 컴파일용이므로 빌드하지 않고 프로젝트에만 표시
+file(GLOB_RECURSE TVBPERF_SHADER_FILES
+    CONFIGURE_DEPENDS
+    ${TVBPERF_SHADER_DIR}/*.hlsl
+    ${TVBPERF_SHADER_DIR}/*.hlsli
+    ${TVBPERF_SHADER_DIR}/*.fx
+    ${TVBPERF_SHADER_DIR}/*.vs
+    ${TVBPERF_SHADER_DIR}/*.ps
+    ${TVBPERF_SHADER_DIR}/*.cs
+)
+
+# 실행 파일
+add_executable(TVBPerf WIN32
+    ${TVBPERF_CPP_FILES}
+    ${TVBPERF_HEADER_FILES}
+    ${TVBPERF_RC_FILES}
+    ${TVBPERF_SHADER_FILES}
+)
+
+target_compile_features(TVBPerf PRIVATE cxx_std_17)
+
+# include 경로
+target_include_directories(TVBPerf
+    PRIVATE
+        ${TVBPERF_SRC_DIR}
+)
+
+# 전처리기 정의
+target_compile_definitions(TVBPerf
+    PRIVATE
+        _CONSOLE
+        UNICODE
+        _UNICODE
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<CONFIG:Release>:NDEBUG>
+        $<$<AND:$<PLATFORM_ID:Windows>,$<EQUAL:${CMAKE_SIZEOF_VOID_P},4>>:WIN32>
+)
+
+# MSVC 컴파일 옵션
+if(MSVC)
+    target_compile_options(TVBPerf
+        PRIVATE
+            /W3
+            /sdl
+            /permissive-
+            $<$<CONFIG:Release>:/Gy>
+            $<$<CONFIG:Release>:/Oi>
+    )
+
+    # Debug=/MDd, Release=/MD
+    set_property(TARGET TVBPerf PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+    )
+
+    # Release Whole Program Optimization
+    set_property(TARGET TVBPerf PROPERTY
+        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+    )
+endif()
+
+# 링크 라이브러리
+target_link_libraries(TVBPerf
+    PRIVATE
+        d3d12
+        dxgi
+        d3dcompiler
+        user32
+        gdi32
+        kernel32
+        Shell32
+)
+
+# 링커 옵션
+if(MSVC)
+    target_link_options(TVBPerf
+        PRIVATE
+            /SUBSYSTEM:WINDOWS
+            /DEBUG
+            $<$<CONFIG:Debug>:/INCREMENTAL>
+            $<$<CONFIG:Release>:/INCREMENTAL:NO>
+            $<$<CONFIG:Release>:/OPT:REF>
+            $<$<CONFIG:Release>:/OPT:ICF>
+    )
+endif()
+
+# ------------------------------------------------------------
+# 셰이더는 직접 컴파일하지 않음
+# Visual Studio에서도 빌드 도구로 처리하지 않도록 설정
+# ------------------------------------------------------------
+if(TVBPERF_SHADER_FILES)
+    set_source_files_properties(
+        ${TVBPERF_SHADER_FILES}
+        PROPERTIES
+            VS_TOOL_OVERRIDE "None"
+            HEADER_FILE_ONLY TRUE
+    )
+endif()
+
+# ------------------------------------------------------------
+# 빌드 결과물에 assets/shaders만 복사
+# 전체 assets 복사 금지
+# ------------------------------------------------------------
+add_custom_command(
+    TARGET TVBPerf
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:TVBPerf>/assets/shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${TVBPERF_SHADER_DIR}"
+        "$<TARGET_FILE_DIR:TVBPerf>/assets/shaders"
+    COMMENT "Copying assets/shaders to output directory"
+)
+
+# 작업 디렉터리 설정
+# 실행 시 결과물 기준으로 assets/shaders를 접근하려면 exe 폴더를 working directory로 둠
+set_property(TARGET TVBPerf PROPERTY
+    VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:TVBPerf>"
+)
+
+# 출력 디렉터리
+set_target_properties(TVBPerf PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# ------------------------------------------------------------
+# Visual Studio 솔루션 탐색기 필터 정리
+# ------------------------------------------------------------
+source_group(TREE ${TVBPERF_SRC_DIR}
+    PREFIX "Source"
+    FILES
+        ${TVBPERF_CPP_FILES}
+        ${TVBPERF_HEADER_FILES}
+        ${TVBPERF_RC_FILES}
+)
+
+if(TVBPERF_SHADER_FILES)
+    source_group(TREE ${TVBPERF_SHADER_DIR}
+        PREFIX "Shader Files"
+        FILES
+            ${TVBPERF_SHADER_FILES}
+    )
+endif()

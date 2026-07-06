@@ -7,7 +7,7 @@
 #include <wrl.h>
 #include <DirectXMath.h>
 
-#include "SceneSynthSphere.h"
+#include "scene/SceneSynthSphere.h"
 
 class SceneSynthSphereRuntime
 {
@@ -29,12 +29,12 @@ public:
 	std::vector<MeshBufferHandle> geometries_handles;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> vertex_buffer;
-	size_t vertex_buffer_size;
+	size_t vertex_buffer_size{};
 	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> index_buffer;
 	D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
-	size_t index_buffer_size;
+	size_t index_buffer_size{};
 
 	static std::unique_ptr<SceneSynthSphereRuntime> generate(const SceneSynthSphere& scene, ID3D12Device* p_device);
 };

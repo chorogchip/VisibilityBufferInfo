@@ -4,8 +4,8 @@
 #include <memory>
 #include <DirectXMath.h>
 
-#include "Materials.h"
-#include "MeshGeometry.h"
+#include "scene/Materials.h"
+#include "scene/Meshgeometry.h"
 
 class SceneSynthSphere
 {
