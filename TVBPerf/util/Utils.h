@@ -12,6 +12,10 @@ public:
         }
     }
 
+    static void throw_win32_lasterr(const char* message) {
+        Utils::throw_if_failed(HRESULT_FROM_WIN32(GetLastError()), message);
+    }
+
     template<typename T>
     static constexpr T GetAlignedAddress(T address, T alignment) {
         return (address + (alignment - 1)) & ~(alignment - 1);

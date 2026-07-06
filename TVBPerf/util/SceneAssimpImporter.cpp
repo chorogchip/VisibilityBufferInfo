@@ -1,18 +1,16 @@
 #include "SceneAssimpImporter.h"
-/*
-#include <assimp/Importer.hpp>
-#include <assimp/material.h>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
 
 #include <algorithm>
 #include <array>
 #include <cfloat>
 #include <utility>
 
-namespace
-{
-DirectX::XMFLOAT4 fallback_color(uint32_t material_index)
+#include <assimp/Importer.hpp>
+#include <assimp/material.h>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+
+static DirectX::XMFLOAT4 fallback_color(uint32_t material_index)
 {
     static constexpr std::array<DirectX::XMFLOAT4, 8> colors = {
         DirectX::XMFLOAT4{0.80f, 0.22f, 0.18f, 1.0f},
@@ -28,8 +26,7 @@ DirectX::XMFLOAT4 fallback_color(uint32_t material_index)
     return colors[material_index % colors.size()];
 }
 
-DirectX::XMFLOAT4 read_material_color(const aiMaterial* material, uint32_t material_index)
-{
+static DirectX::XMFLOAT4 read_material_color(const aiMaterial* material, uint32_t material_index) {
     if (material == nullptr) {
         return fallback_color(material_index);
     }
@@ -43,10 +40,10 @@ DirectX::XMFLOAT4 read_material_color(const aiMaterial* material, uint32_t mater
     return fallback_color(material_index);
 }
 
-void append_texture_paths(
+static void append_texture_paths(
     const aiMaterial* material,
     aiTextureType type,
-    ImportedSceneMaterial& imported_material)
+    ImportedScene::ImportedSceneMaterial & imported_material)
 {
     if (material == nullptr) {
         return;
@@ -61,8 +58,7 @@ void append_texture_paths(
     }
 }
 
-void include_bounds(ImportedScene& scene, const DirectX::XMFLOAT3& position)
-{
+static void include_bounds(ImportedScene& scene, const DirectX::XMFLOAT3& position) {
     scene.bounds_min.x = std::min(scene.bounds_min.x, position.x);
     scene.bounds_min.y = std::min(scene.bounds_min.y, position.y);
     scene.bounds_min.z = std::min(scene.bounds_min.z, position.z);
@@ -70,11 +66,9 @@ void include_bounds(ImportedScene& scene, const DirectX::XMFLOAT3& position)
     scene.bounds_max.y = std::max(scene.bounds_max.y, position.y);
     scene.bounds_max.z = std::max(scene.bounds_max.z, position.z);
 }
-}
 
-ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::path& path)
-{
-    ImportedSceneLoadResult result;
+std::unique_ptr<ImportedSceneLoadResult> load_imported_scene_with_assimp(const std::filesystem::path& path) {
+    std::unique_ptr<ImportedSceneLoadResult>result{ new ImportedSceneLoadResult{} };
 
     Assimp::Importer importer;
     const unsigned int flags =
@@ -88,9 +82,9 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
 
     const aiScene* assimp_scene = importer.ReadFile(path.string(), flags);
     if (assimp_scene == nullptr || assimp_scene->mNumMeshes == 0) {
-        result.message = importer.GetErrorString();
-        if (result.message.empty()) {
-            result.message = "Assimp returned no meshes.";
+        result->message = importer.GetErrorString();
+        if (result->message.empty()) {
+            result->message = "Assimp returned no meshes.";
         }
         return result;
     }
@@ -103,7 +97,7 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
     scene.materials.reserve(assimp_scene->mNumMaterials);
     for (uint32_t material_index = 0; material_index < assimp_scene->mNumMaterials; ++material_index) {
         const aiMaterial* material = assimp_scene->mMaterials[material_index];
-        ImportedSceneMaterial imported_material;
+        ImportedScene::ImportedSceneMaterial imported_material;
         imported_material.base_color = read_material_color(material, material_index);
 
         if (material != nullptr) {
@@ -131,7 +125,7 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
             continue;
         }
 
-        ImportedSceneMesh imported_mesh;
+        ImportedScene::ImportedSceneMesh imported_mesh;
         imported_mesh.name = mesh->mName.C_Str();
         imported_mesh.vertex_start = static_cast<uint32_t>(scene.vertices.size());
         imported_mesh.index_start = static_cast<uint32_t>(scene.indices.size());
@@ -149,7 +143,7 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
             const aiVector3D uv =
                 mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vertex_index] : aiVector3D(0.0f, 0.0f, 0.0f);
 
-            ImportedSceneVertex vertex;
+            ImportedScene::ImportedSceneVertex vertex;
             vertex.position = {position.x, position.y, position.z};
             vertex.normal = {normal.x, normal.y, normal.z};
             vertex.uv = {uv.x, uv.y};
@@ -178,13 +172,20 @@ ImportedSceneLoadResult load_imported_scene_with_assimp(const std::filesystem::p
     }
 
     if (scene.vertices.empty() || scene.indices.empty() || scene.meshes.empty()) {
-        result.message = "Imported scene had no triangle meshes after filtering.";
+        result->message = "Imported scene had no triangle meshes after filtering.";
         return result;
     }
 
-    result.loaded = true;
-    result.message = "ok";
-    result.scene = std::move(scene);
+    result->loaded = true;
+    result->message = "ok";
+    result->scene = std::move(scene);
     return result;
 }
-*/
+
+std::unique_ptr<SceneSynthSphere> scene_loaded_scene_to_cpu_scene(const ImportedSceneLoadResult& src) {
+    std::unique_ptr<SceneSynthSphere> ret{ new SceneSynthSphere {} };
+
+    
+
+    return ret;
+}

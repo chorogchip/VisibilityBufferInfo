@@ -14,6 +14,33 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(TVBPERF_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TVBPerf)
 set(TVBPERF_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
+set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
+set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
+
+# 빌드 옵션
+# ------------------------------------------------------------
+# Assimp
+# ------------------------------------------------------------
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
+# Exporter 필요 없으면 OFF
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+
+# static library
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${TVBPERF_ASSIMP_DIR})
+set_target_properties(assimp PROPERTIES FOLDER "External/assimp")
+if(TARGET zlibstatic)
+    set_target_properties(zlibstatic PROPERTIES FOLDER "External/assimp")
+endif()
+
+if(TARGET UpdateAssimpLibsDebugSymbolsAndDLLs)
+    set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "External/assimp")
+endif()
 
 # ------------------------------------------------------------
 # 소스 자동 수집
@@ -61,6 +88,7 @@ target_compile_features(TVBPerf PRIVATE cxx_std_17)
 target_include_directories(TVBPerf
     PRIVATE
         ${TVBPERF_SRC_DIR}
+        ${TVBPERF_ASSIMP_DIR}/include
 )
 
 # 전처리기 정의
@@ -99,6 +127,7 @@ endif()
 # 링크 라이브러리
 target_link_libraries(TVBPerf
     PRIVATE
+        assimp
         d3d12
         dxgi
         d3dcompiler

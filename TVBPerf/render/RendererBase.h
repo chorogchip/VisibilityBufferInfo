@@ -10,6 +10,8 @@
 
 #include "util/ProgramArgument.h"
 #include "util/GPUFrameTime.h"
+#include "util/FrameCounter.h"
+#include "dx_util/Fence.h"
 #include "scene/SceneSynthSphere.h"
 #include "scene/SceneSynthSphereRuntime.h"
 
@@ -24,7 +26,7 @@ public:
     ~RendererBase();
     void init(HWND hwnd, const ProgramArgument&);
     void render();
-    bool to_terminate() const { return to_terminate_; }
+    bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 private:
     void create_dsv_heap();
@@ -40,7 +42,6 @@ private:
 
     void create_timestamp_queries();
 
-    void wait_for_gpu();
     void move_to_next_frame();
     void read_gpu_timestamp_for_frame(UINT frame_index);
 
@@ -48,11 +49,6 @@ private:
     HWND hwnd_ = nullptr;
     uint32_t width_ = 0;
     uint32_t height_ = 0;
-
-    bool to_terminate_;
-    size_t frame_count_;
-    size_t frame_warmup_count_;
-    size_t frame_measure_count_;
 
     ComPtr<IDXGIFactory4> factory_;
     ComPtr<ID3D12Device> device_;
@@ -76,9 +72,8 @@ private:
     ComPtr<ID3D12RootSignature> root_signature_;
     ComPtr<ID3D12PipelineState> pipeline_state_;
 
-    ComPtr<ID3D12Fence> fence_;
     UINT64 fence_values_[FRAME_COUNT]{};
-    HANDLE fence_event_ = nullptr;
+    dxutl::Fence fence_;
 
     std::unique_ptr<SceneSynthSphere> scene_raw_;
     std::unique_ptr<SceneSynthSphereRuntime> scene_resource_;
@@ -93,5 +88,5 @@ private:
 
     GpuFrameTime<FRAME_COUNT> frame_time;
 
-
+    util::FrameCounter frame_counter_;
 };

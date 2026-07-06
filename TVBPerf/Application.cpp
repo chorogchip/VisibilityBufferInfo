@@ -11,8 +11,6 @@
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static std::unique_ptr<RendererBase> gp_renderer;
-
 void Application::parse_args() {
     std::vector<std::string> args;
 
@@ -22,13 +20,14 @@ void Application::parse_args() {
     for (int i = 1; i < argc; ++i)
         args.push_back(Utils::wstring_to_string(argv[i]));
 
-    program_argument = ArgParser::parse(args);
+    program_argument_ = ArgParser::parse(args);
 }
 
-void Application::init(HINSTANCE h_instance, int n_show_cmd) {
-    
-    const uint32_t width = program_argument.window_width;
-    const uint32_t height = program_argument.window_height;
+void Application::run(HINSTANCE h_instance, int n_show_cmd) {
+    parse_args();
+
+    const uint32_t width = program_argument_.window_width;
+    const uint32_t height = program_argument_.window_height;
 
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
@@ -60,32 +59,25 @@ void Application::init(HINSTANCE h_instance, int n_show_cmd) {
     ShowWindow(hwnd, n_show_cmd);
     UpdateWindow(hwnd);
 
-    gp_renderer = std::unique_ptr<RendererBase>(new RendererBase{});
-    gp_renderer->init(hwnd, program_argument);
-}
+    renderer_ = std::unique_ptr<RendererBase>(new RendererBase{});
+    renderer_->init(hwnd, program_argument_);
 
-void Application::run() {
     MSG msg{};
 
     while (msg.message != WM_QUIT) {
-        if (gp_renderer->to_terminate()) {
+        if (renderer_->to_terminate()) {
             PostQuitMessage(0);
             break;
         }  else if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         } else {
-            gp_renderer->render();
+            renderer_->render();
         }
     }
 }
 
-void Application::close() {
-    gp_renderer = nullptr;
-    return;
-}
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
 
     case WM_DESTROY:

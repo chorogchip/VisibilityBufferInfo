@@ -9,11 +9,8 @@
 using Microsoft::WRL::ComPtr;
 
 RendererBase::~RendererBase() {
-    if (command_queue_ && fence_ && fence_event_)
-        wait_for_gpu();
-
-    if (fence_event_)
-        CloseHandle(fence_event_);
+    if (command_queue_ && fence_)
+        fence_.wait_for_gpu();
 }
 
 void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
@@ -22,10 +19,10 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     width_ = arg.window_width;
     height_ = arg.window_height;
 
-    to_terminate_ = false;
-    frame_count_ = 0;
-    frame_warmup_count_ = arg.warmup_frames;
-    frame_measure_count_ = arg.measure_frames;
+    frame_counter_.init(
+        arg.warmup_frames,
+        arg.warmup_frames + arg.measure_frames,
+        arg.warmup_frames + arg.measure_frames + 60);
 
     GraphicsUtils::create_device(factory_, device_);
 
@@ -41,15 +38,8 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_root_signature();
     this->create_pso();
 
-    Utils::throw_if_failed(device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_)), "create fence");
-
+    fence_.init(device_.Get(), command_queue_.Get());
     fence_values_[frame_index_] = 1;
-
-    fence_event_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (!fence_event_)
-    {
-        throw std::runtime_error("CreateEvent failed");
-    }
 
     this->create_meshbuffers(arg);
     this->create_constbuffers(arg);
@@ -320,7 +310,7 @@ void RendererBase::create_meshbuffers(const ProgramArgument& arg)
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
 
-    wait_for_gpu();
+    fence_.wait_for_gpu();
 
     using Vertex = decltype(scene_raw_->geometries[0].vertices)::value_type;
     using Index = decltype(scene_raw_->geometries[0].indices)::value_type;
@@ -399,7 +389,7 @@ void RendererBase::create_instancebuffers() {
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
 
-    wait_for_gpu();
+    fence_.wait_for_gpu();
     buf_instance_upload = nullptr;
 }
 
@@ -523,58 +513,22 @@ void RendererBase::render()
 
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
     Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
-    move_to_next_frame();
+        
+    this->move_to_next_frame();
 }
-
-
 
 void RendererBase::move_to_next_frame()
 {
-    const UINT64 current_fence_value = fence_values_[frame_index_];
-
-    Utils::throw_if_failed(command_queue_->Signal(
-        fence_.Get(),
-        current_fence_value), "command queue signal waiting next frame");
-
+    const UINT finished_frame_index = frame_index_;
+    fence_values_[finished_frame_index] = fence_.signal();
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
+    fence_.wait_for_value(fence_values_[frame_index_]);
 
-    if (fence_->GetCompletedValue() < fence_values_[frame_index_])
-    {
-        Utils::throw_if_failed(fence_->SetEventOnCompletion(
-            fence_values_[frame_index_],
-            fence_event_), "command queue set event on complete waiting next frame");
+    //read_gpu_timestamp_for_frame(finished_frame_index);
+    //const double gpu_ms = frame_time.gpu_frame_ms_[finished_frame_index]; // TODO
 
-        WaitForSingleObject(fence_event_, INFINITE);
-    }
-
-    read_gpu_timestamp_for_frame(frame_index_);
-
-    const double gpu_ms = frame_time.gpu_frame_ms_[frame_index_]; // TODO
-
-    fence_values_[frame_index_] = current_fence_value + 1;
-
-    frame_count_++;
-
-    if (frame_count_ >= frame_warmup_count_ + frame_measure_count_ + 10)
-        to_terminate_ = true;
+    frame_counter_.tick(static_cast<float>(0.0f));
 }
-
-void RendererBase::wait_for_gpu()
-{
-    Utils::throw_if_failed(command_queue_->Signal(
-        fence_.Get(),
-        fence_values_[frame_index_]), "command queue signal waiting gpu");
-
-    Utils::throw_if_failed(fence_->SetEventOnCompletion(
-        fence_values_[frame_index_],
-        fence_event_), "command queue set event on complete waiting gpu");
-
-    WaitForSingleObjectEx(fence_event_, INFINITE, FALSE);
-
-    fence_values_[frame_index_]++;
-}
-
-
 
 void RendererBase::read_gpu_timestamp_for_frame(UINT frame_index)
 {
