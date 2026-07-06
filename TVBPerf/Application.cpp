@@ -7,7 +7,7 @@
 
 #include "util/Utils.h"
 #include "util/ArgParser.h"
-#include "render/RendererBase.h"
+#include "render/RendererForward.h"
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -59,7 +59,7 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
     ShowWindow(hwnd, n_show_cmd);
     UpdateWindow(hwnd);
 
-    renderer_ = std::unique_ptr<RendererBase>(new RendererBase{});
+    renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForward{});
     renderer_->init(hwnd, program_argument_);
 
     MSG msg{};

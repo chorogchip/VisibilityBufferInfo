@@ -8,6 +8,7 @@
 #include <DirectXMath.h>
 
 #include "scene/SceneSynthSphere.h"
+#include "scene/ImportedScene.h"
 
 class SceneSynthSphereRuntime
 {
@@ -37,5 +38,6 @@ public:
 	size_t index_buffer_size{};
 
 	static std::unique_ptr<SceneSynthSphereRuntime> generate(const SceneSynthSphere& scene, ID3D12Device* p_device);
+	static std::unique_ptr<SceneSynthSphereRuntime> generate(const ImportedScene& scene, ID3D12Device* p_device);
 };
 

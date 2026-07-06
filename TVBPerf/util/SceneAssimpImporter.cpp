@@ -182,10 +182,18 @@ std::unique_ptr<ImportedSceneLoadResult> load_imported_scene_with_assimp(const s
     return result;
 }
 
-std::unique_ptr<SceneSynthSphere> scene_loaded_scene_to_cpu_scene(const ImportedSceneLoadResult& src) {
-    std::unique_ptr<SceneSynthSphere> ret{ new SceneSynthSphere {} };
+std::unique_ptr<SceneSynthSphereRuntime> scene_loaded_scene_to_cpu_scene(const ImportedSceneLoadResult& src) {
+    std::unique_ptr<SceneSynthSphereRuntime> ret{ new SceneSynthSphereRuntime {} };
 
+    // TOOD 이걸 3시간만에 만들수있을까?
     
+    for (const auto& vert : src.scene.vertices) {
+        ret->vertex_buffer;
+    }
+
+    for (const auto& mesh : src.scene.meshes) {
+        mesh;
+    }
 
     return ret;
 }

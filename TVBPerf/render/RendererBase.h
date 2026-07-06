@@ -23,9 +23,9 @@ class RendererBase
 public:
     static constexpr UINT FRAME_COUNT = 2;
 
-    ~RendererBase();
+    virtual ~RendererBase();
     void init(HWND hwnd, const ProgramArgument&);
-    void render();
+    virtual void render() = 0;
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 private:
@@ -34,18 +34,20 @@ private:
     void create_render_targets();
     void create_depth_stencil_buffer();
 
-    void create_root_signature();
-    void create_pso();
+    virtual void create_root_signature() = 0;
+    virtual void create_pso() = 0;
+
     void create_meshbuffers(const ProgramArgument& arg);
     void create_constbuffers(const ProgramArgument& arg);
     void create_instancebuffers();
 
     void create_timestamp_queries();
 
+protected:
     void move_to_next_frame();
     void read_gpu_timestamp_for_frame(UINT frame_index);
 
-private:
+protected:
     HWND hwnd_ = nullptr;
     uint32_t width_ = 0;
     uint32_t height_ = 0;
