@@ -8,7 +8,8 @@
 #include "util/Utils.h"
 #include "util/ArgParser.h"
 #include "render/RendererForward.h"
-
+#include "render/RendererForwardPrepass.h"
+#include "render/RendererDeferred.h"
 
 static std::unique_ptr<RendererBase> renderer_;
 
@@ -66,7 +67,17 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
     ShowWindow(hwnd, n_show_cmd);
     UpdateWindow(hwnd);
 
-    renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForward{});
+    switch (program_argument_.renderer_variant) {
+    case 0: default:
+        renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForward{});
+        break;
+    case 1:
+        renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForwardPrePass{});
+        break;
+    case 2:
+        renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererDeferred{});
+    }
+    
     renderer_->init(hwnd, program_argument_);
 
     MSG msg{};

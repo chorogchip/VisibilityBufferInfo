@@ -11,6 +11,7 @@
 #include "util/ProgramArgument.h"
 #include "util/GPUFrameTime.h"
 #include "util/FrameCounter.h"
+#include "util/ProgramArgument.h"
 #include "dx_util/Fence.h"
 
 #include "scene/SceneDataCPU.h"
@@ -35,6 +36,7 @@ protected:
     virtual void init_() = 0;
     virtual void render_() = 0;
 
+    void copy_camera_data();
 private:
     void create_device();
     void create_command_objects();
@@ -44,15 +46,16 @@ private:
     virtual void create_depth_stencil_buffer() = 0;
     virtual void create_rtv_heap() = 0;
     virtual void create_render_targets() = 0;
+    virtual void create_srv_heap();
+    virtual void create_shader_resources();
 
     virtual void create_root_signature() = 0;
     virtual void create_pso() = 0;
 
     void init_viewport_scissorrect();
-    void create_meshbuffers(const ProgramArgument& arg);
-    void create_constbuffers(const ProgramArgument& arg);
+    void create_meshbuffers();
+    void create_constbuffers();
 
-    void copy_camera_data();
     void move_to_next_frame();
     void create_timestamp_queries();
     void read_gpu_timestamp_for_frame(UINT frame_index);
@@ -105,6 +108,8 @@ protected:
     util::FrameCounter frame_counter_;
 
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+
+    std::unique_ptr<const ProgramArgument> program_arguments_;
     
 public:
     rndr::Camera camera_{};

@@ -11,9 +11,12 @@ using Microsoft::WRL::ComPtr;
 class GraphicsUtils {
 	
 public:
-	static void compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR shader_model);
+	static void compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR shader_model, D3D_SHADER_MACRO* defines = nullptr);
 
-	static void create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height, D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state);
+	static void create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height,
+		D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, D3D12_CLEAR_VALUE* clear_value = nullptr);
 	
 	static void copy_cpu_to_upload(ID3D12Resource* dest, const void* src, size_t sz);
 	static void* get_mapped_address(ID3D12Resource* dest);

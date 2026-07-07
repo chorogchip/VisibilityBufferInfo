@@ -9,7 +9,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-void GraphicsUtils::compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR shader_model) {
+void GraphicsUtils::compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR shader_model, D3D_SHADER_MACRO* defines) {
     Microsoft::WRL::ComPtr<ID3DBlob> error_blob;
 
     UINT compileFlags = 0;
@@ -19,7 +19,7 @@ void GraphicsUtils::compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR 
 #endif
 
     HRESULT hr = D3DCompileFromFile(
-        filename, nullptr, nullptr, "main", shader_model,
+        filename, defines, nullptr, "main", shader_model,
         compileFlags, 0, pp_blob, &error_blob
     );
 
@@ -33,7 +33,9 @@ void GraphicsUtils::compile_shader(ID3DBlob** pp_blob, LPCWSTR filename, LPCSTR 
     }
 }
 
-void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height, D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state) {
+void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* p_device, UINT64 width, UINT height,
+    D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_STATES state,
+    D3D12_RESOURCE_FLAGS flags, DXGI_FORMAT format, D3D12_CLEAR_VALUE* clear_value) {
 
     D3D12_HEAP_PROPERTIES heap_props{};
     heap_props.Type = heap_type;
@@ -43,24 +45,24 @@ void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* 
     heap_props.VisibleNodeMask = 1;
 
     D3D12_RESOURCE_DESC resource_desc{};
-    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    resource_desc.Dimension = height == 1 ? D3D12_RESOURCE_DIMENSION_BUFFER : D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     resource_desc.Alignment = 0;
     resource_desc.Width = width;
     resource_desc.Height = height;
     resource_desc.DepthOrArraySize = 1;
     resource_desc.MipLevels = 1;
-    resource_desc.Format = DXGI_FORMAT_UNKNOWN;
+    resource_desc.Format = format;
     resource_desc.SampleDesc.Count = 1;
     resource_desc.SampleDesc.Quality = 0;
-    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    resource_desc.Layout = height == 1 ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR : D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    resource_desc.Flags = flags;
 
     Utils::throw_if_failed(p_device->CreateCommittedResource(
         &heap_props,
         D3D12_HEAP_FLAG_NONE,
         &resource_desc,
         state,
-        nullptr,
+        clear_value,
         IID_PPV_ARGS(&buffer)), "create buffer");
 }
 

@@ -1,4 +1,4 @@
-#include "render/RendererForward.h"
+#include "render/RendererForwardPrePass.h"
 
 #include <d3d12.h>
 
@@ -8,15 +8,15 @@
 
 namespace rndr {
 
-    void RendererForward::init_() {
+    void RendererForwardPrePass::init_() {
 
     }
 
-    void RendererForward::render_() {
+    void RendererForwardPrePass::render_() {
 
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
         Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
-            pipeline_state_.Get()), "command list reset on render start");
+            pso_depth_prepass_.Get()), "command list reset on render start");
 
         this->copy_camera_data();
 
@@ -27,20 +27,17 @@ namespace rndr {
 
         // command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);*/
 
+
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
-            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-        rtv_handle.ptr += static_cast<SIZE_T>(frame_index_) * rtv_descriptor_size_;
-        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
-        command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
+
+        GraphicsUtils::record_transition(command_list_.Get(), depth_stencil_buffer_.Get(),
+            D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         command_list_->RSSetViewports(1, &viewport_);
         command_list_->RSSetScissorRects(1, &scissor_rect_);
 
-        command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
-        command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+        // depth pre-pass
 
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
@@ -49,6 +46,47 @@ namespace rndr {
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
         command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
+
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
+        command_list_->OMSetRenderTargets(0, nullptr, FALSE, &dsv_handle);
+
+        command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+        for (const auto& obj : scene_cpu_->objects) {
+            const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
+            const auto& material = scene_cpu_->materials[obj.material_index];
+
+            command_list_->SetGraphicsRoot32BitConstant(2, obj.object_id, 0);
+
+            command_list_->DrawIndexedInstanced(mesh.index_count, 1,
+                mesh.index_start, 0, 0);
+        }
+
+        // forward pass
+
+        command_list_->SetPipelineState(pipeline_state_.Get());
+        command_list_->SetGraphicsRootSignature(root_signature_.Get());
+        command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
+        command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
+
+        command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
+        command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
+
+        GraphicsUtils::record_transition(command_list_.Get(), depth_stencil_buffer_.Get(),
+            D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
+
+
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
+            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
+        rtv_handle.ptr += static_cast<SIZE_T>(frame_index_) * rtv_descriptor_size_;
+
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle_readonly = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
+        dsv_handle_readonly.ptr += dsv_descriptor_size_;
+
+        command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle_readonly);
+
+        command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
 
         for (const auto& obj : scene_cpu_->objects) {
             const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
@@ -77,13 +115,14 @@ namespace rndr {
         ID3D12CommandList* command_lists[] = { command_list_.Get() };
         command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
         Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
+
     }
 
 
-    void RendererForward::create_dsv_heap() {
+    void RendererForwardPrePass::create_dsv_heap() {
 
         D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
-        dsv_heap_desc.NumDescriptors = 1;
+        dsv_heap_desc.NumDescriptors = 2;
         dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
         dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -95,7 +134,7 @@ namespace rndr {
             device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
-    void RendererForward::create_depth_stencil_buffer() {
+    void RendererForwardPrePass::create_depth_stencil_buffer() {
         D3D12_RESOURCE_DESC depth_desc{};
         depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         depth_desc.Alignment = 0;
@@ -123,9 +162,11 @@ namespace rndr {
 
         Utils::throw_if_failed(device_->CreateCommittedResource(
             &heap_props, D3D12_HEAP_FLAG_NONE, &depth_desc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear_value,
+            D3D12_RESOURCE_STATE_DEPTH_READ, &clear_value,
             IID_PPV_ARGS(&depth_stencil_buffer_)),
             "create depth stencil buf");
+
+        auto dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
 
         D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
         dsv_desc.Format = DEPTH_STENCIL_FORMAT_;
@@ -134,11 +175,16 @@ namespace rndr {
         dsv_desc.Texture2D.MipSlice = 0;
 
         device_->CreateDepthStencilView(
-            depth_stencil_buffer_.Get(), &dsv_desc,
-            dsv_heap_->GetCPUDescriptorHandleForHeapStart());
+            depth_stencil_buffer_.Get(), &dsv_desc, dsv_handle);
+
+        dsv_handle.ptr += dsv_descriptor_size_;
+        dsv_desc.Flags = D3D12_DSV_FLAG_READ_ONLY_DEPTH;
+
+        device_->CreateDepthStencilView(
+            depth_stencil_buffer_.Get(), &dsv_desc, dsv_handle);
     }
 
-    void RendererForward::create_rtv_heap() {
+    void RendererForwardPrePass::create_rtv_heap() {
         D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
         rtv_heap_desc.NumDescriptors = FRAME_COUNT;
         rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -152,7 +198,7 @@ namespace rndr {
             device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
-    void RendererForward::create_render_targets() {
+    void RendererForwardPrePass::create_render_targets() {
         D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
             rtv_heap_->GetCPUDescriptorHandleForHeapStart();
 
@@ -166,7 +212,8 @@ namespace rndr {
         }
     }
 
-    void RendererForward::create_root_signature() {
+
+    void RendererForwardPrePass::create_root_signature() {
 
         // b0 (constant buffer)
         D3D12_ROOT_PARAMETER root_parameters[3]{};
@@ -204,12 +251,13 @@ namespace rndr {
         Utils::throw_if_failed(device_->CreateRootSignature(
             0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_)), "create root signature");
     }
-    
-    void RendererForward::create_pso()
-    {
+
+    void RendererForwardPrePass::create_pso() {
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_depth;
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
 
+        GraphicsUtils::compile_shader(&vertex_shader_depth, L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0");
         GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
         GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0");
 
@@ -267,14 +315,8 @@ namespace rndr {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc{};
         pso_desc.InputLayout = { input_layout, _countof(input_layout) };
         pso_desc.pRootSignature = root_signature_.Get();
-        pso_desc.VS = {
-            vertex_shader->GetBufferPointer(),
-            vertex_shader->GetBufferSize()
-        };
-        pso_desc.PS = {
-            pixel_shader->GetBufferPointer(),
-            pixel_shader->GetBufferSize()
-        };
+        pso_desc.VS = { vertex_shader_depth->GetBufferPointer(), vertex_shader_depth->GetBufferSize() };
+        pso_desc.PS = { nullptr, 0 };
         pso_desc.RasterizerState = rasterizer_desc;
         pso_desc.BlendState = blend_desc;
         pso_desc.DepthStencilState.DepthEnable = TRUE;
@@ -284,9 +326,26 @@ namespace rndr {
         pso_desc.DepthStencilState.StencilEnable = FALSE;
         pso_desc.SampleMask = UINT_MAX;
         pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        pso_desc.NumRenderTargets = 0;
+        pso_desc.SampleDesc.Count = 1;
+
+        Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
+            &pso_desc,
+            IID_PPV_ARGS(&pso_depth_prepass_)), "create pso depth");
+
+        pso_desc.pRootSignature = root_signature_.Get();
+        pso_desc.VS = {
+            vertex_shader->GetBufferPointer(),
+            vertex_shader->GetBufferSize()
+        };
+        pso_desc.PS = {
+            pixel_shader->GetBufferPointer(),
+            pixel_shader->GetBufferSize()
+        };
+        pso_desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+        pso_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-        pso_desc.SampleDesc.Count = 1;
 
         Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
             &pso_desc,

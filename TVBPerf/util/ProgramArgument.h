@@ -8,7 +8,7 @@
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, run_current_time, "", run-current-time) \
     X(std::string, output_filepath, "", output-filepath) \
-    X(uint32_t, renderer_variant, 0, renderer-variant) \
+    X(uint32_t, renderer_variant, 2, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
     X(bool, to_use_scene, false, to-use-scene) \
     X(std::string, scene_path, "assets/scenes/unpacked/CornellBox/CornellBox-Empty-RG.obj", scene-path) \

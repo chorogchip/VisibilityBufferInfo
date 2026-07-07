@@ -1,4 +1,4 @@
-#include "render/RendererForward.h"
+#include "render/RendererDeferred.h"
 
 #include <d3d12.h>
 
@@ -8,11 +8,30 @@
 
 namespace rndr {
 
-    void RendererForward::init_() {
+    void RendererDeferred::init_() {
 
+        gbuffer_count_ = program_arguments_->gbuffer_cnt;
+        assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
+
+        for (uint32_t i = 0; i < gbuffer_count_; ++i) {
+
+            gbuffers_.emplace_back();
+
+            D3D12_CLEAR_VALUE clear_value{};
+            clear_value.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            clear_value.Color[0] = CLEAR_COLOR_[0];
+            clear_value.Color[1] = CLEAR_COLOR_[1];
+            clear_value.Color[2] = CLEAR_COLOR_[2];
+            clear_value.Color[3] = CLEAR_COLOR_[3];
+
+            GraphicsUtils::create_buffer(gbuffers_.back(), device_.Get(), width_, height_,
+                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+                DXGI_FORMAT_R32G32B32A32_FLOAT, &clear_value);
+        }
     }
 
-    void RendererForward::render_() {
+    void RendererDeferred::render_() {
 
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
         Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
@@ -20,27 +39,14 @@ namespace rndr {
 
         this->copy_camera_data();
 
-        /*
-        const UINT timestamp_base = frame_index_ * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-        const UINT timestamp_start_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_START;
-        const UINT timestamp_end_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_END;
-
-        // command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);*/
-
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
-            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-        rtv_handle.ptr += static_cast<SIZE_T>(frame_index_) * rtv_descriptor_size_;
-        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
-        command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
+        for (UINT i = 0; i < gbuffer_count_; ++i)
+            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         command_list_->RSSetViewports(1, &viewport_);
         command_list_->RSSetScissorRects(1, &scissor_rect_);
 
-        command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
-        command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+        // geometry pass
 
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
@@ -49,6 +55,20 @@ namespace rndr {
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
         command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
+
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
+            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
+        rtv_handle.ptr += static_cast<SIZE_T>(FRAME_COUNT) * rtv_descriptor_size_;
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
+        command_list_->OMSetRenderTargets(gbuffer_count_, &rtv_handle, TRUE, &dsv_handle);
+
+
+        for (UINT i = 0; i < gbuffer_count_; ++i) {
+            command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
+            rtv_handle.ptr += rtv_descriptor_size_;
+        }
+
+        command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
         for (const auto& obj : scene_cpu_->objects) {
             const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
@@ -60,17 +80,34 @@ namespace rndr {
                 mesh.index_start, 0, 0);
         }
 
+        // lighting pass
+
+        command_list_->SetPipelineState(pso_lighting_.Get());
+        command_list_->SetGraphicsRootSignature(root_signature_lighting_.Get());
+        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get() };
+        command_list_->SetDescriptorHeaps(_countof(heaps), heaps);
+        command_list_->SetGraphicsRootDescriptorTable(0, srv_heap_->GetGPUDescriptorHandleForHeapStart());
+
+        command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        for (UINT i = 0; i < gbuffer_count_; ++i)
+            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
+        rtv_handle.ptr += static_cast<SIZE_T>(frame_index_) * rtv_descriptor_size_;
+
+        command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, nullptr);
+
+        command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
+
+        command_list_->DrawInstanced(3, 1, 0, 0);
+
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-        /*
-        command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_end_index);
-        command_list_->ResolveQueryData(
-            frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
-            timestamp_start_index, GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME,
-            frame_time.timestamp_readback_buffer_.Get(), sizeof(UINT64) * timestamp_base);
-
-        frame_time.timestamp_frame_valid_[frame_index_] = true;*/
 
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
@@ -80,7 +117,7 @@ namespace rndr {
     }
 
 
-    void RendererForward::create_dsv_heap() {
+    void RendererDeferred::create_dsv_heap() {
 
         D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
         dsv_heap_desc.NumDescriptors = 1;
@@ -95,7 +132,7 @@ namespace rndr {
             device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
     }
 
-    void RendererForward::create_depth_stencil_buffer() {
+    void RendererDeferred::create_depth_stencil_buffer() {
         D3D12_RESOURCE_DESC depth_desc{};
         depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         depth_desc.Alignment = 0;
@@ -138,9 +175,9 @@ namespace rndr {
             dsv_heap_->GetCPUDescriptorHandleForHeapStart());
     }
 
-    void RendererForward::create_rtv_heap() {
+    void RendererDeferred::create_rtv_heap() {
         D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
-        rtv_heap_desc.NumDescriptors = FRAME_COUNT;
+        rtv_heap_desc.NumDescriptors = FRAME_COUNT + gbuffer_count_;
         rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -152,21 +189,56 @@ namespace rndr {
             device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
-    void RendererForward::create_render_targets() {
+    void RendererDeferred::create_render_targets() {
         D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
             rtv_heap_->GetCPUDescriptorHandleForHeapStart();
 
         for (UINT i = 0; i < FRAME_COUNT; ++i) {
             Utils::throw_if_failed(
-                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])),
-                "create rtv");
-            device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr,
-                rtv_handle);
+                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])), "create rtv");
+            device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr, rtv_handle);
+            rtv_handle.ptr += rtv_descriptor_size_;
+        }
+
+        for (UINT i = 0; i < gbuffer_count_; ++i) {
+            device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, rtv_handle);
             rtv_handle.ptr += rtv_descriptor_size_;
         }
     }
 
-    void RendererForward::create_root_signature() {
+    void RendererDeferred::create_srv_heap() {
+        D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
+        srv_heap_desc.NumDescriptors = gbuffer_count_;
+        srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+        Utils::throw_if_failed(
+            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
+            "create srv descriptor heap");
+
+        srv_descriptor_size_ =
+            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
+
+    void RendererDeferred::create_shader_resources() {
+        D3D12_CPU_DESCRIPTOR_HANDLE srv_handle =
+            srv_heap_->GetCPUDescriptorHandleForHeapStart();
+
+        for (UINT i = 0; i < gbuffer_count_; ++i) {
+            D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+            srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            srv_desc.Texture2D.MipLevels = 1;
+
+            device_->CreateShaderResourceView(
+                gbuffers_[i].Get(), &srv_desc, srv_handle);
+
+            srv_handle.ptr += srv_descriptor_size_;
+        }
+    }
+
+    void RendererDeferred::create_root_signature() {
 
         // b0 (constant buffer)
         D3D12_ROOT_PARAMETER root_parameters[3]{};
@@ -203,15 +275,53 @@ namespace rndr {
 
         Utils::throw_if_failed(device_->CreateRootSignature(
             0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_)), "create root signature");
-    }
-    
-    void RendererForward::create_pso()
-    {
-        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
-        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
 
-        GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0");
+
+        D3D12_DESCRIPTOR_RANGE srv_range{};
+        srv_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        srv_range.NumDescriptors = gbuffer_count_;
+        srv_range.BaseShaderRegister = 0;
+        srv_range.RegisterSpace = 0;
+        srv_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        D3D12_ROOT_PARAMETER root_parameter_lighting{};
+        root_parameter_lighting.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameter_lighting.DescriptorTable.NumDescriptorRanges = 1;
+        root_parameter_lighting.DescriptorTable.pDescriptorRanges = &srv_range;
+        root_parameter_lighting.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        root_sig_desc.NumParameters = 1;
+        root_sig_desc.pParameters = &root_parameter_lighting;
+        root_sig_desc.NumStaticSamplers = 0;
+        root_sig_desc.pStaticSamplers = nullptr;
+        root_sig_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+        // later create samplers
+
+        Utils::throw_if_failed(D3D12SerializeRootSignature(
+            &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error), "create root signature");
+
+        Utils::throw_if_failed(device_->CreateRootSignature(
+            0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_lighting_)), "create root signature");
+    }
+
+    void RendererDeferred::create_pso() {
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_geometry;
+        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_geometry;
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_lighting;
+        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
+
+        std::string gbuffer_count_define = std::to_string(gbuffer_count_);
+        D3D_SHADER_MACRO defines[] =
+        {
+            { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
+            { nullptr, nullptr }
+        };
+
+        GraphicsUtils::compile_shader(&vertex_shader_geometry, L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0");
+        GraphicsUtils::compile_shader(&pixel_shader_geometry, L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", defines);
+        GraphicsUtils::compile_shader(&vertex_shader_lighting, L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0");
+        GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {
@@ -268,12 +378,12 @@ namespace rndr {
         pso_desc.InputLayout = { input_layout, _countof(input_layout) };
         pso_desc.pRootSignature = root_signature_.Get();
         pso_desc.VS = {
-            vertex_shader->GetBufferPointer(),
-            vertex_shader->GetBufferSize()
+            vertex_shader_geometry->GetBufferPointer(),
+            vertex_shader_geometry->GetBufferSize()
         };
         pso_desc.PS = {
-            pixel_shader->GetBufferPointer(),
-            pixel_shader->GetBufferSize()
+            pixel_shader_geometry->GetBufferPointer(),
+            pixel_shader_geometry->GetBufferSize()
         };
         pso_desc.RasterizerState = rasterizer_desc;
         pso_desc.BlendState = blend_desc;
@@ -284,12 +394,37 @@ namespace rndr {
         pso_desc.DepthStencilState.StencilEnable = FALSE;
         pso_desc.SampleMask = UINT_MAX;
         pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        pso_desc.NumRenderTargets = 1;
-        pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        pso_desc.NumRenderTargets = gbuffer_count_;
+        for (UINT i = 0; i < gbuffer_count_; ++i)
+            pso_desc.RTVFormats[i] = DXGI_FORMAT_R32G32B32A32_FLOAT;
         pso_desc.SampleDesc.Count = 1;
 
         Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
             &pso_desc,
             IID_PPV_ARGS(&pipeline_state_)), "create pso");
+
+
+        pso_desc.InputLayout = { nullptr, 0 };
+        pso_desc.pRootSignature = root_signature_lighting_.Get();
+        pso_desc.VS = {
+            vertex_shader_lighting->GetBufferPointer(),
+            vertex_shader_lighting->GetBufferSize()
+        };
+        pso_desc.PS = {
+            pixel_shader_lighting->GetBufferPointer(),
+            pixel_shader_lighting->GetBufferSize()
+        };
+        pso_desc.DepthStencilState.DepthEnable = FALSE;
+        pso_desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+        pso_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+        pso_desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+        pso_desc.NumRenderTargets = 1;
+        pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        for (UINT i = 1; i < gbuffer_count_; ++i)
+            pso_desc.RTVFormats[i] = DXGI_FORMAT_UNKNOWN;
+
+        Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
+            &pso_desc,
+            IID_PPV_ARGS(&pso_lighting_)), "create pso");
     }
 }

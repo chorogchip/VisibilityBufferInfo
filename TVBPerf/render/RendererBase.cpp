@@ -3,7 +3,6 @@
 #include <string>
 
 #include "util/GraphicsUtils.h"
-#include "util/ProgramArgument.h"
 #include "util/Utils.h"
 
 #include "scene/SceneAssimpImporter.h"
@@ -24,6 +23,9 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     width_ = arg.window_width;
     height_ = arg.window_height;
 
+    program_arguments_ = std::unique_ptr<const ProgramArgument>{ new ProgramArgument{ arg } };
+
+
     frame_counter_.init(arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
 
@@ -31,10 +33,14 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_command_objects();
     this->create_swapchain();
 
+    this->init_();
+
     this->create_dsv_heap();
     this->create_depth_stencil_buffer();
     this->create_rtv_heap();
     this->create_render_targets();
+    this->create_srv_heap();
+    this->create_shader_resources();
 
     this->create_root_signature();
     this->create_pso();
@@ -44,45 +50,16 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
 
     this->init_viewport_scissorrect();
 
-    this->create_meshbuffers(arg);
-    this->create_constbuffers(arg);
+    this->create_meshbuffers();
+    this->create_constbuffers();
 
-    this->init_();
 
     // this->create_timestamp_queries();
 }
 
 void RendererBase::render() {
 
-    Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
-    Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
-        pipeline_state_.Get()), "command list reset on render start");
-
-    this->copy_camera_data();
-
-    /*
-    const UINT timestamp_base = frame_index_ * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-    const UINT timestamp_start_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_START;
-    const UINT timestamp_end_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_END;
-
-    // command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);*/
-
     this->render_();
-
-    /*
-    command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_end_index);
-    command_list_->ResolveQueryData(
-        frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
-        timestamp_start_index, GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME,
-        frame_time.timestamp_readback_buffer_.Get(), sizeof(UINT64) * timestamp_base);
-
-    frame_time.timestamp_frame_valid_[frame_index_] = true;*/
-
-    Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
-
-    ID3D12CommandList* command_lists[] = { command_list_.Get() };
-    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-    Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
 
     this->move_to_next_frame();
 
@@ -199,24 +176,27 @@ void RendererBase::init_viewport_scissorrect() {
     scissor_rect_.bottom = static_cast<LONG>(height_);
 }
 
-void RendererBase::create_meshbuffers(const ProgramArgument& arg) {
+void RendererBase::create_srv_heap() {}
+void RendererBase::create_shader_resources() {}
 
-    if (arg.to_use_scene) {
+void RendererBase::create_meshbuffers() {
+
+    if (program_arguments_->to_use_scene) {
         scene_cpu_ = scene::SceneAssimpImporter::load(
             std::filesystem::current_path() /
             "assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx");
     } else {
         scene::SceneInfoSphere gen_info{};
-        gen_info.seed = arg.seed;
-        gen_info.material_count = arg.material_count;
-        gen_info.mesh_count = arg.geometry_count;
-        gen_info.sphere_count = arg.sphere_count;
-        gen_info.z_min = arg.z_min;
-        gen_info.z_max = arg.z_max;
-        gen_info.xy_minmax = arg.xy_minmax;
-        gen_info.radius = arg.radius;
-        gen_info.mesh_division = arg.geometry_div;
-        gen_info.gbuffer_resource_count = arg.gbuffer_cnt;
+        gen_info.seed = program_arguments_->seed;
+        gen_info.material_count = program_arguments_->material_count;
+        gen_info.mesh_count = program_arguments_->geometry_count;
+        gen_info.sphere_count = program_arguments_->sphere_count;
+        gen_info.z_min = program_arguments_->z_min;
+        gen_info.z_max = program_arguments_->z_max;
+        gen_info.xy_minmax = program_arguments_->xy_minmax;
+        gen_info.radius = program_arguments_->radius;
+        gen_info.mesh_division = program_arguments_->geometry_div;
+        gen_info.gbuffer_resource_count = program_arguments_->gbuffer_cnt;
 
         scene_cpu_ = scene::SceneBuilder::build(gen_info);
     }
@@ -235,11 +215,11 @@ void RendererBase::create_meshbuffers(const ProgramArgument& arg) {
     fence_.wait_for_gpu();
 }
 
-void RendererBase::create_constbuffers(const ProgramArgument& arg) {
-    camera_.set_pos(arg.camera_pos_x, arg.camera_pos_y, arg.camera_pos_z);
-    camera_.lookat(arg.camera_lookat_x, arg.camera_lookat_y, arg.camera_lookat_z);
-    camera_.set_fovy_nearz_farz(arg.camera_fov, arg.camera_near_z,
-        arg.camera_far_z);
+void RendererBase::create_constbuffers() {
+    camera_.set_pos(program_arguments_->camera_pos_x, program_arguments_->camera_pos_y, program_arguments_->camera_pos_z);
+    camera_.lookat(program_arguments_->camera_lookat_x, program_arguments_->camera_lookat_y, program_arguments_->camera_lookat_z);
+    camera_.set_fovy_nearz_farz(program_arguments_->camera_fov, program_arguments_->camera_near_z,
+        program_arguments_->camera_far_z);
 
     DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_,
         DirectX::XMMatrixTranspose(camera_.get_mat_view()));
