@@ -75,7 +75,7 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
         if (renderer_->to_terminate()) {
             PostQuitMessage(0);
             break;
-        }  else if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+        } else if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         } else {

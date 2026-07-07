@@ -41,6 +41,7 @@ namespace scene {
             uint32_t flags;
             DirectX::XMFLOAT4X4 transform;
         };
+        static_assert(sizeof(Object) == 80);
 
         std::filesystem::path source_path;
         bool loaded = false;

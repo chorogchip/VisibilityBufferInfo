@@ -4,12 +4,6 @@ cbuffer MatricesCB : register(b0)
     float4x4 gProj;
 };
 
-cbuffer DrawCB : register(b1)
-{
-    uint gInstanceIndex;
-};
-
-
 struct InstanceData
 {
     uint object_id;
@@ -20,6 +14,11 @@ struct InstanceData
 };
 
 StructuredBuffer<InstanceData> gInstance : register(t0);
+
+cbuffer DrawCB : register(b1)
+{
+    uint gObjectIndex;
+}
 
 struct VSInput
 {
@@ -36,8 +35,7 @@ struct PSInput
 
 PSInput main(VSInput input, uint instanceID : SV_InstanceID)
 {
-    InstanceData instance_data = gInstance[gInstanceIndex];
-    
+    InstanceData instance_data = gInstance[gObjectIndex + instanceID];
     
     PSInput output;
     float4 pos_in = float4(input.position, 1.0f);

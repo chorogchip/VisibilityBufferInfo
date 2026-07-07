@@ -10,6 +10,8 @@
     X(std::string, output_filepath, "", output-filepath) \
     X(uint32_t, renderer_variant, 0, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
+    X(bool, to_use_scene, false, to-use-scene) \
+    X(std::string, scene_path, "assets/scenes/unpacked/CornellBox/CornellBox-Empty-RG.obj", scene-path) \
     X(uint32_t, warmup_frames, 60000, warmup-frames) \
     X(uint32_t, measure_frames, 12000, measure-frames) \
     X(uint32_t, window_width, 1280, window-width) \
@@ -24,7 +26,7 @@
     X(float, camera_near_z, 0.1f, camera-near-z) \
     X(float, camera_far_z, 1000.0f, camera-far-z) \
     X(float, camera_fov, 45.0f, camera-fov) \
-    X(uint32_t, sphere_count, 1, sphere-count) \
+    X(uint32_t, sphere_count, 5, sphere-count) \
     X(uint32_t, material_count, 1, material-count) \
     X(uint32_t, geometry_count, 1, geometry-count) \
     X(float, z_min, -1.0f, z-min) \

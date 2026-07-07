@@ -28,10 +28,10 @@ namespace util {
 		bool to_terminate() const;
 
 	private:
-		uint64_t frames_;
-		uint64_t frame_to_start_measure_;
-		uint64_t frame_to_end_measure_;
-		uint64_t frame_to_terminate_;
+		uint64_t frames_ = 0;
+		uint64_t frame_to_start_measure_ = 0;
+		uint64_t frame_to_end_measure_ = 0;
+		uint64_t frame_to_terminate_ = 0;
 		std::vector<float> frame_times_;
 	};
 }

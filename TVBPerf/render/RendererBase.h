@@ -28,27 +28,35 @@ public:
 
     virtual ~RendererBase();
     void init(HWND hwnd, const ProgramArgument&);
-    virtual void render() = 0;
+    void render();
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
+protected:
+    virtual void init_() = 0;
+    virtual void render_() = 0;
+
 private:
-    void create_dsv_heap();
-    void create_rtv_heap();
-    void create_render_targets();
-    void create_depth_stencil_buffer();
+    void create_device();
+    void create_command_objects();
+    void create_swapchain();
+
+    virtual void create_dsv_heap() = 0;
+    virtual void create_depth_stencil_buffer() = 0;
+    virtual void create_rtv_heap() = 0;
+    virtual void create_render_targets() = 0;
 
     virtual void create_root_signature() = 0;
     virtual void create_pso() = 0;
 
+    void init_viewport_scissorrect();
     void create_meshbuffers(const ProgramArgument& arg);
     void create_constbuffers(const ProgramArgument& arg);
 
-    void create_timestamp_queries();
-
-protected:
-    void move_to_next_frame();
-    void read_gpu_timestamp_for_frame(UINT frame_index);
     void copy_camera_data();
+    void move_to_next_frame();
+    void create_timestamp_queries();
+    void read_gpu_timestamp_for_frame(UINT frame_index);
+
 
 protected:
     HWND hwnd_ = nullptr;
@@ -65,7 +73,7 @@ protected:
     ComPtr<IDXGISwapChain3> swapchain_;
     UINT frame_index_ = 0;
 
-    constexpr static DXGI_FORMAT depth_stencil_format_ = DXGI_FORMAT_D32_FLOAT;
+    constexpr static DXGI_FORMAT DEPTH_STENCIL_FORMAT_ = DXGI_FORMAT_D32_FLOAT;
     ComPtr<ID3D12DescriptorHeap> dsv_heap_;
     ComPtr<ID3D12Resource> depth_stencil_buffer_;
     UINT dsv_descriptor_size_ = 0;
@@ -77,6 +85,9 @@ protected:
     ComPtr<ID3D12RootSignature> root_signature_;
     ComPtr<ID3D12PipelineState> pipeline_state_;
 
+    D3D12_VIEWPORT viewport_{};
+    D3D12_RECT scissor_rect_{};
+
     UINT64 fence_values_[FRAME_COUNT]{};
     dxutl::Fence fence_;
 
@@ -87,14 +98,14 @@ protected:
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
     } matrix_buf_cpu_{};
-    ComPtr<ID3D12Resource> buf_constant_;
-    void* buf_constant_mapped_;
+    ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
+    void* buf_constant_mapped_[FRAME_COUNT]{};
 
     GpuFrameTime<FRAME_COUNT> frame_time;
     util::FrameCounter frame_counter_;
+
+    static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
     
-    D3D12_VIEWPORT viewport_{};
-    D3D12_RECT scissor_rect_{};
 public:
     rndr::Camera camera_{};
 };

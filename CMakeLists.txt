@@ -167,9 +167,7 @@ endif()
 # 빌드 결과물에 assets/shaders만 복사
 # 전체 assets 복사 금지
 # ------------------------------------------------------------
-add_custom_command(
-    TARGET TVBPerf
-    POST_BUILD
+add_custom_target(CopyShaders ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory
         "$<TARGET_FILE_DIR:TVBPerf>/assets/shaders"
     COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -16,18 +16,5 @@ int WINAPI WinMain(
     Application app{};
     app.run(hInstance, nShowCmd);
 
-    /*
-    try {
-
-        Application app{};
-        app.run(hInstance, nShowCmd);
-
-    } catch (const std::exception& e) {
-
-        MessageBoxA(nullptr, (std::string("Fatal error:\n") + e.what()).c_str(), "Error", MB_OK | MB_ICONERROR);
-        return -1;
-
-    }*/
-
     return 0;
 }
