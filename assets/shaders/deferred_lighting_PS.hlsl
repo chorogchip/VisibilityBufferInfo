@@ -62,7 +62,29 @@ float4 main(PSInput input) : SV_Target
     float4 rt7 = gbuffer7.Load(coord);
 #endif
     
-    float3 normal = rt0.xyz;
+    float4 color = rt0;
+#if GBUFFER_COUNT >= 2
+    color += rt1;
+#endif
+#if GBUFFER_COUNT >= 3
+    color += rt2;
+#endif
+#if GBUFFER_COUNT >= 4
+    color += rt3;
+#endif
+#if GBUFFER_COUNT >= 5
+    color += rt4;
+#endif
+#if GBUFFER_COUNT >= 6
+    color += rt5;
+#endif
+#if GBUFFER_COUNT >= 7
+    color += rt6;
+#endif
+#if GBUFFER_COUNT >= 8
+    color += rt7;
+#endif
+    color *= rcp((float)GBUFFER_COUNT);
 
-    return float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    return float4(color.rgb, 1.0f);
 }

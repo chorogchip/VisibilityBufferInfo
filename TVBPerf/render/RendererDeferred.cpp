@@ -51,6 +51,7 @@ namespace rndr {
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
+        command_list_->SetGraphicsRootShaderResourceView(3, scene_gpu_->material_buffer->GetGPUVirtualAddress());
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
@@ -241,7 +242,7 @@ namespace rndr {
     void RendererDeferred::create_root_signature() {
 
         // b0 (constant buffer)
-        D3D12_ROOT_PARAMETER root_parameters[3]{};
+        D3D12_ROOT_PARAMETER root_parameters[4]{};
         root_parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameters[0].Descriptor.ShaderRegister = 0;
         root_parameters[0].Descriptor.RegisterSpace = 0;
@@ -259,6 +260,11 @@ namespace rndr {
         root_parameters[2].Constants.RegisterSpace = 0;
         root_parameters[2].Constants.Num32BitValues = 1;
         root_parameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+        root_parameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        root_parameters[3].Descriptor.ShaderRegister = 1;
+        root_parameters[3].Descriptor.RegisterSpace = 0;
+        root_parameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_ROOT_SIGNATURE_DESC root_sig_desc{};
         root_sig_desc.NumParameters = _countof(root_parameters);
@@ -336,6 +342,14 @@ namespace rndr {
             {
                 "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
                 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+            },
+            {
+                "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0,
+                32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+            },
+            {
+                "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+                40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
             }
         };
 

@@ -2,6 +2,7 @@ cbuffer MatricesCB : register(b0)
 {
     float4x4 gView;
     float4x4 gProj;
+    float4x4 gViewNormal;
 };
 
 struct InstanceData
@@ -24,13 +25,19 @@ struct VSInput
 {
     float3 position : POSITION;
     float3 normal : NORMAL;
-    float2 texcoord: TEXCOORD;
+    float2 texcoord0 : TEXCOORD0;
+    float2 texcoord1 : TEXCOORD1;
+    float3 tangent : TANGENT;
 };
 
 struct PSInput
 {
     float4 position : SV_POSITION;
-    float4 color    : COLOR;
+    float3 normal : NORMAL;
+    float2 texcoord0 : TEXCOORD0;
+    float2 texcoord1 : TEXCOORD1;
+    float3 tangent : TANGENT;
+    nointerpolation uint material_index : MATERIAL;
 };
 
 PSInput main(VSInput input, uint instanceID : SV_InstanceID)
@@ -42,9 +49,15 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     float4 pos_world = mul(pos_in, instance_data.World);
     float4 pos_view = mul(pos_world, gView);
     float4 pos_homo = mul(pos_view, gProj);
+    float3 normal_world = mul(float4(input.normal, 0.0f), instance_data.World).xyz;
+    float3 tangent_world = mul(float4(input.tangent, 0.0f), instance_data.World).xyz;
     
     output.position = pos_homo;
-    output.color = float4(input.normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.normal = mul(normal_world, (float3x3)gViewNormal);
+    output.texcoord0 = input.texcoord0;
+    output.texcoord1 = input.texcoord1;
+    output.tangent = mul(tangent_world, (float3x3)gViewNormal);
+    output.material_index = instance_data.material_index;
         
     return output;
 }

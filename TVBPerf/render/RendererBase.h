@@ -103,6 +103,7 @@ protected:
     struct ConstBufMatrices {
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
+        DirectX::XMFLOAT4X4 mat_view_normal_;
     } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
     void* buf_constant_mapped_[FRAME_COUNT]{};

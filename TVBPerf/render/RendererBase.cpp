@@ -226,6 +226,9 @@ void RendererBase::create_constbuffers() {
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
+    DirectX::XMStoreFloat4x4(
+        &matrix_buf_cpu_.mat_view_normal_,
+        DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
 
     constexpr size_t matrix_buf_size_aligned =
         Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
@@ -245,6 +248,9 @@ void RendererBase::copy_camera_data() {
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
+    DirectX::XMStoreFloat4x4(
+        &matrix_buf_cpu_.mat_view_normal_,
+        DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
     memcpy(buf_constant_mapped_[frame_index_], &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
 }
 

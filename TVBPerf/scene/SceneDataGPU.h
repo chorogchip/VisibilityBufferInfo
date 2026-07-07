@@ -15,5 +15,6 @@ namespace scene {
 		D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> object_buffer;
+		Microsoft::WRL::ComPtr<ID3D12Resource> material_buffer;
 	};
 }

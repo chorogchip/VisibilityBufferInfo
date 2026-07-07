@@ -2,9 +2,19 @@ struct PSInput
 {
     float4 position : SV_POSITION;
     float3 normal : NORMAL;
-    float2 texcoord : TEXCOORD;
+    float2 texcoord0 : TEXCOORD0;
+    float2 texcoord1 : TEXCOORD1;
+    float3 tangent : TANGENT;
     float3 world_pos : WORLDPOS;
+    nointerpolation uint material_index : MATERIAL;
 };
+
+struct MaterialData
+{
+    float4 base_color;
+};
+
+StructuredBuffer<MaterialData> gMaterials : register(t1);
 
 #ifndef GBUFFER_COUNT
 #define GBUFFER_COUNT 1
@@ -44,31 +54,33 @@ GBufferOutput main(PSInput input)
     GBufferOutput output;
 
     float3 normal = normalize(input.normal);
+    float4 base_color = gMaterials[input.material_index].base_color;
+    float4 gbuffer_value = float4(base_color.rgb * (normal.z * 0.5f + 0.5f), base_color.a);
 
     
 #if GBUFFER_COUNT >= 1
-    output.rt0 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt0 = gbuffer_value;
  #endif
 #if GBUFFER_COUNT >= 2
-    output.rt1 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt1 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 3
-    output.rt2 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt2 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 4
-    output.rt3 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt3 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 5
-    output.rt4 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt4 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 6
-    output.rt5 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt5 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 7
-    output.rt6 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt6 = gbuffer_value;
 #endif
 #if GBUFFER_COUNT >= 8
-    output.rt7 = float4(normal.xy * 0.5f + 0.5f, input.position.z * 0.5f + 0.5f, 1.0f);
+    output.rt7 = gbuffer_value;
 #endif
     return output;
 }
