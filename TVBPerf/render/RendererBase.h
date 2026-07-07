@@ -7,6 +7,7 @@
 #include <d3dcompiler.h>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include "util/ProgramArgument.h"
 #include "util/GPUFrameTime.h"
@@ -48,6 +49,8 @@ protected:
     virtual void create_pso() = 0;
 
     void copy_camera_data();
+    UINT texture_descriptor_count() const;
+    void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
 
 private:
     void create_device();
@@ -57,6 +60,7 @@ private:
 
     void init_viewport_scissorrect();
     void create_meshbuffers();
+    void create_dummy_textures();
     void create_constbuffers();
 
     void move_to_next_frame();
@@ -103,10 +107,12 @@ protected:
     struct ConstBufMatrices {
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
-        DirectX::XMFLOAT4X4 mat_view_normal_;
+        DirectX::XMFLOAT2 viewport_size_;
+        DirectX::XMFLOAT2 inv_viewport_size_;
     } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
     void* buf_constant_mapped_[FRAME_COUNT]{};
+    std::vector<ComPtr<ID3D12Resource>> dummy_textures_;
 
     GpuFrameTime<FRAME_COUNT> frame_time;
     util::FrameCounter frame_counter_;

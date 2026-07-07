@@ -1,6 +1,7 @@
 #include "render/RendererDeferred.h"
 
 #include <d3d12.h>
+#include <string>
 
 #include "util/Utils.h"
 #include "util/GraphicsUtils.h"
@@ -88,6 +89,9 @@ namespace rndr {
         ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get() };
         command_list_->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list_->SetGraphicsRootDescriptorTable(0, srv_heap_->GetGPUDescriptorHandleForHeapStart());
+        D3D12_GPU_DESCRIPTOR_HANDLE texture_handle = srv_heap_->GetGPUDescriptorHandleForHeapStart();
+        texture_handle.ptr += static_cast<SIZE_T>(gbuffer_count_) * srv_descriptor_size_;
+        command_list_->SetGraphicsRootDescriptorTable(1, texture_handle);
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -209,7 +213,7 @@ namespace rndr {
 
     void RendererDeferred::create_srv_heap() {
         D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = gbuffer_count_;
+        srv_heap_desc.NumDescriptors = gbuffer_count_ + texture_descriptor_count();
         srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -237,6 +241,8 @@ namespace rndr {
 
             srv_handle.ptr += srv_descriptor_size_;
         }
+
+        create_texture_srv_descriptors(srv_handle);
     }
 
     void RendererDeferred::create_root_signature() {
@@ -290,14 +296,26 @@ namespace rndr {
         srv_range.RegisterSpace = 0;
         srv_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-        D3D12_ROOT_PARAMETER root_parameter_lighting{};
-        root_parameter_lighting.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        root_parameter_lighting.DescriptorTable.NumDescriptorRanges = 1;
-        root_parameter_lighting.DescriptorTable.pDescriptorRanges = &srv_range;
-        root_parameter_lighting.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        D3D12_DESCRIPTOR_RANGE texture_range{};
+        texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        texture_range.NumDescriptors = texture_descriptor_count();
+        texture_range.BaseShaderRegister = 8;
+        texture_range.RegisterSpace = 0;
+        texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-        root_sig_desc.NumParameters = 1;
-        root_sig_desc.pParameters = &root_parameter_lighting;
+        D3D12_ROOT_PARAMETER root_parameter_lighting[2]{};
+        root_parameter_lighting[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameter_lighting[0].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameter_lighting[0].DescriptorTable.pDescriptorRanges = &srv_range;
+        root_parameter_lighting[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        root_parameter_lighting[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameter_lighting[1].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameter_lighting[1].DescriptorTable.pDescriptorRanges = &texture_range;
+        root_parameter_lighting[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        root_sig_desc.NumParameters = _countof(root_parameter_lighting);
+        root_sig_desc.pParameters = root_parameter_lighting;
         root_sig_desc.NumStaticSamplers = 0;
         root_sig_desc.pStaticSamplers = nullptr;
         root_sig_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
@@ -318,14 +336,28 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
 
         std::string gbuffer_count_define = std::to_string(gbuffer_count_);
+        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
         D3D_SHADER_MACRO defines[] =
+        {
+            { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
+            { "TEXTURE_COUNT", texture_count_define.c_str() },
+            { "TEXTURE_SAMPLING_COUNT", texture_sampling_count_define.c_str() },
+            { "TEXTURE_SIZE", texture_size_define.c_str() },
+            { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
+            { nullptr, nullptr }
+        };
+
+        D3D_SHADER_MACRO gbuffer_defines[] =
         {
             { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
             { nullptr, nullptr }
         };
 
         GraphicsUtils::compile_shader(&vertex_shader_geometry, L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_geometry, L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", defines);
+        GraphicsUtils::compile_shader(&pixel_shader_geometry, L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", gbuffer_defines);
         GraphicsUtils::compile_shader(&vertex_shader_lighting, L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0");
         GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", defines);
 

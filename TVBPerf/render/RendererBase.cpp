@@ -1,5 +1,6 @@
 #include "RendererBase.h"
 
+#include <algorithm>
 #include <string>
 
 #include "util/GraphicsUtils.h"
@@ -9,6 +10,11 @@
 #include "scene/SceneBuilder.h"
 #include "scene/SceneInfo.h"
 #include "scene/SceneResourceBuilder.h"
+
+#ifdef max
+#undef max
+#undef min
+#endif
 
 using Microsoft::WRL::ComPtr;
 
@@ -40,6 +46,7 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->init_();
 
     this->create_meshbuffers();
+    this->create_dummy_textures();
     this->create_constbuffers();
 
     this->create_dsv_heap();
@@ -69,13 +76,13 @@ void RendererBase::create_device() {
 #if defined(_DEBUG)
     {
         ComPtr<ID3D12Debug> debug_controller;
-        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller)))) {
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debug_controller.ReleaseAndGetAddressOf())))) {
             debug_controller->EnableDebugLayer();
         }
     }
 #endif
 
-Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(&factory_)), "create DXGI factory");
+Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(factory_.ReleaseAndGetAddressOf())), "create DXGI factory");
 
 ComPtr<IDXGIAdapter1> adapter;
 
@@ -89,18 +96,18 @@ for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory_->EnumAdapters1(i, &adapter); +
     if (SUCCEEDED(D3D12CreateDevice(
         adapter.Get(),
         D3D_FEATURE_LEVEL_11_0,
-        IID_PPV_ARGS(&device_)))) {
+        IID_PPV_ARGS(device_.ReleaseAndGetAddressOf())))) {
         return;
     }
 }
 
 ComPtr<IDXGIAdapter> warp_adapter;
-Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)), "enumerate adapter");
+Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(warp_adapter.ReleaseAndGetAddressOf())), "enumerate adapter");
 
 Utils::throw_if_failed(D3D12CreateDevice(
     warp_adapter.Get(),
     D3D_FEATURE_LEVEL_11_0,
-    IID_PPV_ARGS(&device_)), "create device");
+    IID_PPV_ARGS(device_.ReleaseAndGetAddressOf())), "create device");
 }
 
 void RendererBase::create_command_objects() {
@@ -111,12 +118,12 @@ void RendererBase::create_command_objects() {
 
     Utils::throw_if_failed(device_->CreateCommandQueue(
         &queue_desc,
-        IID_PPV_ARGS(&command_queue_)), "create command queue");
+        IID_PPV_ARGS(command_queue_.ReleaseAndGetAddressOf())), "create command queue");
 
     for (int i = 0; i < FRAME_COUNT; ++i) {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&command_allocator_[i])), "create command allocator");
+            IID_PPV_ARGS(command_allocator_[i].ReleaseAndGetAddressOf())), "create command allocator");
     }
 
     Utils::throw_if_failed(device_->CreateCommandList(
@@ -124,7 +131,7 @@ void RendererBase::create_command_objects() {
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         command_allocator_[0].Get(),
         nullptr,
-        IID_PPV_ARGS(&command_list_)), "create command list");
+        IID_PPV_ARGS(command_list_.ReleaseAndGetAddressOf())), "create command list");
 
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
@@ -215,6 +222,102 @@ void RendererBase::create_meshbuffers() {
     fence_.wait_for_gpu();
 }
 
+void RendererBase::create_dummy_textures() {
+    const UINT texture_count = texture_descriptor_count();
+    const UINT texture_size = std::max(1u, program_arguments_->texture_size);
+    const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    dummy_textures_.clear();
+    dummy_textures_.resize(texture_count);
+
+    D3D12_RESOURCE_DESC texture_desc{};
+    texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    texture_desc.Alignment = 0;
+    texture_desc.Width = texture_size;
+    texture_desc.Height = texture_size;
+    texture_desc.DepthOrArraySize = 1;
+    texture_desc.MipLevels = 1;
+    texture_desc.Format = texture_format;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    UINT64 upload_size = 0;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
+    UINT row_count = 0;
+    UINT64 row_size_in_bytes = 0;
+    device_->GetCopyableFootprints(
+        &texture_desc, 0, 1, 0, &footprint, &row_count, &row_size_in_bytes, &upload_size);
+    (void)row_count;
+    (void)row_size_in_bytes;
+
+    std::vector<ComPtr<ID3D12Resource>> upload_buffers;
+    upload_buffers.resize(texture_count);
+
+    Utils::throw_if_failed(command_list_->Reset(
+        command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
+
+    for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
+        D3D12_HEAP_PROPERTIES heap_props{};
+        heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
+        heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        heap_props.CreationNodeMask = 1;
+        heap_props.VisibleNodeMask = 1;
+
+        Utils::throw_if_failed(device_->CreateCommittedResource(
+            &heap_props,
+            D3D12_HEAP_FLAG_NONE,
+            &texture_desc,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            nullptr,
+            IID_PPV_ARGS(dummy_textures_[texture_index].ReleaseAndGetAddressOf())), "create dummy texture");
+
+        GraphicsUtils::create_buffer(upload_buffers[texture_index], device_.Get(), upload_size, 1,
+            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+        void* mapped_data = nullptr;
+        D3D12_RANGE read_range{};
+        read_range.Begin = 0;
+        read_range.End = 0;
+        Utils::throw_if_failed(upload_buffers[texture_index]->Map(0, &read_range, &mapped_data),
+            "map dummy texture upload buffer");
+        auto* dst = static_cast<uint8_t*>(mapped_data);
+        for (UINT y = 0; y < texture_size; ++y) {
+            auto* row = dst + footprint.Offset + static_cast<size_t>(y) * footprint.Footprint.RowPitch;
+            for (UINT x = 0; x < texture_size; ++x) {
+                const size_t texel_offset = static_cast<size_t>(x) * 4;
+                row[texel_offset + 0] = static_cast<uint8_t>((x * 17 + texture_index * 29) & 0xff);
+                row[texel_offset + 1] = static_cast<uint8_t>((y * 19 + texture_index * 31) & 0xff);
+                row[texel_offset + 2] = static_cast<uint8_t>(((x + y) * 13 + texture_index * 37) & 0xff);
+                row[texel_offset + 3] = 255;
+            }
+        }
+        upload_buffers[texture_index]->Unmap(0, nullptr);
+
+        D3D12_TEXTURE_COPY_LOCATION dst_location{};
+        dst_location.pResource = dummy_textures_[texture_index].Get();
+        dst_location.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        dst_location.SubresourceIndex = 0;
+
+        D3D12_TEXTURE_COPY_LOCATION src_location{};
+        src_location.pResource = upload_buffers[texture_index].Get();
+        src_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        src_location.PlacedFootprint = footprint;
+
+        command_list_->CopyTextureRegion(&dst_location, 0, 0, 0, &src_location, nullptr);
+        GraphicsUtils::record_transition(command_list_.Get(), dummy_textures_[texture_index].Get(),
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+
+    Utils::throw_if_failed(command_list_->Close(),
+        "close list on dummy texture creation");
+    ID3D12CommandList* command_lists[] = { command_list_.Get() };
+    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
+    fence_.wait_for_gpu();
+}
+
 void RendererBase::create_constbuffers() {
     camera_.set_pos(program_arguments_->camera_pos_x, program_arguments_->camera_pos_y, program_arguments_->camera_pos_z);
     camera_.lookat(program_arguments_->camera_lookat_x, program_arguments_->camera_lookat_y, program_arguments_->camera_lookat_z);
@@ -226,9 +329,8 @@ void RendererBase::create_constbuffers() {
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
-    DirectX::XMStoreFloat4x4(
-        &matrix_buf_cpu_.mat_view_normal_,
-        DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
+    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
+    matrix_buf_cpu_.inv_viewport_size_ = DirectX::XMFLOAT2(1.0f / static_cast<float>(width_), 1.0f / static_cast<float>(height_));
 
     constexpr size_t matrix_buf_size_aligned =
         Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
@@ -248,10 +350,26 @@ void RendererBase::copy_camera_data() {
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
-    DirectX::XMStoreFloat4x4(
-        &matrix_buf_cpu_.mat_view_normal_,
-        DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
+    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
+    matrix_buf_cpu_.inv_viewport_size_ = DirectX::XMFLOAT2(1.0f / static_cast<float>(width_), 1.0f / static_cast<float>(height_));
     memcpy(buf_constant_mapped_[frame_index_], &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
+}
+
+UINT RendererBase::texture_descriptor_count() const {
+    return std::max(1u, program_arguments_->texture_count);
+}
+
+void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MipLevels = 1;
+
+    for (UINT i = 0; i < texture_descriptor_count(); ++i) {
+        device_->CreateShaderResourceView(dummy_textures_[i].Get(), &srv_desc, srv_handle);
+        srv_handle.ptr += device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
 }
 
 void RendererBase::create_timestamp_queries() {
@@ -264,7 +382,7 @@ void RendererBase::create_timestamp_queries() {
 
     Utils::throw_if_failed(
         device_->CreateQueryHeap(&query_heap_desc,
-            IID_PPV_ARGS(&frame_time.timestamp_query_heap_)),
+            IID_PPV_ARGS(frame_time.timestamp_query_heap_.ReleaseAndGetAddressOf())),
         "create timestamp query heap");
 
     const UINT64 readback_buffer_size =

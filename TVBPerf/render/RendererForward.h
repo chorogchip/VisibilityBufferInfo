@@ -17,7 +17,12 @@ namespace rndr {
 		void create_rtv_heap() override;
 		void create_render_targets() override;
 		void create_depth_stencil_buffer() override;
+		void create_srv_heap() override;
+		void create_shader_resources() override;
 		void create_root_signature() override;
 		void create_pso() override;
+
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srv_heap_;
+		UINT srv_descriptor_size_ = 0;
 	};
 }

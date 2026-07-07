@@ -2,7 +2,6 @@ cbuffer MatricesCB : register(b0)
 {
     float4x4 gView;
     float4x4 gProj;
-    float4x4 gViewNormal;
 };
 
 struct InstanceData
@@ -53,10 +52,10 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     float3 tangent_world = mul(float4(input.tangent, 0.0f), instance_data.World).xyz;
     
     output.position = pos_homo;
-    output.normal = mul(normal_world, (float3x3)gViewNormal);
+    output.normal = mul(normal_world, (float3x3)gView);
     output.texcoord0 = input.texcoord0;
     output.texcoord1 = input.texcoord1;
-    output.tangent = mul(tangent_world, (float3x3)gViewNormal);
+    output.tangent = mul(tangent_world, (float3x3)gView);
     output.material_index = instance_data.material_index;
         
     return output;

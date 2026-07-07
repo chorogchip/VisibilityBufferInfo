@@ -63,7 +63,7 @@ void GraphicsUtils::create_buffer(ComPtr<ID3D12Resource>& buffer, ID3D12Device* 
         &resource_desc,
         state,
         clear_value,
-        IID_PPV_ARGS(&buffer)), "create buffer");
+        IID_PPV_ARGS(buffer.ReleaseAndGetAddressOf())), "create buffer");
 }
 
 void GraphicsUtils::copy_cpu_to_upload(ID3D12Resource* dest, const void* src, size_t sz) {

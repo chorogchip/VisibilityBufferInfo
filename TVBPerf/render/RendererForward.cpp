@@ -1,6 +1,7 @@
 #include "render/RendererForward.h"
 
 #include <d3d12.h>
+#include <string>
 
 #include "util/Utils.h"
 #include "util/GraphicsUtils.h"
@@ -43,9 +44,12 @@ namespace rndr {
         command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
+        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get() };
+        command_list_->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(3, scene_gpu_->material_buffer->GetGPUVirtualAddress());
+        command_list_->SetGraphicsRootDescriptorTable(4, srv_heap_->GetGPUDescriptorHandleForHeapStart());
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
@@ -167,10 +171,35 @@ namespace rndr {
         }
     }
 
+    void RendererForward::create_srv_heap() {
+        D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
+        srv_heap_desc.NumDescriptors = texture_descriptor_count();
+        srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+        Utils::throw_if_failed(
+            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
+            "create srv descriptor heap");
+
+        srv_descriptor_size_ =
+            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
+
+    void RendererForward::create_shader_resources() {
+        create_texture_srv_descriptors(srv_heap_->GetCPUDescriptorHandleForHeapStart());
+    }
+
     void RendererForward::create_root_signature() {
 
         // b0 (constant buffer)
-        D3D12_ROOT_PARAMETER root_parameters[4]{};
+        D3D12_DESCRIPTOR_RANGE texture_range{};
+        texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        texture_range.NumDescriptors = texture_descriptor_count();
+        texture_range.BaseShaderRegister = 8;
+        texture_range.RegisterSpace = 0;
+        texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        D3D12_ROOT_PARAMETER root_parameters[5]{};
         root_parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameters[0].Descriptor.ShaderRegister = 0;
         root_parameters[0].Descriptor.RegisterSpace = 0;
@@ -194,6 +223,11 @@ namespace rndr {
         root_parameters[3].Descriptor.RegisterSpace = 0;
         root_parameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+        root_parameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameters[4].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameters[4].DescriptorTable.pDescriptorRanges = &texture_range;
+        root_parameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
         D3D12_ROOT_SIGNATURE_DESC root_sig_desc{};
         root_sig_desc.NumParameters = _countof(root_parameters);
         root_sig_desc.pParameters = root_parameters;
@@ -216,8 +250,21 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
 
+        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
+        D3D_SHADER_MACRO workload_defines[] =
+        {
+            { "TEXTURE_COUNT", texture_count_define.c_str() },
+            { "TEXTURE_SAMPLING_COUNT", texture_sampling_count_define.c_str() },
+            { "TEXTURE_SIZE", texture_size_define.c_str() },
+            { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
+            { nullptr, nullptr }
+        };
+
         GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0");
+        GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0", workload_defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {

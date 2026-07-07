@@ -2,7 +2,6 @@ cbuffer MatricesCB : register(b0)
 {
     float4x4 gView;
     float4x4 gProj;
-    float4x4 gViewNormal;
 };
 
 struct InstanceData

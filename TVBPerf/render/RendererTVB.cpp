@@ -1,6 +1,7 @@
 #include "render/RendererTVB.h"
 
 #include <d3d12.h>
+#include <string>
 
 #include "util/Utils.h"
 #include "util/GraphicsUtils.h"
@@ -14,6 +15,8 @@ namespace rndr {
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;
         clear_value.Color[0] = 0.0f;
         clear_value.Color[1] = 0.0f;
+        clear_value.Color[2] = 0.0f;
+        clear_value.Color[3] = 0.0f;
 
         GraphicsUtils::create_buffer(vis_buffer_, device_.Get(), width_, height_,
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
@@ -51,8 +54,8 @@ namespace rndr {
         D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
         command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
 
-
-        command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
+        float clear_color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+        command_list_->ClearRenderTargetView(rtv_handle, clear_color, 0, nullptr);
 
         command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -74,6 +77,9 @@ namespace rndr {
         command_list_->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootDescriptorTable(1, srv_heap_->GetGPUDescriptorHandleForHeapStart());
+        D3D12_GPU_DESCRIPTOR_HANDLE texture_handle = srv_heap_->GetGPUDescriptorHandleForHeapStart();
+        texture_handle.ptr += static_cast<SIZE_T>(6) * srv_descriptor_size_;
+        command_list_->SetGraphicsRootDescriptorTable(2, texture_handle);
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -191,12 +197,12 @@ namespace rndr {
 
     void RendererTVB::create_srv_heap() {
         D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = 5;
+        srv_heap_desc.NumDescriptors = 6 + texture_descriptor_count();
         srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
         Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
+            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(srv_heap_.ReleaseAndGetAddressOf())),
             "create srv descriptor heap");
 
         srv_descriptor_size_ =
@@ -234,6 +240,12 @@ namespace rndr {
         // COMMON -> COPY_DEST: implicit transition
         GraphicsUtils::record_transition(command_list_.Get(), mesh_buffer_.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->vertex_buffer.Get(),
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->index_buffer.Get(),
+            D3D12_RESOURCE_STATE_INDEX_BUFFER,
+            D3D12_RESOURCE_STATE_INDEX_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         // this is for later work
         GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->object_buffer.Get(),
@@ -249,6 +261,7 @@ namespace rndr {
         assert(scene_cpu_->indices.size() <= UINT_MAX);
         assert(meshes.size() <= UINT_MAX);
         assert(scene_cpu_->objects.size() <= UINT_MAX);
+        assert(scene_cpu_->materials.size() <= UINT_MAX);
 
         D3D12_CPU_DESCRIPTOR_HANDLE srv_handle =
             srv_heap_->GetCPUDescriptorHandleForHeapStart();
@@ -285,6 +298,13 @@ namespace rndr {
         srv_desc.Buffer.NumElements = static_cast<UINT>(scene_cpu_->objects.size());
         device_->CreateShaderResourceView(scene_gpu_->object_buffer.Get(), &srv_desc, srv_handle);
         srv_handle.ptr += srv_descriptor_size_;
+
+        srv_desc.Buffer.StructureByteStride = sizeof(float) * 4;
+        srv_desc.Buffer.NumElements = static_cast<UINT>(scene_cpu_->materials.size());
+        device_->CreateShaderResourceView(scene_gpu_->material_buffer.Get(), &srv_desc, srv_handle);
+        srv_handle.ptr += srv_descriptor_size_;
+
+        create_texture_srv_descriptors(srv_handle);
     }
 
     void RendererTVB::create_root_signature() {
@@ -328,12 +348,19 @@ namespace rndr {
 
         D3D12_DESCRIPTOR_RANGE srv_range{};
         srv_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        srv_range.NumDescriptors = 5;
+        srv_range.NumDescriptors = 6;
         srv_range.BaseShaderRegister = 0;
         srv_range.RegisterSpace = 0;
         srv_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-        D3D12_ROOT_PARAMETER root_parameter_lighting[2]{};
+        D3D12_DESCRIPTOR_RANGE texture_range{};
+        texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        texture_range.NumDescriptors = texture_descriptor_count();
+        texture_range.BaseShaderRegister = 8;
+        texture_range.RegisterSpace = 0;
+        texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        D3D12_ROOT_PARAMETER root_parameter_lighting[3]{};
         // b0 (constant buffer)
         root_parameter_lighting[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameter_lighting[0].Descriptor.ShaderRegister = 0;
@@ -344,6 +371,11 @@ namespace rndr {
         root_parameter_lighting[1].DescriptorTable.NumDescriptorRanges = 1;
         root_parameter_lighting[1].DescriptorTable.pDescriptorRanges = &srv_range;
         root_parameter_lighting[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        root_parameter_lighting[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameter_lighting[2].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameter_lighting[2].DescriptorTable.pDescriptorRanges = &texture_range;
+        root_parameter_lighting[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
         root_sig_desc.NumParameters = _countof(root_parameter_lighting);
         root_sig_desc.pParameters = root_parameter_lighting;
@@ -366,10 +398,23 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_lighting;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
 
+        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
+        D3D_SHADER_MACRO workload_defines[] =
+        {
+            { "TEXTURE_COUNT", texture_count_define.c_str() },
+            { "TEXTURE_SAMPLING_COUNT", texture_sampling_count_define.c_str() },
+            { "TEXTURE_SIZE", texture_size_define.c_str() },
+            { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
+            { nullptr, nullptr }
+        };
+
         GraphicsUtils::compile_shader(&vertex_shader_visibility, L"assets/shaders/TVB_visibility_VS.hlsl", "vs_5_0");
         GraphicsUtils::compile_shader(&pixel_shader_visibility, L"assets/shaders/TVB_visibility_PS.hlsl", "ps_5_0");
         GraphicsUtils::compile_shader(&vertex_shader_lighting, L"assets/shaders/TVB_lighting_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/TVB_lighting_PS.hlsl", "ps_5_0");
+        GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/TVB_lighting_PS.hlsl", "ps_5_0", workload_defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {
