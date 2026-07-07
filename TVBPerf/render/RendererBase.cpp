@@ -33,7 +33,14 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_command_objects();
     this->create_swapchain();
 
+    fence_.init(device_.Get(), command_queue_.Get());
+    fence_values_[frame_index_] = 1;
+
+    this->init_viewport_scissorrect();
     this->init_();
+
+    this->create_meshbuffers();
+    this->create_constbuffers();
 
     this->create_dsv_heap();
     this->create_depth_stencil_buffer();
@@ -45,13 +52,6 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_root_signature();
     this->create_pso();
 
-    fence_.init(device_.Get(), command_queue_.Get());
-    fence_values_[frame_index_] = 1;
-
-    this->init_viewport_scissorrect();
-
-    this->create_meshbuffers();
-    this->create_constbuffers();
 
 
     // this->create_timestamp_queries();

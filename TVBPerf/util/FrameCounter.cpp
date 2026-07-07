@@ -43,7 +43,6 @@ namespace util {
 	}
 	
 	bool FrameCounter::to_terminate() const {
-		return false;
 		return frame_to_terminate_ <= frames_;
 	}
 }

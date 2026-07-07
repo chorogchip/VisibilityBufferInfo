@@ -10,6 +10,7 @@
 #include "render/RendererForward.h"
 #include "render/RendererForwardPrepass.h"
 #include "render/RendererDeferred.h"
+#include "render/RendererTVB.h"
 
 static std::unique_ptr<RendererBase> renderer_;
 
@@ -68,14 +69,18 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
     UpdateWindow(hwnd);
 
     switch (program_argument_.renderer_variant) {
-    case 0: default:
+    case 1: default:
         renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForward{});
         break;
-    case 1:
+    case 2:
         renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererForwardPrePass{});
         break;
-    case 2:
+    case 3:
         renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererDeferred{});
+        break;
+    case 4:
+        renderer_ = std::unique_ptr <RendererBase>(new rndr::RendererTVB{});
+        break;
     }
     
     renderer_->init(hwnd, program_argument_);

@@ -36,11 +36,6 @@ protected:
     virtual void init_() = 0;
     virtual void render_() = 0;
 
-    void copy_camera_data();
-private:
-    void create_device();
-    void create_command_objects();
-    void create_swapchain();
 
     virtual void create_dsv_heap() = 0;
     virtual void create_depth_stencil_buffer() = 0;
@@ -51,6 +46,14 @@ private:
 
     virtual void create_root_signature() = 0;
     virtual void create_pso() = 0;
+
+    void copy_camera_data();
+
+private:
+    void create_device();
+    void create_command_objects();
+    void create_swapchain();
+
 
     void init_viewport_scissorrect();
     void create_meshbuffers();
