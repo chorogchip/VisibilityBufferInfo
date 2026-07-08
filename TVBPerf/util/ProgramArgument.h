@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdint>
+#include <sstream>
 
 #define ProgramArgument_MAC \
     X(uint32_t, run_id, 0, run-id) \
@@ -48,3 +49,58 @@ struct ProgramArgument {
     ProgramArgument_MAC
 #undef X
 };
+
+inline std::string csv_escape(const std::string& value) {
+    bool need_quote = false;
+    for (char c : value) {
+        if (c == ',' || c == '"' || c == '\n' || c == '\r') {
+            need_quote = true;
+            break;
+        }
+    }
+
+    if (!need_quote) return value;
+
+    std::string ret = "\"";
+    for (char c : value) {
+        if (c == '"') ret += "\"\"";
+        else ret += c;
+    }
+    ret += "\"";
+    return ret;
+}
+
+inline std::string csv_value(const std::string& value) {
+    return csv_escape(value);
+}
+
+inline std::string csv_value(bool value) {
+    return value ? "1" : "0";
+}
+
+template <typename T>
+inline std::string csv_value(const T& value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+inline std::string program_argument_csv_header() {
+    std::string ret;
+#define X(type, name, defl, arg) \
+    ret += #name ",";
+    ProgramArgument_MAC
+#undef X
+    if (!ret.empty()) ret.pop_back();
+    return ret;
+}
+
+inline std::string program_argument_csv_values(const ProgramArgument& arg) {
+    std::string ret;
+#define X(type, name, defl, argname) \
+    ret += csv_value(arg.name) + ",";
+    ProgramArgument_MAC
+#undef X
+    if (!ret.empty()) ret.pop_back();
+    return ret;
+}

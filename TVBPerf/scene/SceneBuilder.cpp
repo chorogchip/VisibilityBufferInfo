@@ -37,7 +37,7 @@ namespace scene {
 				ret->vertices.push_back(vertex);
 			}
 			for (const auto& ind : geom.indices) {
-				ret->indices.push_back(ind);
+				ret->indices.push_back(mesh.vertex_start + ind);
 			}
 			ret->meshes.push_back(mesh);
 		}

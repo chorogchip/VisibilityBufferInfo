@@ -31,21 +31,19 @@ namespace dxutl {
             "map timestamp readback");
 	}
 
-    std::pair<double,double> GpuFrameTimer::read_timestamp(UINT frame_index) {
+    std::vector<double> GpuFrameTimer::read_timestamp(UINT frame_index) {
 
-        std::pair<double, double> ret{};
+        std::vector<double> ret(PASS_COUNT, 0.0);
         const UINT timestamp_base = frame_index * PASS_COUNT * 2;
 
-        const UINT64 start0 = readback_buffer_mapped_[timestamp_base + 0];
-        const UINT64 end0 = readback_buffer_mapped_[timestamp_base + 1];
-        const UINT64 start1 = readback_buffer_mapped_[timestamp_base + 2];
-        const UINT64 end1 = readback_buffer_mapped_[timestamp_base + 3];
+        for (UINT pass = 0; pass < PASS_COUNT; ++pass) {
+            const UINT timestamp_index = timestamp_base + pass * 2;
+            const UINT64 start = readback_buffer_mapped_[timestamp_index + 0];
+            const UINT64 end = readback_buffer_mapped_[timestamp_index + 1];
 
-        if (end0 > start0 && timestamp_frequency_rcp_ != 0.0f)
-            ret.first = static_cast<double>(end0 - start0) * 1000.0 * timestamp_frequency_rcp_;
-
-        if (end1 > start1 && timestamp_frequency_rcp_ != 0.0f)
-            ret.second = static_cast<double>(end1 - start1) * 1000.0 * timestamp_frequency_rcp_;
+            if (end > start && timestamp_frequency_rcp_ != 0.0f)
+                ret[pass] = static_cast<double>(end - start) * 1000.0 * timestamp_frequency_rcp_;
+        }
 
         return ret;
     }

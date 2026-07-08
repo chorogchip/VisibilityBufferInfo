@@ -61,6 +61,7 @@ namespace scene {
 
     std::unique_ptr<SceneDataCPU>  SceneAssimpImporter::load(const std::filesystem::path& path) {
         std::unique_ptr<SceneDataCPU> res{ new SceneDataCPU{} };
+        res->source_path = path;
 
         Assimp::Importer importer;
         const unsigned int flags =
@@ -84,7 +85,6 @@ namespace scene {
             assimp_scene->mNumMaterials << "] materals | [" <<
             assimp_scene->mMeshes << "] meshes" << std::endl;
 
-        res->source_path = path;
         res->bounds_min = { FLT_MAX, FLT_MAX, FLT_MAX };
         res->bounds_max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
 

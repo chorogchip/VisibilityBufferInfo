@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <cstdint>
 #include <utility>
+#include <vector>
 #include <wrl.h>
 #include <d3d12.h>
 
@@ -12,12 +13,12 @@ namespace dxutl {
 
     public:
         static constexpr UINT FRAME_COUNT = 2;
-        static constexpr UINT PASS_COUNT = 2;
+        static constexpr UINT PASS_COUNT = 3;
         static constexpr UINT BUF_COUNT = FRAME_COUNT * PASS_COUNT * 2;
 
     public:
         void init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue);
-        std::pair<double, double> read_timestamp(UINT frame_index);
+        std::vector<double> read_timestamp(UINT frame_index);
         void start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass);
         void end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass);
 

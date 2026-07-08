@@ -34,22 +34,19 @@ namespace util {
 			const size_t sz = frame_times.size();
 			if (sz == 0) continue;
 
-			ret.name = ".";
-			ret.variable = 0;
+			std::sort(frame_times.begin(), frame_times.end());
+			ret.time_min_ms = frame_times.front();
+			ret.time_median_ms = frame_times[sz / 2];
+			ret.time_max_ms = frame_times.back();
 
-			std::sort(frame_times_.begin(), frame_times_.end());
-			ret.frame_time_min = frame_times.front();
-			ret.frame_time_mid = frame_times[sz / 2];
-			ret.frame_time_max = frame_times.back();
-
-			ret.frame_time_p01 = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.01f)];
-			ret.frame_time_p10 = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.10f)];
-			ret.frame_time_p90 = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.90f)];
-			ret.frame_time_p99 = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.99f)];
+			ret.time_p01_ms = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.01f)];
+			ret.time_p10_ms = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.10f)];
+			ret.time_p90_ms = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.90f)];
+			ret.time_p99_ms = frame_times[static_cast<size_t>(static_cast<float>(sz) * 0.99f)];
 
 			double sum = 0.0;
 			for (auto f : frame_times) sum += f;
-			ret.frame_time_avg = static_cast<float>(sum / static_cast<double>(sz));
+			ret.time_avg_ms = static_cast<float>(sum / static_cast<double>(sz));
 		}
 		return rets;
 	}

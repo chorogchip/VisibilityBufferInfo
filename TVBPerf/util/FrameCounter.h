@@ -16,36 +16,32 @@ namespace util {
 		FrameCounter() = default;
 
         struct CountedData {
-            double frame_time_min;
-            double frame_time_mid;
-            double frame_time_max;
-            double frame_time_avg;
-            double frame_time_p01;
-            double frame_time_p10;
-            double frame_time_p90;
-            double frame_time_p99;
-            std::string name;
-            int variable;
+            double time_min_ms = 0.0;
+            double time_median_ms = 0.0;
+            double time_max_ms = 0.0;
+            double time_avg_ms = 0.0;
+            double time_p01_ms = 0.0;
+            double time_p10_ms = 0.0;
+            double time_p90_ms = 0.0;
+            double time_p99_ms = 0.0;
 
-            std::string to_string_header() const {
+            static std::string to_string_header() {
                 return std::string(
-                    "frame_time_min,frame_time_mid,frame_time_max,frame_time_avg,"
-                    "frame_time_p01,frame_time_p10,frame_time_p90,frame_time_p99,"
-                    "name,variable\n");
+                    "time_min_ms,time_median_ms,time_max_ms,time_avg_ms,"
+                    "time_p01_ms,time_p10_ms,time_p90_ms,time_p99_ms");
             }
+
             std::string to_string() const {
                 std::ostringstream oss;
                 oss << std::fixed << std::setprecision(5)
-                    << frame_time_min << ','
-                    << frame_time_mid << ','
-                    << frame_time_max << ','
-                    << frame_time_avg << ','
-                    << frame_time_p01 << ','
-                    << frame_time_p10 << ','
-                    << frame_time_p90 << ','
-                    << frame_time_p99 << ','
-                    << name << ',' << variable
-                    << '\n';
+                    << time_min_ms << ','
+                    << time_median_ms << ','
+                    << time_max_ms << ','
+                    << time_avg_ms << ','
+                    << time_p01_ms << ','
+                    << time_p10_ms << ','
+                    << time_p90_ms << ','
+                    << time_p99_ms;
                 return oss.str();
             }
 

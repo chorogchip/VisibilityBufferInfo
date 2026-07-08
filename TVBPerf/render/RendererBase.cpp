@@ -1,6 +1,7 @@
 #include "RendererBase.h"
 
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -10,6 +11,7 @@
 
 #include "scene/SceneAssimpImporter.h"
 #include "scene/SceneBuilder.h"
+#include "scene/SceneFingerprint.h"
 #include "scene/SceneInfo.h"
 #include "scene/SceneResourceBuilder.h"
 
@@ -19,6 +21,65 @@
 #endif
 
 using Microsoft::WRL::ComPtr;
+
+namespace {
+
+    struct PassOutputInfo {
+        int index;
+        const char* name;
+    };
+
+    std::vector<PassOutputInfo> get_pass_output_infos(uint32_t renderer_variant) {
+        switch (renderer_variant) {
+        case 1:
+            return { { 0, "main" }, { 1, "unused" }, { 3, "total" } };
+        case 2:
+            return { { 0, "depth_prepass" }, { 1, "forward" }, { 3, "total" } };
+        case 3:
+            return { { 0, "geometry" }, { 1, "lighting" }, { 3, "total" } };
+        case 4:
+            return { { 0, "visibility" }, { 1, "resolve" }, { 3, "total" } };
+        case 5:
+            return { { 0, "depth_prepass" }, { 1, "geometry" }, { 2, "lighting" }, { 3, "total" } };
+        case 6:
+            return { { 0, "visibility" }, { 1, "gbuffer" }, { 2, "lighting" }, { 3, "total" } };
+        default:
+            return { { 0, "pass0" }, { 1, "pass1" }, { 3, "total" } };
+        }
+    }
+
+    const char* get_renderer_variant_name(uint32_t renderer_variant) {
+        switch (renderer_variant) {
+        case 1:
+            return "Forward";
+        case 2:
+            return "ForwardPrepass";
+        case 3:
+            return "Deferred";
+        case 4:
+            return "TVB";
+        case 5:
+            return "DeferredPrepass";
+        case 6:
+            return "TVBGBuffer";
+        default:
+            return "Unknown";
+        }
+    }
+
+    std::filesystem::path get_scene_fingerprint_output_path(const std::string& output_filepath) {
+        if (output_filepath.empty()) {
+            return "scene_fingerprint.csv";
+        }
+
+        std::filesystem::path path = output_filepath;
+        const std::filesystem::path parent = path.parent_path();
+        const std::string stem = path.stem().string().empty() ? "result" : path.stem().string();
+        const std::string extension = path.extension().string().empty() ? ".csv" : path.extension().string();
+        return parent / (stem + "_scene_fingerprint" + extension);
+    }
+
+}
 
 RendererBase::~RendererBase() {
     if (command_queue_ && fence_)
@@ -34,7 +95,7 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     program_arguments_ = std::unique_ptr<const ProgramArgument>{ new ProgramArgument{ arg } };
 
 
-    frame_counter_.init(3, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
+    frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
 
     this->create_device();
@@ -80,10 +141,19 @@ void RendererBase::close() {
 
     auto results = frame_counter_.summarize();
 
-    std::string csv_string = results[0].to_string_header();
-    results[0].name = program_arguments_->run_name;
-    results[0].variable = program_arguments_->variable;
-    for (auto& o : results) csv_string += o.to_string();
+    std::string csv_string = program_argument_csv_header() + ",variant_name,pass_index,pass_name," +
+        util::FrameCounter::CountedData::to_string_header() + "\n";
+
+    const auto pass_infos = get_pass_output_infos(program_arguments_->renderer_variant);
+    const std::string variant_name = get_renderer_variant_name(program_arguments_->renderer_variant);
+    for (const auto& pass_info : pass_infos) {
+        if (pass_info.index < 0 || static_cast<size_t>(pass_info.index) >= results.size()) continue;
+        csv_string += program_argument_csv_values(*program_arguments_) + ",";
+        csv_string += csv_value(variant_name) + ",";
+        csv_string += std::to_string(pass_info.index) + ",";
+        csv_string += csv_value(std::string(pass_info.name)) + ",";
+        csv_string += results[pass_info.index].to_string() + "\n";
+    }
 
     std::ofstream ofs(path, std::ios::out | std::ios::trunc);
     if (!ofs) { std::cerr << "Failed to open output file: " << path << '\n'; return; }
@@ -214,8 +284,11 @@ void RendererBase::create_meshbuffers() {
 
     if (program_arguments_->to_use_scene) {
         scene_cpu_ = scene::SceneAssimpImporter::load(
-            std::filesystem::current_path() /
-            "assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx");
+            std::filesystem::current_path() / program_arguments_->scene_path);
+        scene::SceneFingerprint::write_csv(
+            get_scene_fingerprint_output_path(program_arguments_->output_filepath),
+            *scene_cpu_,
+            *program_arguments_);
     } else {
         scene::SceneInfoSphere gen_info{};
         gen_info.seed = program_arguments_->seed;
@@ -398,7 +471,7 @@ void RendererBase::move_to_next_frame() {
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
     fence_.wait_for_value(fence_values_[frame_index_]);
 
-    const auto [pass0, pass1] = frame_time_.read_timestamp(frame_index_);
-    std::vector<double> passes = std::initializer_list<double>{ pass0, pass1, pass0 + pass1 };
+    std::vector<double> passes = frame_time_.read_timestamp(frame_index_);
+    passes.push_back(std::accumulate(passes.begin(), passes.end(), 0.0));
     frame_counter_.tick(passes);
 }

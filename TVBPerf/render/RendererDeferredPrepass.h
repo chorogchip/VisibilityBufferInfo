@@ -6,10 +6,10 @@
 
 namespace rndr {
 
-	class RendererDeferred : public RendererBase {
+	class RendererDeferredPrepass : public RendererBase {
 	public:
-		RendererDeferred() = default;
-		~RendererDeferred() override = default;
+		RendererDeferredPrepass() = default;
+		~RendererDeferredPrepass() override = default;
 
 		void init_() override;
 		void render_() override;
@@ -25,6 +25,7 @@ namespace rndr {
 		void create_pso() override;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_lighting_;
+		Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_depth_prepass_;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_lighting_;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srv_heap_;
 		UINT srv_descriptor_size_ = 0;

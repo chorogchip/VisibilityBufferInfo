@@ -10,7 +10,9 @@
 #include "render/RendererForward.h"
 #include "render/RendererForwardPrepass.h"
 #include "render/RendererDeferred.h"
+#include "render/RendererDeferredPrepass.h"
 #include "render/RendererTVB.h"
+#include "render/RendererTVBGBuffer.h"
 
 static std::unique_ptr<RendererBase> renderer_;
 
@@ -80,6 +82,12 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
         break;
     case 4:
         renderer_ = std::unique_ptr <RendererBase>(new rndr::RendererTVB{});
+        break;
+    case 5:
+        renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererDeferredPrepass{});
+        break;
+    case 6:
+        renderer_ = std::unique_ptr<RendererBase>(new rndr::RendererTVBGBuffer{});
         break;
     }
     
