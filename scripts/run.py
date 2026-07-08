@@ -32,6 +32,7 @@ class ProgramArgument:
 
     warmup_frames: int = 60
     measure_frames: int = 120
+    auto_terminate: bool = True
 
     window_width: int = 1280
     window_height: int = 720

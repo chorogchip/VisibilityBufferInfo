@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "util/ProgramArgument.h"
-#include "util/GPUFrameTime.h"
 #include "util/FrameCounter.h"
 #include "util/ProgramArgument.h"
+#include "dx_util/GPUFrameTimer.h"
 #include "dx_util/Fence.h"
 
 #include "scene/SceneDataCPU.h"
@@ -31,12 +31,12 @@ public:
     virtual ~RendererBase();
     void init(HWND hwnd, const ProgramArgument&);
     void render();
+    void close();
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
     virtual void init_() = 0;
     virtual void render_() = 0;
-
 
     virtual void create_dsv_heap() = 0;
     virtual void create_depth_stencil_buffer() = 0;
@@ -49,7 +49,6 @@ protected:
     virtual void create_pso() = 0;
 
     void copy_camera_data();
-    UINT texture_descriptor_count() const;
     void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
 
 private:
@@ -57,16 +56,12 @@ private:
     void create_command_objects();
     void create_swapchain();
 
-
     void init_viewport_scissorrect();
     void create_meshbuffers();
     void create_dummy_textures();
     void create_constbuffers();
 
     void move_to_next_frame();
-    void create_timestamp_queries();
-    void read_gpu_timestamp_for_frame(UINT frame_index);
-
 
 protected:
     HWND hwnd_ = nullptr;
@@ -112,9 +107,11 @@ protected:
     } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
     void* buf_constant_mapped_[FRAME_COUNT]{};
+
     std::vector<ComPtr<ID3D12Resource>> dummy_textures_;
 
-    GpuFrameTime<FRAME_COUNT> frame_time;
+    static_assert(dxutl::GpuFrameTimer::FRAME_COUNT == FRAME_COUNT, "");
+    dxutl::GpuFrameTimer frame_time_;
     util::FrameCounter frame_counter_;
 
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };

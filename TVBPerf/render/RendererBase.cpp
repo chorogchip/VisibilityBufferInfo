@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <string>
+#include <fstream>
+#include <iostream>
 
-#include "util/GraphicsUtils.h"
 #include "util/Utils.h"
+#include "dx_util/GraphicsUtils.h"
 
 #include "scene/SceneAssimpImporter.h"
 #include "scene/SceneBuilder.h"
@@ -41,6 +43,7 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
 
     fence_.init(device_.Get(), command_queue_.Get());
     fence_values_[frame_index_] = 1;
+    frame_time_.init(device_.Get(), command_queue_.Get());
 
     this->init_viewport_scissorrect();
     this->init_();
@@ -59,8 +62,6 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_root_signature();
     this->create_pso();
 
-
-
     // this->create_timestamp_queries();
 }
 
@@ -69,7 +70,31 @@ void RendererBase::render() {
     this->render_();
 
     this->move_to_next_frame();
+}
 
+void RendererBase::close() {
+    fence_.wait_for_gpu();
+
+    const std::string& path = program_arguments_->output_filepath;
+    if (path == "") return;
+
+    auto results = frame_counter_.summarize();
+
+    std::string csv_string = results[0].to_string_header()
+        + results[0].to_string()
+        + results[1].to_string()
+        + results[2].to_string();
+
+    std::ofstream ofs(path, std::ios::out | std::ios::trunc);
+    if (!ofs) { std::cerr << "Failed to open output file: " << path << '\n'; return; }
+
+    ofs << csv_string;
+    if (!ofs) { std::cerr << "Failed to write output file: " << path << '\n'; return; }
+
+    ofs.close();
+
+    if (!ofs) { std::cerr << "Failed to close output file: " << path << '\n'; return; }
+    std::cout << "Saved CSV: " << path << '\n';
 }
 
 void RendererBase::create_device() {
@@ -223,7 +248,7 @@ void RendererBase::create_meshbuffers() {
 }
 
 void RendererBase::create_dummy_textures() {
-    const UINT texture_count = texture_descriptor_count();
+    const UINT texture_count = std::max(1u, program_arguments_->texture_count);
     const UINT texture_size = std::max(1u, program_arguments_->texture_size);
     const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
@@ -355,10 +380,6 @@ void RendererBase::copy_camera_data() {
     memcpy(buf_constant_mapped_[frame_index_], &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
 }
 
-UINT RendererBase::texture_descriptor_count() const {
-    return std::max(1u, program_arguments_->texture_count);
-}
-
 void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
     srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -366,37 +387,10 @@ void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE sr
     srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srv_desc.Texture2D.MipLevels = 1;
 
-    for (UINT i = 0; i < texture_descriptor_count(); ++i) {
+    for (UINT i = 0; i < program_arguments_->texture_count; ++i) {
         device_->CreateShaderResourceView(dummy_textures_[i].Get(), &srv_desc, srv_handle);
         srv_handle.ptr += device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
-}
-
-void RendererBase::create_timestamp_queries() {
-
-    D3D12_QUERY_HEAP_DESC query_heap_desc{};
-    query_heap_desc.Count =
-        FRAME_COUNT * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-    query_heap_desc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-    query_heap_desc.NodeMask = 0;
-
-    Utils::throw_if_failed(
-        device_->CreateQueryHeap(&query_heap_desc,
-            IID_PPV_ARGS(frame_time.timestamp_query_heap_.ReleaseAndGetAddressOf())),
-        "create timestamp query heap");
-
-    const UINT64 readback_buffer_size =
-        sizeof(UINT64) * FRAME_COUNT *
-        GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-
-    GraphicsUtils::create_buffer(frame_time.timestamp_readback_buffer_,
-        device_.Get(), readback_buffer_size, 1,
-        D3D12_HEAP_TYPE_READBACK,
-        D3D12_RESOURCE_STATE_COPY_DEST);
-
-    Utils::throw_if_failed(
-        command_queue_->GetTimestampFrequency(&frame_time.timestamp_frequency_),
-        "get timestamp frequency");
 }
 
 void RendererBase::move_to_next_frame() {
@@ -405,47 +399,6 @@ void RendererBase::move_to_next_frame() {
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
     fence_.wait_for_value(fence_values_[frame_index_]);
 
-    // read_gpu_timestamp_for_frame(finished_frame_index);
-    // const double gpu_ms = frame_time.gpu_frame_ms_[finished_frame_index]; //
-    // TODO
-
-    frame_counter_.tick(static_cast<float>(0.0f));
-}
-
-void RendererBase::read_gpu_timestamp_for_frame(UINT frame_index) {
-    if (!frame_time.timestamp_frame_valid_[frame_index])
-        return;
-
-    const UINT timestamp_base =
-        frame_index * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-
-    UINT64* mapped_data = nullptr;
-
-    D3D12_RANGE read_range{};
-    read_range.Begin = sizeof(UINT64) * timestamp_base;
-    read_range.End =
-        sizeof(UINT64) *
-        (timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME);
-
-    Utils::throw_if_failed(
-        frame_time.timestamp_readback_buffer_->Map(
-            0, &read_range, reinterpret_cast<void**>(&mapped_data)),
-        "map timestamp readback");
-
-    const UINT64 start = mapped_data[timestamp_base + 0];
-    const UINT64 end = mapped_data[timestamp_base + 1];
-
-    D3D12_RANGE write_range{};
-    write_range.Begin = 0;
-    write_range.End = 0;
-
-    frame_time.timestamp_readback_buffer_->Unmap(0, &write_range);
-
-    if (end > start && frame_time.timestamp_frequency_ != 0) {
-        const double elapsed_ms =
-            static_cast<double>(end - start) * 1000.0 /
-            static_cast<double>(frame_time.timestamp_frequency_);
-
-        frame_time.gpu_frame_ms_[frame_index] = elapsed_ms;
-    }
+    const auto [pass0, pass1] = frame_time_.read_timestamp(frame_index_);
+    frame_counter_.tick(pass0, pass1);
 }

@@ -4,7 +4,7 @@
 #include <wrl.h>
 
 #include "util/Utils.h"
-#include "util/GraphicsUtils.h"
+#include "dx_util/GraphicsUtils.h"
 
 namespace scene {
     std::unique_ptr<SceneDataGPU> SceneResourceBuilder::build(const SceneDataCPU& src,

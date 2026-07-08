@@ -5,7 +5,7 @@
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
 
-#include "Utils.h"
+#include "util/Utils.h"
 
 using Microsoft::WRL::ComPtr;
 

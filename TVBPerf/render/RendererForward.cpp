@@ -4,8 +4,7 @@
 #include <string>
 
 #include "util/Utils.h"
-#include "util/GraphicsUtils.h"
-
+#include "dx_util/GraphicsUtils.h"
 
 namespace rndr {
 
@@ -173,7 +172,7 @@ namespace rndr {
 
     void RendererForward::create_srv_heap() {
         D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = texture_descriptor_count();
+        srv_heap_desc.NumDescriptors = program_arguments_->texture_count;
         srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -194,7 +193,7 @@ namespace rndr {
         // b0 (constant buffer)
         D3D12_DESCRIPTOR_RANGE texture_range{};
         texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        texture_range.NumDescriptors = texture_descriptor_count();
+        texture_range.NumDescriptors = program_arguments_->texture_count;
         texture_range.BaseShaderRegister = 8;
         texture_range.RegisterSpace = 0;
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;

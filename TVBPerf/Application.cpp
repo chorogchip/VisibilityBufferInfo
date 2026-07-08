@@ -88,7 +88,7 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
     MSG msg{};
 
     while (msg.message != WM_QUIT) {
-        if (renderer_->to_terminate()) {
+        if (program_argument_.auto_terminate && renderer_->to_terminate()) {
             PostQuitMessage(0);
             break;
         } else if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -98,6 +98,9 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
             renderer_->render();
         }
     }
+
+    renderer_->close();
+    renderer_ = nullptr;
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
