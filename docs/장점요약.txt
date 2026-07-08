@@ -1,0 +1,154 @@
+
+Forward
+- cons: overdraw 발생
+
+Forward Prepass
+- prepass: for mesh
+- lighting: for mesh for material
+- cons: light 독립적이지 않음
+- cons: geometry 두번처리
+
+Deferred
+- material: for mesh for material (sample)
+- lighting: 1
+- cons: overdraw 발생
+
+Deferred Prepass
+- prepass: for mesh
+- material: for mesh for material (sample)
+- lighting: 1
+- cons: geometry 두번처리
+
+Visibility
+- prepass: for mesh (+ draw call / triangle ID)
+- visutl: binning, prefix sum, get xy
+- material: for material (interpolation, sample)
+- lighting: 1
+- pros: geometry 한 번만 처리.
+
+
+visibility는 일단 처음에 depth와 함께 draw call ID / triangle ID를 넣는 접근은 맞다
+하지만 그 뒤부터 다르다
+예를들어 패스를 한번 실행해서 ID로 material얻은후 barycentric구할수있는데 그 뒤로 어떻게 material별로 할 것인가?
+
+
+
+- rasterizer : Nanite처럼 custom rasterizer를 쓸 것인가, HW rasterizer를 쓸 것인가 (작은 삼각형에서 quad구조 깰수있음, hybrid접근 가능)
+	원래도 샘플링을 미루기에 quad구조는 훨씬 비용이 절약된다는 장점 가짐.
+- material별로 분류해 작은 셰이더를 쓸 것인가 거대한 셰이더를 쓸 것인가 (overhead vs divergence)
+- 분류한다면 tile단위로 분류할것인가 전체를 분류할것인가
+- gbuffer를 채울 것인가: (screen space효과 등등을 계산하려면 채우는 것이 좋겠지. 그렇다면 대역폭 장점은 적어지지만 quad에 대해선 대역폭 낭비가 준다)
+	단 gbuffer를 만들지 않을 경우에는 대역폭 장점은 생긴다
+
+즉 visibility 방법론의 장점은 다음과 같이 요약할 수 있겠다
+- quad구조를 피하므로 픽셀 셰이더 수가 줄어듬 -> deferred에서 텍스쳐를 샘플링해 gbuffer를 채우는 셰이더에서 이득
+
+
+
+
+렌더링 파이프라인에서
+
+
+
+
+visibility buffer를 depth 에 정보를 추가한걸로 볼것이냐 gbuffer의 대체제로 볼것이냐라는 접근이 갈림.
+
+전자
+- DOOM은 채운다.
+- nanite: Gbuffer를 채우기 위한 것으로 봄.
+후자
+- TVB 1.0 (forward ++라고 부름, forward처럼 바로 lighting, Gbuffer bandwidth 절약)
+- TVB 2.0도 같음 (이건 앞단을 만진거임)
+
+
+
+
+
+
+
+
+렌더링 파이프라인을 draw call 관점에서 보면 draw -1번-depth/visibility정보-2번-gbuffer등샘플링된텍스쳐-3번-output
+으로 봤을 때 1번은 mesh에 대해 다른 연산이 필요, 2는 material에 대해 다른 연산이 필요, 3은 light에 대해 다른 연산이 필요하다
+
+1에서 픽셀 하나에 여러 프래그먼트가 겹칠 수 있는데
+이로 인한 overdraw 또는 ddx ddy 계산을 위한 2x2 quad로 인한 오버헤드가 발생하는데 둘은 속성이 꽤 비슷하다
+둘을 프래그먼트 낭비라고 부르겠다
+pre-pass 추가시 겹치는 픽셀은 없애지만 ddx ddy는 못막는다
+이는 naive forward기준 2와 3에 비용을 추가하므로 이를 끊기 위한 접근이 논의될 수 있다
+deferred는 scene복잡도와 light를 독립적으로 계산할 수 있게 출발했다
+
+deferred는 2와 3 사이에 gbuffer를 두어 별도의 패스로 처리, overdraw를 3까지 늘리지 않는 장점이 있다
+TVB는 1과 2 사이에 visibility버퍼를 둔다. 이로 인해  overdraw가 2까지 늘리지 않는다.
+즉 overdraw된 프래그먼트들의 texture sampling / material shader 비용을 지연시켜 막을 수 있다
+물론 이를 위한 material binning 오버헤드가 추가된다. 이걸 안할 수 있지만 AAA등의 게임들은 머티리얼이 복잡해 쓰는것이 좋다
+그리고 이걸 하면은 같은 material을 연속적으로 실행할 수 있어 더 좋다 (PSO전환 줄인다) 그리고 shading rate를 더 자유롭게 조정가능하다
+이게 첫 번쨰 장점이다 머티리얼이 복잡한걸 다루는 AAA게임들의 고민이다
+
+또한 1과 2를 끊으므로 forward/deferred와 달리 geometry가 pre-pass 이후에 파이프라인 앞단에서 처리되지 않도록 한다
+물론 정확히는 뒷단으로 미뤄지는것이다. 래스터라이즈하는건 없어진다. (래스터화가 준다는게 메인 장점으로)
+그래서 geometry의 양 자체가 많을수록 이 처리량을 절감해 이득이다.
+
+부가적으로 draw call수도 준다 (for each mesh, for each submesh 에서 submesh iteration이 날라간다)
+그니까 서로 다른 material을 가진 geometry를 같은 PSO로 처리할 수 있기에 PSO를 덜 바꿀 수 있다
+이게 2번이다 지오메트리가 복잡한걸 다루는 nanaite등의 접근이다
+
+마지막으로 gbuffer 앞단에서 파이프라인을 끊으므로 gbuffer를 안쓸수있다 이럼 gbuffer 대역폭을 아낄수있다 이게 3번장점
+하지만 screen space effect등을 위해선 복잡한 시스템에선 쓰는 것이 나을것이다 (연구중심인 TVB에선 안썼고 실용 DOOM/nanaite에선 썼다)
+SSR, SSAO, decals, TAA, probes, debug view, material layering 등이 필요하기 때문에
+연구에선 visibility buffer를 gbuffer의 대체제로 인식하면서 이 점을 조명한다
+
+즉 버리는 프래그먼트들의 샘플링/셰이딩 준다, geometry 처리 준다, gbuffer bandwidth 준다
+단점으로는 vertex/index/materal data 의 indirect access를 하게돼서 locality가 떨어지고
+material binning이 보통 필요하고
+또 복잡한 무게중심 보간 등을 해야한다 여기서 ddx ddy 계산하고 등등 빡세다
+
+즉 실험 설계 파라미터는 다음과 같다
+
+- texture sampling count / texture resolution / shader ALU overhead : waste fragment를 2에서 줄이는 비용 추론.
+- scene overdraw rate / triangle size : waste fragment의 개수 자체를 조절하고 geometry의 래스터화 비용 추정.
+- gbuffer size : gbuffer bandwidth 절감을 실험하기 위한 파라미터.
+- geometry data working set : 메쉬의 용량이 클수록 indirect access가 random access가 됨
+- material count / scene material variance : binnig의 오버헤드 영향 가능, PSO switch등을 결정. 스크린에 머티리얼이 얼마나 지역성 있게 분포하느냐도 중요.
+- resolution : triangle quad와 gbuffer size를 결정.
+
+light는 아예 안 할 것임. (애초에 deferred와 TVB는 독립적이고 또 독립적으로 되도록 하는 건 다른 분야의 역할이므로)
+또한 여기서는 material 개수 = shader 쌍 개수 = PSO 개수 < 최소 draw call 수 라고 봄. uber shader나 그 divergence는 고려하지 않음. (AAA적 관점)
+
+일단 세 가지 모두 prepass 쓰고안쓰고, TVB 에서 binnning은 써야하고 TVB에서 gbuffer쓰고 안쓰고 이것까지 구현을 해야 한다
+variant는 forward, forward+PP, deferred, deferred+PP, TVB, TVB+Gbuffer 6개.
+
+측정할 것: frame time, 각 pass time,
+기타 프로파일링 시 측정한 지표 (nvidia nsight: L2 hit rate, VRAM bw, shaded pixel, quad occupancy...),
+이론상 계산가능한 지표 (gbuffer bandwidth, texture sampling bandwidth, PSO switch count, draw call count...)
+
+실험 1: VB는 두 번째 래스터화와 quad낭비 비용을 얼마나 줄이는가?
+- 삼각형 크기를 조절하며 forward, forward + depth prepass와 비교. material은 간단하게 최소비용으로 두고 메쉬도 아주 간단한걸 인스턴스를 많이 만듬.
+- overdraw도 조정. (두 번쨰 래스터화에서 씀
+- resolution도 두배 네배 해보기. (삼각형을 덮는 픽셀수가 달라짐)
+- forward pre-pass 에 집중해 비교.
+- 예상: 삼각형당 픽셀개수가 적어질수록 이득, overdraw 증가할수록 이,득 단 일정 개수의 삼각형 이상에서만 발생, 
+실험 2: VB는 버려지는 프래그먼트들의 texture sampling / material shader 비용을 얼마나 줄이는가?
+- 메쉬를 간단한걸 인스턴스를 많이 만듬. material 수도 1개. shader에서 텍스쳐를 엄청나게 샘플링 / ALU연산을 엄청하게 함.
+- 삼각형 크기를 조절하며 quad를 집중적으로 봄.
+- resolution도 두배 네배 해보기. (삼각형을 덮는 픽셀수가 달라짐)
+- 삼각형은 전에 봤으므로 셰이더 비용에 집중하기. (샘플링 수와 ALU연산 두 축으로)
+- 예상: 삼각형 크기가 작고 셰이더 비용이 증가할수록 이득
+실험 3: draw call 수와 PSO switch 수 줄면 얼마나 좋은가?
+- material 개수가 많아야 함. TVB는 binning으로 처리, 다른건 draw call하면서 처리해 scalability 비교하기.
+- material의 분포도 조절해보기 (binning 비용이 어떻게 변하는지)
+- material의 비용 자체도 필요하다면 변동.
+- cpu와 gpu의 병목을 같이 측정.
+실험 4: gbuffer bandwidth 절약이 의미있는가?
+- gbuffer크기 늘리며 비교. 다른건 간단하게. 이론상 gbuffer크기 조정하며 비교. resolution도 건들기.
+- TVB, TVB+Gbuffer, deferred를 비교한다.
+- gbuffer의 이론적 필요 bandwidth를 계산하며, L2캐시 크기와 연관지어 접근
+실험 5: indirect access는 얼마나 치명적인가?
+- geometry data working set개수 조절하며 다른 알고리즘과 비교.
+- L2캐시 크기와 연관지어 접근
+- 미세하게 조절해가며 많은 데이터 뽑기.
+- 메모리 레이아웃을 바꾸면서 실험할 수 있다.
+
+여기까지 다음주까지 하겠다.
+
+
+

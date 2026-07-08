@@ -7,13 +7,14 @@
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, run_current_time, "", run-current-time) \
-    X(std::string, output_filepath, "", output-filepath) \
-    X(uint32_t, renderer_variant, 3, renderer-variant) \
+    X(std::string, output_filepath, "temp.csv", output-filepath) \
+    X(uint32_t, renderer_variant, 4, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
+    X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, false, to-use-scene) \
     X(std::string, scene_path, "assets/scenes/unpacked/CornellBox/CornellBox-Empty-RG.obj", scene-path) \
-    X(uint32_t, warmup_frames, 60000, warmup-frames) \
-    X(uint32_t, measure_frames, 12000, measure-frames) \
+    X(uint32_t, warmup_frames, 600, warmup-frames) \
+    X(uint32_t, measure_frames, 120, measure-frames) \
     X(bool, auto_terminate, false, auto-terminate) \
     X(uint32_t, window_width, 1280, window-width) \
     X(uint32_t, window_height, 720, window-height) \

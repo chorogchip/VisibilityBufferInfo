@@ -36,6 +36,7 @@ namespace rndr {
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
         Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
             pipeline_state_.Get()), "command list reset on render start");
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
 
         this->copy_camera_data();
 
@@ -63,7 +64,6 @@ namespace rndr {
         D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
         command_list_->OMSetRenderTargets(gbuffer_count_, &rtv_handle, TRUE, &dsv_handle);
 
-
         for (UINT i = 0; i < gbuffer_count_; ++i) {
             command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
             rtv_handle.ptr += rtv_descriptor_size_;
@@ -80,6 +80,9 @@ namespace rndr {
             command_list_->DrawIndexedInstanced(mesh.index_count, 1,
                 mesh.index_start, 0, 0);
         }
+
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
 
         // lighting pass
 
@@ -113,6 +116,7 @@ namespace rndr {
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
         ID3D12CommandList* command_lists[] = { command_list_.Get() };

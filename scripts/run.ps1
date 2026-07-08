@@ -1,0 +1,1 @@
+C:\Users\mgkim15\AppData\Local\Programs\Python\Python313\python.exe .\run.py

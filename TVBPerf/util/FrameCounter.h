@@ -24,15 +24,18 @@ namespace util {
             double frame_time_p10;
             double frame_time_p90;
             double frame_time_p99;
+            std::string name;
+            int variable;
 
             std::string to_string_header() const {
                 return std::string(
                     "frame_time_min,frame_time_mid,frame_time_max,frame_time_avg,"
-                    "frame_time_p01,frame_time_p10,frame_time_p90,frame_time_p99\n");
+                    "frame_time_p01,frame_time_p10,frame_time_p90,frame_time_p99,"
+                    "name,variable\n");
             }
             std::string to_string() const {
                 std::ostringstream oss;
-                oss << std::fixed << std::setprecision(3)
+                oss << std::fixed << std::setprecision(5)
                     << frame_time_min << ','
                     << frame_time_mid << ','
                     << frame_time_max << ','
@@ -40,7 +43,8 @@ namespace util {
                     << frame_time_p01 << ','
                     << frame_time_p10 << ','
                     << frame_time_p90 << ','
-                    << frame_time_p99
+                    << frame_time_p99 << ','
+                    << name << ',' << variable
                     << '\n';
                 return oss.str();
             }
@@ -50,9 +54,9 @@ namespace util {
             }
         };
 
-		void init(uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate);
-		void tick(double pass0, double pass1);
-		std::array<CountedData, 3> summarize();
+		void init(int dimension, uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate);
+		void tick(std::vector<double>& measure);
+		std::vector<CountedData> summarize();
 		bool to_terminate() const;
 
 	private:
@@ -60,6 +64,6 @@ namespace util {
 		uint64_t frame_to_start_measure_ = 0;
 		uint64_t frame_to_end_measure_ = 0;
 		uint64_t frame_to_terminate_ = 0;
-		std::array<std::vector<double>, 3> frame_times_;
+		std::vector<std::vector<double>> frame_times_;
 	};
 }

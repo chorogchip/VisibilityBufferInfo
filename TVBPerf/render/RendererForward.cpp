@@ -17,15 +17,8 @@ namespace rndr {
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
         Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
             pipeline_state_.Get()), "command list reset on render start");
-
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
         this->copy_camera_data();
-
-        /*
-        const UINT timestamp_base = frame_index_ * GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME;
-        const UINT timestamp_start_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_START;
-        const UINT timestamp_end_index = timestamp_base + GpuFrameTime<FRAME_COUNT>::TIMESTAMP_END;
-
-        // command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_start_index);*/
 
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -67,15 +60,7 @@ namespace rndr {
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-        /*
-        command_list_->EndQuery(frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_end_index);
-        command_list_->ResolveQueryData(
-            frame_time.timestamp_query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
-            timestamp_start_index, GpuFrameTime<FRAME_COUNT>::TIMESTAMP_COUNT_PER_FRAME,
-            frame_time.timestamp_readback_buffer_.Get(), sizeof(UINT64) * timestamp_base);
-
-        frame_time.timestamp_frame_valid_[frame_index_] = true;*/
-
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
         ID3D12CommandList* command_lists[] = { command_list_.Get() };
@@ -92,7 +77,7 @@ namespace rndr {
         dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
         Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&dsv_heap_)),
+            device_->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(dsv_heap_.ReleaseAndGetAddressOf())),
             "create descriptor heap");
 
         dsv_descriptor_size_ =
@@ -149,7 +134,7 @@ namespace rndr {
         rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
         Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)),
+            device_->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(rtv_heap_.ReleaseAndGetAddressOf())),
             "create descriptor heap");
 
         rtv_descriptor_size_ =
@@ -162,7 +147,7 @@ namespace rndr {
 
         for (UINT i = 0; i < FRAME_COUNT; ++i) {
             Utils::throw_if_failed(
-                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])),
+                swapchain_->GetBuffer(i, IID_PPV_ARGS(render_targets_[i].ReleaseAndGetAddressOf())),
                 "create rtv");
             device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr,
                 rtv_handle);
@@ -177,7 +162,7 @@ namespace rndr {
         srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
         Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
+            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(srv_heap_.ReleaseAndGetAddressOf())),
             "create srv descriptor heap");
 
         srv_descriptor_size_ =

@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 
 project(TVBPerf LANGUAGES CXX RC)
 
+# Visual Studio 멀티 구성 generator용 구성 명시
+if(CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+endif()
+
 # C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +22,6 @@ set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
 set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
 
-# 빌드 옵션
 # ------------------------------------------------------------
 # Assimp
 # ------------------------------------------------------------
@@ -33,7 +37,9 @@ set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${TVBPERF_ASSIMP_DIR})
+
 set_target_properties(assimp PROPERTIES FOLDER "External/assimp")
+
 if(TARGET zlibstatic)
     set_target_properties(zlibstatic PROPERTIES FOLDER "External/assimp")
 endif()
@@ -56,14 +62,11 @@ file(GLOB_RECURSE TVBPERF_HEADER_FILES
     ${TVBPERF_SRC_DIR}/*.hpp
 )
 
-# RC 파일 자동 수집
 file(GLOB_RECURSE TVBPERF_RC_FILES
     CONFIGURE_DEPENDS
     ${TVBPERF_SRC_DIR}/*.rc
 )
 
-# 셰이더 자동 수집
-# 런타임 컴파일용이므로 빌드하지 않고 프로젝트에만 표시
 file(GLOB_RECURSE TVBPERF_SHADER_FILES
     CONFIGURE_DEPENDS
     ${TVBPERF_SHADER_DIR}/*.hlsl
@@ -89,6 +92,7 @@ target_include_directories(TVBPerf
     PRIVATE
         ${TVBPERF_SRC_DIR}
         ${TVBPERF_ASSIMP_DIR}/include
+        ${TVBPERF_SHADER_DIR}
 )
 
 # 전처리기 정의
@@ -97,20 +101,34 @@ target_compile_definitions(TVBPerf
         _CONSOLE
         UNICODE
         _UNICODE
+
         $<$<CONFIG:Debug>:_DEBUG>
         $<$<CONFIG:Release>:NDEBUG>
+
         $<$<AND:$<PLATFORM_ID:Windows>,$<EQUAL:${CMAKE_SIZEOF_VOID_P},4>>:WIN32>
 )
 
+# ------------------------------------------------------------
 # MSVC 컴파일 옵션
+# ------------------------------------------------------------
 if(MSVC)
     target_compile_options(TVBPerf
         PRIVATE
             /W3
             /sdl
             /permissive-
-            $<$<CONFIG:Release>:/Gy>
+
+            # Debug 옵션
+            $<$<CONFIG:Debug>:/Od>
+            $<$<CONFIG:Debug>:/Zi>
+
+            # Release 옵션
+            $<$<CONFIG:Release>:/O2>
+            $<$<CONFIG:Release>:/Ob2>
             $<$<CONFIG:Release>:/Oi>
+            $<$<CONFIG:Release>:/Ot>
+            $<$<CONFIG:Release>:/Gy>
+            $<$<CONFIG:Release>:/DNDEBUG>
     )
 
     # Debug=/MDd, Release=/MD
@@ -137,16 +155,23 @@ target_link_libraries(TVBPerf
         Shell32
 )
 
+# ------------------------------------------------------------
 # 링커 옵션
+# ------------------------------------------------------------
 if(MSVC)
     target_link_options(TVBPerf
         PRIVATE
             /SUBSYSTEM:WINDOWS
             /DEBUG
+
+            # Debug
             $<$<CONFIG:Debug>:/INCREMENTAL>
+
+            # Release
             $<$<CONFIG:Release>:/INCREMENTAL:NO>
             $<$<CONFIG:Release>:/OPT:REF>
             $<$<CONFIG:Release>:/OPT:ICF>
+            $<$<CONFIG:Release>:/LTCG>
     )
 endif()
 
@@ -164,6 +189,16 @@ if(TVBPERF_SHADER_FILES)
 endif()
 
 # ------------------------------------------------------------
+# 출력 디렉터리
+# Debug/Release 별도 폴더
+# ------------------------------------------------------------
+set_target_properties(TVBPerf PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release
+)
+
+# ------------------------------------------------------------
 # 빌드 결과물에 assets/shaders만 복사
 # 전체 assets 복사 금지
 # ------------------------------------------------------------
@@ -176,15 +211,11 @@ add_custom_target(CopyShaders ALL
     COMMENT "Copying assets/shaders to output directory"
 )
 
+add_dependencies(CopyShaders TVBPerf)
+
 # 작업 디렉터리 설정
-# 실행 시 결과물 기준으로 assets/shaders를 접근하려면 exe 폴더를 working directory로 둠
 set_property(TARGET TVBPerf PROPERTY
     VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:TVBPerf>"
-)
-
-# 출력 디렉터리
-set_target_properties(TVBPerf PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # ------------------------------------------------------------

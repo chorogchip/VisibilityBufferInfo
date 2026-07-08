@@ -1,0 +1,121 @@
+[06-30 진행상황]
+
+프로젝트 개요 구체화
+- 프로젝트 개요를 구상하였습니다.
+- 우선 TVB의 기본 개념을 차용해 구현한 뒤, 남은 시간을 잘 분배하여 TVB 2.0에서 다루는 주제들로 확장하려고 합니다.
+
+DX12 초기화
+- DX12 기본 초기화 코드를 만들었습니다.
+
+Spherified Cube 모델 생성
+- 코드로 구 모델을 생성하는 코드를 만들었습니다.
+
+주간 계획
+- 수요일은 프로젝트 구체화와 발표 준비를 하고, 씬 전체를 그릴 수 있도록 렌더러를 확장하려고 합니다.
+- 우선 forward 렌더러 + 자동화된 벤치마크 시스템을 구축하는 것을 목표로 하였습니다.
+- 위가 완료되면 depth pre-pass -> deferred -> TVB 순서대로 구현하려고 합니다.
+
+[07-01 진행상황]
+
+모델에서 Scene 전체를 그리도록 확장
+- 여러 인스턴스를 그릴 수 있도록 렌더러를 확장하였습니다.
+- 전역 vertex / index 버퍼에 geometry들을 담고, offset 으로 사용합니다.
+- structured buffer 에 인스턴스별 데이터(월드 행렬)를 담아 사용합니다.
+- 단 geometry/material을 공유하는 오브젝트끼리 묶어서 인스턴싱하는 기능은 구현되지 않았습니다.
+- 각 버퍼는 아직 upload heap을 사용합니다. 추후 default heap을 사용하는 구조로 전환할 예정입니다.
+
+- 장면은 파라미터에 따라 자동으로 생성됩니다.
+- 현재 매개 변수는 다음과 같습니다.
+
+struct SceneInfo {
+	uint32_t seed;
+	uint32_t sphere_count;
+	uint32_t material_count;
+	uint32_t geometry_count;
+	float z_min;
+	float z_max;
+	float xy_min;
+	float xy_max;
+	float radius_min;
+	float radius_max;
+	uint32_t geometry_division_min;
+	uint32_t geometry_division_max;
+	uint32_t material_float4_count;  // g버퍼 장수 (미구현)
+};
+
+- 모델로 Spherified Cube를 선택한 이유는 추후 meshlet을 고려할 경우 격자 단위로 나누기 쉽다고 판단했기 때문입니다.
+- 각 구의 6면은 설정한 개수의 삼각형 (geometry_division^2 * 2) 으로 분할됩니다.
+- TVB에 유리한 인위적인 상황을 막기 위해 어떤 구들은 데이터는 같지만 서로 다른 주소에 별개로 존재하는 vertex/index 를 사용할 수 있습니다.
+
+발표 준비
+- 주제를 더 구체화하며 발표 준비를 하였습니다.
+
+주간 계획
+- 이번 주까지 자동화된 벤치마크 시스템을 구축해, 포워드 렌더러의 수치를 뽑아보려고 합니다.
+- 이번 TVB 프로젝트에서 중요한 요소 중 하나가 상용 게임에서의 material 사용의 복잡성을 재현하는 것이라고 생각했습니다. 구체적인 방법을 더 생각해보려고 합니다.
+
+[07-02 진행상황]
+관련 지식을 조사하고 프로젝트를 구체화, 발표를 진행했습니다.
+
+[07-03 진행상황]
+
+렌더러 개발
+- 커맨드라인 인자를 파싱해 외부에서 파라미터를 읽어오도록 했습니다.
+- 설정한 조건에 따른 프레임만큼 실행한 뒤 종료하도록 만들었습니다.
+- 파이썬 스크립트로 렌더러를 실행하도록 했습니다.
+- 렌더링에 필요한 버퍼들을 upload heap에 올려 default heap으로 복사해 정상적인 성능으로 사용할 수 있도록 했습니다.
+- readback buffer를 이용해 GPU timestamp query를 읽어올 수 있도록 했습니다.
+
+
+
+각 방법별 렌더러 계획
+- forward: material과 geometry를 순회하며 둘을 공유하는 인스턴스끼리 묶어 draw call을 하려고 합니다.
+- forward + depth pre-pass : forward와 같되 geometry를 순회하며 geometry를 공유하는 인스턴스끼리 묶어 pre-pass를 계산합니다.
+- deferred : material과 geometry를 순회하며 geometry pass를 그리고, shading pass는 통합된 하나를 사용합니다.
+- TVB: geometry를 순회하며 visibility buffer를 만들고, 그 뒤는 같은 material끼리 묶어 draw call을 하려고 합니다.
+	추후 material에 상관없이 통합된 draw call을 사용해보는 접근을 하려고 합니다.
+
+
+
+씬 계획 - 초반에 인조 구 씬으로 다음과 같은 시도를 하려고 합니다.
+- Tradeoff 관찰:  overdraw, material, G-buffer, triangle size 등등에 따라 각 알고리즘의 성능 분석, 변수에 따른 민감도 관찰
+- Crossover Point 찾기: 위와 같은 맥락으로 유리해지는 알고리즘이 바뀌는 지점 찾기
+- 데이터와 맞게 성능 모델을 수립
+- Roofline 분석: VRAM bandwidth, ALU, texture sampling, rasterization, L2 cache 등에 의한 roofline 분석
+
+
+
+씬 계획 - 이후 인터넷에서 구할 수 있는 씬으로 다음과 같은 시도를 하려고 합니다.
+- Scene fingerprint 추출 (각 씬의 geometry/material/texture/overdraw 특성 수치화)
+- 구에서 세운 모델이 현실에서도 통하는지 가설을 세우고 검증
+- HW 프로파일링을 동반
+- 안 통한다면 이유를 찾기
+- TVB 약점, 강점 케이스 찾기
+- material binning / sorting 실험 (확장) (편집됨)
+
+[07-06 진행상황]
+
+렌더러 개발
+- 인터넷에서 다양한 씬들을 구해 프로젝트에 사용했습니다. 라이센스는 전부 Creative Commons류로 확인했습니다.
+- 구가 아닌 실제 다양한 씬들의 정보를 담을 수 있는 데이터 구조를 만들었습니다.
+- 씬들을 Assimp로 불러왔습니다. 또한 각 씬의 삼각형 수, material 수 등의 정보를 요약하는 코드를 만들었습니다. 여기에는 ai agent의 도움을 받았습니다.
+- 씬들을 간단하게 렌더링해봤습니다.
+- 렌더러 코드를 리팩토링하고 4가지의 알고리즘으로 씬을 렌더링할 수 있도록 만들었습니다.
+- 화요일엔 본격적으로 Forward/Forward + depth pre-pass/deferred/TVB 알고리즘을 구현해보려고 합니다.
+- 수요일엔 실제로 수치를 뽑아 분석해보려고 합니다.
+
+[07-07 진행상황]
+
+렌더러 개발
+- Forward, Forward + Depth Pre-Pass, Deferred, TVB 알고리즘을 구현했습니다.
+- 단 TVB의 경우 무게중심좌표계를 계산해 보간하는 연산은 아직 구현하지 않았습니다.
+
+계획
+- 네 알고리즘이 공정한 연산을 하도록 세부적으로 조정한 뒤 수치를 측정해보려고 합니다.
+- Nvidia Nsight Graphics의 경우 2024년 버전이 Blackwell 에 대한 프로파일링이 불가능해 집에서 진행해보려고 합니다.
+
+
+
+
+
+

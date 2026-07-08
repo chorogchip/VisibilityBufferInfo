@@ -29,8 +29,8 @@ ProgramArgument ArgParser::parse(const std::vector<std::string>& args) {
         if (args[i] == std::string("--" #arg)) { \
             if (i + 1 >= args.size()) throw std::runtime_error("Missing value for --" #arg); \
             ret.name = parse_value<type>(args[i + 1]); \
-            ++i;\
-            continue;\
+            ++i; \
+            continue; \
         }
 
         ProgramArgument_MAC

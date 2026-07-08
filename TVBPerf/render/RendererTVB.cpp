@@ -28,6 +28,7 @@ namespace rndr {
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
         Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(),
             pipeline_state_.Get()), "command list reset on render start");
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
 
         this->copy_camera_data();
 
@@ -68,6 +69,9 @@ namespace rndr {
                 mesh.index_start, 0, 0);
         }
 
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
+
         // lighting pass
 
         command_list_->SetPipelineState(pso_lighting_.Get());
@@ -100,6 +104,7 @@ namespace rndr {
         GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
         ID3D12CommandList* command_lists[] = { command_list_.Get() };
@@ -209,7 +214,6 @@ namespace rndr {
     }
 
     void RendererTVB::create_shader_resources() {
-
 
         struct Mesh {
             uint32_t vertex_start;

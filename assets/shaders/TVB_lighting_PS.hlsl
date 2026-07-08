@@ -30,7 +30,9 @@ struct Vertex
 {
     float3 position;
     float3 normal;
-    float2 uv;
+    float2 uv0;
+    float2 uv1;
+    float3 tangent;
 };
 
 struct Mesh
@@ -74,7 +76,7 @@ Texture2D<float4> gTextures[TEXTURE_COUNT] : register(t8);
 
 float2 clip_to_pixel(float4 clip_pos)
 {
-    float2 ndc = clip_pos.xy / clip_pos.w;
+    float2 ndc = clip_pos.xy * clip_pos.w;  // w is inv
     return float2(
         (ndc.x * 0.5f + 0.5f) * gViewportSize.x,
         (0.5f - ndc.y * 0.5f) * gViewportSize.y);
@@ -127,7 +129,7 @@ float4 main(PSInput input) : SV_Target
     uint2 vis = gVisibility.Load(int3(pixel.xy, 0));
     
     if (vis.x == 0)
-        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        return float4(0.1f, 0.1f, 0.15f, 1.0f);
     
     uint object_id = vis.x - 1;
     uint primitive_id = vis.y;
@@ -153,13 +155,17 @@ float4 main(PSInput input) : SV_Target
     float4 clip0 = mul(view0, gProj);
     float4 clip1 = mul(view1, gProj);
     float4 clip2 = mul(view2, gProj);
+    
+    clip0.w = rcp(clip0.w);
+    clip1.w = rcp(clip1.w);
+    clip2.w = rcp(clip2.w);
 
     float2 p0 = clip_to_pixel(clip0);
     float2 p1 = clip_to_pixel(clip1);
     float2 p2 = clip_to_pixel(clip2);
     float3 bary = calc_barycentric(input.position.xy, p0, p1, p2);
 
-    float3 inv_w = float3(rcp(clip0.w), rcp(clip1.w), rcp(clip2.w));
+    float3 inv_w = float3(clip0.w, clip1.w, clip2.w);
     float3 perspective_bary = bary * inv_w;
     perspective_bary *= rcp(perspective_bary.x + perspective_bary.y + perspective_bary.z);
 

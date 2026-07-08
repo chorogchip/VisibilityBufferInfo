@@ -1,35 +1,41 @@
 #include "util/FrameCounter.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace util {
 
-	void FrameCounter::init(uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate) {
+	void FrameCounter::init(int dimension, uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate) {
+		frame_times_ = std::vector<std::vector<double>>(dimension, std::vector<double>());
 		frames_ = 0;
 		frame_to_start_measure_ = frame_to_start_measure;
 		frame_to_end_measure_ = frame_to_end_measure;
 		frame_to_terminate_ = frame_to_terminate;
 	}
 
-	void FrameCounter::tick(double pass0, double pass1) {
+	void FrameCounter::tick(std::vector<double>& measures) {
 		if (frame_to_start_measure_ <= frames_ && frames_ < frame_to_end_measure_) {
-			frame_times_[0].push_back(pass0);
-			frame_times_[1].push_back(pass1);
-			frame_times_[2].push_back(pass0 + pass1);
+			for (int i = 0; i < static_cast<int>(measures.size()); ++i) {
+				frame_times_[i].push_back(measures[i]);
+			}
 		}
 		frames_++;
 	}
 
-	std::array<FrameCounter::CountedData, 3> FrameCounter::summarize() {
-		std::array<FrameCounter::CountedData, 3> rets{};
+	std::vector<FrameCounter::CountedData> FrameCounter::summarize() {
+		std::vector<FrameCounter::CountedData> rets{};
 
-		for (int i = 0; i < 3; ++i) {
-			auto& ret = rets[i];
+		for (int i = 0; i < static_cast<int>(frame_times_.size()); ++i) {
+			rets.emplace_back();
+			auto& ret = rets.back();
 
 			auto& frame_times = frame_times_[i];
 
 			const size_t sz = frame_times.size();
 			if (sz == 0) continue;
+
+			ret.name = ".";
+			ret.variable = 0;
 
 			std::sort(frame_times_.begin(), frame_times_.end());
 			ret.frame_time_min = frame_times.front();

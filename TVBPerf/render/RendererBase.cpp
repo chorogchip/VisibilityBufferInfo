@@ -34,7 +34,7 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     program_arguments_ = std::unique_ptr<const ProgramArgument>{ new ProgramArgument{ arg } };
 
 
-    frame_counter_.init(arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
+    frame_counter_.init(3, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
 
     this->create_device();
@@ -80,10 +80,10 @@ void RendererBase::close() {
 
     auto results = frame_counter_.summarize();
 
-    std::string csv_string = results[0].to_string_header()
-        + results[0].to_string()
-        + results[1].to_string()
-        + results[2].to_string();
+    std::string csv_string = results[0].to_string_header();
+    results[0].name = program_arguments_->run_name;
+    results[0].variable = program_arguments_->variable;
+    for (auto& o : results) csv_string += o.to_string();
 
     std::ofstream ofs(path, std::ios::out | std::ios::trunc);
     if (!ofs) { std::cerr << "Failed to open output file: " << path << '\n'; return; }
@@ -192,7 +192,6 @@ void RendererBase::create_swapchain() {
 
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 }
-
 
 void RendererBase::init_viewport_scissorrect() {
     viewport_.TopLeftX = 0.0f;
@@ -400,5 +399,6 @@ void RendererBase::move_to_next_frame() {
     fence_.wait_for_value(fence_values_[frame_index_]);
 
     const auto [pass0, pass1] = frame_time_.read_timestamp(frame_index_);
-    frame_counter_.tick(pass0, pass1);
+    std::vector<double> passes = std::initializer_list<double>{ pass0, pass1, pass0 + pass1 };
+    frame_counter_.tick(passes);
 }
