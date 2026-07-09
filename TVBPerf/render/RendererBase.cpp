@@ -9,10 +9,8 @@
 #include "util/Utils.h"
 #include "dx_util/GraphicsUtils.h"
 
-#include "scene/SceneAssimpImporter.h"
-#include "scene/SceneBuilder.h"
 #include "scene/SceneFingerprint.h"
-#include "scene/SceneInfo.h"
+#include "scene/SceneLoader.h"
 #include "scene/SceneResourceBuilder.h"
 
 #ifdef max
@@ -282,28 +280,11 @@ void RendererBase::create_shader_resources() {}
 
 void RendererBase::create_meshbuffers() {
 
-    if (program_arguments_->to_use_scene) {
-        scene_cpu_ = scene::SceneAssimpImporter::load(
-            std::filesystem::current_path() / program_arguments_->scene_path);
-        scene::SceneFingerprint::write_csv(
-            get_scene_fingerprint_output_path(program_arguments_->output_filepath),
-            *scene_cpu_,
-            *program_arguments_);
-    } else {
-        scene::SceneInfoSphere gen_info{};
-        gen_info.seed = program_arguments_->seed;
-        gen_info.material_count = program_arguments_->material_count;
-        gen_info.mesh_count = program_arguments_->geometry_count;
-        gen_info.sphere_count = program_arguments_->sphere_count;
-        gen_info.z_min = program_arguments_->z_min;
-        gen_info.z_max = program_arguments_->z_max;
-        gen_info.xy_minmax = program_arguments_->xy_minmax;
-        gen_info.radius = program_arguments_->radius;
-        gen_info.mesh_division = program_arguments_->geometry_div;
-        gen_info.gbuffer_resource_count = program_arguments_->gbuffer_cnt;
-
-        scene_cpu_ = scene::SceneBuilder::build(gen_info);
-    }
+    scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
+    scene::SceneFingerprint::write_csv(
+        get_scene_fingerprint_output_path(program_arguments_->output_filepath),
+        *scene_cpu_,
+        *program_arguments_);
 
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
     Utils::throw_if_failed(command_list_->Reset(
