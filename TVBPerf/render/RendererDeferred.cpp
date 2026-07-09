@@ -4,7 +4,8 @@
 #include <string>
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/ResourceUtils.h"
+#include "dx_util/ShaderUtils.h"
 
 namespace rndr {
 
@@ -24,10 +25,11 @@ namespace rndr {
             clear_value.Color[2] = CLEAR_COLOR_[2];
             clear_value.Color[3] = CLEAR_COLOR_[3];
 
-            GraphicsUtils::create_buffer(gbuffers_.back(), device_.Get(), width_, height_,
+            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), width_, height_,
+                DXGI_FORMAT_R32G32B32A32_FLOAT,
                 D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-                DXGI_FORMAT_R32G32B32A32_FLOAT, &clear_value);
+                &clear_value);
         }
     }
 
@@ -41,7 +43,7 @@ namespace rndr {
         this->copy_camera_data();
 
         for (UINT i = 0; i < gbuffer_count_; ++i)
-            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+            dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         command_list_->RSSetViewports(1, &viewport_);
@@ -98,11 +100,11 @@ namespace rndr {
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         for (UINT i = 0; i < gbuffer_count_; ++i)
-            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+            dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
@@ -114,7 +116,7 @@ namespace rndr {
 
         command_list_->DrawInstanced(3, 1, 0, 0);
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
@@ -126,107 +128,19 @@ namespace rndr {
     }
 
 
-    void RendererDeferred::create_dsv_heap() {
-
-        D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
-        dsv_heap_desc.NumDescriptors = 1;
-        dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&dsv_heap_)),
-            "create descriptor heap");
-
-        dsv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    UINT RendererDeferred::rtv_descriptor_count() const {
+        return FRAME_COUNT + gbuffer_count_;
     }
 
-    void RendererDeferred::create_depth_stencil_buffer() {
-        D3D12_RESOURCE_DESC depth_desc{};
-        depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        depth_desc.Alignment = 0;
-        depth_desc.Width = width_;
-        depth_desc.Height = height_;
-        depth_desc.DepthOrArraySize = 1;
-        depth_desc.MipLevels = 1;
-        depth_desc.Format = DEPTH_STENCIL_FORMAT_;
-        depth_desc.SampleDesc.Count = 1;
-        depth_desc.SampleDesc.Quality = 0;
-        depth_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        depth_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        D3D12_CLEAR_VALUE clear_value{};
-        clear_value.Format = DEPTH_STENCIL_FORMAT_;
-        clear_value.DepthStencil.Depth = 1.0f;
-        clear_value.DepthStencil.Stencil = 0;
-
-        D3D12_HEAP_PROPERTIES heap_props{};
-        heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heap_props.CreationNodeMask = 1;
-        heap_props.VisibleNodeMask = 1;
-
-        Utils::throw_if_failed(device_->CreateCommittedResource(
-            &heap_props, D3D12_HEAP_FLAG_NONE, &depth_desc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear_value,
-            IID_PPV_ARGS(&depth_stencil_buffer_)),
-            "create depth stencil buf");
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-        dsv_desc.Format = DEPTH_STENCIL_FORMAT_;
-        dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
-        dsv_desc.Texture2D.MipSlice = 0;
-
-        device_->CreateDepthStencilView(
-            depth_stencil_buffer_.Get(), &dsv_desc,
-            dsv_heap_->GetCPUDescriptorHandleForHeapStart());
-    }
-
-    void RendererDeferred::create_rtv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
-        rtv_heap_desc.NumDescriptors = FRAME_COUNT + gbuffer_count_;
-        rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)),
-            "create descriptor heap");
-
-        rtv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    }
-
-    void RendererDeferred::create_render_targets() {
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
-            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-
-        for (UINT i = 0; i < FRAME_COUNT; ++i) {
-            Utils::throw_if_failed(
-                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])), "create rtv");
-            device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr, rtv_handle);
-            rtv_handle.ptr += rtv_descriptor_size_;
-        }
-
+    void RendererDeferred::create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) {
         for (UINT i = 0; i < gbuffer_count_; ++i) {
-            device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, rtv_handle);
-            rtv_handle.ptr += rtv_descriptor_size_;
+            device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, next_rtv_handle);
+            next_rtv_handle.ptr += rtv_descriptor_size_;
         }
     }
 
-    void RendererDeferred::create_srv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = gbuffer_count_ + program_arguments_->texture_count;
-        srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
-            "create srv descriptor heap");
-
-        srv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    UINT RendererDeferred::srv_descriptor_count() const {
+        return gbuffer_count_ + program_arguments_->texture_count;
     }
 
     void RendererDeferred::create_shader_resources() {
@@ -360,10 +274,10 @@ namespace rndr {
             { nullptr, nullptr }
         };
 
-        GraphicsUtils::compile_shader(&vertex_shader_geometry, L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_geometry, L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", defines);
-        GraphicsUtils::compile_shader(&vertex_shader_lighting, L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", gbuffer_defines);
+        vertex_shader_geometry = dxutl::compile_shader(L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0");
+        pixel_shader_geometry = dxutl::compile_shader(L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", "main", defines);
+        vertex_shader_lighting = dxutl::compile_shader(L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0");
+        pixel_shader_lighting = dxutl::compile_shader(L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", "main", gbuffer_defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {

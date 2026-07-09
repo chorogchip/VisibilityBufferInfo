@@ -13,17 +13,14 @@ namespace rndr {
 		void render_() override;
 
 	private:
-		void create_dsv_heap() override;
-		void create_rtv_heap() override;
-		void create_render_targets() override;
-		void create_depth_stencil_buffer() override;
-		void create_srv_heap() override;
+		UINT dsv_descriptor_count() const override;
+		D3D12_RESOURCE_STATES depth_stencil_initial_state() const override;
+		void create_extra_depth_stencil_views() override;
+		UINT srv_descriptor_count() const override;
 		void create_shader_resources() override;
 		void create_root_signature() override;
 		void create_pso() override;
 
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_depth_prepass_;
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srv_heap_;
-		UINT srv_descriptor_size_ = 0;
 	};
 }

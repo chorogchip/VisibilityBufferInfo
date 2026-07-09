@@ -4,7 +4,8 @@
 #include <string>
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/ResourceUtils.h"
+#include "dx_util/ShaderUtils.h"
 
 namespace rndr {
 
@@ -20,10 +21,11 @@ namespace rndr {
         clear_value.Color[2] = 0.0f;
         clear_value.Color[3] = 0.0f;
 
-        GraphicsUtils::create_buffer(vis_buffer_, device_.Get(), width_, height_,
+        vis_buffer_ = dxutl::create_texture2d(device_.Get(), width_, height_,
+            DXGI_FORMAT_R32G32_UINT,
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-            DXGI_FORMAT_R32G32_UINT, &clear_value);
+            &clear_value);
 
         for (uint32_t i = 0; i < gbuffer_count_; ++i) {
 
@@ -36,10 +38,11 @@ namespace rndr {
             gbuffer_clear_value.Color[2] = CLEAR_COLOR_[2];
             gbuffer_clear_value.Color[3] = CLEAR_COLOR_[3];
 
-            GraphicsUtils::create_buffer(gbuffers_.back(), device_.Get(), width_, height_,
+            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), width_, height_,
+                DXGI_FORMAT_R32G32B32A32_FLOAT,
                 D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-                DXGI_FORMAT_R32G32B32A32_FLOAT, &gbuffer_clear_value);
+                &gbuffer_clear_value);
         }
     }
 
@@ -52,7 +55,7 @@ namespace rndr {
 
         this->copy_camera_data();
 
-        GraphicsUtils::record_transition(command_list_.Get(), vis_buffer_.Get(),
+        dxutl::transition_resource(command_list_.Get(), vis_buffer_.Get(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         command_list_->RSSetViewports(1, &viewport_);
@@ -106,11 +109,11 @@ namespace rndr {
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsUtils::record_transition(command_list_.Get(), vis_buffer_.Get(),
+        dxutl::transition_resource(command_list_.Get(), vis_buffer_.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         for (UINT i = 0; i < gbuffer_count_; ++i)
-            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+            dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
@@ -139,11 +142,11 @@ namespace rndr {
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         for (UINT i = 0; i < gbuffer_count_; ++i)
-            GraphicsUtils::record_transition(command_list_.Get(), gbuffers_[i].Get(),
+            dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         rtv_handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
@@ -155,7 +158,7 @@ namespace rndr {
 
         command_list_->DrawInstanced(3, 1, 0, 0);
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
@@ -167,110 +170,22 @@ namespace rndr {
     }
 
 
-    void RendererTVBGBuffer::create_dsv_heap() {
-
-        D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
-        dsv_heap_desc.NumDescriptors = 1;
-        dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&dsv_heap_)),
-            "create descriptor heap");
-
-        dsv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    UINT RendererTVBGBuffer::rtv_descriptor_count() const {
+        return FRAME_COUNT + 1 + gbuffer_count_;
     }
 
-    void RendererTVBGBuffer::create_depth_stencil_buffer() {
-        D3D12_RESOURCE_DESC depth_desc{};
-        depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        depth_desc.Alignment = 0;
-        depth_desc.Width = width_;
-        depth_desc.Height = height_;
-        depth_desc.DepthOrArraySize = 1;
-        depth_desc.MipLevels = 1;
-        depth_desc.Format = DEPTH_STENCIL_FORMAT_;
-        depth_desc.SampleDesc.Count = 1;
-        depth_desc.SampleDesc.Quality = 0;
-        depth_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        depth_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        D3D12_CLEAR_VALUE clear_value{};
-        clear_value.Format = DEPTH_STENCIL_FORMAT_;
-        clear_value.DepthStencil.Depth = 1.0f;
-        clear_value.DepthStencil.Stencil = 0;
-
-        D3D12_HEAP_PROPERTIES heap_props{};
-        heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heap_props.CreationNodeMask = 1;
-        heap_props.VisibleNodeMask = 1;
-
-        Utils::throw_if_failed(device_->CreateCommittedResource(
-            &heap_props, D3D12_HEAP_FLAG_NONE, &depth_desc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear_value,
-            IID_PPV_ARGS(&depth_stencil_buffer_)),
-            "create depth stencil buf");
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-        dsv_desc.Format = DEPTH_STENCIL_FORMAT_;
-        dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
-        dsv_desc.Texture2D.MipSlice = 0;
-
-        device_->CreateDepthStencilView(
-            depth_stencil_buffer_.Get(), &dsv_desc,
-            dsv_heap_->GetCPUDescriptorHandleForHeapStart());
-    }
-
-    void RendererTVBGBuffer::create_rtv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
-        rtv_heap_desc.NumDescriptors = FRAME_COUNT + 1 + gbuffer_count_;
-        rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)),
-            "create descriptor heap");
-
-        rtv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    }
-
-    void RendererTVBGBuffer::create_render_targets() {
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
-            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-
-        for (UINT i = 0; i < FRAME_COUNT; ++i) {
-            Utils::throw_if_failed(
-                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])), "create rtv");
-            device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr, rtv_handle);
-            rtv_handle.ptr += rtv_descriptor_size_;
-        }
-
-        device_->CreateRenderTargetView(vis_buffer_.Get(), nullptr, rtv_handle);
-        rtv_handle.ptr += rtv_descriptor_size_;
+    void RendererTVBGBuffer::create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) {
+        device_->CreateRenderTargetView(vis_buffer_.Get(), nullptr, next_rtv_handle);
+        next_rtv_handle.ptr += rtv_descriptor_size_;
 
         for (UINT i = 0; i < gbuffer_count_; ++i) {
-            device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, rtv_handle);
-            rtv_handle.ptr += rtv_descriptor_size_;
+            device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, next_rtv_handle);
+            next_rtv_handle.ptr += rtv_descriptor_size_;
         }
     }
 
-    void RendererTVBGBuffer::create_srv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = 6 + gbuffer_count_ + program_arguments_->texture_count;
-        srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(srv_heap_.ReleaseAndGetAddressOf())),
-            "create srv descriptor heap");
-
-        srv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    UINT RendererTVBGBuffer::srv_descriptor_count() const {
+        return 6 + gbuffer_count_ + program_arguments_->texture_count;
     }
 
     void RendererTVBGBuffer::create_shader_resources() {
@@ -288,12 +203,10 @@ namespace rndr {
 
         Microsoft::WRL::ComPtr<ID3D12Resource> upload_buf;
 
-        GraphicsUtils::create_buffer(upload_buf, device_.Get(), mesh_buf_sz, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        GraphicsUtils::create_buffer(mesh_buffer_, device_.Get(), mesh_buf_sz, 1,
-            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+        upload_buf = dxutl::create_buffer(device_.Get(), mesh_buf_sz, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        mesh_buffer_ = dxutl::create_buffer(device_.Get(), mesh_buf_sz, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
-        GraphicsUtils::copy_cpu_to_upload(upload_buf.Get(), meshes.data(), mesh_buf_sz);
+        dxutl::copy_to_upload_buffer(upload_buf.Get(), meshes.data(), mesh_buf_sz);
 
         Utils::throw_if_failed(command_list_->Reset(
             command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
@@ -301,17 +214,17 @@ namespace rndr {
         command_list_->CopyBufferRegion(mesh_buffer_.Get(), 0, upload_buf.Get(), 0, mesh_buf_sz);
 
         // COMMON -> COPY_DEST: implicit transition
-        GraphicsUtils::record_transition(command_list_.Get(), mesh_buffer_.Get(),
+        dxutl::transition_resource(command_list_.Get(), mesh_buffer_.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->vertex_buffer.Get(),
+        dxutl::transition_resource(command_list_.Get(), scene_gpu_->vertex_buffer.Get(),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->index_buffer.Get(),
+        dxutl::transition_resource(command_list_.Get(), scene_gpu_->index_buffer.Get(),
             D3D12_RESOURCE_STATE_INDEX_BUFFER,
             D3D12_RESOURCE_STATE_INDEX_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         // this is for later work
-        GraphicsUtils::record_transition(command_list_.Get(), scene_gpu_->object_buffer.Get(),
+        dxutl::transition_resource(command_list_.Get(), scene_gpu_->object_buffer.Get(),
             D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
         Utils::throw_if_failed(command_list_->Close(), "close list on resource creation");
@@ -514,11 +427,11 @@ namespace rndr {
             { nullptr, nullptr }
         };
 
-        GraphicsUtils::compile_shader(&vertex_shader_visibility, L"assets/shaders/TVB_visibility_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_visibility, L"assets/shaders/TVB_visibility_PS.hlsl", "ps_5_0");
-        GraphicsUtils::compile_shader(&vertex_shader_lighting, L"assets/shaders/TVB_lighting_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader_gbuffer, L"assets/shaders/TVB_gbuffer_PS.hlsl", "ps_5_0", workload_defines);
-        GraphicsUtils::compile_shader(&pixel_shader_lighting, L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", gbuffer_defines);
+        vertex_shader_visibility = dxutl::compile_shader(L"assets/shaders/TVB_visibility_VS.hlsl", "vs_5_0");
+        pixel_shader_visibility = dxutl::compile_shader(L"assets/shaders/TVB_visibility_PS.hlsl", "ps_5_0");
+        vertex_shader_lighting = dxutl::compile_shader(L"assets/shaders/TVB_lighting_VS.hlsl", "vs_5_0");
+        pixel_shader_gbuffer = dxutl::compile_shader(L"assets/shaders/TVB_gbuffer_PS.hlsl", "ps_5_0", "main", workload_defines);
+        pixel_shader_lighting = dxutl::compile_shader(L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", "main", gbuffer_defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {

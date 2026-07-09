@@ -38,11 +38,14 @@ protected:
     virtual void init_() = 0;
     virtual void render_() = 0;
 
-    virtual void create_dsv_heap() = 0;
-    virtual void create_depth_stencil_buffer() = 0;
-    virtual void create_rtv_heap() = 0;
-    virtual void create_render_targets() = 0;
-    virtual void create_srv_heap();
+    virtual UINT dsv_descriptor_count() const;
+    virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
+    virtual void create_extra_depth_stencil_views();
+
+    virtual UINT rtv_descriptor_count() const;
+    virtual void create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle);
+
+    virtual UINT srv_descriptor_count() const;
     virtual void create_shader_resources();
 
     virtual void create_root_signature() = 0;
@@ -60,6 +63,9 @@ private:
     void create_meshbuffers();
     void create_dummy_textures();
     void create_constbuffers();
+    void create_depth_stencil_resources();
+    void create_render_target_views();
+    void create_shader_visible_srv_heap();
 
     void move_to_next_frame();
 
@@ -86,6 +92,9 @@ protected:
     ComPtr<ID3D12DescriptorHeap> rtv_heap_;
     UINT rtv_descriptor_size_ = 0;
     ComPtr<ID3D12Resource> render_targets_[FRAME_COUNT];
+
+    ComPtr<ID3D12DescriptorHeap> srv_heap_;
+    UINT srv_descriptor_size_ = 0;
 
     ComPtr<ID3D12RootSignature> root_signature_;
     ComPtr<ID3D12PipelineState> pipeline_state_;

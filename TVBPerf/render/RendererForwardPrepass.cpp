@@ -4,7 +4,9 @@
 #include <string>
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/DescriptorUtils.h"
+#include "dx_util/ResourceUtils.h"
+#include "dx_util/ShaderUtils.h"
 
 namespace rndr {
 
@@ -21,10 +23,10 @@ namespace rndr {
 
         this->copy_camera_data();
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        GraphicsUtils::record_transition(command_list_.Get(), depth_stencil_buffer_.Get(),
+        dxutl::transition_resource(command_list_.Get(), depth_stencil_buffer_.Get(),
             D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         command_list_->RSSetViewports(1, &viewport_);
@@ -74,7 +76,7 @@ namespace rndr {
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
         command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
 
-        GraphicsUtils::record_transition(command_list_.Get(), depth_stencil_buffer_.Get(),
+        dxutl::transition_resource(command_list_.Get(), depth_stencil_buffer_.Get(),
             D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
 
 
@@ -99,7 +101,7 @@ namespace rndr {
                 mesh.index_start, 0, 0);
         }
 
-        GraphicsUtils::record_transition(command_list_.Get(), render_targets_[frame_index_].Get(),
+        dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
@@ -112,111 +114,24 @@ namespace rndr {
     }
 
 
-    void RendererForwardPrePass::create_dsv_heap() {
-
-        D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc{};
-        dsv_heap_desc.NumDescriptors = 2;
-        dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&dsv_heap_)),
-            "create descriptor heap");
-
-        dsv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    UINT RendererForwardPrePass::dsv_descriptor_count() const {
+        return 2;
     }
 
-    void RendererForwardPrePass::create_depth_stencil_buffer() {
-        D3D12_RESOURCE_DESC depth_desc{};
-        depth_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        depth_desc.Alignment = 0;
-        depth_desc.Width = width_;
-        depth_desc.Height = height_;
-        depth_desc.DepthOrArraySize = 1;
-        depth_desc.MipLevels = 1;
-        depth_desc.Format = DEPTH_STENCIL_FORMAT_;
-        depth_desc.SampleDesc.Count = 1;
-        depth_desc.SampleDesc.Quality = 0;
-        depth_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        depth_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        D3D12_CLEAR_VALUE clear_value{};
-        clear_value.Format = DEPTH_STENCIL_FORMAT_;
-        clear_value.DepthStencil.Depth = 1.0f;
-        clear_value.DepthStencil.Stencil = 0;
-
-        D3D12_HEAP_PROPERTIES heap_props{};
-        heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heap_props.CreationNodeMask = 1;
-        heap_props.VisibleNodeMask = 1;
-
-        Utils::throw_if_failed(device_->CreateCommittedResource(
-            &heap_props, D3D12_HEAP_FLAG_NONE, &depth_desc,
-            D3D12_RESOURCE_STATE_DEPTH_READ, &clear_value,
-            IID_PPV_ARGS(&depth_stencil_buffer_)),
-            "create depth stencil buf");
-
-        auto dsv_handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-        dsv_desc.Format = DEPTH_STENCIL_FORMAT_;
-        dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
-        dsv_desc.Texture2D.MipSlice = 0;
-
-        device_->CreateDepthStencilView(
-            depth_stencil_buffer_.Get(), &dsv_desc, dsv_handle);
-
-        dsv_handle.ptr += dsv_descriptor_size_;
-        dsv_desc.Flags = D3D12_DSV_FLAG_READ_ONLY_DEPTH;
-
-        device_->CreateDepthStencilView(
-            depth_stencil_buffer_.Get(), &dsv_desc, dsv_handle);
+    D3D12_RESOURCE_STATES RendererForwardPrePass::depth_stencil_initial_state() const {
+        return D3D12_RESOURCE_STATE_DEPTH_READ;
     }
 
-    void RendererForwardPrePass::create_rtv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc{};
-        rtv_heap_desc.NumDescriptors = FRAME_COUNT;
-        rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&rtv_heap_)),
-            "create descriptor heap");
-
-        rtv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    void RendererForwardPrePass::create_extra_depth_stencil_views() {
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = dxutl::offset_cpu_descriptor(
+            dsv_heap_->GetCPUDescriptorHandleForHeapStart(), dsv_descriptor_size_, 1);
+        dxutl::create_depth_stencil_view(
+            device_.Get(), depth_stencil_buffer_.Get(), DEPTH_STENCIL_FORMAT_, dsv_handle,
+            D3D12_DSV_FLAG_READ_ONLY_DEPTH);
     }
 
-    void RendererForwardPrePass::create_render_targets() {
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
-            rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-
-        for (UINT i = 0; i < FRAME_COUNT; ++i) {
-            Utils::throw_if_failed(
-                swapchain_->GetBuffer(i, IID_PPV_ARGS(&render_targets_[i])),
-                "create rtv");
-            device_->CreateRenderTargetView(render_targets_[i].Get(), nullptr,
-                rtv_handle);
-            rtv_handle.ptr += rtv_descriptor_size_;
-        }
-    }
-
-    void RendererForwardPrePass::create_srv_heap() {
-        D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc{};
-        srv_heap_desc.NumDescriptors = program_arguments_->texture_count;
-        srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-        Utils::throw_if_failed(
-            device_->CreateDescriptorHeap(&srv_heap_desc, IID_PPV_ARGS(&srv_heap_)),
-            "create srv descriptor heap");
-
-        srv_descriptor_size_ =
-            device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    UINT RendererForwardPrePass::srv_descriptor_count() const {
+        return program_arguments_->texture_count;
     }
 
     void RendererForwardPrePass::create_shader_resources() {
@@ -298,9 +213,9 @@ namespace rndr {
             { nullptr, nullptr }
         };
 
-        GraphicsUtils::compile_shader(&vertex_shader_depth, L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&vertex_shader, L"assets/shaders/forward_VS.hlsl", "vs_5_0");
-        GraphicsUtils::compile_shader(&pixel_shader, L"assets/shaders/forward_PS.hlsl", "ps_5_0", workload_defines);
+        vertex_shader_depth = dxutl::compile_shader(L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0");
+        vertex_shader = dxutl::compile_shader(L"assets/shaders/forward_VS.hlsl", "vs_5_0");
+        pixel_shader = dxutl::compile_shader(L"assets/shaders/forward_PS.hlsl", "ps_5_0", "main", workload_defines);
 
         D3D12_INPUT_ELEMENT_DESC input_layout[] =
         {

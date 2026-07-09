@@ -4,7 +4,7 @@
 #include <wrl.h>
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/ResourceUtils.h"
 
 namespace scene {
     std::unique_ptr<SceneDataGPU> SceneResourceBuilder::build(const SceneDataCPU& src,
@@ -31,27 +31,19 @@ namespace scene {
         assert(0 < buf_sz_objects && buf_sz_objects < UINT_MAX);
         assert(0 < buf_sz_materials && buf_sz_materials < UINT_MAX);
 
-        GraphicsUtils::create_buffer(upload_heap_vertex, p_device, buf_sz_vertices, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        GraphicsUtils::create_buffer(upload_heap_index, p_device, buf_sz_indices, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        GraphicsUtils::create_buffer(upload_heap_object, p_device, buf_sz_objects, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        GraphicsUtils::create_buffer(upload_heap_material, p_device, buf_sz_materials, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        GraphicsUtils::create_buffer(ret->vertex_buffer, p_device, buf_sz_vertices, 1,
-            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
-        GraphicsUtils::create_buffer(ret->index_buffer, p_device, buf_sz_indices, 1,
-            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
-        GraphicsUtils::create_buffer(ret->object_buffer, p_device, buf_sz_objects, 1,
-            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
-        GraphicsUtils::create_buffer(ret->material_buffer, p_device, buf_sz_materials, 1,
-            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+        upload_heap_vertex = dxutl::create_buffer(p_device, buf_sz_vertices, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        upload_heap_index = dxutl::create_buffer(p_device, buf_sz_indices, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        upload_heap_object = dxutl::create_buffer(p_device, buf_sz_objects, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        upload_heap_material = dxutl::create_buffer(p_device, buf_sz_materials, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        ret->vertex_buffer = dxutl::create_buffer(p_device, buf_sz_vertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+        ret->index_buffer = dxutl::create_buffer(p_device, buf_sz_indices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+        ret->object_buffer = dxutl::create_buffer(p_device, buf_sz_objects, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+        ret->material_buffer = dxutl::create_buffer(p_device, buf_sz_materials, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
         
-        GraphicsUtils::copy_cpu_to_upload(upload_heap_vertex.Get(), src.vertices.data(), buf_sz_vertices);
-        GraphicsUtils::copy_cpu_to_upload(upload_heap_index.Get(), src.indices.data(), buf_sz_indices);
-        GraphicsUtils::copy_cpu_to_upload(upload_heap_object.Get(), src.objects.data(), buf_sz_objects);
-        GraphicsUtils::copy_cpu_to_upload(upload_heap_material.Get(), materials.data(), buf_sz_materials);
+        dxutl::copy_to_upload_buffer(upload_heap_vertex.Get(), src.vertices.data(), buf_sz_vertices);
+        dxutl::copy_to_upload_buffer(upload_heap_index.Get(), src.indices.data(), buf_sz_indices);
+        dxutl::copy_to_upload_buffer(upload_heap_object.Get(), src.objects.data(), buf_sz_objects);
+        dxutl::copy_to_upload_buffer(upload_heap_material.Get(), materials.data(), buf_sz_materials);
 
         p_list->CopyBufferRegion(ret->vertex_buffer.Get(), 0, upload_heap_vertex.Get(), 0, buf_sz_vertices);
         p_list->CopyBufferRegion(ret->index_buffer.Get(), 0, upload_heap_index.Get(), 0, buf_sz_indices);
@@ -60,13 +52,13 @@ namespace scene {
         
         // COMMON -> COPY_DEST: implicit transition
 
-        GraphicsUtils::record_transition(p_list, ret->vertex_buffer.Get(),
+        dxutl::transition_resource(p_list, ret->vertex_buffer.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        GraphicsUtils::record_transition(p_list, ret->index_buffer.Get(),
+        dxutl::transition_resource(p_list, ret->index_buffer.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        GraphicsUtils::record_transition(p_list, ret->object_buffer.Get(),
+        dxutl::transition_resource(p_list, ret->object_buffer.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        GraphicsUtils::record_transition(p_list, ret->material_buffer.Get(),
+        dxutl::transition_resource(p_list, ret->material_buffer.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         used_upload_heaps.emplace_back(std::move(upload_heap_vertex));

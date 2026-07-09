@@ -7,7 +7,8 @@
 #include <iostream>
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/DescriptorUtils.h"
+#include "dx_util/ResourceUtils.h"
 
 #include "scene/SceneFingerprint.h"
 #include "scene/SceneLoader.h"
@@ -111,11 +112,9 @@ void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
     this->create_dummy_textures();
     this->create_constbuffers();
 
-    this->create_dsv_heap();
-    this->create_depth_stencil_buffer();
-    this->create_rtv_heap();
-    this->create_render_targets();
-    this->create_srv_heap();
+    this->create_depth_stencil_resources();
+    this->create_render_target_views();
+    this->create_shader_visible_srv_heap();
     this->create_shader_resources();
 
     this->create_root_signature();
@@ -275,8 +274,79 @@ void RendererBase::init_viewport_scissorrect() {
     scissor_rect_.bottom = static_cast<LONG>(height_);
 }
 
-void RendererBase::create_srv_heap() {}
+UINT RendererBase::dsv_descriptor_count() const {
+    return 1;
+}
+
+D3D12_RESOURCE_STATES RendererBase::depth_stencil_initial_state() const {
+    return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+}
+
+void RendererBase::create_extra_depth_stencil_views() {}
+
+UINT RendererBase::rtv_descriptor_count() const {
+    return FRAME_COUNT;
+}
+
+void RendererBase::create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE) {}
+
+UINT RendererBase::srv_descriptor_count() const {
+    return 0;
+}
+
 void RendererBase::create_shader_resources() {}
+
+void RendererBase::create_depth_stencil_resources() {
+    dsv_heap_ = dxutl::create_descriptor_heap(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+        dsv_descriptor_count(),
+        D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    dsv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
+        device_.Get(),
+        width_,
+        height_,
+        DEPTH_STENCIL_FORMAT_,
+        depth_stencil_initial_state());
+
+    dxutl::create_depth_stencil_view(
+        device_.Get(),
+        depth_stencil_buffer_.Get(),
+        DEPTH_STENCIL_FORMAT_,
+        dsv_heap_->GetCPUDescriptorHandleForHeapStart());
+
+    create_extra_depth_stencil_views();
+}
+
+void RendererBase::create_render_target_views() {
+    rtv_heap_ = dxutl::create_descriptor_heap(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+        rtv_descriptor_count(),
+        D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+    rtv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    dxutl::create_swapchain_render_target_views(
+        device_.Get(), swapchain_.Get(), rtv_heap_.Get(), rtv_descriptor_size_, FRAME_COUNT, render_targets_);
+
+    create_extra_render_target_views(dxutl::offset_cpu_descriptor(
+        rtv_heap_->GetCPUDescriptorHandleForHeapStart(), rtv_descriptor_size_, FRAME_COUNT));
+}
+
+void RendererBase::create_shader_visible_srv_heap() {
+    const UINT descriptor_count = srv_descriptor_count();
+    if (descriptor_count == 0) return;
+
+    srv_heap_ = dxutl::create_descriptor_heap(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+        descriptor_count,
+        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+        "create srv descriptor heap");
+    srv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
 
 void RendererBase::create_meshbuffers() {
 
@@ -337,30 +407,15 @@ void RendererBase::create_dummy_textures() {
         command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
 
     for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
-        D3D12_HEAP_PROPERTIES heap_props{};
-        heap_props.Type = D3D12_HEAP_TYPE_DEFAULT;
-        heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heap_props.CreationNodeMask = 1;
-        heap_props.VisibleNodeMask = 1;
+        dummy_textures_[texture_index] = dxutl::create_committed_resource(
+            device_.Get(),
+            texture_desc,
+            D3D12_HEAP_TYPE_DEFAULT,
+            D3D12_RESOURCE_STATE_COPY_DEST);
 
-        Utils::throw_if_failed(device_->CreateCommittedResource(
-            &heap_props,
-            D3D12_HEAP_FLAG_NONE,
-            &texture_desc,
-            D3D12_RESOURCE_STATE_COPY_DEST,
-            nullptr,
-            IID_PPV_ARGS(dummy_textures_[texture_index].ReleaseAndGetAddressOf())), "create dummy texture");
+        upload_buffers[texture_index] = dxutl::create_buffer(device_.Get(), upload_size, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-        GraphicsUtils::create_buffer(upload_buffers[texture_index], device_.Get(), upload_size, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-        void* mapped_data = nullptr;
-        D3D12_RANGE read_range{};
-        read_range.Begin = 0;
-        read_range.End = 0;
-        Utils::throw_if_failed(upload_buffers[texture_index]->Map(0, &read_range, &mapped_data),
-            "map dummy texture upload buffer");
+        void* mapped_data = dxutl::map_upload_buffer(upload_buffers[texture_index].Get());
         auto* dst = static_cast<uint8_t*>(mapped_data);
         for (UINT y = 0; y < texture_size; ++y) {
             auto* row = dst + footprint.Offset + static_cast<size_t>(y) * footprint.Footprint.RowPitch;
@@ -385,7 +440,7 @@ void RendererBase::create_dummy_textures() {
         src_location.PlacedFootprint = footprint;
 
         command_list_->CopyTextureRegion(&dst_location, 0, 0, 0, &src_location, nullptr);
-        GraphicsUtils::record_transition(command_list_.Get(), dummy_textures_[texture_index].Get(),
+        dxutl::transition_resource(command_list_.Get(), dummy_textures_[texture_index].Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
@@ -414,11 +469,9 @@ void RendererBase::create_constbuffers() {
         Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
 
     for (int i = 0; i < FRAME_COUNT; ++i) {
-        GraphicsUtils::create_buffer(
-            buf_constant_[i], device_.Get(), matrix_buf_size_aligned, 1,
-            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        buf_constant_[i] = dxutl::create_buffer(device_.Get(), matrix_buf_size_aligned, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-        buf_constant_mapped_[i] = GraphicsUtils::get_mapped_address(buf_constant_[i].Get());
+        buf_constant_mapped_[i] = dxutl::map_upload_buffer(buf_constant_[i].Get());
     }
 }
 

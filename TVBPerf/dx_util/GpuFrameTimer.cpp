@@ -1,7 +1,7 @@
 #include "dx_util/GpuFrameTimer.h"
 
 #include "util/Utils.h"
-#include "dx_util/GraphicsUtils.h"
+#include "dx_util/ResourceUtils.h"
 
 namespace dxutl {
 
@@ -16,9 +16,7 @@ namespace dxutl {
             p_device->CreateQueryHeap(&query_heap_desc, IID_PPV_ARGS(query_heap_.ReleaseAndGetAddressOf())),
             "create timestamp query heap");
 
-        GraphicsUtils::create_buffer(
-            readback_buffer_, p_device, sizeof(UINT64) * BUF_COUNT, 1,
-            D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
+        readback_buffer_ = dxutl::create_buffer(p_device, sizeof(UINT64) * BUF_COUNT, D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
 
         UINT64 frequency;
         Utils::throw_if_failed(p_queue->GetTimestampFrequency(&frequency),
