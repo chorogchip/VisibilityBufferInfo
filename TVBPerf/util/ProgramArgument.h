@@ -12,7 +12,7 @@
     X(uint32_t, renderer_variant, 4, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
     X(uint32_t, variable, 0, variable) \
-    X(bool, to_use_scene, false, to-use-scene) \
+    X(bool, to_use_scene, true, to-use-scene) \
     X(std::string, scene_path, "assets/scenes/unpacked/CornellBox/CornellBox-Empty-RG.obj", scene-path) \
     X(uint32_t, warmup_frames, 600, warmup-frames) \
     X(uint32_t, measure_frames, 120, measure-frames) \
