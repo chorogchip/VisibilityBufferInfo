@@ -29,8 +29,7 @@ GenedMesh GenedMesh::generate_triangle() {
     return ret;
 }
 
-GenedMesh GenedMesh::generate_sphere(int division)
-{
+GenedMesh GenedMesh::generate_sphere(int division) {
     assert(division > 0);
 
     GenedMesh ret{};
@@ -41,12 +40,12 @@ GenedMesh GenedMesh::generate_sphere(int division)
 
     XMVECTOR dirs[] =
     {
-        XMVectorSet( 1,  0,  0, 0 ),
-        XMVectorSet(-1,  0,  0, 0 ),
-        XMVectorSet( 0,  1,  0, 0 ),
-        XMVectorSet( 0, -1,  0, 0 ),
-        XMVectorSet( 0,  0,  1, 0 ),
-        XMVectorSet( 0,  0, -1, 0 ),
+        XMVectorSet(1,  0,  0, 0),
+        XMVectorSet(-1,  0,  0, 0),
+        XMVectorSet(0,  1,  0, 0),
+        XMVectorSet(0, -1,  0, 0),
+        XMVectorSet(0,  0,  1, 0),
+        XMVectorSet(0,  0, -1, 0),
     };
 
     int dir_ind_right[] = { 5, 4, 0, 0, 0, 1 };
@@ -54,21 +53,18 @@ GenedMesh GenedMesh::generate_sphere(int division)
 
     const uint32_t row = static_cast<uint32_t>(division + 1);
 
-    for (int i = 0; i < 6; ++i)
-    {
+    for (int i = 0; i < 6; ++i) {
         const uint32_t baseVertex = static_cast<uint32_t>(ret.vertices.size());
 
         const XMVECTOR dir = dirs[i];
         const XMVECTOR dir_right = dirs[dir_ind_right[i]];
         const XMVECTOR dir_up = dirs[dir_ind_up[i]];
 
-        for (int ix = 0; ix <= division; ++ix)
-        {
+        for (int ix = 0; ix <= division; ++ix) {
             const float fx = static_cast<float>(ix) * inv_division;
             const float sx = fx * 2.0f - 1.0f;
 
-            for (int iy = 0; iy <= division; ++iy)
-            {
+            for (int iy = 0; iy <= division; ++iy) {
                 const float fy = static_cast<float>(iy) * inv_division;
                 const float sy = fy * 2.0f - 1.0f;
 
@@ -93,10 +89,8 @@ GenedMesh GenedMesh::generate_sphere(int division)
             }
         }
 
-        for (int ix = 0; ix < division; ++ix)
-        {
-            for (int iy = 0; iy < division; ++iy)
-            {
+        for (int ix = 0; ix < division; ++ix) {
+            for (int iy = 0; iy < division; ++iy) {
                 uint32_t v00 = baseVertex + ix * row + iy;
                 uint32_t v10 = baseVertex + (ix + 1) * row + iy;
                 uint32_t v01 = baseVertex + ix * row + (iy + 1);

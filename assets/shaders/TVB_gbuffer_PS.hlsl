@@ -122,7 +122,7 @@ float edge_function(float2 a, float2 b, float2 c)
 float3 calc_barycentric(float2 p, float2 p0, float2 p1, float2 p2)
 {
     float area = edge_function(p0, p1, p2);
-    float inv_area = rcp(area);
+    float inv_area = rcp(area); 
     return float3(
         edge_function(p1, p2, p) * inv_area,
         edge_function(p2, p0, p) * inv_area,
