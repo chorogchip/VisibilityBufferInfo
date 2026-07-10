@@ -48,14 +48,14 @@ namespace rndr {
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
         command_list_->IASetIndexBuffer(&scene_gpu_->index_buffer_view);
 
-        for (const auto& obj : scene_cpu_->objects) {
-            const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
-            const auto& material = scene_cpu_->materials[obj.material_index];
+        for (const auto& batch : scene_cpu_->batches) {
+            const auto& material = scene_cpu_->materials[batch.material_index];
+            const auto& mesh = scene_cpu_->meshes[batch.mesh_index];
 
-            command_list_->SetGraphicsRoot32BitConstant(2, obj.object_id, 0);
+            command_list_->SetGraphicsRoot32BitConstant(2, batch.object_index, 0);
 
-            command_list_->DrawIndexedInstanced(mesh.index_count, 1,
-                mesh.index_start, 0, 0);
+            command_list_->DrawIndexedInstanced(mesh.index_count, batch.object_count,
+                mesh.index_start, mesh.vertex_start, 0);
         }
 
         dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),

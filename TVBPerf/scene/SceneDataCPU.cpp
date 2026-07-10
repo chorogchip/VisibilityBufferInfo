@@ -27,18 +27,24 @@ namespace scene {
 				return a.object_id < b.object_id;
 			});
 
-		this->batches.push_back({ 0, 0 });
-		size_t cur_size = 1;
+		ObjectBatch batch{};
+		batch.object_index = 0;
+		batch.object_count = 1;
+		batch.material_index = objects[0].material_index;
+		batch.mesh_index = objects[0].mesh_index;
+
 		for (size_t i = 1; i < obj_cnt; ++i) {
-			if (this->objects[i].mesh_index == this->objects[i - 1].mesh_index &&
-				this->objects[i].material_index == this->objects[i - 1].material_index) {
-				++cur_size;
+			if (this->objects[i].material_index == batch.material_index &&
+				this->objects[i].mesh_index == batch.mesh_index) {
+				batch.object_count++;
 			} else {
-				this->batches.back().object_count = static_cast<uint32_t>(cur_size);
-				this->batches.push_back({ static_cast<uint32_t>(i), 0 });
-				cur_size = 1;
+				this->batches.push_back(batch);
+				batch.object_index = i;
+				batch.object_count = 1;
+				batch.material_index = this->objects[i].material_index;
+				batch.mesh_index = this->objects[i].mesh_index;
 			}
 		}
-		this->batches.back().object_count = static_cast<uint32_t>(cur_size);
+		this->batches.push_back(batch);
 	}
 }

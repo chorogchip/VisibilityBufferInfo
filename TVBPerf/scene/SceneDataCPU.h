@@ -46,6 +46,8 @@ namespace scene {
         struct ObjectBatch {
             uint32_t object_index = 0;
             uint32_t object_count = 0;
+            uint32_t material_index = 0;
+            uint32_t mesh_index = 0;
         };
 
         std::filesystem::path source_path;

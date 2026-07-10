@@ -128,13 +128,6 @@ namespace scene {
             imported_obj.object_id = mesh_index;
             imported_obj.material_index = mesh->mMaterialIndex;
             imported_obj.mesh_index = mesh_index;
-            if (imported_mesh.index_count > 0) {
-                imported_obj.object_id = static_cast<uint32_t>(res->objects.size());
-                imported_obj.mesh_index = static_cast<uint32_t>(res->meshes.size());
-
-                res->meshes.push_back(imported_mesh);
-                res->objects.push_back(imported_obj);
-            }
             imported_obj.flags = 0;
 
             const DirectX::XMFLOAT4 color =
@@ -165,9 +158,9 @@ namespace scene {
                     continue;
                 }
 
-                res->indices.push_back(imported_mesh.vertex_start + face.mIndices[0]);
-                res->indices.push_back(imported_mesh.vertex_start + face.mIndices[1]);
-                res->indices.push_back(imported_mesh.vertex_start + face.mIndices[2]);
+                res->indices.push_back(face.mIndices[0]);
+                res->indices.push_back(face.mIndices[1]);
+                res->indices.push_back(face.mIndices[2]);
             }
 
             imported_mesh.vertex_count = static_cast<uint32_t>(res->vertices.size()) - imported_mesh.vertex_start;
@@ -183,6 +176,9 @@ namespace scene {
             res->error_message = "Imported scene had no triangle meshes after filtering.";
             return res;
         }
+
+
+        res->build_batches_from_objects();
 
         res->loaded = true;
         res->error_message = "ok";
