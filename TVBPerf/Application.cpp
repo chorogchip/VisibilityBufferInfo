@@ -55,7 +55,7 @@ bool Application::handle_key_down(WPARAM key) {
     if (!renderer_) return false;
 
     constexpr float move_speed = 0.3f;
-    constexpr float turn_speed = 3.0f;
+    constexpr float turn_speed = 3.0f * 0.01f;
 
     switch (key) {
     case 'W':
@@ -71,10 +71,16 @@ bool Application::handle_key_down(WPARAM key) {
         renderer_->camera_.move_right(move_speed);
         return true;
     case 'Q':
-        renderer_->camera_.turn(-turn_speed);
+        renderer_->camera_.turn_right(-turn_speed);
         return true;
     case 'E':
-        renderer_->camera_.turn(turn_speed);
+        renderer_->camera_.turn_right(turn_speed);
+        return true;
+    case 'R':
+        renderer_->camera_.turn_up(turn_speed);
+        return true;
+    case 'F':
+        renderer_->camera_.turn_up(-turn_speed);
         return true;
     case VK_SPACE:
         renderer_->camera_.move_pos(0.0f, move_speed, 0.0f);

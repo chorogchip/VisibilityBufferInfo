@@ -365,6 +365,7 @@ void RendererBase::create_meshbuffers() {
 
     Utils::throw_if_failed(command_list_->Close(),
         "close list on resource creation");
+
     ID3D12CommandList* command_lists[] = { command_list_.Get() };
     command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
     fence_.wait_for_gpu();
