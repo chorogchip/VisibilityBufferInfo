@@ -31,6 +31,7 @@ public:
 
     RendererBase() = default;
     virtual ~RendererBase() = default;
+
     void init(const util::ProgramArgument& args, HWND hwnd);
     void render();
     void close();
@@ -39,6 +40,8 @@ protected:
 
     virtual void init_() = 0;
     virtual void render_() = 0;
+    virtual void create_root_signature() = 0;
+    virtual void create_pso() = 0;
 
     virtual UINT dsv_descriptor_count() const;
     virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
@@ -49,9 +52,6 @@ protected:
 
     virtual UINT srv_descriptor_count() const;
     virtual void create_shader_resources();
-
-    virtual void create_root_signature() = 0;
-    virtual void create_pso() = 0;
 
     void copy_camera_data();
     void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
@@ -114,4 +114,5 @@ protected:
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
     
 public:
+
 };
