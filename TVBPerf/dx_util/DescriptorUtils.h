@@ -33,5 +33,4 @@ namespace dxutl {
         UINT rtv_descriptor_size,
         UINT frame_count,
         Microsoft::WRL::ComPtr<ID3D12Resource>* render_targets);
-
 }

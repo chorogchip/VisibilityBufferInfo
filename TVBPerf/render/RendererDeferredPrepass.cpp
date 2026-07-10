@@ -11,7 +11,7 @@ namespace rndr {
 
     void RendererDeferredPrepass::init_() {
 
-        gbuffer_count_ = program_arguments_->gbuffer_cnt;
+        gbuffer_count_ = program_arguments_.gbuffer_cnt;
         assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
 
         for (uint32_t i = 0; i < gbuffer_count_; ++i) {
@@ -25,7 +25,7 @@ namespace rndr {
             clear_value.Color[2] = CLEAR_COLOR_[2];
             clear_value.Color[3] = CLEAR_COLOR_[3];
 
-            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), width_, height_,
+            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), program_arguments_.window_width, program_arguments_.window_height,
                 DXGI_FORMAT_R32G32B32A32_FLOAT,
                 D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
@@ -166,7 +166,7 @@ namespace rndr {
     }
 
     UINT RendererDeferredPrepass::srv_descriptor_count() const {
-        return gbuffer_count_ + program_arguments_->texture_count;
+        return gbuffer_count_ + program_arguments_.texture_count;
     }
 
     void RendererDeferredPrepass::create_shader_resources() {
@@ -193,7 +193,7 @@ namespace rndr {
 
         D3D12_DESCRIPTOR_RANGE texture_range_geometry{};
         texture_range_geometry.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        texture_range_geometry.NumDescriptors = program_arguments_->texture_count;
+        texture_range_geometry.NumDescriptors = program_arguments_.texture_count;
         texture_range_geometry.BaseShaderRegister = 8;
         texture_range_geometry.RegisterSpace = 0;
         texture_range_geometry.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -281,10 +281,10 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
 
         std::string gbuffer_count_define = std::to_string(gbuffer_count_);
-        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
-        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
-        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
-        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
+        std::string texture_count_define = std::to_string(program_arguments_.texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_.texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_.texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_.alu_calc_count);
         D3D_SHADER_MACRO defines[] =
         {
             { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
