@@ -13,6 +13,9 @@ namespace dxutl {
 		Fence() = default;
 		~Fence();
 
+		Fence(const Fence&) = delete;
+		Fence& operator=(const Fence&) = delete;
+
 		void init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue);
 		UINT64 signal();
 		void wait_for_value(UINT64 value);
@@ -23,6 +26,6 @@ namespace dxutl {
 		Microsoft::WRL::ComPtr<ID3D12Fence> fence_;
 		UINT64 fence_value_ = 0;
 		HANDLE fence_event_ = nullptr;
-		ID3D12CommandQueue* p_queue_ = nullptr;
+		Microsoft::WRL::ComPtr<ID3D12CommandQueue> queue_;
 	};
 }

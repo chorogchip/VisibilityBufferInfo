@@ -39,6 +39,6 @@ namespace scene {
 				cur_size = 1;
 			}
 		}
-		this->batches.back().object_count = cur_size;
+		this->batches.back().object_count = static_cast<uint32_t>(cur_size);
 	}
 }

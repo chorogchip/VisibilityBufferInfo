@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "util/Utils.h"
-#include "util/ArgParser.h"
 #include "render/RendererFactory.h"
 
 Application::~Application() {
@@ -23,18 +22,15 @@ void Application::parse_args() {
 
     LocalFree(argv);
 
-    program_argument_ = ArgParser::parse(args);
+    program_argument_ = util::ProgramArgument::from_args(args);
 }
 
 void Application::run(HINSTANCE h_instance, int n_show_cmd) {
-    parse_args();
+    this->parse_args();
 
-    window_.create(
-        h_instance,
-        n_show_cmd,
-        program_argument_.window_width,
-        program_argument_.window_height,
-        L"Triangle Visibility Buffer Performance");
+    window_.create(h_instance, n_show_cmd,
+        program_argument_.window_width, program_argument_.window_height,
+        L"Visibility Buffer Performance");
 
     renderer_ = rndr::create_renderer(program_argument_.renderer_variant);
     window_.set_key_down_handler([this](WPARAM key) { return handle_key_down(key); });

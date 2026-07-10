@@ -85,13 +85,13 @@ RendererBase::~RendererBase() {
         fence_.wait_for_gpu();
 }
 
-void RendererBase::init(HWND hwnd, const ProgramArgument& arg) {
+void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     hwnd_ = hwnd;
     width_ = arg.window_width;
     height_ = arg.window_height;
 
-    program_arguments_ = std::unique_ptr<const ProgramArgument>{ new ProgramArgument{ arg } };
+    program_arguments_ = std::make_unique<const util::ProgramArgument>(arg);
 
 
     frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
@@ -138,17 +138,17 @@ void RendererBase::close() {
 
     auto results = frame_counter_.summarize();
 
-    std::string csv_string = program_argument_csv_header() + ",variant_name,pass_index,pass_name," +
+    std::string csv_string = util::ProgramArgument::get_header_string() + ",variant_name,pass_index,pass_name," +
         util::FrameCounter::CountedData::to_string_header() + "\n";
 
     const auto pass_infos = get_pass_output_infos(program_arguments_->renderer_variant);
     const std::string variant_name = get_renderer_variant_name(program_arguments_->renderer_variant);
     for (const auto& pass_info : pass_infos) {
         if (pass_info.index < 0 || static_cast<size_t>(pass_info.index) >= results.size()) continue;
-        csv_string += program_argument_csv_values(*program_arguments_) + ",";
-        csv_string += csv_value(variant_name) + ",";
+        csv_string += program_arguments_->to_string() + ",";
+        csv_string += variant_name + ",";
         csv_string += std::to_string(pass_info.index) + ",";
-        csv_string += csv_value(std::string(pass_info.name)) + ",";
+        csv_string += std::string(pass_info.name) + ",";
         csv_string += results[pass_info.index].to_string() + "\n";
     }
 

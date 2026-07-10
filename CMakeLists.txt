@@ -67,6 +67,21 @@ file(GLOB_RECURSE TVBPERF_RC_FILES
     ${TVBPERF_SRC_DIR}/*.rc
 )
 
+# ------------------------------------------------------------
+# trashes 디렉터리 제외
+# ------------------------------------------------------------
+list(FILTER TVBPERF_CPP_FILES EXCLUDE REGEX
+    "[/\\\\]trashes[/\\\\]"
+)
+
+list(FILTER TVBPERF_HEADER_FILES EXCLUDE REGEX
+    "[/\\\\]trashes[/\\\\]"
+)
+
+list(FILTER TVBPERF_RC_FILES EXCLUDE REGEX
+    "[/\\\\]trashes[/\\\\]"
+)
+
 file(GLOB_RECURSE TVBPERF_SHADER_FILES
     CONFIGURE_DEPENDS
     ${TVBPERF_SHADER_DIR}/*.hlsl

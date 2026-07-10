@@ -5,10 +5,8 @@
 namespace dxutl {
 
     Microsoft::WRL::ComPtr<ID3DBlob> compile_shader(
-        const std::wstring& path,
-        const char* target,
-        const char* entry_point,
-        const D3D_SHADER_MACRO* defines) {
+        const std::wstring& path, const char* target,
+        const char* entry_point, const D3D_SHADER_MACRO* defines) {
 
         Microsoft::WRL::ComPtr<ID3DBlob> shader;
         Microsoft::WRL::ComPtr<ID3DBlob> error_blob;

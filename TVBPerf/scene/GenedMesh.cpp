@@ -4,6 +4,8 @@
 #include <cmath>
 #include <DirectXMath.h>
 
+#include "util/Logger.h"
+
 GenedMesh GenedMesh::generate_triangle() {
     GenedMesh ret{};
 
@@ -30,16 +32,15 @@ GenedMesh GenedMesh::generate_triangle() {
 }
 
 GenedMesh GenedMesh::generate_sphere(int division) {
-    assert(division > 0);
+    util::Logger::g_logger.assert_with_log(division > 0, "division must > 0");
 
     GenedMesh ret{};
 
     const float inv_division = 1.0f / static_cast<float>(division);
 
-    using namespace DirectX;
+    using namespace DirectX;  // for XMVector
 
-    XMVECTOR dirs[] =
-    {
+    XMVECTOR dirs[] = {
         XMVectorSet(1,  0,  0, 0),
         XMVectorSet(-1,  0,  0, 0),
         XMVectorSet(0,  1,  0, 0),

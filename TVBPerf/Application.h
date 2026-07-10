@@ -13,7 +13,7 @@ public:
 	void run(HINSTANCE h_instance, int n_show_cmd);
 
 private:
-	ProgramArgument program_argument_;
+	util::ProgramArgument program_argument_;
     Win32Window window_;
     std::unique_ptr<RendererBase> renderer_;
 

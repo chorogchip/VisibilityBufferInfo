@@ -7,6 +7,6 @@
 
 class ArgParser {
 public:
-	static ProgramArgument parse(const std::vector<std::string>& args);
+	static util::ProgramArgument parse(const std::vector<std::string>& args);
 };
 

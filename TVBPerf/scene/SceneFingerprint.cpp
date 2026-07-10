@@ -72,8 +72,8 @@ namespace scene {
 
 		static void write_header(std::ostream& output) {
 			output
-				<< program_argument_csv_header()
-				<< ",scene_source_path,scene_file_size_bytes,scene_ok,scene_message,"
+				<< util::ProgramArgument::get_header_string() << ','
+				<< "scene_source_path,scene_file_size_bytes,scene_ok,scene_message,"
 				<< "scene_mesh_count,scene_object_count,scene_material_count,"
 				<< "scene_vertex_count,scene_index_count,scene_triangle_count,"
 				<< "scene_degenerate_triangle_count,"
@@ -95,15 +95,15 @@ namespace scene {
 
 		static void write_row(
 			std::ostream& output,
-			const ProgramArgument& arg,
+			const util::ProgramArgument& arg,
 			const SceneFingerprint::Metrics& f) {
 			output << std::fixed << std::setprecision(6);
 			output
-				<< program_argument_csv_values(arg) << ','
-				<< csv_value(path_string(f.source_path)) << ','
+				<< arg.to_string() << ','
+				<< path_string(f.source_path) << ','
 				<< f.file_size_bytes << ','
 				<< (f.ok ? 1 : 0) << ','
-				<< csv_value(f.message) << ','
+				<< f.message << ','
 				<< f.mesh_count << ','
 				<< f.object_count << ','
 				<< f.material_count << ','
@@ -152,7 +152,8 @@ namespace scene {
 		Metrics metrics{};
 		metrics.source_path = scene.source_path;
 		metrics.ok = scene.loaded;
-		metrics.message = scene.error_message;
+		//metrics.message = scene.error_message; for no csv argument support for arbitrary string
+		metrics.message = "no-message";
 		metrics.mesh_count = static_cast<uint32_t>(scene.meshes.size());
 		metrics.object_count = static_cast<uint32_t>(scene.objects.size());
 		metrics.material_count = static_cast<uint32_t>(scene.materials.size());
@@ -300,7 +301,7 @@ namespace scene {
 	void SceneFingerprint::write_csv(
 		const std::filesystem::path& path,
 		const SceneDataCPU& scene,
-		const ProgramArgument& arg) {
+		const util::ProgramArgument& arg) {
 		const Metrics metrics = analyze(scene);
 
 		std::ofstream output(path, std::ios::out | std::ios::trunc);

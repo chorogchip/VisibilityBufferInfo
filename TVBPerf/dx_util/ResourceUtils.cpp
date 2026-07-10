@@ -170,5 +170,4 @@ namespace dxutl {
 
         command_list->ResourceBarrier(1, &barrier);
     }
-
 }

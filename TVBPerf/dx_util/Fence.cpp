@@ -13,8 +13,10 @@ namespace dxutl {
     }
 
     void Fence::init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue) {
+        if (fence_ || fence_event_ || queue_) throw std::logic_error("Fence is already initialized");
+
         fence_value_ = 0;
-        p_queue_ = p_queue;
+        queue_ = p_queue;
         Utils::throw_if_failed(p_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence_)), "fence create");
 
         fence_event_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -23,7 +25,7 @@ namespace dxutl {
 
     UINT64 Fence::signal() {
         ++fence_value_;
-        Utils::throw_if_failed(p_queue_->Signal(fence_.Get(), fence_value_), "fence signal");
+        Utils::throw_if_failed(queue_->Signal(fence_.Get(), fence_value_), "fence signal");
         return fence_value_;
     }
 

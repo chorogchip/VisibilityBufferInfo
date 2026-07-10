@@ -20,8 +20,8 @@ T parse_value(const std::string& s) {
     return value;
 }
 
-ProgramArgument ArgParser::parse(const std::vector<std::string>& args) {
-    ProgramArgument ret{};
+util::ProgramArgument ArgParser::parse(const std::vector<std::string>& args) {
+    util::ProgramArgument ret{};
 
     for (size_t i = 0; i < args.size(); ++i) {
 
@@ -32,11 +32,8 @@ ProgramArgument ArgParser::parse(const std::vector<std::string>& args) {
             ++i; \
             continue; \
         }
-
         ProgramArgument_MAC
-
 #undef X
-
     };
 
     return ret;

@@ -154,7 +154,7 @@ namespace scene {
                 vertex.normal = { normal.x, normal.y, normal.z };
                 vertex.uv0 = { uv.x, uv.y };
                 vertex.tangent = DirectX::XMFLOAT3(color.x, color.y, color.z);
-                //vertex.material_index = mesh->mMaterialIndex;
+                // vertex.material_index = mesh->mMaterialIndex;
                 res->vertices.push_back(vertex);
                 include_bounds(*res, vertex.position);
             }

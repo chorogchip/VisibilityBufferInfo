@@ -9,7 +9,7 @@ namespace scene {
 
     class SceneLoader {
     public:
-        static std::unique_ptr<SceneDataCPU> load(const ProgramArgument& arg);
+        static std::unique_ptr<SceneDataCPU> load(const util::ProgramArgument& arg);
     };
 
 }

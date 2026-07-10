@@ -1,8 +1,10 @@
 #pragma once
 
-#include <string>
 #include <cstdint>
-#include <sstream>
+#include <vector>
+#include <string>
+
+namespace util {
 
 #define ProgramArgument_MAC \
     X(uint32_t, run_id, 0, run-id) \
@@ -43,64 +45,42 @@
     X(uint32_t, texture_sampling_count, 0, texture-sampling-count) \
     X(uint32_t, alu_calc_count, 0, alu-calc-count)
 
-struct ProgramArgument {
+
+#define ProgramResult_MAC
+
+
+#define ProgramResultPerFrame_MAC
+
+
+    struct ProgramArgument {
 #define X(type, name, defl, arg) \
 	type name = defl;
-    ProgramArgument_MAC
+        ProgramArgument_MAC
 #undef X
-};
+    public:
+        static ProgramArgument from_args(const std::vector<std::string>& args);
 
-inline std::string csv_escape(const std::string& value) {
-    bool need_quote = false;
-    for (char c : value) {
-        if (c == ',' || c == '"' || c == '\n' || c == '\r') {
-            need_quote = true;
-            break;
-        }
-    }
+        static std::string get_header_string();
+        std::string to_string() const;
+    };
 
-    if (!need_quote) return value;
-
-    std::string ret = "\"";
-    for (char c : value) {
-        if (c == '"') ret += "\"\"";
-        else ret += c;
-    }
-    ret += "\"";
-    return ret;
-}
-
-inline std::string csv_value(const std::string& value) {
-    return csv_escape(value);
-}
-
-inline std::string csv_value(bool value) {
-    return value ? "1" : "0";
-}
-
-template <typename T>
-inline std::string csv_value(const T& value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}
-
-inline std::string program_argument_csv_header() {
-    std::string ret;
-#define X(type, name, defl, arg) \
-    ret += #name ",";
-    ProgramArgument_MAC
+    struct ProgramResult {
+#define X(type, name, arg) \
+    type name;
+        ProgramResult_MAC
 #undef X
-    if (!ret.empty()) ret.pop_back();
-    return ret;
-}
+    public:
+        static std::string get_header_string();
+        std::string to_string() const;
+    };
 
-inline std::string program_argument_csv_values(const ProgramArgument& arg) {
-    std::string ret;
-#define X(type, name, defl, argname) \
-    ret += csv_value(arg.name) + ",";
-    ProgramArgument_MAC
+    struct ProgramResultPerFrame {
+#define X(type, name, arg) \
+    type name;
+        ProgramResultPerFrame_MAC
 #undef X
-    if (!ret.empty()) ret.pop_back();
-    return ret;
+    public:
+        static std::string get_header_string();
+        std::string to_string() const;
+    };
 }

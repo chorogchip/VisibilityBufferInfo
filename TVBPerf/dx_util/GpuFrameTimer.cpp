@@ -24,7 +24,7 @@ namespace dxutl {
 
         timestamp_frequency_rcp_ = 1.0 / static_cast<double>(frequency);
 
-        D3D12_RANGE read_range{ 0, 0 };
+        D3D12_RANGE read_range{ 0, sizeof(UINT64) * BUF_COUNT };
         Utils::throw_if_failed(readback_buffer_->Map(0, &read_range, reinterpret_cast<void**>(&readback_buffer_mapped_)),
             "map timestamp readback");
 	}

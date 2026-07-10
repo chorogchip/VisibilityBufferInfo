@@ -29,7 +29,7 @@ public:
     static constexpr UINT FRAME_COUNT = 2;
 
     virtual ~RendererBase();
-    void init(HWND hwnd, const ProgramArgument&);
+    void init(HWND hwnd, const util::ProgramArgument&);
     void render();
     void close();
     bool to_terminate() const { return frame_counter_.to_terminate(); }
@@ -125,7 +125,7 @@ protected:
 
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
 
-    std::unique_ptr<const ProgramArgument> program_arguments_;
+    std::unique_ptr<const util::ProgramArgument> program_arguments_;
     
 public:
     rndr::Camera camera_{};

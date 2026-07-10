@@ -8,7 +8,7 @@
 
 namespace scene {
 
-    std::unique_ptr<SceneDataCPU> SceneLoader::load(const ProgramArgument& arg) {
+    std::unique_ptr<SceneDataCPU> SceneLoader::load(const util::ProgramArgument& arg) {
         if (arg.to_use_scene) {
             return SceneAssimpImporter::load(std::filesystem::current_path() / arg.scene_path);
         }

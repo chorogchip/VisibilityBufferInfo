@@ -66,7 +66,7 @@ namespace scene {
 		static void write_csv(
 			const std::filesystem::path& path,
 			const SceneDataCPU& scene,
-			const ProgramArgument& arg);
+			const util::ProgramArgument& arg);
 
 	private:
 		static Metrics analyze(const SceneDataCPU& scene);
