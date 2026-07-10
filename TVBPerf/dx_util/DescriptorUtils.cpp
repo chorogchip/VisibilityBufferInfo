@@ -62,5 +62,4 @@ namespace dxutl {
             rtv_handle.ptr += rtv_descriptor_size;
         }
     }
-
 }

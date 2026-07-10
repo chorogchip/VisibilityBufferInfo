@@ -43,6 +43,11 @@ namespace scene {
         };
         static_assert(sizeof(Object) == 80);
 
+        struct ObjectBatch {
+            uint32_t object_index = 0;
+            uint32_t object_count = 0;
+        };
+
         std::filesystem::path source_path;
         bool loaded = false;
         std::string error_message;
@@ -52,7 +57,11 @@ namespace scene {
         std::vector<Index> indices;
         std::vector<Mesh> meshes;
         std::vector<Object> objects;
+        std::vector<ObjectBatch> batches;
         DirectX::XMFLOAT3 bounds_min{};
         DirectX::XMFLOAT3 bounds_max{};
+
+        void build_random_material(size_t material_count);
+        void build_batches_from_objects();
     };
 }

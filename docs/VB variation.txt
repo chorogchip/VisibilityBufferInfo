@@ -1,0 +1,120 @@
+Burns & Hunt 2013
+A Cache-Friendly Approach to Deferred Shading
+bench: AMD Radeon HD 5750, Nvidia GeForce 560 Ti, Intel HD 5000, Intel Iris Pro 5200
+
+DAIS 2015
+Deferred Attribute Interpolation for Memory-Efficient Deferred Shading
+bench: Nvidia GTX 980
+
+I3D 2024 The Forge Industry Talk
+Triangle Visibility Buffer 2.0
+https://www.youtube.com/watch?v=kWLev9CoQdg
+https://github.com/ConfettiFX/The-Forge
+https://github.com/ConfettiFX/The-Forge/blob/master/Examples_3/Visibility_Buffer/src/Visibility_Buffer.cpp
+
+Adventures with Deferred Texturing in Horizon Forbidden West
+https://www.gdcvault.com/play/1028035/Adventures-with-Deferred-Texturing-in
+https://www.guerrilla-games.com/read/adventures-with-deferred-texturing-in-horizon-forbidden-west
+
+Nanite, UE5
+https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf
+format
+- atomic 비교를 위해 한 정수에 패킹
+
+DOOM: The Dark Ages
+https://static.graphicsprogrammingconference.com/public/2025/slides/visibility-buffer-and-deferred-rendering-in-doom/Lazarek-Hammer-visibility-buffer-and-deferred-rendering-in-doom-the-dark-ages.pdf
+
+
+[visibility format]
+
+instance/mesh/cluster ID + primitive/triangle ID + depth
+- 최소 형태
+- visibility pass 쌈, overdraw 많을때 material 계산 제거해 유리, 하지만 decode가 shading마다 매번 필요
+- 주로 논문(2013)
+
++ barycentric u, v
+- skinned/deformed vertex를 다시 변환하는 비용 제거
+- DOOM
+
+triangle마다 interpolation coefficient 로 barycentric을 보간
+- 픽셀당 저장량 줌(삼각형마다), 계산단순. 단 추가 pass 필요, triangle x attribute만큼 저장필요, 삼각형 많으면 어려움
+
+depth + ID 를 atimic 하나로 pack, InterlockedMax로 갱신
+- 원자적으로 끝나서 hw + sw 결과를 하나로 합치기 가능, 하지만 비트수가 제한된다
+
+[mesh buffer format]
+
+원본 직접 참조
+- burns
+- instanceID -> transform, vertex/index buffer base
+- triangleIID -> index0, 1, 2 -> vertex attributes
+- 별도 버퍼 없음, visibility pass 쌈, static geometry에서 구조가 단순
+- 하지만 새 vertex를 gather해야 함, tessellation이나 procedural geometry가 원본 triangle ID와 대응되지 않을수있음, mesh별로 vertex layout 다를수도있음
+- 실제로는 SoA방식 global buffer로 통합하거나 meshlet/cluster metadata가 각각 stream offset이나 format decoder를 제공함
+
+Dynamic visible-triangle buffer
+- 별도 버퍼 씀
+
+GPU filtering, compacted index buffer
+- TVB 1.0, 2.0
+- 남은 triangle만 compact, unified draw로 rasterize
+- CPU submission과 PSO switching 줄임, sw raster해야 함
+
+Meshlet/cluster 기반
+- 128-triangle cluster로 7비트로 삼각형 표현, 단일 공용 virtualized buffer에 geometry 둠, indirect draw가 가능
+
+[barycentric calculation]
+
+화면 공간에서 재계산
+
+[material binning]
+
+- global tile-material list
+- uber shader + bindless
+- material-depth buffer (depth HW를 material mask test로 재활용, depth test로 pixel shader invocation 제거)
+- coarse tile + wave packing (절충)
+- pixel command wave packing (compute shader로 wave에 packing)
+
+[draw call batching]
+
+ㅁㄴㅇㄹ
+
+[alpha test / alpha blending]
+
+그냥 독립인듯
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
