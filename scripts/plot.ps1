@@ -4,4 +4,4 @@ param(
 )
 
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-python (Join-Path $scriptDirectory 'run.py') $Spec
+python (Join-Path $scriptDirectory 'plot.py') $Spec
