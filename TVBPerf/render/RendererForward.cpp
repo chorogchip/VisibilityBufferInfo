@@ -71,7 +71,7 @@ namespace rndr {
 
 
     UINT RendererForward::srv_descriptor_count() const {
-        return program_arguments_.texture_count;
+        return program_arguments_->texture_count;
     }
 
     void RendererForward::create_shader_resources() {
@@ -83,7 +83,7 @@ namespace rndr {
         // b0 (constant buffer)
         D3D12_DESCRIPTOR_RANGE texture_range{};
         texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        texture_range.NumDescriptors = program_arguments_.texture_count;
+        texture_range.NumDescriptors = program_arguments_->texture_count;
         texture_range.BaseShaderRegister = 8;
         texture_range.RegisterSpace = 0;
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -139,10 +139,10 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
 
-        std::string texture_count_define = std::to_string(program_arguments_.texture_count);
-        std::string texture_sampling_count_define = std::to_string(program_arguments_.texture_sampling_count);
-        std::string texture_size_define = std::to_string(program_arguments_.texture_size);
-        std::string alu_calc_count_define = std::to_string(program_arguments_.alu_calc_count);
+        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
         D3D_SHADER_MACRO workload_defines[] =
         {
             { "TEXTURE_COUNT", texture_count_define.c_str() },

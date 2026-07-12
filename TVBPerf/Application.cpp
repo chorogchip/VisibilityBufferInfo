@@ -34,7 +34,7 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
 
     renderer_ = rndr::create_renderer(program_argument_.renderer_variant);
     window_.set_key_down_handler([this](WPARAM key) { return handle_key_down(key); });
-    renderer_->init(program_argument_, window_.hwnd());
+    renderer_->init(window_.hwnd(), program_argument_);
 
     bool running = true;
     while (running) {

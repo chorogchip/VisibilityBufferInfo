@@ -11,7 +11,7 @@ namespace rndr {
 
     void RendererTVBGBuffer::init_() {
 
-        gbuffer_count_ = program_arguments_.gbuffer_cnt;
+        gbuffer_count_ = program_arguments_->gbuffer_cnt;
         assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
 
         D3D12_CLEAR_VALUE clear_value{};
@@ -21,7 +21,7 @@ namespace rndr {
         clear_value.Color[2] = 0.0f;
         clear_value.Color[3] = 0.0f;
 
-        vis_buffer_ = dxutl::create_texture2d(device_.Get(), program_arguments_.window_width, program_arguments_.window_height,
+        vis_buffer_ = dxutl::create_texture2d(device_.Get(), width_, height_,
             DXGI_FORMAT_R32G32_UINT,
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
@@ -38,7 +38,7 @@ namespace rndr {
             gbuffer_clear_value.Color[2] = CLEAR_COLOR_[2];
             gbuffer_clear_value.Color[3] = CLEAR_COLOR_[3];
 
-            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), program_arguments_.window_width, program_arguments_.window_height,
+            gbuffers_.back() = dxutl::create_texture2d(device_.Get(), width_, height_,
                 DXGI_FORMAT_R32G32B32A32_FLOAT,
                 D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
@@ -185,7 +185,7 @@ namespace rndr {
     }
 
     UINT RendererTVBGBuffer::srv_descriptor_count() const {
-        return 6 + gbuffer_count_ + program_arguments_.texture_count;
+        return 6 + gbuffer_count_ + program_arguments_->texture_count;
     }
 
     void RendererTVBGBuffer::create_shader_resources() {
@@ -340,7 +340,7 @@ namespace rndr {
 
         D3D12_DESCRIPTOR_RANGE texture_range{};
         texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        texture_range.NumDescriptors = program_arguments_.texture_count;
+        texture_range.NumDescriptors = program_arguments_->texture_count;
         texture_range.BaseShaderRegister = 8;
         texture_range.RegisterSpace = 0;
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -407,10 +407,10 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
 
         std::string gbuffer_count_define = std::to_string(gbuffer_count_);
-        std::string texture_count_define = std::to_string(program_arguments_.texture_count);
-        std::string texture_sampling_count_define = std::to_string(program_arguments_.texture_sampling_count);
-        std::string texture_size_define = std::to_string(program_arguments_.texture_size);
-        std::string alu_calc_count_define = std::to_string(program_arguments_.alu_calc_count);
+        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
+        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
+        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
+        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
         D3D_SHADER_MACRO workload_defines[] =
         {
             { "GBUFFER_COUNT", gbuffer_count_define.c_str() },

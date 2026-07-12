@@ -7,21 +7,20 @@
 
 namespace dxutl {
 
-	class DX12Fence {
+	class Fence {
 
 	public:
-		DX12Fence() = default;
-		~DX12Fence();
+		Fence() = default;
+		~Fence();
 
+		Fence(const Fence&) = delete;
+		Fence& operator=(const Fence&) = delete;
+
+		void init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue);
 		UINT64 signal();
 		void wait_for_value(UINT64 value);
 		void wait_for_gpu();
-
 		operator bool() const { return fence_.Get() != nullptr && fence_event_; }
-
-		static DX12Fence create_fence(
-			ID3D12Device* p_device,
-			ID3D12CommandQueue* p_queue);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Fence> fence_;

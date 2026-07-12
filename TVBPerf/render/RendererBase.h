@@ -1,27 +1,26 @@
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <vector>
-#include <array>
 #include <Windows.h>
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <d3dcompiler.h>
-#include <DirectXMath.h>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
-#include "dx_util/DX12Context.h"
-#include "dx_util/DX12FrameContext.h"
-#include "dx_util/DX12List.h"
-#include "dx_util/DX12Fence.h"
-#include "dx_util/DX12QueryBuf.h"
+#include "util/ProgramArgument.h"
+#include "util/FrameCounter.h"
+#include "util/ProgramArgument.h"
+#include "dx_util/GPUFrameTimer.h"
+#include "dx_util/Fence.h"
 
+#include "scene/SceneDataCPU.h"
 #include "scene/SceneDataGPU.h"
 
-#include "render/ProcedureBase.h"
+#include "render/Camera.h"
 
-class RendererBase : public rndr::ProcedureBase
+class RendererBase
 {
     template <typename T>
     using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -29,14 +28,13 @@ class RendererBase : public rndr::ProcedureBase
 public:
     static constexpr UINT FRAME_COUNT = 2;
 
-    RendererBase() = default;
-    virtual ~RendererBase() = default;
-    void init(const util::ProgramArgument& args, HWND hwnd);
+    virtual ~RendererBase();
+    void init(HWND hwnd, const util::ProgramArgument&);
     void render();
     void close();
+    bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
-
     virtual void init_() = 0;
     virtual void render_() = 0;
 
@@ -57,7 +55,11 @@ protected:
     void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
 
 private:
+    void create_device();
+    void create_command_objects();
+    void create_swapchain();
 
+    void init_viewport_scissorrect();
     void create_meshbuffers();
     void create_dummy_textures();
     void create_constbuffers();
@@ -68,20 +70,19 @@ private:
     void move_to_next_frame();
 
 protected:
-    
-    dxutl::DX12Context dx12_context_;
-    std::array<dxutl::DX12FrameContext, FRAME_COUNT> dx12_frame_contexts_;
-    dxutl::DX12List dx12_list_;
+    HWND hwnd_ = nullptr;
+    uint32_t width_ = 0;
+    uint32_t height_ = 0;
 
-    dxutl::DX12Fence dx12_fence_;
-    dxutl::DX12QueryBuf dx12_query_buf_;
+    ComPtr<IDXGIFactory4> factory_;
+    ComPtr<ID3D12Device> device_;
 
-    D3D12_VIEWPORT viewport_{};
-    D3D12_RECT scissor_rect_{};
+    ComPtr<ID3D12CommandQueue> command_queue_;
+    ComPtr<ID3D12CommandAllocator> command_allocator_[FRAME_COUNT];
+    ComPtr<ID3D12GraphicsCommandList> command_list_;
 
-    dxutl::DX12FrameContext& curr_context();
-
-
+    ComPtr<IDXGISwapChain3> swapchain_;
+    UINT frame_index_ = 0;
 
     constexpr static DXGI_FORMAT DEPTH_STENCIL_FORMAT_ = DXGI_FORMAT_D32_FLOAT;
     ComPtr<ID3D12DescriptorHeap> dsv_heap_;
@@ -98,6 +99,13 @@ protected:
     ComPtr<ID3D12RootSignature> root_signature_;
     ComPtr<ID3D12PipelineState> pipeline_state_;
 
+    D3D12_VIEWPORT viewport_{};
+    D3D12_RECT scissor_rect_{};
+
+    UINT64 fence_values_[FRAME_COUNT]{};
+    dxutl::Fence fence_;
+
+    std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
     std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
 
     struct ConstBufMatrices {
@@ -111,7 +119,14 @@ protected:
 
     std::vector<ComPtr<ID3D12Resource>> dummy_textures_;
 
+    static_assert(dxutl::GpuFrameTimer::FRAME_COUNT == FRAME_COUNT, "");
+    dxutl::GpuFrameTimer frame_time_;
+    util::FrameCounter frame_counter_;
+
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+
+    std::unique_ptr<const util::ProgramArgument> program_arguments_;
     
 public:
+    rndr::Camera camera_{};
 };
