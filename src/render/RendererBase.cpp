@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "util/Utils.h"
+#include "dx_util/DeviceUtils.h"
 #include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
 
@@ -97,9 +98,11 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
 
-    this->create_device();
+    device_ = dxutl::create_device(factory_);
     this->create_command_objects();
-    this->create_swapchain();
+    swapchain_ = dxutl::create_swapchain(
+        factory_.Get(), command_queue_.Get(), hwnd_, width_, height_, FRAME_COUNT);
+    frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 
     fence_.init(device_.Get(), command_queue_.Get());
     fence_values_[frame_index_] = 1;
@@ -164,53 +167,8 @@ void RendererBase::close() {
     std::cout << "Saved CSV: " << path << '\n';
 }
 
-void RendererBase::create_device() {
-#if defined(_DEBUG)
-    {
-        ComPtr<ID3D12Debug> debug_controller;
-        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debug_controller.ReleaseAndGetAddressOf())))) {
-            debug_controller->EnableDebugLayer();
-        }
-    }
-#endif
-
-Utils::throw_if_failed(CreateDXGIFactory1(IID_PPV_ARGS(factory_.ReleaseAndGetAddressOf())), "create DXGI factory");
-
-ComPtr<IDXGIAdapter1> adapter;
-
-for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory_->EnumAdapters1(i, &adapter); ++i) {
-    DXGI_ADAPTER_DESC1 desc;
-    adapter->GetDesc1(&desc);
-
-    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-        continue;
-
-    if (SUCCEEDED(D3D12CreateDevice(
-        adapter.Get(),
-        D3D_FEATURE_LEVEL_11_0,
-        IID_PPV_ARGS(device_.ReleaseAndGetAddressOf())))) {
-        return;
-    }
-}
-
-ComPtr<IDXGIAdapter> warp_adapter;
-Utils::throw_if_failed(factory_->EnumWarpAdapter(IID_PPV_ARGS(warp_adapter.ReleaseAndGetAddressOf())), "enumerate adapter");
-
-Utils::throw_if_failed(D3D12CreateDevice(
-    warp_adapter.Get(),
-    D3D_FEATURE_LEVEL_11_0,
-    IID_PPV_ARGS(device_.ReleaseAndGetAddressOf())), "create device");
-}
-
 void RendererBase::create_command_objects() {
-
-    D3D12_COMMAND_QUEUE_DESC queue_desc{};
-    queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-
-    Utils::throw_if_failed(device_->CreateCommandQueue(
-        &queue_desc,
-        IID_PPV_ARGS(command_queue_.ReleaseAndGetAddressOf())), "create command queue");
+    command_queue_ = dxutl::create_command_queue(device_.Get());
 
     for (int i = 0; i < FRAME_COUNT; ++i) {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
@@ -226,38 +184,6 @@ void RendererBase::create_command_objects() {
         IID_PPV_ARGS(command_list_.ReleaseAndGetAddressOf())), "create command list");
 
     Utils::throw_if_failed(command_list_->Close(), "command list close");
-}
-
-void RendererBase::create_swapchain() {
-
-    DXGI_SWAP_CHAIN_DESC1 swap_chain_desc{};
-    swap_chain_desc.BufferCount = FRAME_COUNT;
-    swap_chain_desc.Width = width_;
-    swap_chain_desc.Height = height_;
-    swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swap_chain_desc.SampleDesc.Count = 1;
-    swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-
-    ComPtr<IDXGISwapChain1> swap_chain;
-
-    Utils::throw_if_failed(factory_->CreateSwapChainForHwnd(
-        command_queue_.Get(),
-        hwnd_,
-        &swap_chain_desc,
-        nullptr,
-        nullptr,
-        &swap_chain), "create swapchain");
-
-    Utils::throw_if_failed(factory_->MakeWindowAssociation(
-        hwnd_,
-        DXGI_MWA_NO_ALT_ENTER), "factory make window association");
-
-    Utils::throw_if_failed(swap_chain.As(&swapchain_), "swapchain as");
-
-
-    frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 }
 
 void RendererBase::init_viewport_scissorrect() {

@@ -55,9 +55,7 @@ protected:
     void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
 
 private:
-    void create_device();
     void create_command_objects();
-    void create_swapchain();
 
     void init_viewport_scissorrect();
     void create_meshbuffers();
