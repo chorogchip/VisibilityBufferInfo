@@ -11,7 +11,7 @@ namespace rndr {
 		RendererTVB() = default;
 		~RendererTVB() override = default;
 
-		void init_() override;
+		void create_pass_resources() override;
 		void render_() override;
 
 	private:

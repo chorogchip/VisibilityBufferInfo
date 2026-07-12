@@ -9,7 +9,6 @@ namespace rndr {
 		RendererForwardPrePass() = default;
 		~RendererForwardPrePass() override = default;
 
-		void init_() override;
 		void render_() override;
 
 	private:

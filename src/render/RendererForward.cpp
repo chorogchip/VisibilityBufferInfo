@@ -9,10 +9,6 @@
 
 namespace rndr {
 
-    void RendererForward::init_() {
-
-    }
-
     void RendererForward::render_() {
 
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");

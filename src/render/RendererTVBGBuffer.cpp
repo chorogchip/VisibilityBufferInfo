@@ -9,10 +9,12 @@
 
 namespace rndr {
 
-    void RendererTVBGBuffer::init_() {
-
+    void RendererTVBGBuffer::configure_pass() {
         gbuffer_count_ = program_arguments_->gbuffer_cnt;
         assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
+    }
+
+    void RendererTVBGBuffer::create_pass_resources() {
 
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;

@@ -35,7 +35,8 @@ public:
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
-    virtual void init_() = 0;
+    virtual void configure_pass();
+    virtual void create_pass_resources();
     virtual void render_() = 0;
 
     virtual UINT dsv_descriptor_count() const;

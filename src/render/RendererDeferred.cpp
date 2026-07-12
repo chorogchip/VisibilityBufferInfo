@@ -9,10 +9,12 @@
 
 namespace rndr {
 
-    void RendererDeferred::init_() {
-
+    void RendererDeferred::configure_pass() {
         gbuffer_count_ = program_arguments_->gbuffer_cnt;
         assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
+    }
+
+    void RendererDeferred::create_pass_resources() {
 
         for (uint32_t i = 0; i < gbuffer_count_; ++i) {
 

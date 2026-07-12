@@ -94,6 +94,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     program_arguments_ = std::make_unique<const util::ProgramArgument>(arg);
 
+    this->configure_pass();
 
     frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
@@ -109,7 +110,9 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     frame_time_.init(device_.Get(), command_queue_.Get());
 
     this->init_viewport_scissorrect();
-    this->init_();
+
+    // Pass resources must be created before descriptor counts and views are configured.
+    this->create_pass_resources();
 
     this->create_meshbuffers();
     this->create_dummy_textures();
@@ -185,6 +188,10 @@ void RendererBase::create_command_objects() {
 
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
+
+void RendererBase::configure_pass() {}
+
+void RendererBase::create_pass_resources() {}
 
 void RendererBase::init_viewport_scissorrect() {
     viewport_.TopLeftX = 0.0f;

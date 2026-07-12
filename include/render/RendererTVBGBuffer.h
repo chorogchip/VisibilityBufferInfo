@@ -11,7 +11,8 @@ namespace rndr {
 		RendererTVBGBuffer() = default;
 		~RendererTVBGBuffer() override = default;
 
-		void init_() override;
+		void configure_pass() override;
+		void create_pass_resources() override;
 		void render_() override;
 
 	private:
