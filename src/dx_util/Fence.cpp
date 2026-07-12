@@ -1,4 +1,4 @@
-#include "Fence.h"
+#include "dx_util/Fence.h"
 
 #include <d3d12.h>
 #include "util/Utils.h"

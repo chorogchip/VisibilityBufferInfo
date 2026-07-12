@@ -1,4 +1,4 @@
-#include "SceneAssimpImporter.h"
+#include "scene/SceneAssimpImporter.h"
 
 #include <algorithm>
 #include <array>

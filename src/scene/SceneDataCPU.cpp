@@ -1,4 +1,4 @@
-#include "SceneDataCPU.h"
+#include "scene/SceneDataCPU.h"
 
 #include "util/Logger.h"
 

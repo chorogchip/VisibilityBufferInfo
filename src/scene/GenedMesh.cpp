@@ -1,4 +1,4 @@
-#include "GenedMesh.h"
+#include "scene/GenedMesh.h"
 
 #include <cassert>
 #include <cmath>

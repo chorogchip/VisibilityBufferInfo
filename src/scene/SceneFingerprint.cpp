@@ -1,4 +1,4 @@
-#include "SceneFingerprint.h"
+#include "scene/SceneFingerprint.h"
 
 #include <algorithm>
 #include <cmath>
