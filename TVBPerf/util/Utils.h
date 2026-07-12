@@ -3,34 +3,17 @@
 #include <Windows.h>
 #include <stdexcept>
 #include <string>
-#include <source_location>
-
-#include "util/Logger.h"
 
 class Utils {
 public:
-    // if debug, then throw runtime error
-    // if release, log by txt
-    [[noreturn]] static void panic(const char* message, const std::source_location& loc = std::source_location::current()) {
-
-        const char* safe_message = message ? message : "Unknown panic";
-
-#ifdef _DEBUG
-        throw std::runtime_error(std::string(safe_message));
-#else
-        util::Logger::g_logger.assert_with_log(false, safe_message, loc);
-        std::terminate();
-#endif
-    }
-
-    static void throw_if_failed(HRESULT hr, const char* message, const std::source_location& loc = std::source_location::current()) {
+    static void throw_if_failed(HRESULT hr, const char* message) {
         if (FAILED(hr)) {
-            panic((std::string("HRESULT failed on ") + message).c_str(), loc);
+            throw std::runtime_error(std::string("HRESULT failed on ") + message);
         }
     }
 
     static void throw_win32_lasterr(const char* message) {
-        throw_if_failed(HRESULT_FROM_WIN32(GetLastError()), message);
+        Utils::throw_if_failed(HRESULT_FROM_WIN32(GetLastError()), message);
     }
 
     template<typename T>
@@ -54,7 +37,6 @@ public:
 
         return s;
     }
-
     static void throw_if_failed(HRESULT hr) {
         throw_if_failed(hr, "no cause specified");
     }
