@@ -1,5 +1,6 @@
 #include "util/ProgramArgument.h"
 
+#include <iomanip>
 #include <sstream>
 
 #include "util/StringUtils.h"
@@ -62,6 +63,7 @@ namespace util {
 
     std::string ProgramResult::to_string() const {
         std::ostringstream stream;
+        stream << std::fixed << std::setprecision(5);
 #define X(type, name, argname) \
         stream << (this->name) << ',';
         ProgramResult_MAC;

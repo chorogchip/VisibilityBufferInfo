@@ -3,10 +3,9 @@
 #include <algorithm>
 #include <numeric>
 #include <string>
-#include <fstream>
-#include <iostream>
 
 #include "util/Utils.h"
+#include "util/BenchmarkCsvWriter.h"
 #include "dx_util/DeviceUtils.h"
 #include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
@@ -24,27 +23,44 @@ using Microsoft::WRL::ComPtr;
 
 namespace {
 
-    struct PassOutputInfo {
-        int index;
-        const char* name;
-    };
-
-    std::vector<PassOutputInfo> get_pass_output_infos(uint32_t renderer_variant) {
+    void set_pass_names(util::ProgramResult& result, uint32_t renderer_variant) {
         switch (renderer_variant) {
         case 1:
-            return { { 0, "main" }, { 1, "unused" }, { 3, "total" } };
+            result.pass_name_0 = "main";
+            result.pass_name_3 = "total";
+            break;
         case 2:
-            return { { 0, "depth_prepass" }, { 1, "forward" }, { 3, "total" } };
+            result.pass_name_0 = "depth_prepass";
+            result.pass_name_1 = "forward";
+            result.pass_name_3 = "total";
+            break;
         case 3:
-            return { { 0, "geometry" }, { 1, "lighting" }, { 3, "total" } };
+            result.pass_name_0 = "geometry";
+            result.pass_name_1 = "lighting";
+            result.pass_name_3 = "total";
+            break;
         case 4:
-            return { { 0, "visibility" }, { 1, "resolve" }, { 3, "total" } };
+            result.pass_name_0 = "visibility";
+            result.pass_name_1 = "resolve";
+            result.pass_name_3 = "total";
+            break;
         case 5:
-            return { { 0, "depth_prepass" }, { 1, "geometry" }, { 2, "lighting" }, { 3, "total" } };
+            result.pass_name_0 = "depth_prepass";
+            result.pass_name_1 = "geometry";
+            result.pass_name_2 = "lighting";
+            result.pass_name_3 = "total";
+            break;
         case 6:
-            return { { 0, "visibility" }, { 1, "gbuffer" }, { 2, "lighting" }, { 3, "total" } };
+            result.pass_name_0 = "visibility";
+            result.pass_name_1 = "gbuffer";
+            result.pass_name_2 = "lighting";
+            result.pass_name_3 = "total";
+            break;
         default:
-            return { { 0, "pass0" }, { 1, "pass1" }, { 3, "total" } };
+            result.pass_name_0 = "pass0";
+            result.pass_name_1 = "pass1";
+            result.pass_name_3 = "total";
+            break;
         }
     }
 
@@ -144,30 +160,28 @@ void RendererBase::close() {
 
     auto results = frame_counter_.summarize();
 
-    std::string csv_string = util::ProgramArgument::get_header_string() + ",variant_name,pass_index,pass_name," +
-        util::FrameCounter::CountedData::to_string_header() + "\n";
+    util::ProgramResult result{};
+    result.renderer_name = get_renderer_variant_name(program_arguments_->renderer_variant);
+    set_pass_names(result, program_arguments_->renderer_variant);
 
-    const auto pass_infos = get_pass_output_infos(program_arguments_->renderer_variant);
-    const std::string variant_name = get_renderer_variant_name(program_arguments_->renderer_variant);
-    for (const auto& pass_info : pass_infos) {
-        if (pass_info.index < 0 || static_cast<size_t>(pass_info.index) >= results.size()) continue;
-        csv_string += program_arguments_->to_string() + ",";
-        csv_string += variant_name + ",";
-        csv_string += std::to_string(pass_info.index) + ",";
-        csv_string += std::string(pass_info.name) + ",";
-        csv_string += results[pass_info.index].to_string() + "\n";
+#define COPY_PASS_RESULT(index) \
+    if (results.size() > index) { \
+        result.pass_##index##_time_min_ms = results[index].time_min_ms; \
+        result.pass_##index##_time_median_ms = results[index].time_median_ms; \
+        result.pass_##index##_time_max_ms = results[index].time_max_ms; \
+        result.pass_##index##_time_avg_ms = results[index].time_avg_ms; \
+        result.pass_##index##_time_p01_ms = results[index].time_p01_ms; \
+        result.pass_##index##_time_p10_ms = results[index].time_p10_ms; \
+        result.pass_##index##_time_p90_ms = results[index].time_p90_ms; \
+        result.pass_##index##_time_p99_ms = results[index].time_p99_ms; \
     }
+    COPY_PASS_RESULT(0)
+    COPY_PASS_RESULT(1)
+    COPY_PASS_RESULT(2)
+    COPY_PASS_RESULT(3)
+#undef COPY_PASS_RESULT
 
-    std::ofstream ofs(path, std::ios::out | std::ios::trunc);
-    if (!ofs) { std::cerr << "Failed to open output file: " << path << '\n'; return; }
-
-    ofs << csv_string;
-    if (!ofs) { std::cerr << "Failed to write output file: " << path << '\n'; return; }
-
-    ofs.close();
-
-    if (!ofs) { std::cerr << "Failed to close output file: " << path << '\n'; return; }
-    std::cout << "Saved CSV: " << path << '\n';
+    util::write_benchmark_csv(path, *program_arguments_, result);
 }
 
 void RendererBase::create_command_objects() {

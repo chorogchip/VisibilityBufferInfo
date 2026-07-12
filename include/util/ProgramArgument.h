@@ -46,7 +46,26 @@ namespace util {
     X(uint32_t, alu_calc_count, 0, alu-calc-count)
 
 
-#define ProgramResult_MAC
+#define ProgramResultPass_MAC(X, index) \
+    X(double, pass_##index##_time_min_ms, pass_##index##_time_min_ms) \
+    X(double, pass_##index##_time_median_ms, pass_##index##_time_median_ms) \
+    X(double, pass_##index##_time_max_ms, pass_##index##_time_max_ms) \
+    X(double, pass_##index##_time_avg_ms, pass_##index##_time_avg_ms) \
+    X(double, pass_##index##_time_p01_ms, pass_##index##_time_p01_ms) \
+    X(double, pass_##index##_time_p10_ms, pass_##index##_time_p10_ms) \
+    X(double, pass_##index##_time_p90_ms, pass_##index##_time_p90_ms) \
+    X(double, pass_##index##_time_p99_ms, pass_##index##_time_p99_ms)
+
+#define ProgramResult_MAC \
+    X(std::string, renderer_name, renderer_name) \
+    X(std::string, pass_name_0, pass_name_0) \
+    X(std::string, pass_name_1, pass_name_1) \
+    X(std::string, pass_name_2, pass_name_2) \
+    X(std::string, pass_name_3, pass_name_3) \
+    ProgramResultPass_MAC(X, 0) \
+    ProgramResultPass_MAC(X, 1) \
+    ProgramResultPass_MAC(X, 2) \
+    ProgramResultPass_MAC(X, 3)
 
 
 #define ProgramResultPerFrame_MAC
