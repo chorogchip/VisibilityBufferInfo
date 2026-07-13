@@ -11,11 +11,11 @@ namespace rndr {
 		RendererTVBGBuffer() = default;
 		~RendererTVBGBuffer() override = default;
 
-		void configure_pass() override;
-		void create_pass_resources() override;
-		void render_() override;
-
 	private:
+		void render_() override;
+		void make_programresult(util::ProgramResult& result) override;
+		void create_pass_resources() override;
+
 		UINT rtv_descriptor_count() const override;
 		void create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) override;
 		UINT srv_descriptor_count() const override;
@@ -30,6 +30,5 @@ namespace rndr {
 		Microsoft::WRL::ComPtr<ID3D12Resource> mesh_buffer_;
 		Microsoft::WRL::ComPtr<ID3D12Resource> vis_buffer_;
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> gbuffers_;
-		uint32_t gbuffer_count_ = 0;
 	};
 }

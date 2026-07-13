@@ -21,82 +21,6 @@
 
 using Microsoft::WRL::ComPtr;
 
-namespace {
-
-    void set_pass_names(util::ProgramResult& result, uint32_t renderer_variant) {
-        switch (renderer_variant) {
-        case 1:
-            result.pass_name_0 = "main";
-            result.pass_name_3 = "total";
-            break;
-        case 2:
-            result.pass_name_0 = "depth_prepass";
-            result.pass_name_1 = "forward";
-            result.pass_name_3 = "total";
-            break;
-        case 3:
-            result.pass_name_0 = "geometry";
-            result.pass_name_1 = "lighting";
-            result.pass_name_3 = "total";
-            break;
-        case 4:
-            result.pass_name_0 = "visibility";
-            result.pass_name_1 = "resolve";
-            result.pass_name_3 = "total";
-            break;
-        case 5:
-            result.pass_name_0 = "depth_prepass";
-            result.pass_name_1 = "geometry";
-            result.pass_name_2 = "lighting";
-            result.pass_name_3 = "total";
-            break;
-        case 6:
-            result.pass_name_0 = "visibility";
-            result.pass_name_1 = "gbuffer";
-            result.pass_name_2 = "lighting";
-            result.pass_name_3 = "total";
-            break;
-        default:
-            result.pass_name_0 = "pass0";
-            result.pass_name_1 = "pass1";
-            result.pass_name_3 = "total";
-            break;
-        }
-    }
-
-    const char* get_renderer_variant_name(uint32_t renderer_variant) {
-        switch (renderer_variant) {
-        case 1:
-            return "Forward";
-        case 2:
-            return "ForwardPrepass";
-        case 3:
-            return "Deferred";
-        case 4:
-            return "TVB";
-        case 5:
-            return "DeferredPrepass";
-        case 6:
-            return "TVBGBuffer";
-        default:
-            return "Unknown";
-        }
-    }
-
-    std::filesystem::path get_scene_fingerprint_output_path(const std::string& output_filepath) {
-        if (output_filepath.empty()) {
-            return "scene_fingerprint.csv";
-        }
-
-        std::filesystem::path path = output_filepath;
-        const std::filesystem::path parent = path.parent_path();
-        const std::string stem = path.stem().string().empty() ? "result" : path.stem().string();
-        const std::string extension = path.extension().string().empty() ? ".csv" : path.extension().string();
-        return parent / (stem + "_scene_fingerprint" + extension);
-    }
-
-}
-
 RendererBase::~RendererBase() {
     if (command_queue_ && fence_)
         fence_.wait_for_gpu();
@@ -109,8 +33,6 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     height_ = arg.window_height;
 
     program_arguments_ = std::make_unique<const util::ProgramArgument>(arg);
-
-    this->configure_pass();
 
     frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
@@ -158,11 +80,8 @@ void RendererBase::close() {
     const std::string& path = program_arguments_->output_filepath;
     if (path == "") return;
 
-    auto results = frame_counter_.summarize();
-
     util::ProgramResult result{};
-    result.renderer_name = get_renderer_variant_name(program_arguments_->renderer_variant);
-    set_pass_names(result, program_arguments_->renderer_variant);
+    auto results = frame_counter_.summarize();
 
 #define COPY_PASS_RESULT(index) \
     if (results.size() > index) { \
@@ -180,6 +99,8 @@ void RendererBase::close() {
     COPY_PASS_RESULT(2)
     COPY_PASS_RESULT(3)
 #undef COPY_PASS_RESULT
+
+    this->make_programresult(result);
 
     util::write_benchmark_csv(path, *program_arguments_, result);
 }
@@ -202,8 +123,6 @@ void RendererBase::create_command_objects() {
 
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
-
-void RendererBase::configure_pass() {}
 
 void RendererBase::create_pass_resources() {}
 
@@ -299,7 +218,7 @@ void RendererBase::create_meshbuffers() {
 
     scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
     scene::SceneFingerprint::write_csv(
-        get_scene_fingerprint_output_path(program_arguments_->output_filepath),
+        util::get_scene_fingerprint_output_path(program_arguments_->output_filepath),
         *scene_cpu_,
         *program_arguments_);
 

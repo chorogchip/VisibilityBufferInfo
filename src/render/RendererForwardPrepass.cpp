@@ -10,6 +10,12 @@
 
 namespace rndr {
 
+    void RendererForwardPrePass::make_programresult(util::ProgramResult& result) {
+        result.renderer_name = "Forward";
+        result.pass_name_0 = "forward";
+        result.pass_name_3 = "total";
+    }
+
     void RendererForwardPrePass::render_() {
 
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");

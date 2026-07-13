@@ -9,6 +9,13 @@
 
 namespace rndr {
 
+    void RendererTVB::make_programresult(util::ProgramResult& result) {
+        result.renderer_name = "VisBuf";
+        result.pass_name_0 = "visibility";
+        result.pass_name_1 = "resolve";
+        result.pass_name_3 = "total";
+    }
+
     void RendererTVB::create_pass_resources() {
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;

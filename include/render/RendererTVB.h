@@ -15,6 +15,8 @@ namespace rndr {
 		void render_() override;
 
 	private:
+		void make_programresult(util::ProgramResult& result) override;
+
 		UINT rtv_descriptor_count() const override;
 		void create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) override;
 		UINT srv_descriptor_count() const override;

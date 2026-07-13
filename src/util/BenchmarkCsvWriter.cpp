@@ -5,6 +5,17 @@
 
 namespace util {
 
+    std::filesystem::path get_scene_fingerprint_output_path(
+        const std::string& output_filepath) {
+        if (output_filepath.empty()) return "scene_fingerprint.csv";
+
+        std::filesystem::path path = output_filepath;
+        const std::filesystem::path parent = path.parent_path();
+        const std::string stem = path.stem().string().empty() ? "result" : path.stem().string();
+        const std::string extension = path.extension().string().empty() ? ".csv" : path.extension().string();
+        return parent / (stem + "_scene_fingerprint" + extension);
+    }
+
     void write_benchmark_csv(
         const std::filesystem::path& path,
         const ProgramArgument& arguments,

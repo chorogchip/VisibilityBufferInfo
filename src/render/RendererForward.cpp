@@ -9,6 +9,14 @@
 
 namespace rndr {
 
+
+    void RendererForward::make_programresult(util::ProgramResult& result) {
+        result.renderer_name = "ForwardPrepass";
+        result.pass_name_0 = "depth_prepass";
+        result.pass_name_1 = "forward";
+        result.pass_name_3 = "total";
+    }
+
     void RendererForward::render_() {
 
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");

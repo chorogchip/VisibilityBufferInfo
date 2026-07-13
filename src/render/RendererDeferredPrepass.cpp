@@ -9,14 +9,26 @@
 
 namespace rndr {
 
-    void RendererDeferredPrepass::configure_pass() {
-        gbuffer_count_ = program_arguments_->gbuffer_cnt;
-        assert(gbuffer_count_ <= 8);  // max gbuffer count is 8
+    void RendererDeferredPrepass::make_programresult(util::ProgramResult& result) {
+        result.renderer_name = "DeferredPrepass";
+        result.pass_name_0 = "depth_prepass";
+        result.pass_name_1 = "geometry";
+        result.pass_name_2 = "lighting";
+        result.pass_name_3 = "total";
     }
 
     void RendererDeferredPrepass::create_pass_resources() {
 
-        for (uint32_t i = 0; i < gbuffer_count_; ++i) {
+        util::Logger::g_logger.assert_with_log(
+            program_arguments_->gbuffer_cnt > 0,
+            "gbuffer count must > 0 in deferred"
+        );
+        util::Logger::g_logger.assert_with_log(
+            program_arguments_->gbuffer_cnt <= 8,
+            "gbuffer count must < 8 in deferred"
+        );
+
+        for (uint32_t i = 0; i < program_arguments_->gbuffer_cnt; ++i) {
 
             gbuffers_.emplace_back();
 
@@ -77,7 +89,7 @@ namespace rndr {
 
         // geometry pass
 
-        for (UINT i = 0; i < gbuffer_count_; ++i)
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i)
             dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -89,7 +101,7 @@ namespace rndr {
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(3, scene_gpu_->material_buffer->GetGPUVirtualAddress());
         D3D12_GPU_DESCRIPTOR_HANDLE texture_handle = srv_heap_->GetGPUDescriptorHandleForHeapStart();
-        texture_handle.ptr += static_cast<SIZE_T>(gbuffer_count_) * srv_descriptor_size_;
+        texture_handle.ptr += static_cast<SIZE_T>(program_arguments_->gbuffer_cnt) * srv_descriptor_size_;
         command_list_->SetGraphicsRootDescriptorTable(4, texture_handle);
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -99,9 +111,9 @@ namespace rndr {
         D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle =
             rtv_heap_->GetCPUDescriptorHandleForHeapStart();
         rtv_handle.ptr += static_cast<SIZE_T>(FRAME_COUNT) * rtv_descriptor_size_;
-        command_list_->OMSetRenderTargets(gbuffer_count_, &rtv_handle, TRUE, &dsv_handle);
+        command_list_->OMSetRenderTargets(program_arguments_->gbuffer_cnt, &rtv_handle, TRUE, &dsv_handle);
 
-        for (UINT i = 0; i < gbuffer_count_; ++i) {
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i) {
             command_list_->ClearRenderTargetView(rtv_handle, CLEAR_COLOR_, 0, nullptr);
             rtv_handle.ptr += rtv_descriptor_size_;
         }
@@ -131,7 +143,7 @@ namespace rndr {
         dxutl::transition_resource(command_list_.Get(), render_targets_[frame_index_].Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        for (UINT i = 0; i < gbuffer_count_; ++i)
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i)
             dxutl::transition_resource(command_list_.Get(), gbuffers_[i].Get(),
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
@@ -157,25 +169,25 @@ namespace rndr {
 
 
     UINT RendererDeferredPrepass::rtv_descriptor_count() const {
-        return FRAME_COUNT + gbuffer_count_;
+        return FRAME_COUNT + program_arguments_->gbuffer_cnt;
     }
 
     void RendererDeferredPrepass::create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) {
-        for (UINT i = 0; i < gbuffer_count_; ++i) {
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i) {
             device_->CreateRenderTargetView(gbuffers_[i].Get(), nullptr, next_rtv_handle);
             next_rtv_handle.ptr += rtv_descriptor_size_;
         }
     }
 
     UINT RendererDeferredPrepass::srv_descriptor_count() const {
-        return gbuffer_count_ + program_arguments_->texture_count;
+        return program_arguments_->gbuffer_cnt + program_arguments_->texture_count;
     }
 
     void RendererDeferredPrepass::create_shader_resources() {
         D3D12_CPU_DESCRIPTOR_HANDLE srv_handle =
             srv_heap_->GetCPUDescriptorHandleForHeapStart();
 
-        for (UINT i = 0; i < gbuffer_count_; ++i) {
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i) {
             D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
             srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -249,7 +261,7 @@ namespace rndr {
 
         D3D12_DESCRIPTOR_RANGE srv_range{};
         srv_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        srv_range.NumDescriptors = gbuffer_count_;
+        srv_range.NumDescriptors = program_arguments_->gbuffer_cnt;
         srv_range.BaseShaderRegister = 0;
         srv_range.RegisterSpace = 0;
         srv_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -282,7 +294,7 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_lighting;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting;
 
-        std::string gbuffer_count_define = std::to_string(gbuffer_count_);
+        std::string gbuffer_count_define = std::to_string(program_arguments_->gbuffer_cnt);
         std::string texture_count_define = std::to_string(program_arguments_->texture_count);
         std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
         std::string texture_size_define = std::to_string(program_arguments_->texture_size);
@@ -405,8 +417,8 @@ namespace rndr {
         };
         pso_desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
         pso_desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
-        pso_desc.NumRenderTargets = gbuffer_count_;
-        for (UINT i = 0; i < gbuffer_count_; ++i)
+        pso_desc.NumRenderTargets = program_arguments_->gbuffer_cnt;
+        for (UINT i = 0; i < program_arguments_->gbuffer_cnt; ++i)
             pso_desc.RTVFormats[i] = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
         Utils::throw_if_failed(device_->CreateGraphicsPipelineState(
@@ -430,7 +442,7 @@ namespace rndr {
         pso_desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
         pso_desc.NumRenderTargets = 1;
         pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-        for (UINT i = 1; i < gbuffer_count_; ++i)
+        for (UINT i = 1; i < program_arguments_->gbuffer_cnt; ++i)
             pso_desc.RTVFormats[i] = DXGI_FORMAT_UNKNOWN;
 
         Utils::throw_if_failed(device_->CreateGraphicsPipelineState(

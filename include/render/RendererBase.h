@@ -9,9 +9,9 @@
 #include <memory>
 #include <vector>
 
+#include "util/Logger.h"
 #include "util/ProgramArgument.h"
 #include "util/FrameCounter.h"
-#include "util/ProgramArgument.h"
 #include "dx_util/GPUFrameTimer.h"
 #include "dx_util/Fence.h"
 
@@ -35,7 +35,8 @@ public:
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
-    virtual void configure_pass();
+    virtual void make_programresult(util::ProgramResult& result) = 0;
+
     virtual void create_pass_resources();
     virtual void render_() = 0;
 

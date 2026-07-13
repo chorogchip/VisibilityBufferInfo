@@ -12,6 +12,8 @@ namespace rndr {
 		void render_() override;
 
 	private:
+		virtual void make_programresult(util::ProgramResult& result) override;
+
 		UINT dsv_descriptor_count() const override;
 		D3D12_RESOURCE_STATES depth_stencil_initial_state() const override;
 		void create_extra_depth_stencil_views() override;
