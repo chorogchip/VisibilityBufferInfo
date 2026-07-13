@@ -24,7 +24,9 @@ struct VSInput
 {
     float3 position : POSITION;
     float3 normal : NORMAL;
-    float2 texcoord : TEXCOORD;
+    float2 texcoord0 : TEXCOORD0;
+    float2 texcoord1 : TEXCOORD1;
+    float3 tangent : TANGENT;
 };
 
 struct PSInput

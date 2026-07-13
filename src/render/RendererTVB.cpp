@@ -316,6 +316,7 @@ namespace rndr {
     }
 
     void RendererTVB::create_pso() {
+
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_visibility =
             dxutl::compile_shader(L"assets/shaders/TVB_visibility_VS.hlsl", "vs_5_0", "main", *program_arguments_);
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_visibility =

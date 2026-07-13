@@ -295,6 +295,8 @@ namespace rndr {
         device_->CreateShaderResourceView(scene_gpu_->material_buffer.Get(), &srv_desc, srv_handle);
         srv_handle.ptr += srv_descriptor_size_;
 
+        srv_desc = D3D12_SHADER_RESOURCE_VIEW_DESC{};
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
         srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         srv_desc.Texture2D.MipLevels = 1;
@@ -340,10 +342,15 @@ namespace rndr {
         Microsoft::WRL::ComPtr<ID3DBlob> error;
 
         Utils::throw_if_failed(D3D12SerializeRootSignature(
-            &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error), "create root signature");
+            &root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error),
+            "create root signature");
 
         Utils::throw_if_failed(device_->CreateRootSignature(
-            0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_)), "create root signature");
+            0,
+            signature->GetBufferPointer(),
+            signature->GetBufferSize(),
+            IID_PPV_ARGS(root_signature_.ReleaseAndGetAddressOf())),
+            "create root signature");
 
 
         D3D12_DESCRIPTOR_RANGE srv_range{};
@@ -415,14 +422,15 @@ namespace rndr {
     }
 
     void RendererTVBGBuffer::create_pso() {
+
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_visibility =
             dxutl::compile_shader(L"assets/shaders/TVB_visibility_VS.hlsl", "vs_5_0", "main", *program_arguments_);
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_visibility =
             dxutl::compile_shader(L"assets/shaders/TVB_visibility_PS.hlsl", "ps_5_0", "main", *program_arguments_);
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_gbuffer =
-            dxutl::compile_shader(L"assets/shaders/TVB_lighting_VS.hlsl", "vs_5_0", "main", *program_arguments_);
-        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_lighting =
             dxutl::compile_shader(L"assets/shaders/TVB_gbuffer_PS.hlsl", "ps_5_0", "main", *program_arguments_);
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_lighting =
+            dxutl::compile_shader(L"assets/shaders/TVB_lighting_VS.hlsl", "vs_5_0", "main", *program_arguments_);
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_lighting =
             dxutl::compile_shader(L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", "main", *program_arguments_);
 
