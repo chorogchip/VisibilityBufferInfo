@@ -13,7 +13,9 @@
 - Forward: overdraw 발생
 - Forward + Depth Pre-Pass : Geometry 두 번 처리
 - Deferred: G-buffer에 큰 메모리 대역폭
+- Deferred + Depth Pre-Pass
 - TVB: indirect access
+- TVB + gbuffer
 
 장면 구성 1: synthetic primitive scene 사용, 파라미터된 구 여러 개
 - 기본적으로 파라미터에 따라 생성된 구 여러 개의 scene을 사용
