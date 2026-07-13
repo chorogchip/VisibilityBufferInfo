@@ -66,6 +66,8 @@ private:
     void create_depth_stencil_resources();
     void create_render_target_views();
     void create_shader_visible_srv_heap();
+    void create_sampler_heap();
+    void create_texture_sampler_descriptors();
 
     void move_to_next_frame();
 
@@ -95,6 +97,9 @@ protected:
 
     ComPtr<ID3D12DescriptorHeap> srv_heap_;
     UINT srv_descriptor_size_ = 0;
+
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> sampler_heap_;
+    UINT sampler_descriptor_size_ = 0;
 
     ComPtr<ID3D12RootSignature> root_signature_;
     ComPtr<ID3D12PipelineState> pipeline_state_;

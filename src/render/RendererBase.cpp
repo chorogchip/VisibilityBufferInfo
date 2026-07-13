@@ -59,6 +59,8 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     this->create_depth_stencil_resources();
     this->create_render_target_views();
     this->create_shader_visible_srv_heap();
+    this->create_sampler_heap();
+    this->create_texture_sampler_descriptors();
     this->create_shader_resources();
 
     this->create_root_signature();
@@ -212,6 +214,59 @@ void RendererBase::create_shader_visible_srv_heap() {
     srv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
+void RendererBase::create_sampler_heap() {
+    const UINT sampler_count = program_arguments_->texture_count;
+
+    util::Logger::g_logger.assert_with_log(
+        sampler_count > 0,
+        "sampler count must > 0");
+
+    sampler_heap_ = dxutl::create_descriptor_heap(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
+        sampler_count,
+        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+        "create sampler descriptor heap");
+
+    sampler_descriptor_size_ = dxutl::descriptor_size(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+    );
+}
+
+void RendererBase::create_texture_sampler_descriptors() {
+    D3D12_CPU_DESCRIPTOR_HANDLE sampler_handle =
+        sampler_heap_->GetCPUDescriptorHandleForHeapStart();
+
+    const UINT sampler_count = program_arguments_->texture_count;
+
+    for (UINT i = 0; i < sampler_count; ++i) {
+        D3D12_SAMPLER_DESC sampler_desc{};
+
+        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+
+        sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+
+        sampler_desc.MipLODBias = 0.0f;
+        sampler_desc.MaxAnisotropy = 1;
+        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+        sampler_desc.BorderColor[0] = 0.0f;
+        sampler_desc.BorderColor[1] = 0.0f;
+        sampler_desc.BorderColor[2] = 0.0f;
+        sampler_desc.BorderColor[3] = 0.0f;
+
+        sampler_desc.MinLOD = 0.0f;
+        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
+
+        device_->CreateSampler(&sampler_desc, sampler_handle);
+
+        sampler_handle.ptr += sampler_descriptor_size_;
+    }
+}
+
 void RendererBase::create_meshbuffers() {
 
     scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
@@ -237,8 +292,11 @@ void RendererBase::create_meshbuffers() {
 
 void RendererBase::create_dummy_textures() {
 
-    const UINT texture_count = std::max(1u, program_arguments_->texture_count);
-    const UINT texture_size = std::max(1u, program_arguments_->texture_size);
+    const UINT texture_count = program_arguments_->texture_count;
+    const UINT texture_size = program_arguments_->texture_size;
+
+    util::Logger::g_logger.assert_with_log(texture_count > 0, "texture count must > 0");
+    util::Logger::g_logger.assert_with_log(texture_size > 0, "texture size must > 0");
     const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     dummy_textures_.clear();

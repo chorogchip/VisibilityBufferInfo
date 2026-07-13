@@ -11,7 +11,7 @@ namespace util {
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, run_current_time, "", run-current-time) \
     X(std::string, output_filepath, "temp.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 4, renderer-variant) \
+    X(uint32_t, renderer_variant, 1, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, false, to-use-scene) \

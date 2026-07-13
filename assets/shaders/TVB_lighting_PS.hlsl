@@ -1,9 +1,9 @@
 #ifndef TEXTURE_COUNT
-#define TEXTURE_COUNT 0
+#define TEXTURE_COUNT 1
 #endif
 
 #ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 0
+#define TEXTURE_SAMPLING_COUNT 1
 #endif
 
 #ifndef TEXTURE_SIZE
@@ -11,7 +11,7 @@
 #endif
 
 #ifndef ALU_CALC_COUNT
-#define ALU_CALC_COUNT 0
+#define ALU_CALC_COUNT 1
 #endif
 
 #if TEXTURE_SIZE < 1
@@ -82,19 +82,55 @@ float2 clip_to_pixel(float4 clip_pos)
         (0.5f - ndc.y * 0.5f) * gViewportSize.y);
 }
 
-float edge_function(float2 a, float2 b, float2 c)
+float edge_function(float2 p0, float2 p1, float2 p2)
 {
-    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+    float2 e1 = p1 - p0;
+    float2 e2 = p2 - p0;
+    return e2.x * e1.y - e2.y * e1.x;
 }
 
 float3 calc_barycentric(float2 p, float2 p0, float2 p1, float2 p2)
 {
     float area = edge_function(p0, p1, p2);
-    float inv_area = rcp(area);
+    float area_inv = rcp(area);
     return float3(
-        edge_function(p1, p2, p) * inv_area,
-        edge_function(p2, p0, p) * inv_area,
-        edge_function(p0, p1, p) * inv_area);
+        edge_function(p1, p2, p) * area_inv,
+        edge_function(p2, p0, p) * area_inv,
+        edge_function(p0, p1, p) * area_inv);
+}
+
+struct BarycentricGradient
+{
+    float3 value;
+    float3 dx;
+    float3 dy;
+};
+
+BarycentricGradient calc_barycentric_with_grad(
+    float2 p, float2 p0, float2 p1, float2 p2)
+{
+    float2 e1 = p1 - p0;
+    float2 e2 = p2 - p0;
+    float2 d = p - p0;
+    
+    float det = e1.x * e2.y - e1.y * e2.x;
+    if (abs(det) < 1e-8f) det = 1e-8f;
+    float det_inv = rcp(det);
+    
+    float lambda1 = (d.x * e2.y - d.y * e2.x) * det_inv;
+    float lambda2 = (d.y * e1.x - d.x * e1.y) * det_inv;
+    float lambda0 = 1.0f - lambda1 - lambda2;
+    
+    float2 grad_lambda1 = float2(e2.y, -e2.x) * det_inv;
+    float2 grad_lambda2 = float2(-e1.y, e1.x) * det_inv;
+    float2 grad_lambda0 = -grad_lambda1 - grad_lambda2;
+    
+    BarycentricGradient result;
+    result.value = float3(lambda0, lambda1, lambda2);
+    result.dx = float3(grad_lambda0.x, grad_lambda1.x, grad_lambda2.x);
+    result.dy = float3(grad_lambda0.y, grad_lambda1.y, grad_lambda2.y);
+
+    return result;
 }
 
 struct AttributeGrad
@@ -105,39 +141,24 @@ struct AttributeGrad
 };
 
 AttributeGrad interpolate_uv_with_grad(
-    float2 uv0,
-    float2 uv1,
-    float2 uv2,
-    float3 q,
-    float inv_D,
-    float3 lambda,
-    float3 d_lambda_dx,
-    float3 d_lambda_dy)
-{
-    float2 N =
-        lambda.x * uv0 * q.x +
-        lambda.y * uv1 * q.y +
-        lambda.z * uv2 * q.z;
-
+    float2 uv0, float2 uv1, float2 uv2,
+    float3 q, float inv_D,
+    float3 lambda, float3 d_lambda_dx, float3 d_lambda_dy)
+{   
+    float2 N = lambda.x * uv0 * q.x + lambda.y * uv1 * q.y + lambda.z * uv2 * q.z;
     float2 uv = N * inv_D;
-
+    
     float Dx = dot(d_lambda_dx, q);
     float Dy = dot(d_lambda_dy, q);
-
-    float2 Nx =
-        d_lambda_dx.x * uv0 * q.x +
-        d_lambda_dx.y * uv1 * q.y +
-        d_lambda_dx.z * uv2 * q.z;
-
-    float2 Ny =
-        d_lambda_dy.x * uv0 * q.x +
-        d_lambda_dy.y * uv1 * q.y +
-        d_lambda_dy.z * uv2 * q.z;
-
+    
+    float2 Nx = d_lambda_dx.x * uv0 * q.x + d_lambda_dx.y * uv1 * q.y + d_lambda_dx.z * uv2 * q.z;
+    float2 Ny = d_lambda_dy.x * uv0 * q.x + d_lambda_dy.y * uv1 * q.y + d_lambda_dy.z * uv2 * q.z;
+    
     AttributeGrad res;
     res.value = uv;
     res.dx = (Nx - uv * Dx) * inv_D;
     res.dy = (Ny - uv * Dy) * inv_D;
+    
     return res;
 }
 
@@ -202,36 +223,22 @@ float4 main(PSInput input) : SV_Target
     float2 p0 = clip_to_pixel(clip0);
     float2 p1 = clip_to_pixel(clip1);
     float2 p2 = clip_to_pixel(clip2);
-
-    float3 bary = calc_barycentric(input.position.xy, p0, p1, p2);
     
-    float2 e1 = p1 - p0;
-    float2 e2 = p2 - p0;
-
-    float det = e1.x * e2.y - e1.y * e2.x;
+    BarycentricGradient bary_grad = calc_barycentric_with_grad(
+        input.position.xy, p0, p1, p2);
     
-    float inv_det = rcp(det);
-
-    float2 grad_lambda1 = float2(e2.y, -e2.x) * inv_det;
-
-    float2 grad_lambda2 = float2(-e1.y, e1.x) * inv_det;
-
-    float2 grad_lambda0 = -grad_lambda1 - grad_lambda2;
-
-    float3 d_lambda_dx = float3(grad_lambda0.x, grad_lambda1.x, grad_lambda2.x);
-
-    float3 d_lambda_dy = float3(grad_lambda0.y, grad_lambda1.y, grad_lambda2.y);
-    float3 inv_w = rcp(float3(clip0.w, clip1.w, clip2.w));
-
-    float D = dot(bary, inv_w);
-    float inv_D = rcp(D);
-
-    float3 perspective_bary = bary * inv_w * inv_D;
+    float3 bary = bary_grad.value;
+    float3 w_inv = rcp(float3(clip0.w, clip1.w, clip2.w));
+    
+    float D = dot(bary, w_inv);
+    float D_inv = rcp(D);
+    
+    float3 bary_perspective = bary * w_inv * D_inv;
 
     AttributeGrad uv0_grad = interpolate_uv_with_grad(
         v0.uv0, v1.uv0, v2.uv0,
-        inv_w, inv_D, bary,
-        d_lambda_dx, d_lambda_dy);
+        w_inv, D_inv,
+        bary, bary_grad.dx, bary_grad.dy);
     
     float2 uv = uv0_grad.value;
     float2 d_uv_dx = uv0_grad.dx;
@@ -242,9 +249,9 @@ float4 main(PSInput input) : SV_Target
     float3 normal2 = mul(mul(float4(v2.normal, 0.0f), obj.World).xyz, (float3x3) gView);
 
     float3 normal = normalize(
-        normal0 * perspective_bary.x +
-        normal1 * perspective_bary.y +
-        normal2 * perspective_bary.z);
+        normal0 * bary_perspective.x +
+        normal1 * bary_perspective.y +
+        normal2 * bary_perspective.z);
 
     float4 base_color = gMaterials[obj.material_index].base_color;
     float3 color = base_color.rgb * (normal.z * 0.5f + 0.5f);

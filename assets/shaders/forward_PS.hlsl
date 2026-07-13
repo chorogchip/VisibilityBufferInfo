@@ -1,9 +1,9 @@
 #ifndef TEXTURE_COUNT
-#define TEXTURE_COUNT 0
+#define TEXTURE_COUNT 1
 #endif
 
 #ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 0
+#define TEXTURE_SAMPLING_COUNT 1
 #endif
 
 #ifndef TEXTURE_SIZE
@@ -11,7 +11,7 @@
 #endif
 
 #ifndef ALU_CALC_COUNT
-#define ALU_CALC_COUNT 0
+#define ALU_CALC_COUNT 1
 #endif
 
 #if TEXTURE_SIZE < 1
@@ -39,7 +39,14 @@ StructuredBuffer<MaterialData> gMaterials : register(t1);
 
 #if TEXTURE_COUNT > 0
 Texture2D<float4> gTextures[TEXTURE_COUNT] : register(t8);
+SamplerState gSamplers[TEXTURE_COUNT] : register(s0);
 #endif
+
+float4 SampleTexture(uint textureIndex, float2 uv)
+{
+    uint index = NonUniformResourceIndex(textureIndex);
+    return gTextures[index].Sample(gSamplers[index], uv);
+}
 
 float3 apply_workload(float3 color, float2 pixel)
 {

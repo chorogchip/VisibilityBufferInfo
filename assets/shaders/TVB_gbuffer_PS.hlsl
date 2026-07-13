@@ -1,9 +1,9 @@
 #ifndef TEXTURE_COUNT
-#define TEXTURE_COUNT 0
+#define TEXTURE_COUNT 1
 #endif
 
 #ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 0
+#define TEXTURE_SAMPLING_COUNT 1
 #endif
 
 #ifndef TEXTURE_SIZE
@@ -11,7 +11,7 @@
 #endif
 
 #ifndef ALU_CALC_COUNT
-#define ALU_CALC_COUNT 0
+#define ALU_CALC_COUNT 1
 #endif
 
 #ifndef GBUFFER_COUNT
