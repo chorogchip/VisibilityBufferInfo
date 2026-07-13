@@ -74,7 +74,6 @@ namespace rndr {
         Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
     }
 
-
     UINT RendererForward::srv_descriptor_count() const {
         return program_arguments_->texture_count;
     }
@@ -85,7 +84,6 @@ namespace rndr {
 
     void RendererForward::create_root_signature() {
 
-        // b0 (constant buffer)
         D3D12_DESCRIPTOR_RANGE texture_range{};
         texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         texture_range.NumDescriptors = program_arguments_->texture_count;
@@ -94,12 +92,14 @@ namespace rndr {
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         D3D12_ROOT_PARAMETER root_parameters[5]{};
+
+        // b0 (constant buffer)
         root_parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameters[0].Descriptor.ShaderRegister = 0;
         root_parameters[0].Descriptor.RegisterSpace = 0;
         root_parameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
-        // t0 (per instance structuredbuffer)
+        // t0 (object buffer)
         root_parameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         root_parameters[1].Descriptor.ShaderRegister = 0;
         root_parameters[1].Descriptor.RegisterSpace = 0;
@@ -112,11 +112,13 @@ namespace rndr {
         root_parameters[2].Constants.Num32BitValues = 1;
         root_parameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
+        // t1 (material buffer)
         root_parameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         root_parameters[3].Descriptor.ShaderRegister = 1;
         root_parameters[3].Descriptor.RegisterSpace = 0;
         root_parameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+        // t8 (textures)
         root_parameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         root_parameters[4].DescriptorTable.NumDescriptorRanges = 1;
         root_parameters[4].DescriptorTable.pDescriptorRanges = &texture_range;

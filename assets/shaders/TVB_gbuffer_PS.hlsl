@@ -129,6 +129,50 @@ float3 calc_barycentric(float2 p, float2 p0, float2 p1, float2 p2)
         edge_function(p0, p1, p) * inv_area);
 }
 
+struct AttributeGrad
+{
+    float2 value;
+    float2 dx;
+    float2 dy;
+};
+
+AttributeGrad interpolate_uv_with_grad(
+    float2 uv0, float2 uv1, float uv2,
+    float w0, float w1, float w2,
+    float3 lambda, float3 d_lambda_dx, float3 d_lambda_dy)
+{
+    float3 q = rcp(float3(w0, w1, w2));
+    
+    float D = dot(lambda, q);
+    
+    float2 N =
+        lambda.x * uv0 * q.x +
+        lambda.y * uv1 * q.y +
+        lambda.z * uv2 * q.z;
+    
+    float uv = N / D;
+    
+    float Dx = dot(d_lambda_dx, q);
+    float Dy = dot(d_lambda_dx, q);
+    
+    float2 Nx =
+        d_lambda_dx.x * uv0 * q.x +
+        d_lambda_dx.y * uv1 * q.y +
+        d_lambda_dx.z * uv2 * q.z;
+    
+    float2 Ny =
+        d_lambda_dy.x * uv0 * q.x +
+        d_lambda_dy.y * uv1 * q.y +
+        d_lambda_dy.z * uv2 * q.z;
+    
+    AttributeGrad res;
+    res.value = uv;
+    res.dx = (Nx - uv * Dx) / D;
+    res.dy = (Nx - uv * Dy) / D;
+    return res;
+}
+
+
 float3 apply_workload(float3 color, float2 pixel)
 {
     float3 ret = color;
