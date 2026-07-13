@@ -9,5 +9,6 @@ namespace scene {
 	class SceneBuilder {
 	public:
 		static std::unique_ptr<SceneDataCPU> build(const SceneInfoSphere& info);
+		static std::unique_ptr<SceneDataCPU> build_squares(const SceneInfoSphere& info);
 	};
 }

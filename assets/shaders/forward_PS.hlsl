@@ -74,8 +74,9 @@ float3 apply_workload(float3 color, float2 pixel)
     return ret;
 }
 
-float4 main(PSInput input) : SV_TARGET
+float4 main(PSInput input, uint triangleID : SV_PrimitiveID) : SV_TARGET
 {
+    return float4(frac(float(triangleID + input.material_index) * 0.2345f), frac(float(triangleID + input.material_index) * 0.56789f), frac(float(triangleID + input.material_index) * 0.1234f), 1.0f);
     float3 normal = normalize(input.normal);
     float4 base_color = gMaterials[input.material_index].base_color;
     float3 color = base_color.rgb * (normal.z * 0.5f + 0.5f);

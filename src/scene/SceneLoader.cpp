@@ -25,6 +25,8 @@ namespace scene {
         gen_info.mesh_division = arg.geometry_div;
         gen_info.gbuffer_resource_count = arg.gbuffer_cnt;
 
+        if (arg.variable == 1) return SceneBuilder::build_squares(gen_info);  // temp branch
+
         return SceneBuilder::build(gen_info);
     }
 

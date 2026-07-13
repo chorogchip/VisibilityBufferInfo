@@ -110,3 +110,52 @@ GenedMesh GenedMesh::generate_sphere(int division) {
 
     return ret;
 }
+
+GenedMesh GenedMesh::generate_fullquad(int division) {
+    util::Logger::g_logger.assert_with_log(division > 0, "division must > 0");
+
+    GenedMesh ret{};
+
+    using namespace DirectX;  // for XMVector
+
+    const float inv_division = 1.0f / static_cast<float>(division);
+    const float inv_div_x2 = inv_division * 2.0f;
+    XMFLOAT3 normal{ 0.0f, 0.0f, -1.0f };
+
+    for (int i = 0; i <= division; ++i) {
+
+        float fy = static_cast<float>(i);
+        float pos_y = -1.0f + inv_div_x2 * fy;
+
+        for (int j = 0; j <= division; ++j) {
+
+            float fx = static_cast<float>(j);
+            float pos_x = -1.0f + inv_div_x2 * fx;
+
+            XMFLOAT3 pos{ pos_x, pos_y, 0.0f };
+            ret.vertices.emplace_back(Vertex{ pos, normal, XMFLOAT2{ fx * inv_division, fy * inv_division } });
+        }
+    }
+
+    const uint32_t row = static_cast<uint32_t>(division + 1);
+
+    for (int iy = 0; iy < division; ++iy) {
+        for (int ix = 0; ix < division; ++ix) {
+            const uint32_t v00 = iy * row + ix;
+            const uint32_t v10 = iy * row + (ix + 1);
+            const uint32_t v01 = (iy + 1) * row + ix;
+            const uint32_t v11 = (iy + 1) * row + (ix + 1);
+
+            ret.indices.push_back(v00);
+            ret.indices.push_back(v01);
+            ret.indices.push_back(v10);
+
+            ret.indices.push_back(v10);
+            ret.indices.push_back(v01);
+            ret.indices.push_back(v11);
+        }
+    }
+
+    return ret;
+}
+

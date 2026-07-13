@@ -93,11 +93,11 @@ namespace rndr {
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         D3D12_DESCRIPTOR_RANGE sampler_range{};
-        texture_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-        texture_range.NumDescriptors = program_arguments_->texture_count;
-        texture_range.BaseShaderRegister = 0;
-        texture_range.RegisterSpace = 0;
-        texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+        sampler_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        sampler_range.NumDescriptors = program_arguments_->texture_count;
+        sampler_range.BaseShaderRegister = 0;
+        sampler_range.RegisterSpace = 0;
+        sampler_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         D3D12_ROOT_PARAMETER root_parameters[6]{};
 

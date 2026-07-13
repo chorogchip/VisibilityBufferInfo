@@ -22,6 +22,7 @@ public:
 	
 	static GenedMesh generate_triangle();
 	static GenedMesh generate_sphere(int division);
+	static GenedMesh generate_fullquad(int division);
 };
 
 static_assert(sizeof(GenedMesh::Vertex) == sizeof(float) * (3 + 3 + 2), "invalid size");

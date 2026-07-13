@@ -251,7 +251,7 @@ void RendererBase::create_texture_sampler_descriptors() {
 
         sampler_desc.MipLODBias = 0.0f;
         sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 
         sampler_desc.BorderColor[0] = 0.0f;
         sampler_desc.BorderColor[1] = 0.0f;

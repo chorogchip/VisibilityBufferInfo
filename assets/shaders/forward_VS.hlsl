@@ -57,6 +57,6 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     output.texcoord1 = input.texcoord1;
     output.tangent = mul(tangent_world, (float3x3)gView);
     output.material_index = instance_data.material_index;
-        
+    
     return output;
 }
