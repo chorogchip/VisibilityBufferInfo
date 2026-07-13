@@ -69,6 +69,7 @@ float3 apply_workload(float3 color, float2 pixel)
 
 float4 main(PSInput input) : SV_TARGET
 {
+    return float4(input.texcoord0, 0.0f, 1.0f);
     float3 normal = normalize(input.normal);
     float4 base_color = gMaterials[input.material_index].base_color;
     float3 color = base_color.rgb * (normal.z * 0.5f + 0.5f);
