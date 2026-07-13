@@ -46,6 +46,6 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     float4 pos_homo = mul(pos_view, gProj);
     
     output.position = pos_homo;
-    output.object_id = gObjectIndex + 1;
+    output.object_id = gObjectIndex + instanceID + 1;
     return output;
 }
