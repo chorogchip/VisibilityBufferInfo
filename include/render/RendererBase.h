@@ -35,10 +35,10 @@ public:
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
-    virtual void make_programresult(util::ProgramResult& result) = 0;
-
-    virtual void create_pass_resources();
     virtual void render_() = 0;
+
+    virtual void make_programresult(util::ProgramResult& result) = 0;
+    virtual void create_pass_resources();
 
     virtual UINT dsv_descriptor_count() const;
     virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
@@ -112,7 +112,6 @@ protected:
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
         DirectX::XMFLOAT2 viewport_size_;
-        DirectX::XMFLOAT2 inv_viewport_size_;
     } matrix_buf_cpu_{};
     ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
     void* buf_constant_mapped_[FRAME_COUNT]{};

@@ -34,4 +34,6 @@ namespace dxutl {
         UINT frame_count,
         Microsoft::WRL::ComPtr<ID3D12Resource>* render_targets);
 
+    D3D12_INPUT_LAYOUT_DESC get_default_input_layout_desc();
+
 }

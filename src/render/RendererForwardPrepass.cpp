@@ -4,9 +4,9 @@
 #include <string>
 
 #include "util/Utils.h"
-#include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
+#include "dx_util/DescriptorUtils.h"
 
 namespace rndr {
 
@@ -198,50 +198,12 @@ namespace rndr {
     }
 
     void RendererForwardPrePass::create_pso() {
-        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_depth;
-        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader;
-        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader;
-
-        std::string texture_count_define = std::to_string(program_arguments_->texture_count);
-        std::string texture_sampling_count_define = std::to_string(program_arguments_->texture_sampling_count);
-        std::string texture_size_define = std::to_string(program_arguments_->texture_size);
-        std::string alu_calc_count_define = std::to_string(program_arguments_->alu_calc_count);
-        D3D_SHADER_MACRO workload_defines[] =
-        {
-            { "TEXTURE_COUNT", texture_count_define.c_str() },
-            { "TEXTURE_SAMPLING_COUNT", texture_sampling_count_define.c_str() },
-            { "TEXTURE_SIZE", texture_size_define.c_str() },
-            { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
-            { nullptr, nullptr }
-        };
-
-        vertex_shader_depth = dxutl::compile_shader(L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0");
-        vertex_shader = dxutl::compile_shader(L"assets/shaders/forward_VS.hlsl", "vs_5_0");
-        pixel_shader = dxutl::compile_shader(L"assets/shaders/forward_PS.hlsl", "ps_5_0", "main", workload_defines);
-
-        D3D12_INPUT_ELEMENT_DESC input_layout[] =
-        {
-            {
-                "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-                0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-            },
-            {
-                "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-                12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-            },
-            {
-                "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
-                24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-            },
-            {
-                "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0,
-                32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-            },
-            {
-                "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-                40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
-            }
-        };
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_depth =
+            dxutl::compile_shader(L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0", "main", *program_arguments_);
+        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader =
+            dxutl::compile_shader(L"assets/shaders/forward_VS.hlsl", "vs_5_0", "main", *program_arguments_);
+        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader =
+            dxutl::compile_shader(L"assets/shaders/forward_PS.hlsl", "ps_5_0", "main", *program_arguments_);
 
         D3D12_RASTERIZER_DESC rasterizer_desc{};
         rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID;
@@ -279,7 +241,7 @@ namespace rndr {
         }
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc{};
-        pso_desc.InputLayout = { input_layout, _countof(input_layout) };
+        pso_desc.InputLayout = dxutl::get_default_input_layout_desc();
         pso_desc.pRootSignature = root_signature_.Get();
         pso_desc.VS = { vertex_shader_depth->GetBufferPointer(), vertex_shader_depth->GetBufferSize() };
         pso_desc.PS = { nullptr, 0 };

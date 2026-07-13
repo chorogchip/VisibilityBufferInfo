@@ -38,4 +38,30 @@ namespace dxutl {
         return shader;
     }
 
+
+    Microsoft::WRL::ComPtr<ID3DBlob> compile_shader(
+        const std::wstring& path, const char* target,
+        const char* entry_point, const util::ProgramArgument& args) {
+
+        std::string gbuffer_count_define = std::to_string(args.gbuffer_cnt);
+        std::string texture_count_define = std::to_string(args.texture_count);
+        std::string texture_sampling_count_define = std::to_string(args.texture_sampling_count);
+        std::string texture_size_define = std::to_string(args.texture_size);
+        std::string alu_calc_count_define = std::to_string(args.alu_calc_count);
+
+        D3D_SHADER_MACRO defines[] =
+        {
+            { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
+            { "TEXTURE_COUNT", texture_count_define.c_str() },
+            { "TEXTURE_SAMPLING_COUNT", texture_sampling_count_define.c_str() },
+            { "TEXTURE_SIZE", texture_size_define.c_str() },
+            { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
+            { nullptr, nullptr }
+        };
+
+        return compile_shader(
+            path, target, entry_point,
+            defines
+        );
+    }
 }

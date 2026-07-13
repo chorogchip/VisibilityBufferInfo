@@ -11,7 +11,6 @@ namespace rndr {
 		RendererDeferred() = default;
 		~RendererDeferred() override = default;
 
-
 	private:
 		void render_() override;
 		void make_programresult(util::ProgramResult& result) override;

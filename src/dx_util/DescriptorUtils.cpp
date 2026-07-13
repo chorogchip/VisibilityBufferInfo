@@ -62,4 +62,36 @@ namespace dxutl {
             rtv_handle.ptr += rtv_descriptor_size;
         }
     }
+
+    static D3D12_INPUT_ELEMENT_DESC input_layout[] =
+    {
+        {
+            "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
+            24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0,
+            32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        },
+        {
+            "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0
+        }
+    };
+
+    D3D12_INPUT_LAYOUT_DESC get_default_input_layout_desc() {
+
+        D3D12_INPUT_LAYOUT_DESC desc{};
+        desc.pInputElementDescs = input_layout;
+        desc.NumElements = _countof(input_layout);
+        return desc;
+    }
 }

@@ -9,10 +9,10 @@ namespace rndr {
 		RendererForward() = default;
 		~RendererForward() override = default;
 
-		void render_() override;
 
 	private:
 		virtual void make_programresult(util::ProgramResult& result) override;
+		void render_() override;
 
 		UINT srv_descriptor_count() const override;
 		void create_shader_resources() override;

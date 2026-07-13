@@ -63,8 +63,6 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     this->create_root_signature();
     this->create_pso();
-
-    // this->create_timestamp_queries();
 }
 
 void RendererBase::render() {
@@ -238,6 +236,7 @@ void RendererBase::create_meshbuffers() {
 }
 
 void RendererBase::create_dummy_textures() {
+
     const UINT texture_count = std::max(1u, program_arguments_->texture_count);
     const UINT texture_size = std::max(1u, program_arguments_->texture_size);
     const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -319,6 +318,7 @@ void RendererBase::create_dummy_textures() {
 }
 
 void RendererBase::create_constbuffers() {
+
     camera_.set_pos(program_arguments_->camera_pos_x, program_arguments_->camera_pos_y, program_arguments_->camera_pos_z);
     camera_.lookat(program_arguments_->camera_lookat_x, program_arguments_->camera_lookat_y, program_arguments_->camera_lookat_z);
     camera_.set_fovy_nearz_farz(program_arguments_->camera_fov, program_arguments_->camera_near_z,
@@ -330,7 +330,6 @@ void RendererBase::create_constbuffers() {
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
     matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
-    matrix_buf_cpu_.inv_viewport_size_ = DirectX::XMFLOAT2(1.0f / static_cast<float>(width_), 1.0f / static_cast<float>(height_));
 
     constexpr size_t matrix_buf_size_aligned =
         Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
@@ -343,17 +342,21 @@ void RendererBase::create_constbuffers() {
 }
 
 void RendererBase::copy_camera_data() {
+
     DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_,
         DirectX::XMMatrixTranspose(camera_.get_mat_view()));
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
-    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
-    matrix_buf_cpu_.inv_viewport_size_ = DirectX::XMFLOAT2(1.0f / static_cast<float>(width_), 1.0f / static_cast<float>(height_));
+
+    matrix_buf_cpu_.viewport_size_ =
+        DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
+
     memcpy(buf_constant_mapped_[frame_index_], &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
 }
 
 void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
     srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
