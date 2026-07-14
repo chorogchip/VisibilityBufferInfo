@@ -22,8 +22,8 @@ namespace util {
     X(uint32_t, window_width, 1280, window-width) \
     X(uint32_t, window_height, 720, window-height) \
     X(uint32_t, seed, 0, seed) \
-    X(float, camera_pos_x, 5.0f, camera-pos-x) \
-    X(float, camera_pos_y, 2.0f, camera-pos-y) \
+    X(float, camera_pos_x, 0.0f, camera-pos-x) \
+    X(float, camera_pos_y, 0.0f, camera-pos-y) \
     X(float, camera_pos_z, -10.0f, camera-pos-z) \
     X(float, camera_lookat_x, 0.0f, camera-lookat-x) \
     X(float, camera_lookat_y, 0.0f, camera-lookat-y) \
@@ -31,17 +31,19 @@ namespace util {
     X(float, camera_near_z, 0.1f, camera-near-z) \
     X(float, camera_far_z, 1000.0f, camera-far-z) \
     X(float, camera_fov, 0.785f, camera-fov) \
-    X(uint32_t, sphere_count, 5, sphere-count) \
-    X(uint32_t, material_count, 10, material-count) \
-    X(uint32_t, geometry_count, 10'00, geometry-count) \
+    X(uint32_t, object_count, 1, object-count) \
+    X(uint32_t, material_count, 1, material-count) \
+    X(uint32_t, geometry_count, 1, geometry-count) \
+    X(bool, sort_from_front, false, sort-from-front) \
+    X(bool, sort_from_back, false, sort-from-back) \
     X(float, z_min, -1.0f, z-min) \
     X(float, z_max, 1.0f, z-max) \
     X(float, xy_minmax, 1.0f, xy-minmax) \
     X(float, radius, 0.5f, radius) \
-    X(uint32_t, geometry_div, 100, geometry-div) \
+    X(uint32_t, geometry_div, 1, geometry-div) \
     X(uint32_t, gbuffer_cnt, 1, gbuffer-cnt) \
     X(uint32_t, texture_count, 1, texture-count) \
-    X(uint32_t, texture_size, 1024, texture-size) \
+    X(uint32_t, texture_size, 256, texture-size) \
     X(uint32_t, texture_sampling_count, 1, texture-sampling-count) \
     X(uint32_t, alu_calc_count, 1, alu-calc-count)
 

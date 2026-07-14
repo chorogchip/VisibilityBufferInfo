@@ -75,22 +75,31 @@ namespace scene {
 		util::Logger::g_logger.assert_with_log(info.radius > 0.0f, "radius must > 0");
 		std::uniform_real_distribution<float> dist_xy{ -info.xy_minmax, info.xy_minmax };
 		std::uniform_real_distribution<float> dist_z{ info.z_min, info.z_max };
+		std::normal_distribution<float> dist_rot{ 0.0f, 1.0f };
 
-		ret->objects.reserve(info.sphere_count);
-		for (uint32_t i = 0; i < info.sphere_count; ++i) {
+		ret->objects.reserve(info.object_count);
+		for (uint32_t i = 0; i < info.object_count; ++i) {
 			SceneDataCPU::Object obj{};
 			obj.object_id = i;
 			obj.material_index = dist_material(gen);
 			obj.mesh_index = dist_mesh(gen);
 			obj.flags = 0;
+
+			DirectX::XMVECTOR q{ dist_rot(gen), dist_rot(gen) , dist_rot(gen) , dist_rot(gen) };
+			const float length_2 = DirectX::XMVectorGetX(DirectX::XMQuaternionLengthSq(q));
+			if (length_2 < 1e-12f) q = DirectX::XMQuaternionIdentity();
+			q = DirectX::XMQuaternionNormalize(q);
+
 			DirectX::XMMATRIX transform =
 				DirectX::XMMatrixScaling(info.radius, info.radius, info.radius) *
+				DirectX::XMMatrixRotationQuaternion(q) *
 				DirectX::XMMatrixTranslation(dist_xy(gen), dist_xy(gen), dist_z(gen));
 			DirectX::XMStoreFloat4x4(&obj.transform, DirectX::XMMatrixTranspose(transform));
 			ret->objects.push_back(obj);
 		}
 
 		ret->build_batches_from_objects();
+		ret->sort_objects_in_batch(info.sort_from_front, info.sort_from_back);
 
 		ret->loaded = true;
 		return ret;
@@ -160,8 +169,8 @@ namespace scene {
 
 		// gen object
 
-		ret->objects.reserve(info.sphere_count);
-		for (uint32_t i = 0; i < info.sphere_count; ++i) {
+		ret->objects.reserve(info.object_count);
+		for (uint32_t i = 0; i < info.object_count; ++i) {
 			SceneDataCPU::Object obj{};
 			obj.object_id = i;
 			obj.material_index = dist_material(gen);
@@ -169,12 +178,13 @@ namespace scene {
 			obj.flags = 0;
 			DirectX::XMMATRIX transform =
 				DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, static_cast<float>(i) / static_cast<float>(info.sphere_count));
+				DirectX::XMMatrixTranslation(0.0f, 0.0f, static_cast<float>(i) / static_cast<float>(info.object_count));
 			DirectX::XMStoreFloat4x4(&obj.transform, DirectX::XMMatrixTranspose(transform));
 			ret->objects.push_back(obj);
 		}
 
 		ret->build_batches_from_objects();
+		ret->sort_objects_in_batch(info.sort_from_front, info.sort_from_back);
 
 		ret->loaded = true;
 		return ret;

@@ -11,8 +11,9 @@
 namespace rndr {
 
     void RendererForwardPrePass::make_programresult(util::ProgramResult& result) {
-        result.renderer_name = "Forward";
-        result.pass_name_0 = "forward";
+        result.renderer_name = "ForwardPrepass";
+        result.pass_name_0 = "depth_prepass";
+        result.pass_name_1 = "forward";
         result.pass_name_3 = "total";
     }
 
@@ -50,14 +51,14 @@ namespace rndr {
 
         command_list_->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-        for (const auto& obj : scene_cpu_->objects) {
-            const auto& mesh = scene_cpu_->meshes[obj.mesh_index];
-            const auto& material = scene_cpu_->materials[obj.material_index];
+        for (const auto& batch : scene_cpu_->batches) {
+            const auto& material = scene_cpu_->materials[batch.material_index];
+            const auto& mesh = scene_cpu_->meshes[batch.mesh_index];
 
-            command_list_->SetGraphicsRoot32BitConstant(2, obj.object_id, 0);
+            command_list_->SetGraphicsRoot32BitConstant(2, batch.object_index, 0);
 
-            command_list_->DrawIndexedInstanced(mesh.index_count, 1,
-                mesh.index_start, 0, 0);
+            command_list_->DrawIndexedInstanced(mesh.index_count, batch.object_count,
+                mesh.index_start, mesh.vertex_start, 0);
         }
 
 

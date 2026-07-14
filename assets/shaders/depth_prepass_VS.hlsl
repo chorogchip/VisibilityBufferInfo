@@ -46,4 +46,5 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     
     output.position = pos_homo;
     return output;
+  
 }

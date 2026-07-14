@@ -63,6 +63,7 @@ namespace scene {
         DirectX::XMFLOAT3 bounds_min{};
         DirectX::XMFLOAT3 bounds_max{};
 
+        void sort_objects_in_batch(bool sort_from_front, bool sort_from_back);
         void build_random_material(size_t material_count);
         void build_batches_from_objects();
     };

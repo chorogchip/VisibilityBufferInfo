@@ -1,0 +1,309 @@
+# VisibilityBufferInfo 프로젝트 컨텍스트
+
+## 정보 우선순위
+
+1. `https://github.com/chorogchip/VisibilityBufferInfo`의 최신 코드와 실제 실행 결과
+2. 이 문서
+3. 일반적인 렌더링 지식이나 외부 자료
+
+충돌 시 저장소를 직접 확인한다. 아래의 “현재 구현”과 “목표/예정”을 구분하며, 미구현 기능을 구현된 것처럼 전제하지 않는다. 이 문서는 `master`, commit `58ec9f73a4cbe9bc62e97bfeec9c886bfb31b557` 부근을 기준으로 작성되었으므로 저장소가 갱신되었다면 최신 코드를 우선한다.
+
+## 프로젝트 목적
+
+Direct3D 12 기반 실험 렌더러로 Triangle Visibility Buffer 계열 기법이 Forward/Deferred보다 유리하거나 불리해지는 조건과 crossover point를 정량적으로 찾는다.
+
+단순히 “TVB가 빠른가”를 비교하는 것이 아니라 다음 비용의 trade-off를 분리해 모델링하는 것이 목적이다.
+
+* overdraw 및 2×2 pixel quad 때문에 낭비되는 fragment shading
+* depth pre-pass 이후 발생하는 두 번째 geometry/rasterization 비용
+* Deferred G-buffer read/write bandwidth
+* TVB의 vertex/index/object/material 간접 접근과 낮은 cache locality
+* barycentric 및 attribute gradient 재구성 비용
+* material 분류, batching, PSO/draw-call 관리 비용
+
+결과물은 새 렌더링 기법 도입 시 장면·하드웨어·워크로드 특성을 보고 적절한 파이프라인을 판단할 수 있는 실험적 기준과 성능 모델이어야 한다.
+
+## 개념적 관점
+
+렌더링을 다음 세 단계로 본다.
+
+1. Geometry/visibility 처리
+2. Material attribute 계산, texture sampling 및 shading
+3. Lighting/output 계산
+
+Forward는 이 단계들이 강하게 결합되어 overdraw된 fragment에도 material 비용이 발생한다. Deferred는 2와 3 사이에 G-buffer를 두어 geometry/material 복잡도와 lighting을 분리한다. Visibility Buffer는 1과 2 사이에 ID buffer를 두어 최종 visible sample에 대해서만 material 계산을 수행한다.
+
+TVB의 기대 이점은 세 가지다.
+
+1. overdraw 및 quad inefficiency로 버려질 fragment의 sampling/ALU 비용을 지연·제거
+2. depth pre-pass 뒤의 두 번째 geometry rasterization을 fullscreen 또는 compute resolve로 대체
+3. 최종 출력을 직접 계산하는 경우 G-buffer bandwidth 제거
+
+주요 비용은 다음과 같다.
+
+* vertex/index/mesh/object/material 데이터의 indirect access
+* barycentric, perspective correction, UV derivative 재구성
+* material binning 및 dispatch 관리
+* screen-space 효과를 위해 G-buffer를 다시 만들 경우 줄어드는 bandwidth 이점
+
+Visibility Buffer를 항상 G-buffer 대체물로 간주하지 않는다. DOOM/Nanite류처럼 G-buffer를 생성하기 위한 visibility front-end로 쓸 수도 있고, TVB 연구처럼 직접 shading하여 G-buffer를 생략할 수도 있다.
+
+## 현재 구현
+
+API는 Windows Direct3D 12이며 HW rasterizer를 사용한다. 실제 lighting 시스템은 연구 범위에서 제외되어 있고, 공통 material workload로 texture sampling 및 ALU 비용을 인위적으로 제어한다.
+
+Renderer variant 번호는 코드의 `RendererFactory`를 따른다.
+
+* `1`: `RendererForward`
+* `2`: `RendererForwardPrePass`
+* `3`: `RendererDeferred`
+* `4`: `RendererTVB`
+* `5`: `RendererDeferredPrepass`
+* `6`: `RendererTVBGBuffer`
+
+현재 `RendererForward`와 `RendererForwardPrePass`의 CSV `renderer_name`/pass label 일부가 서로 뒤바뀐 것으로 보이므로, 분석 시 문자열 이름보다 variant 번호와 실제 class/render path를 기준으로 판단한다.
+
+### TVB
+
+현재 TVB는 다음 기준 구현이다.
+
+* visibility pass에서 `R32G32_UINT`에 `object ID + primitive ID` 저장
+* HW rasterization 사용
+* fullscreen pixel shader resolve
+* ID를 이용해 object, mesh, index, vertex, material buffer를 간접 참조
+* triangle vertex를 다시 projection하여 screen-space barycentric 계산
+* perspective-correct interpolation 및 UV gradient 재구성
+* `SampleGrad`를 사용한 texture workload 수행
+
+현재 구현에 없는 기능:
+
+* compute shader material binning
+* material별 work queue/prefix sum
+* tile/global material classification
+* material별 서로 다른 shader/PSO
+* GPU indirect draw, meshlet/cluster pipeline
+* custom/software rasterizer 또는 hybrid rasterizer
+* visibility buffer에 barycentric/derivative 직접 저장
+* alpha blending 처리
+
+따라서 현재 TVB는 “material-binned TVB”가 아니라 `visibility raster pass + monolithic fullscreen resolve` baseline이다. visibility pass도 `scene_cpu_->batches`를 순회하여 draw하므로 draw-call 감소 효과가 완전히 구현된 상태가 아니다.
+
+### TVB + G-buffer
+
+TVB visibility 결과로 fullscreen G-buffer pass를 실행한 뒤 별도 fullscreen output pass를 실행한다.
+
+현재 G-buffer는 사용자가 지정한 `gbuffer_cnt`개의 `R32G32B32A32_FLOAT` render target이며 허용 개수는 1~8이다. 따라서 현재 `gbuffer_cnt` 실험은 G-buffer target 개수에 따른 대역폭 증가를 근사하며, 다양한 실제 G-buffer 포맷 조합을 그대로 재현하는 실험은 아니다.
+
+### 공통 material workload
+
+모든 주요 렌더러가 동일한 synthetic workload를 사용하도록 설계되어 있다.
+
+* `texture_count`
+* `texture_size`
+* `texture_sampling_count`
+* `alu_calc_count`
+
+Dummy texture를 결정적으로 생성하며, shader는 여러 texture에 대해 `SampleGrad`를 반복하고 별도의 반복 ALU workload를 수행한다. 실제 게임 material shader나 실제 scene texture 전체를 재현하는 목적이 아니라 texture/ALU 비용 축을 통제하기 위한 장치다.
+
+현재 material count는 scene material 데이터 개수이지 반드시 shader/PSO 개수와 같지 않다. “material 수 = PSO 수” 실험을 하려면 별도 material shader/PSO 구현이 필요하다.
+
+## Scene 구성
+
+두 종류의 장면을 사용한다.
+
+### Synthetic scene
+
+기본은 seed 기반의 parameterized sphere scene이다.
+
+주요 인자:
+
+* sphere/object 수
+* mesh/geometry 수
+* material 수
+* sphere radius
+* sphere subdivision
+* XY/Z 분포 범위
+* seed
+
+임시 분기로 square/quad scene도 생성할 수 있다. Synthetic scene은 변수 간 독립성을 최대한 유지하며 triangle 크기, overdraw, geometry working set, material 수 등을 체계적으로 sweep하기 위한 장면이다.
+
+### 실제 scene
+
+`to_use_scene=true`이면 Assimp importer를 통해 외부 scene을 로드한다. Sponza 등의 실제 scene을 사용할 수 있다.
+
+Scene 로드 시 별도 fingerprint CSV를 생성한다. 현재 기록 항목에는 다음이 포함된다.
+
+* mesh/object/material/vertex/index/triangle 수
+* bounding box, extent, diagonal, surface area
+* triangle area 통계 및 tiny/small/medium/large 분류
+* mesh별 triangle 수
+* material별 triangle 수와 dominant material ratio
+* texture reference 및 unique texture 수
+* index/vertex 비율과 uint16 index 적합 여부
+* bounding-box surface 기준 triangle density
+
+현재 fingerprint는 주로 object-space geometry/material 통계다. 실제 화면의 projected triangle size, visible triangle 수, overdraw, material spatial locality 등은 카메라 종속 지표이므로 추후 별도 측정해야 한다.
+
+## 실행 및 측정 파이프라인
+
+프로그램 흐름:
+
+`argument parsing → scene 생성/로드 → resource 생성 → warm-up → N frame 측정 → CSV 기록 → 자동 종료`
+
+Python `scripts/run.py`는 JSON experiment spec을 읽어 parameter Cartesian product와 repeat를 실행하고 결과를 하나의 CSV에 누적한다.
+
+재현성을 위해 각 실험은 다음을 명시적으로 저장해야 한다.
+
+* 실행 파일 및 가능하면 commit SHA/build configuration
+* 모든 ProgramArgument
+* seed
+* scene 경로 및 fingerprint
+* renderer variant 번호
+* 해상도와 카메라
+* warm-up/measurement frame 수
+* 반복 번호
+* GPU/driver 정보
+* raw CSV와 plotting 입력
+
+C++와 Python의 기본 인자가 일부 다르므로 기본값에 의존하지 말고 experiment JSON에서 중요한 인자를 명시한다.
+
+현재 GPU timestamp 결과는 최대 네 개 pass slot에 대해 다음 통계를 기록한다.
+
+* minimum
+* median
+* maximum
+* average
+* P01
+* P10
+* P90
+* P99
+
+pass 시간의 합을 total로 추가한다. 목표 지표인 P95, P99.9, 0.1% low, 0.01% low 등은 현재 CSV 구현과 동일하지 않으므로 필요하면 별도로 추가한다. VSync는 사용하지 않고 `Present(0, ALLOW_TEARING)`을 사용한다.
+
+향후 필요한 측정:
+
+* 정확한 overdraw buffer/atomic counter
+* shaded fragment 및 quad efficiency
+* draw call/PSO switch 수
+* 이론적 G-buffer 및 texture traffic
+* projected triangle size
+* visible/culled triangle 수
+* L2 hit rate, VRAM bandwidth, cache traffic
+* texture unit/ALU/rasterizer utilization
+* CPU submission time
+* Nsight Graphics 등의 HW counter
+
+## 핵심 실험 축
+
+* projected triangle size 및 subdivision
+* overdraw
+* resolution
+* texture sampling 횟수와 texture resolution
+* shader ALU 반복량
+* G-buffer 개수/포맷/크기
+* geometry working-set 크기
+* mesh/object/material 수
+* material의 화면상 공간적 분포와 entropy
+* draw-call 및 PSO 수
+* batching/instancing 방식
+* vertex/index/mesh buffer layout와 index format
+* camera/scene fingerprint
+* 추후 MSAA 및 screen-space pass
+
+lighting은 우선 통제 변수에서 제외한다. 실제 lighting이 있는 권위 있는 renderer의 결과는 본 실험을 대체하는 baseline이 아니라, synthetic workload 범위가 현실적인지 검증하는 외부 기준으로 사용한다.
+
+## 실험 계획
+
+### E1. 두 번째 rasterization과 quad waste
+
+Forward, Forward+Prepass, TVB를 중심으로 비교한다.
+
+* material/mesh 비용 최소화
+* 많은 instance
+* triangle 크기, subdivision, resolution, overdraw 변화
+* geometry/rasterization 비용과 fullscreen resolve 비용의 crossover 탐색
+
+가설: triangle당 pixel 수가 작고 geometry 수가 많을수록 TVB가 유리해진다. 단 TVB의 고정 resolve/indirect 비용을 상쇄할 최소 입력 크기가 존재한다.
+
+### E2. 버려지는 fragment의 material 비용
+
+* E1에서 정한 geometry 조건 사용
+* texture sampling과 ALU를 독립적으로 증가
+* Forward/Deferred와 TVB 비교
+
+가설: overdraw/quad waste가 크고 material shader가 무거울수록 deferred shading의 이점이 증가한다.
+
+### E3. draw call, batching, material scalability
+
+* mesh/material/batch 수 증가
+* CPU와 GPU 시간을 함께 측정
+* material spatial distribution 변화
+
+현재 구현은 material별 PSO와 compute binning이 없으므로, 이 실험 전에는 비교하려는 draw/PSO 모델을 명확히 구현해야 한다.
+
+### E4. G-buffer bandwidth
+
+Deferred, TVB, TVB+G-buffer를 비교한다.
+
+* G-buffer count/format
+* resolution
+* L2 크기 및 메모리 traffic과 연계
+* 이론적 bytes/frame 및 bytes/pixel 계산
+
+### E5. indirect access와 working set
+
+* geometry/vertex/index/object 데이터 working set 증가
+* buffer layout 및 index format 변경
+* L2 hit rate와 VRAM traffic 측정
+
+가설: working set이 cache를 넘거나 screen-space 접근 순서와 geometry 배치의 상관성이 낮아질수록 TVB resolve가 불리해진다.
+
+### E6. TVB material 처리 변형
+
+후속 확장 실험:
+
+* uber shader
+* global material list/binning
+* tiled binning/packing
+* material별 work queue
+* visibility format에 material ID 포함
+* material sorting 유무
+
+## 분석 방법
+
+단순 frame-time 비교 외에 다음을 수행한다.
+
+* crossover point 추정
+* 입력 크기로 나눈 normalized cost
+* scalability 및 고정비/선형비 분리
+* pass별 회귀 모델
+* 메모리·ALU·texture·raster·cache 관점의 roofline형 분석
+* synthetic scene 모델을 실제 scene fingerprint에 적용한 뒤 오차 원인 분석
+* 결과가 맞지 않을 경우 projected geometry, material locality, cache layout, alpha/texture 특성 등 누락 변수를 찾기
+
+각 실험은 한 번에 하나의 원인을 최대한 고립시킨다. 기능 추가가 실험 변수를 동시에 바꾸지 않도록 하며, 최적화 전후 비교에는 correctness image와 workload 동등성을 확인한다.
+
+## 단기 우선순위
+
+1. barycentric/gradient 정확성 및 noise 검증
+2. renderer variant 이름/pass label 오류와 C++/Python 기본값 불일치 정리
+3. 모든 variant의 synthetic workload 동등성 확인
+4. batching/instancing 및 object/mesh index correctness 개선
+5. 측정·CSV·plotting·JSON sweep의 end-to-end 재현성 강화
+6. projected triangle size와 overdraw 측정 추가
+7. E1/E2부터 데이터 수집 후 E4/E5, 이후 E3 진행
+8. material binning, visibility format, mesh pipeline 등의 TVB variation을 한 번에 하나씩 추가
+9. 실제 scene 및 외부 renderer 결과로 현실성 검증
+10. lighting, alpha blending, custom rasterizer는 후순위 확장
+
+## AI 작업 지침
+
+* 작업 시작 시 관련 저장소 파일을 먼저 확인하고 현재 구현과 목표 구현을 구분한다.
+* 기존 구현에 없는 material binning, indirect draw, meshlet, custom rasterizer 등을 있다고 가정하지 않는다.
+* 변경 제안은 반드시 검증하려는 가설, 독립 변수, 종속 metric과 연결한다.
+* 성능 향상만 제안하지 말고 실험 공정성·재현성·correctness에 미치는 영향도 설명한다.
+* renderer 간 workload가 달라지는 변경은 공통 shader/path에도 동일하게 반영한다.
+* 큰 프레임워크 재설계보다 현재 실험에 필요한 최소 기능을 점진적으로 구현한다.
+* 코드에는 자원 상태 전이, buffer layout, ID 의미, pass 경계, 측정 의도를 명확하게 남긴다.
+* 결과를 해석할 때 “TVB 일반의 특성”과 “현재 baseline 구현의 특성”을 분리한다.
+* 불완전하거나 현실 재현성이 낮은 부분은 숨기지 말고 실험 제한사항으로 기록한다.

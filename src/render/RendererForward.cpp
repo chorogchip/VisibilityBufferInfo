@@ -12,9 +12,8 @@ namespace rndr {
 
 
     void RendererForward::make_programresult(util::ProgramResult& result) {
-        result.renderer_name = "ForwardPrepass";
-        result.pass_name_0 = "depth_prepass";
-        result.pass_name_1 = "forward";
+        result.renderer_name = "Forward";
+        result.pass_name_0 = "forward";
         result.pass_name_3 = "total";
     }
 

@@ -1,0 +1,173 @@
+다음 geometry sweep CSV를 Python의 pandas와 matplotlib로 분석하고 그래프를 생성해라.
+
+## 데이터 구조
+
+주요 열:
+
+* `renderer-variant`: variant ID
+* `renderer_name`: CSV에 기록된 renderer 이름
+* `object-count`: x축 객체 수
+* `pass_name_N`: N번째 pass 이름
+* `pass_N_time_avg_ms`: N번째 pass 평균 실행 시간
+* `pass_3_time_avg_ms`: 전체 pass 시간의 합인 `total`
+
+CSV의 renderer/pass 문자열에는 오류가 있으므로, 원본 문자열을 신뢰하지 말고 아래 의미상 매핑을 강제로 적용한다.
+
+```text
+Variant 1
+renderer: Forward
+passes:
+- pass_0_time_avg_ms → forward
+total:
+- pass_3_time_avg_ms
+
+Variant 2
+renderer: ForwardPrepass
+passes:
+- pass_0_time_avg_ms → depth_prepass
+- pass_1_time_avg_ms → forward
+total:
+- pass_3_time_avg_ms
+
+Variant 4
+renderer: VisBuf
+passes:
+- pass_0_time_avg_ms → visibility
+- pass_1_time_avg_ms → resolve
+total:
+- pass_3_time_avg_ms
+```
+
+즉, CSV에서 Variant 1과 Variant 2의 `Forward` 및 `ForwardPrepass` 관련 문자열이 서로 뒤바뀐 것으로 간주한다. 측정값 자체는 변경하지 않고 이름과 pass 의미만 위 매핑으로 교정한다.
+
+## 선 표시 규칙
+
+각 variant마다 다음 선을 그린다.
+
+* `total`: 굵고 진한 실선
+* `total`에는 원형 marker 사용
+* 개별 pass: total과 같은 색상의 얇고 흐린 선
+* 개별 pass는 `alpha` 약 0.3~0.4
+* 개별 pass별로 `--`, `:`, `-.` 등의 linestyle을 구분해 사용
+* 해당 variant의 전체 데이터에서 한 번도 0보다 커지지 않는 pass는 그리지 않는다
+* 로그 y축에서는 0 이하의 값은 제외하고 그린다
+
+범례 이름 형식:
+
+```text
+Variant 1 · Forward · total
+Variant 1 · Forward · forward
+
+Variant 2 · ForwardPrepass · total
+Variant 2 · ForwardPrepass · depth_prepass
+Variant 2 · ForwardPrepass · forward
+
+Variant 4 · VisBuf · total
+Variant 4 · VisBuf · visibility
+Variant 4 · VisBuf · resolve
+```
+
+variant마다 하나의 기본색을 배정하고, 해당 variant의 total과 개별 pass가 같은 색을 공유하게 한다.
+
+## 생성할 그래프 4개
+
+### 1. 원래 pass 시간, X/Y 로그
+
+* x: `object-count`
+* y: `pass_N_time_avg_ms`
+* x축: base 2 로그
+* y축: 로그
+* 제목 예시:
+  `Geometry Sweep — Pass Time by Variant (Log X / Log Y)`
+* y축 단위: `ms`
+
+### 2. 원래 pass 시간, X/Y 선형
+
+* x: `object-count`
+* y: `pass_N_time_avg_ms`
+* x축: 선형
+* y축: 선형
+* x축과 y축의 시작점은 가능하면 0
+* 제목 예시:
+  `Geometry Sweep — Pass Time by Variant (Linear X / Linear Y)`
+* y축 단위: `ms`
+
+### 3. 객체당 pass 시간, X/Y 선형
+
+각 측정값을 같은 행의 object count로 나눈다.
+
+```python
+normalized_y = pass_time_avg_ms / object_count
+```
+
+* x: `object-count`
+* y: `pass_N_time_avg_ms / object-count`
+* x축: 선형
+* y축: 선형
+* 제목 예시:
+  `Geometry Sweep — Pass Time per Object (Linear X / Linear Y)`
+* y축 단위: `ms/object`
+
+### 4. 객체당 pass 시간, X/Y 로그
+
+3번과 동일한 정규화 값을 사용한다.
+
+* x: `object-count`
+* y: `pass_N_time_avg_ms / object-count`
+* x축: base 2 로그
+* y축: 로그
+* 제목 예시:
+  `Geometry Sweep — Pass Time per Object (Log X / Log Y)`
+* y축 단위: `ms/object`
+
+## 그래프 스타일
+
+* 크기 약 `14.5 × 8.4 inch`
+* `constrained_layout=True`
+* total linewidth 약 `2.8`
+* total marker size 약 `5.8`
+* pass linewidth 약 `1.5`
+* pass alpha 약 `0.34`
+* major grid: `--`, alpha 약 `0.4`
+* minor grid: `:`, alpha 약 `0.2`
+* 위쪽과 오른쪽 spine 제거
+* legend는 왼쪽 위
+* legend가 길면 2열 사용
+* object count tick은 천 단위 쉼표 표시
+* 로그 x축은 `1, 4, 16, 64, 256, 1,024, 4,096, 16,384...`처럼 읽기 좋은 간격으로 표시
+* 그래프 하단에 다음 설명을 작게 추가:
+  `Bold solid lines: total · Faint dashed lines: non-zero passes`
+
+## 데이터 검증
+
+각 variant에 대해 다음을 검증한다.
+
+```python
+total_error = abs(total - sum(non_zero_individual_passes))
+```
+
+각 행의 개별 pass 합과 `pass_3_time_avg_ms`의 차이를 계산하고, variant별 최대 오차를 출력한다.
+
+반올림 오차 수준인 약 `0.00001 ms` 정도는 허용한다. 큰 차이가 있으면 경고를 출력한다.
+
+## 출력 파일
+
+각 그래프를 PNG와 SVG로 저장한다.
+
+```text
+01_log_x_log_y_pass_time.png
+01_log_x_log_y_pass_time.svg
+
+02_linear_x_linear_y_pass_time.png
+02_linear_x_linear_y_pass_time.svg
+
+03_linear_x_linear_y_time_per_object.png
+03_linear_x_linear_y_time_per_object.svg
+
+04_log_x_log_y_time_per_object.png
+04_log_x_log_y_time_per_object.svg
+```
+
+마지막으로 PNG와 SVG 파일 전체를 ZIP 파일 하나로 묶는다.
+
+코드는 특정 CSV 파일명에 지나치게 의존하지 않게 작성하되, variant ID와 교정된 renderer/pass 매핑은 위 규칙을 우선 적용한다.
