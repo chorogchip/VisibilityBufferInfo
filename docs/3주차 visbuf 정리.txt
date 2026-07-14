@@ -1,0 +1,38 @@
+
+
+
+
+[visbuf]
+- 원래: draw call ID, triangle ID
+- Tomasz Stachowiak: primitive ID, barycentric
+- Nanite: (total 64)
+- John Hable: object ID, triangle ID
+- Activision: triangle ID
+- Doom: surface index, triangle index
+- Horizon: micro batch ID, primitive ID, instance ID (total 32)
+
+
+[barycentric]
+- HW로 픽셀 셰이더에서 barycentrics 읽기 가능 (신기술)
+
+[derivative]
+- 네이티브(픽셀 ddx ddy, 컴퓨트 네이티브 derivative)
+- 인접 픽셀 것 읽기
+- 해석적 계산
+- 재평가: 해석적 계산보다 좀더 비싸지만 좀더 정확
+- visbuf에 저장
+- 직접 전달 -> ??
+- Automatic Differentiation: ??
+- 아이디어: visbuf 패스에서 픽셀셰이더에서 얻어서 그걸 아주 작게 패킹하면안댐? 어차피 인덱싱에만쓰자나
+
+[Material 관련]
+- usber shader 분기
+- depth test를 활용
+- material binning (but 픽셀은 non coalesced일수도)
+- tiling (타일에 한픽셀만 있으면 타일 전체에 대해 낭비)
+- loose tiling (타일별로 binning)
+
+[최근 조명 이유]
+- 작은 삼각형이 많다 (depth pre-pass, quad)
+- 4K이상에서 G-buffer가 비싸짐
+- API, HW에서 GPU-driven rendering기반이 갖춰짐 (cluster, indirect draw, triangl ID, bindless texture, compute shader)

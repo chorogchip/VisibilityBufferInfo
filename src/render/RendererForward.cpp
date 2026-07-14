@@ -94,7 +94,7 @@ namespace rndr {
 
         D3D12_DESCRIPTOR_RANGE sampler_range{};
         sampler_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-        sampler_range.NumDescriptors = program_arguments_->texture_count;
+        sampler_range.NumDescriptors = 1;
         sampler_range.BaseShaderRegister = 0;
         sampler_range.RegisterSpace = 0;
         sampler_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;

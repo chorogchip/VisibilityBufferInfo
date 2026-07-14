@@ -20,7 +20,7 @@ namespace dxutl {
         HRESULT hr = D3DCompileFromFile(
             path.c_str(),
             defines,
-            nullptr,
+            D3D_COMPILE_STANDARD_FILE_INCLUDE,
             entry_point,
             target,
             compile_flags,

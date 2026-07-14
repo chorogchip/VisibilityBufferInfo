@@ -215,7 +215,7 @@ void RendererBase::create_shader_visible_srv_heap() {
 }
 
 void RendererBase::create_sampler_heap() {
-    const UINT sampler_count = program_arguments_->texture_count;
+    const UINT sampler_count = 1;
 
     util::Logger::g_logger.assert_with_log(
         sampler_count > 0,
@@ -238,7 +238,7 @@ void RendererBase::create_texture_sampler_descriptors() {
     D3D12_CPU_DESCRIPTOR_HANDLE sampler_handle =
         sampler_heap_->GetCPUDescriptorHandleForHeapStart();
 
-    const UINT sampler_count = program_arguments_->texture_count;
+    const UINT sampler_count =  1;
 
     for (UINT i = 0; i < sampler_count; ++i) {
         D3D12_SAMPLER_DESC sampler_desc{};

@@ -1,28 +1,6 @@
-#ifndef TEXTURE_COUNT
-#define TEXTURE_COUNT 1
-#endif
-
-#ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 1
-#endif
-
-#ifndef TEXTURE_SIZE
-#define TEXTURE_SIZE 1
-#endif
-
-#ifndef ALU_CALC_COUNT
-#define ALU_CALC_COUNT 1
-#endif
-
-#ifndef GBUFFER_COUNT
-#define GBUFFER_COUNT 1
-#endif
-
-#if TEXTURE_SIZE < 1
-#define WORKLOAD_TEXTURE_SIZE 1
-#else
-#define WORKLOAD_TEXTURE_SIZE TEXTURE_SIZE
-#endif
+#include "common_barycentric.hlsli"
+#include "common_material.hlsli"
+#include "common_gbuffer.hlsli"
 
 struct PSInput
 {
@@ -74,140 +52,15 @@ StructuredBuffer<Mesh> gMeshes : register(t3);
 StructuredBuffer<ObjectData> gObjects : register(t4);
 StructuredBuffer<MaterialData> gMaterials : register(t5);
 
-#if TEXTURE_COUNT > 0
-Texture2D<float4> gTextures[TEXTURE_COUNT] : register(t8);
-#endif
-
-struct GBufferOutput
-{
-#if GBUFFER_COUNT >= 1
-    float4 rt0 : SV_Target0;
-#endif
-#if GBUFFER_COUNT >= 2
-    float4 rt1 : SV_Target1;
-#endif
-#if GBUFFER_COUNT >= 3
-    float4 rt2 : SV_Target2;
-#endif
-#if GBUFFER_COUNT >= 4
-    float4 rt3 : SV_Target3;
-#endif
-#if GBUFFER_COUNT >= 5
-    float4 rt4 : SV_Target4;
-#endif
-#if GBUFFER_COUNT >= 6
-    float4 rt5 : SV_Target5;
-#endif
-#if GBUFFER_COUNT >= 7
-    float4 rt6 : SV_Target6;
-#endif
-#if GBUFFER_COUNT >= 8
-    float4 rt7 : SV_Target7;
-#endif
-};
-
-float2 clip_to_pixel(float4 clip_pos)
-{
-    float2 ndc = clip_pos.xy * clip_pos.w;  // w is inv
-    return float2(
-        (ndc.x * 0.5f + 0.5f) * gViewportSize.x,
-        (0.5f - ndc.y * 0.5f) * gViewportSize.y);
-}
-
-float edge_function(float2 a, float2 b, float2 c)
-{
-    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
-}
-
-float3 calc_barycentric(float2 p, float2 p0, float2 p1, float2 p2)
-{
-    float area = edge_function(p0, p1, p2);
-    float inv_area = rcp(area); 
-    return float3(
-        edge_function(p1, p2, p) * inv_area,
-        edge_function(p2, p0, p) * inv_area,
-        edge_function(p0, p1, p) * inv_area);
-}
-
-struct AttributeGrad
-{
-    float2 value;
-    float2 dx;
-    float2 dy;
-};
-
-AttributeGrad interpolate_uv_with_grad(
-    float2 uv0, float2 uv1, float uv2,
-    float w0, float w1, float w2,
-    float3 lambda, float3 d_lambda_dx, float3 d_lambda_dy)
-{
-    float3 q = rcp(float3(w0, w1, w2));
-    
-    float D = dot(lambda, q);
-    
-    float2 N =
-        lambda.x * uv0 * q.x +
-        lambda.y * uv1 * q.y +
-        lambda.z * uv2 * q.z;
-    
-    float uv = N / D;
-    
-    float Dx = dot(d_lambda_dx, q);
-    float Dy = dot(d_lambda_dx, q);
-    
-    float2 Nx =
-        d_lambda_dx.x * uv0 * q.x +
-        d_lambda_dx.y * uv1 * q.y +
-        d_lambda_dx.z * uv2 * q.z;
-    
-    float2 Ny =
-        d_lambda_dy.x * uv0 * q.x +
-        d_lambda_dy.y * uv1 * q.y +
-        d_lambda_dy.z * uv2 * q.z;
-    
-    AttributeGrad res;
-    res.value = uv;
-    res.dx = (Nx - uv * Dx) / D;
-    res.dy = (Nx - uv * Dy) / D;
-    return res;
-}
-
-
-float3 apply_workload(float3 color, float2 pixel)
-{
-    float3 ret = color;
-
-#if TEXTURE_COUNT > 0 && TEXTURE_SAMPLING_COUNT > 0
-    uint2 base_texel = uint2(pixel) % uint2(WORKLOAD_TEXTURE_SIZE, WORKLOAD_TEXTURE_SIZE);
-    [loop]
-    for (uint i = 0; i < TEXTURE_SAMPLING_COUNT; ++i) {
-        uint texture_index = i % TEXTURE_COUNT;
-        uint2 texel = (base_texel + uint2(i * 17, i * 31)) % uint2(WORKLOAD_TEXTURE_SIZE, WORKLOAD_TEXTURE_SIZE);
-        ret += gTextures[texture_index].Load(int3(texel, 0)).rgb * 0.001f;
-    }
-#endif
-
-#if ALU_CALC_COUNT > 0
-    float3 v = ret;
-    [loop]
-    for (uint i = 0; i < ALU_CALC_COUNT; ++i) {
-        v = v * 1.00013f + float3(0.00031f, 0.00071f, 0.00111f);
-    }
-    ret += v * 0.000001f;
-#endif
-
-    return ret;
-}
-
 GBufferOutput main(PSInput input)
 {
-    GBufferOutput output;
+    float4 gbuffer_value = float4(0.1f, 0.1f, 0.15f, 1.0f);
+    
     uint2 pixel = uint2(input.position.xy);
     uint2 vis = gVisibility.Load(int3(pixel.xy, 0));
     
-    float4 gbuffer_value = float4(0.1f, 0.1f, 0.15f, 1.0f);
-    
-    if (vis.x != 0) {
+    if (vis.x != 0)
+    {
         uint object_id = vis.x - 1;
         uint primitive_id = vis.y;
     
@@ -233,55 +86,42 @@ GBufferOutput main(PSInput input)
         float4 clip1 = mul(view1, gProj);
         float4 clip2 = mul(view2, gProj);
     
-        clip0.w = rcp(clip0.w);
-        clip1.w = rcp(clip1.w);
-        clip2.w = rcp(clip2.w);
+        float2 p0 = clip_to_pixel(clip0, gViewportSize);
+        float2 p1 = clip_to_pixel(clip1, gViewportSize);
+        float2 p2 = clip_to_pixel(clip2, gViewportSize);
+    
+        BarycentricGradient bary_grad = calc_barycentric_with_grad(
+        input.position.xy, p0, p1, p2);
+    
+        float3 bary = bary_grad.value;
+        float3 w_inv = rcp(float3(clip0.w, clip1.w, clip2.w));
+    
+        float D = dot(bary, w_inv);
+        float D_inv = rcp(D);
+    
+        float3 bary_perspective = bary * w_inv * D_inv;
 
-        float2 p0 = clip_to_pixel(clip0);
-        float2 p1 = clip_to_pixel(clip1);
-        float2 p2 = clip_to_pixel(clip2);
-        float3 bary = calc_barycentric(input.position.xy, p0, p1, p2);
+        AttributeGrad uv0_grad = interpolate_uv_with_grad(
+        v0.uv0, v1.uv0, v2.uv0,
+        w_inv, D_inv,
+        bary, bary_grad.dx, bary_grad.dy);
+    
+        float2 uv = uv0_grad.value;
+        float2 d_uv_dx = uv0_grad.dx;
+        float2 d_uv_dy = uv0_grad.dy;
+    
+        float3 normal0 = mul(mul(float4(v0.normal, 0.0f), obj.World).xyz, (float3x3) gView);
+        float3 normal1 = mul(mul(float4(v1.normal, 0.0f), obj.World).xyz, (float3x3) gView);
+        float3 normal2 = mul(mul(float4(v2.normal, 0.0f), obj.World).xyz, (float3x3) gView);
 
-        float3 inv_w = float3(clip0.w, clip1.w, clip2.w);
-        float3 perspective_bary = bary * inv_w;
-        perspective_bary *= rcp(perspective_bary.x + perspective_bary.y + perspective_bary.z);
-
-        float3 normal0 = mul(mul(float4(v0.normal, 0.0f), obj.World).xyz, (float3x3)gView);
-        float3 normal1 = mul(mul(float4(v1.normal, 0.0f), obj.World).xyz, (float3x3)gView);
-        float3 normal2 = mul(mul(float4(v2.normal, 0.0f), obj.World).xyz, (float3x3)gView);
         float3 normal = normalize(
-            normal0 * perspective_bary.x +
-            normal1 * perspective_bary.y +
-            normal2 * perspective_bary.z);
-
+        normal0 * bary_perspective.x +
+        normal1 * bary_perspective.y +
+        normal2 * bary_perspective.z);
+    
         float4 base_color = gMaterials[obj.material_index].base_color;
-        float3 color = base_color.rgb * (normal.z * 0.5f + 0.5f);
-        gbuffer_value = float4(apply_workload(color, input.position.xy), base_color.a);
+        gbuffer_value = float4(apply_workload(uv, d_uv_dx, d_uv_dy, normal), base_color.a);
     }
-
-#if GBUFFER_COUNT >= 1
-    output.rt0 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 2
-    output.rt1 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 3
-    output.rt2 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 4
-    output.rt3 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 5
-    output.rt4 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 6
-    output.rt5 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 7
-    output.rt6 = gbuffer_value;
-#endif
-#if GBUFFER_COUNT >= 8
-    output.rt7 = gbuffer_value;
-#endif
-    return output;
+    
+    return make_gbuffer_output(gbuffer_value);
 }

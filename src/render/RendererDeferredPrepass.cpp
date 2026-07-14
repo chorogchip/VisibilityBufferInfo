@@ -96,7 +96,7 @@ namespace rndr {
 
         command_list_->SetPipelineState(pipeline_state_.Get());
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
-        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get() };
+        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get(), sampler_heap_.Get() };
         command_list_->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
@@ -104,6 +104,7 @@ namespace rndr {
         D3D12_GPU_DESCRIPTOR_HANDLE texture_handle = srv_heap_->GetGPUDescriptorHandleForHeapStart();
         texture_handle.ptr += static_cast<SIZE_T>(program_arguments_->gbuffer_cnt) * srv_descriptor_size_;
         command_list_->SetGraphicsRootDescriptorTable(4, texture_handle);
+        command_list_->SetGraphicsRootDescriptorTable(5, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
@@ -213,8 +214,15 @@ namespace rndr {
         texture_range_geometry.RegisterSpace = 0;
         texture_range_geometry.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+        D3D12_DESCRIPTOR_RANGE sampler_range{};
+        sampler_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        sampler_range.NumDescriptors = 1;
+        sampler_range.BaseShaderRegister = 0;
+        sampler_range.RegisterSpace = 0;
+        sampler_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
         // b0 (constant buffer)
-        D3D12_ROOT_PARAMETER root_parameters[5]{};
+        D3D12_ROOT_PARAMETER root_parameters[6]{};
         root_parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameters[0].Descriptor.ShaderRegister = 0;
         root_parameters[0].Descriptor.RegisterSpace = 0;
@@ -242,6 +250,11 @@ namespace rndr {
         root_parameters[4].DescriptorTable.NumDescriptorRanges = 1;
         root_parameters[4].DescriptorTable.pDescriptorRanges = &texture_range_geometry;
         root_parameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // samplers
+        root_parameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameters[5].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameters[5].DescriptorTable.pDescriptorRanges = &sampler_range;
+        root_parameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_ROOT_SIGNATURE_DESC root_sig_desc{};
         root_sig_desc.NumParameters = _countof(root_parameters);

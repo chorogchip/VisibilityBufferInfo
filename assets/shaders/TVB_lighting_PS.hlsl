@@ -1,24 +1,5 @@
-#ifndef TEXTURE_COUNT
-#define TEXTURE_COUNT 1
-#endif
-
-#ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 1
-#endif
-
-#ifndef TEXTURE_SIZE
-#define TEXTURE_SIZE 1
-#endif
-
-#ifndef ALU_CALC_COUNT
-#define ALU_CALC_COUNT 1
-#endif
-
-#if TEXTURE_SIZE < 1
-#define WORKLOAD_TEXTURE_SIZE 1
-#else
-#define WORKLOAD_TEXTURE_SIZE TEXTURE_SIZE
-#endif
+#include "common_material.hlsli"
+#include "common_barycentric.hlsli"
 
 struct PSInput
 {
@@ -70,124 +51,6 @@ StructuredBuffer<Mesh> gMeshes : register(t3);
 StructuredBuffer<ObjectData> gObjects : register(t4);
 StructuredBuffer<MaterialData> gMaterials : register(t5);
 
-#if TEXTURE_COUNT > 0
-Texture2D<float4> gTextures[TEXTURE_COUNT] : register(t8);
-#endif
-
-float2 clip_to_pixel(float4 clip_pos)
-{
-    float2 ndc = clip_pos.xy / clip_pos.w;
-    return float2(
-        (ndc.x * 0.5f + 0.5f) * gViewportSize.x,
-        (0.5f - ndc.y * 0.5f) * gViewportSize.y);
-}
-
-float edge_function(float2 p0, float2 p1, float2 p2)
-{
-    float2 e1 = p1 - p0;
-    float2 e2 = p2 - p0;
-    return e2.x * e1.y - e2.y * e1.x;
-}
-
-float3 calc_barycentric(float2 p, float2 p0, float2 p1, float2 p2)
-{
-    float area = edge_function(p0, p1, p2);
-    float area_inv = rcp(area);
-    return float3(
-        edge_function(p1, p2, p) * area_inv,
-        edge_function(p2, p0, p) * area_inv,
-        edge_function(p0, p1, p) * area_inv);
-}
-
-struct BarycentricGradient
-{
-    float3 value;
-    float3 dx;
-    float3 dy;
-};
-
-BarycentricGradient calc_barycentric_with_grad(
-    float2 p, float2 p0, float2 p1, float2 p2)
-{
-    float2 e1 = p1 - p0;
-    float2 e2 = p2 - p0;
-    float2 d = p - p0;
-    
-    float det = e1.x * e2.y - e1.y * e2.x;
-    if (abs(det) < 1e-8f) det = 1e-8f;
-    float det_inv = rcp(det);
-    
-    float lambda1 = (d.x * e2.y - d.y * e2.x) * det_inv;
-    float lambda2 = (d.y * e1.x - d.x * e1.y) * det_inv;
-    float lambda0 = 1.0f - lambda1 - lambda2;
-    
-    float2 grad_lambda1 = float2(e2.y, -e2.x) * det_inv;
-    float2 grad_lambda2 = float2(-e1.y, e1.x) * det_inv;
-    float2 grad_lambda0 = -grad_lambda1 - grad_lambda2;
-    
-    BarycentricGradient result;
-    result.value = float3(lambda0, lambda1, lambda2);
-    result.dx = float3(grad_lambda0.x, grad_lambda1.x, grad_lambda2.x);
-    result.dy = float3(grad_lambda0.y, grad_lambda1.y, grad_lambda2.y);
-
-    return result;
-}
-
-struct AttributeGrad
-{
-    float2 value;
-    float2 dx;
-    float2 dy;
-};
-
-AttributeGrad interpolate_uv_with_grad(
-    float2 uv0, float2 uv1, float2 uv2,
-    float3 q, float inv_D,
-    float3 lambda, float3 d_lambda_dx, float3 d_lambda_dy)
-{   
-    float2 N = lambda.x * uv0 * q.x + lambda.y * uv1 * q.y + lambda.z * uv2 * q.z;
-    float2 uv = N * inv_D;
-    
-    float Dx = dot(d_lambda_dx, q);
-    float Dy = dot(d_lambda_dy, q);
-    
-    float2 Nx = d_lambda_dx.x * uv0 * q.x + d_lambda_dx.y * uv1 * q.y + d_lambda_dx.z * uv2 * q.z;
-    float2 Ny = d_lambda_dy.x * uv0 * q.x + d_lambda_dy.y * uv1 * q.y + d_lambda_dy.z * uv2 * q.z;
-    
-    AttributeGrad res;
-    res.value = uv;
-    res.dx = (Nx - uv * Dx) * inv_D;
-    res.dy = (Ny - uv * Dy) * inv_D;
-    
-    return res;
-}
-
-float3 apply_workload(float3 color, float2 pixel)
-{
-    float3 ret = color;
-
-#if TEXTURE_COUNT > 0 && TEXTURE_SAMPLING_COUNT > 0
-    uint2 base_texel = uint2(pixel) % uint2(WORKLOAD_TEXTURE_SIZE, WORKLOAD_TEXTURE_SIZE);
-    [loop]
-    for (uint i = 0; i < TEXTURE_SAMPLING_COUNT; ++i) {
-        uint texture_index = i % TEXTURE_COUNT;
-        uint2 texel = (base_texel + uint2(i * 17, i * 31)) % uint2(WORKLOAD_TEXTURE_SIZE, WORKLOAD_TEXTURE_SIZE);
-        ret += gTextures[texture_index].Load(int3(texel, 0)).rgb * 0.001f;
-    }
-#endif
-
-#if ALU_CALC_COUNT > 0
-    float3 v = ret;
-    [loop]
-    for (uint i = 0; i < ALU_CALC_COUNT; ++i) {
-        v = v * 1.00013f + float3(0.00031f, 0.00071f, 0.00111f);
-    }
-    ret += v * 0.000001f;
-#endif
-
-    return ret;
-}
-
 float4 main(PSInput input) : SV_Target
 {
     uint2 pixel = uint2(input.position.xy);
@@ -220,9 +83,9 @@ float4 main(PSInput input) : SV_Target
     float4 clip1 = mul(view1, gProj);
     float4 clip2 = mul(view2, gProj);
     
-    float2 p0 = clip_to_pixel(clip0);
-    float2 p1 = clip_to_pixel(clip1);
-    float2 p2 = clip_to_pixel(clip2);
+    float2 p0 = clip_to_pixel(clip0, gViewportSize);
+    float2 p1 = clip_to_pixel(clip1, gViewportSize);
+    float2 p2 = clip_to_pixel(clip2, gViewportSize);
     
     BarycentricGradient bary_grad = calc_barycentric_with_grad(
         input.position.xy, p0, p1, p2);
@@ -252,8 +115,7 @@ float4 main(PSInput input) : SV_Target
         normal0 * bary_perspective.x +
         normal1 * bary_perspective.y +
         normal2 * bary_perspective.z);
-
+    
     float4 base_color = gMaterials[obj.material_index].base_color;
-    float3 color = base_color.rgb * (normal.z * 0.5f + 0.5f);
-    return float4(apply_workload(color, input.position.xy), base_color.a);
+    return float4(apply_workload(uv, d_uv_dx, d_uv_dy, normal), base_color.a);
 }

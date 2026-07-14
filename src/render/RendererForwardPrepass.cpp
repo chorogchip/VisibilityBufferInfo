@@ -37,7 +37,7 @@ namespace rndr {
         // depth pre-pass
 
         command_list_->SetGraphicsRootSignature(root_signature_.Get());
-        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get() };
+        ID3D12DescriptorHeap* heaps[] = { srv_heap_.Get(), sampler_heap_.Get() };
         command_list_->SetGraphicsRootConstantBufferView(0, buf_constant_[frame_index_]->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
 
@@ -73,6 +73,7 @@ namespace rndr {
         command_list_->SetGraphicsRootShaderResourceView(1, scene_gpu_->object_buffer->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootShaderResourceView(3, scene_gpu_->material_buffer->GetGPUVirtualAddress());
         command_list_->SetGraphicsRootDescriptorTable(4, srv_heap_->GetGPUDescriptorHandleForHeapStart());
+        command_list_->SetGraphicsRootDescriptorTable(5, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
 
         command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list_->IASetVertexBuffers(0, 1, &scene_gpu_->vertex_buffer_view);
@@ -151,7 +152,14 @@ namespace rndr {
         texture_range.RegisterSpace = 0;
         texture_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-        D3D12_ROOT_PARAMETER root_parameters[5]{};
+        D3D12_DESCRIPTOR_RANGE sampler_range{};
+        sampler_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        sampler_range.NumDescriptors = 1;
+        sampler_range.BaseShaderRegister = 0;
+        sampler_range.RegisterSpace = 0;
+        sampler_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+        D3D12_ROOT_PARAMETER root_parameters[6]{};
         root_parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         root_parameters[0].Descriptor.ShaderRegister = 0;
         root_parameters[0].Descriptor.RegisterSpace = 0;
@@ -174,11 +182,16 @@ namespace rndr {
         root_parameters[3].Descriptor.ShaderRegister = 1;
         root_parameters[3].Descriptor.RegisterSpace = 0;
         root_parameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
+        // textures (t8)
         root_parameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         root_parameters[4].DescriptorTable.NumDescriptorRanges = 1;
         root_parameters[4].DescriptorTable.pDescriptorRanges = &texture_range;
         root_parameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        // samplers (s0)
+        root_parameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameters[5].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameters[5].DescriptorTable.pDescriptorRanges = &sampler_range;
+        root_parameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_ROOT_SIGNATURE_DESC root_sig_desc{};
         root_sig_desc.NumParameters = _countof(root_parameters);
