@@ -64,8 +64,7 @@ class ProgramArgument:
     material_count: int = 1
     geometry_count: int = 1
 
-    sort_from_front: bool = False
-    sort_from_back: bool = False
+    sort_type: int = 0
 
     z_min: float = -1.0
     z_max: float = 1.0

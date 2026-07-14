@@ -11,8 +11,6 @@
 * `pass_N_time_avg_ms`: N번째 pass 평균 실행 시간
 * `pass_3_time_avg_ms`: 전체 pass 시간의 합인 `total`
 
-CSV의 renderer/pass 문자열에는 오류가 있으므로, 원본 문자열을 신뢰하지 말고 아래 의미상 매핑을 강제로 적용한다.
-
 ```text
 Variant 1
 renderer: Forward
@@ -38,7 +36,6 @@ total:
 - pass_3_time_avg_ms
 ```
 
-즉, CSV에서 Variant 1과 Variant 2의 `Forward` 및 `ForwardPrepass` 관련 문자열이 서로 뒤바뀐 것으로 간주한다. 측정값 자체는 변경하지 않고 이름과 pass 의미만 위 매핑으로 교정한다.
 
 ## 선 표시 규칙
 

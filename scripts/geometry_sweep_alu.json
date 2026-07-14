@@ -1,7 +1,7 @@
 {
-  "experiment": "geometry_sweep",
+  "experiment": "geometry_sweep_alu",
   "executable": "../out/build/x64-Release/bin/TVBPerf.exe",
-  "output": "geometry_sweep.csv",
+  "output": "geometry_sweep_alu.csv",
   "repeat": 1,
   "keep_individual_csv": false,
   "base": {
@@ -32,8 +32,7 @@
     "_object_count": 1,
     "material_count": 1,
     "geometry_count": 1,
-    "sort_from_front": false,
-    "sort_from_back": false,
+    "_sort_type": 0,
     "z_min": -1.0,
     "z_max": 1.0,
     "xy_minmax": 1.0,
@@ -43,10 +42,11 @@
     "texture_count": 1,
     "texture_size": 256,
     "texture_sampling_count": 1,
-    "alu_calc_count": 1
+    "alu_calc_count": 100
   },
   "sweep": {
-    "renderer_variant": [1, 2, 4],
-    "object_count": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384]
+    "sort_type": [ 0, 1, 2 ],
+    "renderer_variant": [ 1, 2, 4 ],
+    "object_count": [ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 ]
   }
 }

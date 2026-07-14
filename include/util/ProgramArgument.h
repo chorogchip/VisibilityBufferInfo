@@ -34,8 +34,7 @@ namespace util {
     X(uint32_t, object_count, 1, object-count) \
     X(uint32_t, material_count, 1, material-count) \
     X(uint32_t, geometry_count, 1, geometry-count) \
-    X(bool, sort_from_front, false, sort-from-front) \
-    X(bool, sort_from_back, false, sort-from-back) \
+    X(uint32_t, sort_type, 0, sort-type) \
     X(float, z_min, -1.0f, z-min) \
     X(float, z_max, 1.0f, z-max) \
     X(float, xy_minmax, 1.0f, xy-minmax) \
