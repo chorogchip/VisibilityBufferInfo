@@ -11,7 +11,7 @@ namespace util {
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, run_current_time, "", run-current-time) \
     X(std::string, output_filepath, "temp.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 6, renderer-variant) \
+    X(uint32_t, renderer_variant, 1, renderer-variant) \
     X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, false, to-use-scene) \
@@ -33,17 +33,17 @@ namespace util {
     X(float, camera_fov, 0.785f, camera-fov) \
     X(uint32_t, sphere_count, 5, sphere-count) \
     X(uint32_t, material_count, 10, material-count) \
-    X(uint32_t, geometry_count, 10, geometry-count) \
+    X(uint32_t, geometry_count, 10'00, geometry-count) \
     X(float, z_min, -1.0f, z-min) \
     X(float, z_max, 1.0f, z-max) \
     X(float, xy_minmax, 1.0f, xy-minmax) \
     X(float, radius, 0.5f, radius) \
-    X(uint32_t, geometry_div, 10, geometry-div) \
+    X(uint32_t, geometry_div, 100, geometry-div) \
     X(uint32_t, gbuffer_cnt, 1, gbuffer-cnt) \
     X(uint32_t, texture_count, 1, texture-count) \
-    X(uint32_t, texture_size, 1, texture-size) \
-    X(uint32_t, texture_sampling_count, 0, texture-sampling-count) \
-    X(uint32_t, alu_calc_count, 0, alu-calc-count)
+    X(uint32_t, texture_size, 1024, texture-size) \
+    X(uint32_t, texture_sampling_count, 1, texture-sampling-count) \
+    X(uint32_t, alu_calc_count, 1, alu-calc-count)
 
 
 #define ProgramResultPass_MAC(X, index) \

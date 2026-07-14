@@ -1,0 +1,35 @@
+
+실험 1: VB는 두 번째 래스터화와 quad낭비 비용을 얼마나 줄이는가?
+- material=1, mesh=1, 인스턴스 많이 사용
+- quad 낭비를 비교하기 위해 삼각형 크기/resolution을 조ㅓㄹ
+- overdraw를 조절
+- forward pre-pass에 집중해 비교
+- 예상: 삼각형당 픽셀개수가 적어질수록 이득, overdraw 증가할수록 이,득 단 일정 개수의 삼각형 이상에서만 발생, 
+
+실험 2: VB는 버려지는 프래그먼트들의 texture sampling / material shader 비용을 얼마나 줄이는가?
+- material수, mesh수 = 1, 인스턴스 많이 사용
+- 위 실험에서 얻은 삼각형 크기 / resolution / overdraw 조건 사용
+- 셰이더에서 텍스쳐 샘플링 / ALU 연산 횟수를 조절
+- deferred에 집중해 비교
+- 예상: 삼각형 크기가 작고 셰이더 비용이 증가할수록 이득
+
+실험 3: draw call 수와 PSO switch 수 줄면 얼마나 좋은가?
+- 많은 mesh/material 수, draw call을 늘리면서 scalability 비교
+- material의 비용 자체도 필요하다면 변동.
+- cpu와 gpu의 병목을 같이 측정.
+
+실험 4: gbuffer bandwidth 절약이 의미있는가?
+- gbuffer 크기를 늘리며 비교
+- resolution을 조절
+- deferred, VB, VB + Gbuffer를 비교
+- 이론적 메모리 트래픽을 계산해 L2캐시 크기 등과 비교
+
+실험 5: indirect access는 얼마나 치명적인가?
+- geometry data working set개수 조절하며 다른 알고리즘과 비교.
+- L2캐시 크기와 연관지어 접근
+- VB에서 geometry가 저장되는 레이아웃을 바꿔보면서 실험
+
+실험 6: material 계산 방법에 따라 성능이 어떻게 차이나는가?
+- 이건 지금 못할듯
+- 화며 상 material 분포를 다르게 조정하며 비교
+

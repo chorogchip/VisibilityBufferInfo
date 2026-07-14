@@ -44,6 +44,7 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     InstanceData instance_data = gInstance[gObjectIndex + instanceID];
     
     PSInput output;
+    
     float4 pos_in = float4(input.position, 1.0f);
     float4 pos_world = mul(pos_in, instance_data.World);
     float4 pos_view = mul(pos_world, gView);

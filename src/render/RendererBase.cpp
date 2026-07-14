@@ -1,11 +1,13 @@
 #include "render/RendererBase.h"
 
+#include <cstring>
 #include <algorithm>
 #include <numeric>
 #include <string>
 
 #include "util/Utils.h"
 #include "util/BenchmarkCsvWriter.h"
+#include "util/DummyTextureGen.h"
 #include "dx_util/DeviceUtils.h"
 #include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
@@ -331,6 +333,9 @@ void RendererBase::create_dummy_textures() {
         command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
 
     for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
+
+        auto texture_data = util::create_dummy_texture_data(texture_size, texture_size, texture_index);
+
         dummy_textures_[texture_index] = dxutl::create_committed_resource(
             device_.Get(),
             texture_desc,
@@ -340,17 +345,26 @@ void RendererBase::create_dummy_textures() {
         upload_buffers[texture_index] = dxutl::create_buffer(device_.Get(), upload_size, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
         void* mapped_data = dxutl::map_upload_buffer(upload_buffers[texture_index].Get());
-        auto* dst = static_cast<uint8_t*>(mapped_data);
+
+        const std::size_t source_row_pitch = static_cast<std::size_t>(texture_size) * 4u;
+        auto* dest = static_cast<unsigned char*>(mapped_data);
+
         for (UINT y = 0; y < texture_size; ++y) {
-            auto* row = dst + footprint.Offset + static_cast<size_t>(y) * footprint.Footprint.RowPitch;
-            for (UINT x = 0; x < texture_size; ++x) {
-                const size_t texel_offset = static_cast<size_t>(x) * 4;
-                row[texel_offset + 0] = static_cast<uint8_t>((x * 17 + texture_index * 29) & 0xff);
-                row[texel_offset + 1] = static_cast<uint8_t>((y * 19 + texture_index * 31) & 0xff);
-                row[texel_offset + 2] = static_cast<uint8_t>(((x + y) * 13 + texture_index * 37) & 0xff);
-                row[texel_offset + 3] = 255;
-            }
+            unsigned char* destination_row =
+                dest +
+                footprint.Offset +
+                static_cast<std::size_t>(y) * footprint.Footprint.RowPitch;
+
+            const unsigned char* source_row =
+                texture_data.data() +
+                static_cast<std::size_t>(y) * source_row_pitch;
+
+            std::memcpy(
+                destination_row,
+                source_row,
+                source_row_pitch);
         }
+
         upload_buffers[texture_index]->Unmap(0, nullptr);
 
         D3D12_TEXTURE_COPY_LOCATION dst_location{};

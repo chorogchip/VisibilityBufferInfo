@@ -98,12 +98,12 @@ GenedMesh GenedMesh::generate_sphere(int division) {
                 uint32_t v11 = baseVertex + (ix + 1) * row + (iy + 1);
 
                 ret.indices.push_back(v00);
-                ret.indices.push_back(v01);
                 ret.indices.push_back(v10);
+                ret.indices.push_back(v01);
 
                 ret.indices.push_back(v10);
-                ret.indices.push_back(v01);
                 ret.indices.push_back(v11);
+                ret.indices.push_back(v01);
             }
         }
     }
