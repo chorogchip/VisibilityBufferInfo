@@ -1,0 +1,46 @@
+Quad Waste × ALU Orthogonal Plot Generation Summary
+==================================================
+Successful raw rows used: 363
+Non-success raw rows: 0
+Aggregated renderer/grid rows: 363
+Repeat counts per renderer/grid point: [1]
+Quad waste samples (11): ['8', '12', '16', '24', '32', '48', '64', '96', '128', '192', '384']
+ALU samples (11): ['0', '1', '2', '4', '8', '16', '32', '64', '96', '128', '192']
+Logical graphs generated: 11
+PNG/SVG files generated: 22
+
+Winner counts over the sampled 11 × 11 grid:
+- Forward: 77 / 121
+- ForwardPrepass: 0 / 121
+- VisBuf: 44 / 121
+- Median winner margin (second-best / best): 1.106×
+- Minimum winner margin: 1.001×
+- Maximum winner margin: 2.270×
+
+Empirical interaction model:
+T = β0 + βQ1/WasteQuad + βQ2/WasteQuad² + βA·ALU + βQA1·ALU/WasteQuad + βQA2·ALU/WasteQuad²
+- Variant 1 · Forward: R²=0.956939, RMSE=0.176124 ms, MAPE=9.800%
+- Variant 2 · ForwardPrepass: R²=0.960583, RMSE=0.184261 ms, MAPE=9.708%
+- Variant 4 · VisBuf: R²=0.999775, RMSE=0.009819 ms, MAPE=2.972%
+
+Validation:
+- Variant 1 · Forward: max total-minus-pass-sum error=0 ms [OK]
+- Variant 2 · ForwardPrepass: max total-minus-pass-sum error=1.00000000005e-05 ms [OK]
+- Variant 4 · VisBuf: max total-minus-pass-sum error=1.00000000001e-05 ms [OK]
+
+Graph set:
+- 01-03: total-time contour plot for each renderer variant
+- 04: discrete fastest-renderer winner map
+- 05: winner margin / confidence map
+- 06: per-variant time relative to the fastest renderer
+- 07: Forward-relative speedup and crossover contours
+- 08: VisBuf versus ForwardPrepass pairwise crossover
+- 09: selected ALU-axis slices
+- 10: selected waste-quad-axis slices
+- 11: reciprocal quad-proxy model measured-versus-predicted diagnostics
+
+Interpretation cautions:
+- Winner and crossover maps describe the sampled hardware, renderer implementation, resolution, and scene configuration only.
+- Contours interpolate between measured grid points; discrete winner cells are the direct measurements.
+- One runner_repeat value was present in this dataset, so repeat-to-repeat uncertainty cannot be estimated from runner repeats.
+- The interaction model is empirical and should be re-fit when hardware, renderer, buffer format, resolution, or scene fingerprint changes.
