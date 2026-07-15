@@ -1,0 +1,505 @@
+아래 모델은 1차 선형 근사이며, resolution과 visible pixel 수가 고정된 조건을 가정한다.
+
+기호 정의
+
+G = 전체 geometry workload
+예: 처리된 vertex 수, triangle 수 또는 두 값을 결합한 정규화된 geometry 단위
+
+O = 실제 shaded overdraw factor
+O = material pixel shader invocation 수 / overdraw가 없을 때의 invocation 수
+O >= 1
+
+Q = quad inefficiency factor
+Q = pixel shader invocation 수 / 실제 coverage fragment 수
+Q >= 1
+
+A = material shader의 ALU 반복 횟수
+
+P = 최종 visible pixel 수
+
+R = fullscreen resolve pixel 수
+일반적으로 R = width × height
+
+M(A) = material shader의 pixel당 비용
+
+M(A) = m0 + mA × A
+
+m0 = texture sampling, 기본 연산 등을 포함한 ALU 외 기본 material 비용
+
+mA = ALU 한 반복의 단위 비용
+
+r = Visibility Buffer에 ID를 기록하는 fragment 하나당 비용
+
+s = TVB resolve의 pixel당 고정 비용
+primitive ID 해석, index와 vertex fetch, barycentric 계산, perspective correction, derivative 재구성 등을 포함하며 material 비용은 제외
+
+CF, CP, CV = Forward, Forward+Prepass, TVB의 고정 비용
+
+gF, gP, gV = 각 알고리즘의 geometry workload 단위당 비용
+
+gP는 depth prepass와 두 번째 shading geometry pass를 모두 포함한다.
+
+비용 모델
+
+Forward
+
+TF(G, O, Q, A)
+= CF
+
+* gF × G
+* P × O × Q × M(A)
+
+TF
+= CF
+
+* gF × G
+* P × O × Q × (m0 + mA × A)
+
+Forward+Prepass
+
+TP(G, O, Q, A)
+= CP
+
+* gP × G
+* P × Q × M(A)
+
+TP
+= CP
+
+* gP × G
+* P × Q × (m0 + mA × A)
+
+이 식은 prepass 이후 material pass의 overdraw가 거의 제거된 이상적인 경우를 가정한다.
+
+O가 증가하더라도 G를 고정하면 material shading 비용은 증가하지 않는다. 하지만 실제 실험에서 layer를 추가하여 O를 증가시키면 G도 함께 증가하므로 측정 시간은 증가한다.
+
+Triangle Visibility Buffer
+
+TV(G, O, Q, A)
+= CV
+
+* gV × G
+* P × O × Q × r
+* R × s
+* P × M(A)
+
+TV
+= CV
+
+* gV × G
+* P × O × Q × r
+* R × s
+* P × (m0 + mA × A)
+
+P × O × Q × r은 visibility pass에서 depth test를 통과하고 visibility 정보를 기록한 fragment의 비용을 근사한다.
+
+R × s는 fullscreen resolve의 고정적인 reconstruction 비용이다.
+
+P × M(A)는 최종 visible pixel에 대해서만 material shader를 수행하는 비용이다.
+
+Forward와 Forward+Prepass의 crossover
+
+Forward+Prepass가 Forward보다 빠른 조건은 다음과 같다.
+
+TP < TF
+
+CP + gP × G + P × Q × M(A)
+<
+CF + gF × G + P × O × Q × M(A)
+
+정리하면 다음과 같다.
+
+P × Q × M(A) × (O - 1)
+
+>
+
+(CP - CF) + (gP - gF) × G
+
+왼쪽은 prepass가 제거한 overdraw material shading 비용이다.
+
+오른쪽은 prepass를 수행하면서 추가된 고정 비용과 두 번째 geometry 처리 비용이다.
+
+Overdraw crossover는 다음과 같다.
+
+# O*
+
+1
++
+[(CP - CF) + (gP - gF) × G]
+/
+[P × Q × M(A)]
+
+O > O*이면 Forward+Prepass가 Forward보다 유리하다.
+
+O < O*이면 Forward가 유리하다.
+
+Material 비용이 커지거나 quad inefficiency가 커지면 O*가 작아진다. 즉 적은 overdraw에서도 prepass가 유리해진다.
+
+Geometry workload가 증가하면 prepass가 부담하는 추가 geometry 비용도 증가하므로 O*가 커진다.
+
+TVB와 Forward의 crossover
+
+TVB가 Forward보다 빠른 조건은 다음과 같다.
+
+TV < TF
+
+CV + gV × G + P × O × Q × r + R × s + P × M(A)
+<
+CF + gF × G + P × O × Q × M(A)
+
+정리하면 다음과 같다.
+
+P × O × Q × [M(A) - r]
+
+>
+
+R × s
+
+* P × M(A)
+* (CV - CF)
+* (gV - gF) × G
+
+왼쪽은 Forward가 overdraw와 quad inefficiency 때문에 추가로 수행한 material shading에서 TVB visibility 기록 비용을 뺀 값이다.
+
+오른쪽은 TVB가 항상 부담하는 resolve 비용, visible pixel material 비용, 고정 비용 차이, geometry 비용 차이다.
+
+Overdraw crossover는 다음과 같다.
+
+# O*
+
+[R × s
+
+* P × M(A)
+* (CV - CF)
+* (gV - gF) × G]
+  /
+  [P × Q × {M(A) - r}]
+
+M(A) > r인 경우에만 이 식이 의미가 있다.
+
+O > O*이면 TVB가 Forward보다 유리하다.
+
+O < O*이면 Forward가 유리하다.
+
+Material shader가 visibility 기록보다 충분히 저렴하면 M(A) <= r이므로 overdraw가 증가해도 TVB가 쉽게 유리해지지 않을 수 있다.
+
+TVB와 Forward+Prepass의 crossover
+
+TVB가 Forward+Prepass보다 빠른 조건은 다음과 같다.
+
+TV < TP
+
+CV + gV × G + P × O × Q × r + R × s + P × M(A)
+<
+CP + gP × G + P × Q × M(A)
+
+정리하면 다음과 같다.
+
+(gP - gV) × G
+
+* P × (Q - 1) × M(A)
+
+>
+
+P × O × Q × r
+
+* R × s
+* (CV - CP)
+
+왼쪽 첫 번째 항은 TVB가 제거한 두 번째 geometry 처리 비용이다.
+
+왼쪽 두 번째 항은 TVB가 줄인 material pass의 quad inefficiency 비용이다.
+
+오른쪽은 visibility 기록 비용, resolve 비용, TVB의 추가 고정 비용이다.
+
+Geometry crossover는 다음과 같다.
+
+# G*
+
+[P × O × Q × r
+
+* R × s
+* (CV - CP)
+
+- P × (Q - 1) × M(A)]
+  /
+  (gP - gV)
+
+gP > gV인 경우에 다음처럼 해석할 수 있다.
+
+G > G*이면 TVB가 Forward+Prepass보다 유리하다.
+
+G < G*이면 Forward+Prepass가 유리하다.
+
+Quad inefficiency나 material 비용이 증가하면 G*가 감소한다. 즉 geometry가 적어도 TVB가 유리해질 수 있다.
+
+Visibility recording 비용이나 overdraw가 증가하면 G*가 증가한다.
+
+ALU crossover: TVB와 Forward
+
+M(A) = m0 + mA × A를 이용하면 다음과 같다.
+
+# P × O × Q × [M(A) - r]
+
+R × s
+
+* P × M(A)
+* (CV - CF)
+* (gV - gF) × G
+
+정리하면 material 비용의 crossover는 다음과 같다.
+
+# M*
+
+[R × s
+
+* (CV - CF)
+* (gV - gF) × G
+* P × O × Q × r]
+  /
+  [P × (O × Q - 1)]
+
+O × Q > 1인 경우 ALU crossover는 다음과 같다.
+
+# A*
+
+(M* - m0) / mA
+
+A > A*이면 TVB가 Forward보다 유리하다.
+
+A < A*이면 Forward가 유리하다.
+
+ALU crossover: TVB와 Forward+Prepass
+
+TVB와 Forward+Prepass가 같은 시간이 되는 조건은 다음과 같다.
+
+(gP - gV) × G
+
+* P × (Q - 1) × M(A)
+  =
+  P × O × Q × r
+* R × s
+* (CV - CP)
+
+Material 비용의 crossover는 다음과 같다.
+
+# M*
+
+[P × O × Q × r
+
+* R × s
+* (CV - CP)
+
+- (gP - gV) × G]
+  /
+  [P × (Q - 1)]
+
+Q > 1인 경우 ALU crossover는 다음과 같다.
+
+# A*
+
+(M* - m0) / mA
+
+Q = 1이라면 Forward+Prepass와 TVB 모두 visible pixel을 한 번씩 material shading하므로, 이 단순 모델에서는 ALU 비용이 두 알고리즘의 차이를 거의 바꾸지 않는다.
+
+이 경우 crossover는 두 번째 geometry pass 비용과 TVB visibility 및 resolve 비용에 의해 결정된다.
+
+각 알고리즘의 편미분
+
+Forward
+
+∂TF / ∂G
+= gF
+
+Geometry workload가 한 단위 증가할 때 Forward 시간이 gF만큼 증가한다.
+
+∂TF / ∂O
+= P × Q × M(A)
+
+∂TF / ∂O
+= P × Q × (m0 + mA × A)
+
+Overdraw에 대한 민감도는 material 비용과 quad inefficiency에 비례한다.
+
+∂TF / ∂Q
+= P × O × M(A)
+
+∂TF / ∂Q
+= P × O × (m0 + mA × A)
+
+Quad inefficiency에 대한 민감도는 overdraw와 material 비용에 비례한다.
+
+∂TF / ∂A
+= P × O × Q × mA
+
+ALU 반복 횟수가 증가할 때의 비용은 shaded overdraw와 quad inefficiency에 모두 비례한다.
+
+Forward+Prepass
+
+∂TP / ∂G
+= gP
+
+gP는 depth prepass와 두 번째 shading pass의 geometry 비용을 모두 포함하므로 일반적으로 gF보다 크다.
+
+∂TP / ∂O
+= 0
+
+이 결과는 G를 고정하고, depth prepass가 material pass의 overdraw를 완전히 제거한다고 가정한 편미분이다.
+
+실제로 layer를 추가하여 O를 증가시키면 G도 증가하므로 측정된 전체 변화율은 0이 아니다.
+
+∂TP / ∂Q
+= P × M(A)
+
+∂TP / ∂Q
+= P × (m0 + mA × A)
+
+Prepass는 overdraw material shading은 제거하지만 최종 visible triangle 경계에서 발생하는 quad inefficiency는 제거하지 못한다.
+
+∂TP / ∂A
+= P × Q × mA
+
+Material ALU 비용은 최종 visible pixel과 quad helper lane에서 발생한다.
+
+Triangle Visibility Buffer
+
+∂TV / ∂G
+= gV
+
+이 단순 모델에서는 geometry workload가 증가할 때 visibility pass의 geometry 비용만 증가한다.
+
+Geometry working set 증가로 resolve의 cache miss가 늘어나는 효과는 포함하지 않았다.
+
+∂TV / ∂O
+= P × Q × r
+
+Overdraw가 증가하면 visibility pass의 기록 비용이 증가한다.
+
+Forward의 overdraw 민감도인 P × Q × M(A)보다 작으려면 r < M(A)여야 한다.
+
+∂TV / ∂Q
+= P × O × r
+
+Scene triangle의 quad inefficiency는 visibility recording pass에는 영향을 주지만 fullscreen resolve의 material shading에는 직접 영향을 주지 않는다.
+
+∂TV / ∂A
+= P × mA
+
+TVB의 ALU 비용은 overdraw와 원래 scene triangle의 quad inefficiency에 관계없이 최종 visible pixel 수에 비례한다.
+
+알고리즘 간 시간 차이의 편미분
+
+TVB와 Forward의 시간 차이를 다음과 같이 정의한다.
+
+ΔVF = TV - TF
+
+ΔVF < 0이면 TVB가 빠르다.
+
+ΔVF > 0이면 Forward가 빠르다.
+
+∂ΔVF / ∂G
+= gV - gF
+
+gV < gF이면 geometry가 증가할수록 TVB가 상대적으로 유리하다.
+
+gV > gF이면 geometry가 증가할수록 TVB가 상대적으로 불리하다.
+
+∂ΔVF / ∂O
+= P × Q × [r - M(A)]
+
+r < M(A)이면 overdraw가 증가할수록 TVB가 유리하다.
+
+r > M(A)이면 overdraw가 증가할수록 TVB가 오히려 불리할 수 있다.
+
+∂ΔVF / ∂Q
+= P × O × [r - M(A)]
+
+Material 비용이 visibility recording 비용보다 크면 quad inefficiency가 증가할수록 TVB가 유리하다.
+
+∂ΔVF / ∂A
+= P × mA × (1 - O × Q)
+
+O × Q > 1이면 ALU 비용이 증가할수록 TVB가 유리하다.
+
+O = 1이고 Q = 1이면 Forward와 TVB 모두 visible pixel을 한 번씩 shading하므로 ALU 증가가 상대적인 차이를 만들지 않는다.
+
+TVB와 Forward+Prepass의 시간 차이를 다음과 같이 정의한다.
+
+ΔVP = TV - TP
+
+ΔVP < 0이면 TVB가 빠르다.
+
+ΔVP > 0이면 Forward+Prepass가 빠르다.
+
+∂ΔVP / ∂G
+= gV - gP
+
+일반적으로 gV < gP라면 geometry workload가 증가할수록 TVB가 유리하다.
+
+∂ΔVP / ∂O
+= P × Q × r
+
+G를 고정한 상태에서는 overdraw가 증가할수록 TVB의 visibility 기록 비용만 증가하므로 TVB가 불리해진다.
+
+다만 실제로 overdraw 증가와 함께 G가 증가한다면 prepass의 두 번째 geometry 비용도 증가하므로 전체 결과는 달라질 수 있다.
+
+∂ΔVP / ∂Q
+= P × O × r - P × M(A)
+
+정리하면 다음과 같다.
+
+∂ΔVP / ∂Q
+= P × [O × r - M(A)]
+
+M(A) > O × r이면 quad inefficiency가 증가할수록 TVB가 유리하다.
+
+O × r > M(A)이면 visibility pass의 quad 및 기록 비용이 더 커져 TVB가 불리해질 수 있다.
+
+∂ΔVP / ∂A
+= P × mA × (1 - Q)
+
+Q > 1이면 ALU 비용이 증가할수록 TVB가 Forward+Prepass보다 유리하다.
+
+Q = 1이면 두 방식 모두 visible pixel을 한 번씩 material shading하므로 ALU 비용은 상대적인 차이를 만들지 않는다.
+
+실험에서 반드시 구분해야 하는 편미분과 전체 변화율
+
+위 결과는 다른 변수를 고정한 편미분이다.
+
+하지만 layer 수를 늘려 overdraw를 증가시키면 일반적으로 G도 함께 증가한다.
+
+따라서 실제 측정되는 기울기는 다음과 같다.
+
+# dT / dO
+
+∂T / ∂O
++
+∂T / ∂G × dG / dO
++
+∂T / ∂Q × dQ / dO
+
+예를 들어 Forward+Prepass의 경우 다음과 같다.
+
+∂TP / ∂O = 0
+
+하지만 layer 추가로 G가 증가한다면 실제 변화율은 다음과 같다.
+
+# dTP / dO
+
+gP × dG / dO
++
+P × M(A) × dQ / dO
+
+따라서 Forward+Prepass의 시간이 overdraw와 함께 증가하더라도, 그것이 overdraw material shading 때문이라는 뜻은 아니다. 추가된 geometry와 rasterization 때문일 수 있다.
+
+Subdivision을 증가시키는 실험에서도 같은 문제가 있다.
+
+Subdivision 증가 시 G는 증가하고 Q도 증가할 수 있으므로 다음과 같다.
+
+# dT / dSubdivision
+
+∂T / ∂G × dG / dSubdivision
++
+∂T / ∂Q × dQ / dSubdivision
+
+따라서 geometry 효과와 quad inefficiency 효과를 분리하려면 G, O, Q를 입력값뿐 아니라 실제 측정값으로 함께 기록해야 한다.

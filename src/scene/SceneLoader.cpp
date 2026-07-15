@@ -18,7 +18,7 @@ namespace scene {
         gen_info.material_count = arg.material_count;
         gen_info.mesh_count = arg.geometry_count;
         gen_info.object_count = arg.object_count;
-        gen_info.sort_type = static_cast<EnumSortType>(arg.sort_type);
+        gen_info.overdraw_count = arg.overdraw_count;
         gen_info.z_min = arg.z_min;
         gen_info.z_max = arg.z_max;
         gen_info.xy_minmax = arg.xy_minmax;

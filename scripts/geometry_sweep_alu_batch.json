@@ -32,7 +32,7 @@
     "_object_count": 1,
     "_material_count": 10,
     "geometry_count": 1,
-    "_sort_type": 0,
+    "_overdraw_count": 0,
     "z_min": -1.0,
     "z_max": 1.0,
     "xy_minmax": 1.0,
@@ -45,7 +45,7 @@
     "alu_calc_count": 50
   },
   "sweep": {
-    "sort_type": [ 0, 1, 2 ],
+    "overdraw_count": [ 0, 4, 8 ],
     "material_count": [ 10, 20, 30 ],
     "object_count": [ 4, 16, 64, 256, 1024, 4096, 16384 ],
     "renderer_variant": [ 1, 2, 4 ]

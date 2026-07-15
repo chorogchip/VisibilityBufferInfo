@@ -86,7 +86,7 @@ void RendererBase::close() {
     auto results = frame_counter_.summarize();
 
 #define COPY_PASS_RESULT(index) \
-    if (results.size() > index) { \
+    do { if (results.size() > index) { \
         result.pass_##index##_time_min_ms = results[index].time_min_ms; \
         result.pass_##index##_time_median_ms = results[index].time_median_ms; \
         result.pass_##index##_time_max_ms = results[index].time_max_ms; \
@@ -95,12 +95,31 @@ void RendererBase::close() {
         result.pass_##index##_time_p10_ms = results[index].time_p10_ms; \
         result.pass_##index##_time_p90_ms = results[index].time_p90_ms; \
         result.pass_##index##_time_p99_ms = results[index].time_p99_ms; \
-    }
-    COPY_PASS_RESULT(0)
-    COPY_PASS_RESULT(1)
-    COPY_PASS_RESULT(2)
-    COPY_PASS_RESULT(3)
+    } } while (false)
+
+    COPY_PASS_RESULT(0);
+    COPY_PASS_RESULT(1);
+    COPY_PASS_RESULT(2);
+    COPY_PASS_RESULT(3);
 #undef COPY_PASS_RESULT
+
+    const auto val_cnt = program_arguments_->object_count;
+    const auto val_ovd = program_arguments_->overdraw_count;
+    const auto val_div = program_arguments_->geometry_div;
+    const auto val_alu = program_arguments_->alu_calc_count;
+
+    util::Logger::g_logger.assert_with_log_mul_overflow(val_div, val_div,
+        std::numeric_limits<size_t>::max(), "val_div ^2 overflow");
+
+    const size_t val_div_sq = static_cast<size_t>(val_div) * static_cast<size_t>(val_div);
+
+    util::Logger::g_logger.assert_with_log_mul_overflow(val_cnt, val_div_sq,
+        std::numeric_limits<size_t>::max(), "cnt * val_div overflow");
+
+    result.variable_geometry_count = val_cnt * val_div_sq;
+    result.variable_overdraw_count = val_ovd;
+    result.variable_waste_quad_count = val_div;
+    result.variable_alu_op_count = val_alu;
 
     this->make_programresult(result);
 
@@ -240,7 +259,7 @@ void RendererBase::create_texture_sampler_descriptors() {
     D3D12_CPU_DESCRIPTOR_HANDLE sampler_handle =
         sampler_heap_->GetCPUDescriptorHandleForHeapStart();
 
-    const UINT sampler_count =  1;
+    const UINT sampler_count = 1;
 
     for (UINT i = 0; i < sampler_count; ++i) {
         D3D12_SAMPLER_DESC sampler_desc{};

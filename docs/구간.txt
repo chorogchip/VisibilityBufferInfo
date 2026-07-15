@@ -1,0 +1,11 @@
+
+
+
+발생할 수 있는 부하 구간:
+L2에 들어가는 구간과 넘는 구간
+occupancy가 충분하지 않은 구간과 포화 구간
+VRAM bandwidth가 포화되기 전과 후
+작은 triangle rasterization이 병목이 되는 구간
+texture latency가 ALU에 의해 숨겨지는 구간
+resolution 증가로 working set이 cache를 넘는 지점
+

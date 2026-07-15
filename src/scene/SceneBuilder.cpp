@@ -182,21 +182,22 @@ namespace scene {
 
 		ret->objects.reserve(info.object_count);
 		std::vector<uint32_t> indices;
+		indices.reserve(info.object_count);
 
-		if (info.sort_type == EnumSortType::RANDOM) {
-			for (uint32_t i = 0; i < info.object_count; ++i)
+		// generate indices by overdraw
+		{
+			util::Logger::g_logger.assert_with_log(
+				info.overdraw_count < std::numeric_limits<uint32_t>::max() - 1,
+				"overdraw_count overflow");
+			util::Logger::g_logger.assert_with_log(
+				info.object_count >= info.overdraw_count + 1,
+				"there must be object_count >= overdraw_count + 1");
+
+			uint32_t i = 0;
+			for (; i < info.overdraw_count + 1; ++i)
+				indices.push_back(info.overdraw_count - i);
+			for (; i < info.object_count; ++i)
 				indices.push_back(i);
-			for (uint32_t i = 0; i < info.object_count; ++i) {
-				std::uniform_int_distribution<uint32_t> dist(i, info.object_count - 1);
-				uint32_t ind = dist(gen);
-				std::swap(indices[i], indices[ind]);
-			}
-		} else if (info.sort_type == EnumSortType::FROM_FRONT) {
-			for (uint32_t i = 0; i < info.object_count; ++i)
-				indices.push_back(i);
-		} else if (info.sort_type == EnumSortType::FROM_BACK) {
-			for (uint32_t i = 0; i < info.object_count; ++i)
-				indices.push_back(info.object_count - 1 - i);
 		}
 
 		for (uint32_t i = 0; i < info.object_count; ++i) {

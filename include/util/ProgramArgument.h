@@ -34,7 +34,7 @@ namespace util {
     X(uint32_t, object_count, 1, object-count) \
     X(uint32_t, material_count, 1, material-count) \
     X(uint32_t, geometry_count, 1, geometry-count) \
-    X(uint32_t, sort_type, 0, sort-type) \
+    X(uint32_t, overdraw_count, 0, overdraw-count) \
     X(float, z_min, -1.0f, z-min) \
     X(float, z_max, 1.0f, z-max) \
     X(float, xy_minmax, 1.0f, xy-minmax) \
@@ -66,8 +66,11 @@ namespace util {
     ProgramResultPass_MAC(X, 0) \
     ProgramResultPass_MAC(X, 1) \
     ProgramResultPass_MAC(X, 2) \
-    ProgramResultPass_MAC(X, 3)
-
+    ProgramResultPass_MAC(X, 3) \
+    X(std::uint32_t, variable_geometry_count, variable-geometry-count) \
+    X(std::uint32_t, variable_overdraw_count, variable-overdraw-count) \
+    X(std::uint32_t, variable_waste_quad_count, variable-waste-quad-count) \
+    X(std::uint32_t, variable_alu_op_count, variable-alu-op-count)
 
 #define ProgramResultPerFrame_MAC
 

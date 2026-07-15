@@ -1,15 +1,13 @@
 
+3주차 보고서 초안
 좋은 보고서를 쓰자.
-
-
-
-
 
 목적: Triangle Visibility Buffer(TVB) 기법이
     기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
 
+* 장면 구성과 렌더러 설명에 제대로 된 근거를 붙여 정보 누락 없이 설명할 것.
 
-장면 구성 1: synthetic primitive scene
+장면 구성 1: synthetic primitive scene, Custom Renderer
 - Crossover Point 찾기: 변수에 따른 Tradeoff를 관찰하고 유리해지는 알고리즘이 바뀌는 지점 찾기. 점을 잘 찍으면 됨.
 - 데이터와 맞게 성능 모델을 수립(공식)
 - Roofline 분석: VRAM bandwidth, ALU, texture sampling, rasterization, L2 cache 등에 의한 roofline 분석
@@ -20,62 +18,43 @@
 - 인공 씬은 실용적인 부하 분포를 가지지 않으므로 실제 렌더러의 deferred를 baseline으로 삼아 거기에 visbuf를 붙이기.
 
 - Scene fingerprint 추출 (각 씬의 geometry/material/texture/overdraw 특성 수치화)
-- 구에서 세운 모델이 현실에서도 통하는지 가설을 세우고 검증
+- 인공 씬에서 세운 모델이 현실에서도 통하는지 가설을 세우고 검증
+
+공통
 - HW 프로파일링을 동반
 - 안 통한다면 이유를 찾기
 - TVB 약점, 강점 케이스 찾기
-- material binning / sorting 실험 (확장)
+- buffer format, barycentric/derivative calc, material binning 등 variant 구현
 
+* 실험의 의도, 조건(변수), 근거, 데이터를 누락 없이 명확히 설명할것. 특히 씬을 시각적으로 보여줄것.
+* 수치가 너무 빠르거나 비현실적이지 않는지, 이론과 부합하는지 검사.
 
+렌더러 간 비교 동등성
+- 같은 셰이더코드, 같은 버퍼, 같은 텍스쳐 등등을 사용했습니다.
+- 를 자세히 보여주기
 
+VisBuf 구현에 대해
+- material처리는 없고 barycentric은 해석적으로 구하고 resolve는 풀스크린 픽셀셰이더지만, 다양한 구현이 있을수있지만
+- 대부분의 VisBuf resolve의 경우 대부분 스크린 크기가 고정되어있다면 상수 시간을 가지고, 제출된 지오메트리나 버퍼의 지오메트리 working set 등에 의존한다면 해당 의존성 자체는 이미 현재 알고리즘에도 존재하기에, 상수는 달라질 수 있지만 형태는 같다고 가정하고 진행하였습니다. 따라서 기본 렌더러에서는 상수 값보다는 형태를 관찰하는 데 집중했습니다
 
+실험 1: VB는 두 번째 래스터화와 quad낭비 비용을 얼마나 줄이는가?
+- material=1, mesh=1, 인스턴스 많이 사용
+- quad 낭비를 비교하기 위해 삼각형 크기/resolution을 조절
+- overdraw를 조절
+- forward pre-pass에 집중해 비교
+- 예상: 삼각형당 픽셀개수가 적어질수록 이득, overdraw 증가할수록 이,득 단 일정 개수의 삼각형 이상에서만 발생, 
 
-
-
-
-[공통 피드백]
-- 가장 중요한 알고리즘 분량을 길게. 시행착오는 분량 적어도 됨.
-- AI가 짜준게 아니라 내가 소유한다는 걸 강하게 증명해야 한다.
-- 주장을 한다면 근거를 철저히. 실험 변수(조건), 근거, 데이터.
-- 수치가 너무 빠르면 측정이 무의미한걸수도.
-- 먼가 하나하나 자세히 물어보면서 가산점을 주시려는거같다 (어려운 구현이나)
-- 뭔가 쓸떄 이유를 생각해야한다 (이 알고리즘을 / 이 기법을 왜 썼나? 기본적으로 여러 방법을 탐색해야함.)
-- 내 의도가 뭔가? 그게 잘 나오고 있는가?
-- ground turso가 있어야한다. 사람들이 잘 만들어놓은거나 그런거.
-
-[피드백]
-- ppt에서 측정한 씬 보여주면서, 씬 단위로 돌아가면서 점진적으로 실험하고 그걸 보여줘야 의미있다.
-- light (clustered), barycentric, instance단위, 알파블렌딩(이게 힘듬) 등에서 여러 효율적인 구현 생각해보기.
-- scene단위 iteration하면서 실험하기
-- 만들어가면서 실험하고 발표하기.
-
-- light를 넣되, light의 의미는 현실적인 부하로서 의미가 있어야 한다. (unit이 여러 작업을 수행하니까 그런 의미에서의 현실성을 갖춘 부하)
-- 씬 구성에서 bottleneck이 있음을 증명한 후 진행해야한다: 예를 들어 특정 카메라 위치에서 뭐 예를들어 gbuffer 가 bandwidth를 많이 소모한다
-그러면 그거를 nsight로 찍어서 느려진다는걸 증명한 이후로 넘어갈 수 있다.
-- 일관성(다른 주제로 새지 않기) / 노이즈나 변수 독립성을 보여줘야한다
-- 씬에 대해 순회하며 점진적으로 개선하기.
-- AMD그래픽카드를 쓰면 좋을 수 있다. HW 유닛이 어느정도 나눠져있기에 (혹은 드라이버가 nvidia만큼 안돼있기에) 이게 왜 느려지는지가 잘 보인다
-- 근데 느려지는게 안생기면 그냥 부하를 늘리면 된다. light 많이넣고 그런거.
-- 5070은 너무 좋은 그래픽카드다
-- 최신 논문에선 어떤 장비를 썼는지 참조해서 하면 좋다
-
-- 코드를 더 신경쓰자. 이제 코드를 다 보신다..
-- 코드가 많이 부족하다? (어떤 맥락인지 모르겠다 일관성이나 현실 재현성이 부족하다는건가 아님 그냥 못짰다?)
-
-
-
-
-
-[07-14 진행상황]
-
-렌더러 개발
-- 초기 실험을 위해 렌더러의 초기 버전을 마무리했습니다.
-- 텍스쳐 샘플러를 모든 알고리즘에 완전히 추가했습니다.
-- 더 식별하기 좋은 더미 텍스쳐를 만들었습니다.
-- 각 알고리즘이 똑같은 쉐이더 코드로 공정한 workload를 하도록 만들었습니다.
-- 구 씬의 앞뒤가 뒤집히던 버그를 수정했습니다.
-- 실험 측정을 위한 파라미터를 추가했습니다. (정렬, quad씬 등)
-- 측정과 plot을 위한 스크립트를 실험에 따라 점진적으로 개선하며 구축했습니다. (ai 활용)
+충분히 큰 삼각형을 가진 메시에 대해서
+인스턴스를 1개, 10개, ..., 천만개.
+성능을 선형으로도 뽑아보고
+n으로 나눈 걸로도 뽑아봐서 성능 모델 세울 수 있다.
+그걸 forward, forward + prepass, visbuf에 대해 그려본다.
+단 인스턴스가 정렬된순서, 역정렬된순서, 랜덤순서 이렇게 3개를 한다
+quad로도 해보고 구로도 해본다
+그러면 대충 scalability를 알수있을것이다
+거기서 성능 모델을 세울 수 있다
+그리고 모델 간의 차를 분리해서 무언가 결론을 내릴 수 있다
+여기까지가 quad전의 overdraw에 대한 실험
 
 실험 1-1 : geometry처리 절약 - overdraw 실험
 - material=1, mesh=1, 인스턴스를 많이 사용합니다.
@@ -84,19 +63,317 @@
 - 물체의 정렬 순서에 따라(앞부터, 뒤부터, 무작위) 비교합니다.
 - scalability를 비교하고 성능 모델을 세우는 것이 목표입니다.
 
-- overdraw를 많이 했음에도 예상과 달리 forward + prepass의 depth prepass와 forward pass의 비용이 물체 정렬 순서에 상관없이 거의 같게 나왔습니다.
-	- 셰이더 비용이 낮다고 생각해 ALU연산을 넣어 셰이더 비용을 증가시킨 후 실험했지만 결과는 비슷했습니다.
-	- 한 draw call 내부의 인스턴스들의 정렬 순서는 영향이 적을 수 있다는 것을 발젼해 여러 draw call 로 쪼갠 후 정렬 순서를 달리 해 실험했습니다.
-	- 최종적으로 오브젝트들을 정렬하는 코드에서 오류가 있었던 것을 확인했고, 올바르게 작성하여 테스트한 결과 정렬 순서와 알고리즘에 의존해 성능이 변하는 결과가 나왔습니다.
-	- 조금 더 실험을 이어나가 잘 설명할 수 있게 다듬으려고 합니다.
-
 실험 1-2 : geometry처리 절약 - quad 실험
 - 비슷한 상황에서 삼각형의 크기를 조절하며 실험해보려고 합니다.
 
-계획
-- 실험을 계속 진행하겠습니다
-- 실험과 동시에 donut 렌더러 상에서 visibility buffer방식의 렌더러를 만들어
-	intel jungle ruins 씬의 특정 상황에서 donut의 deferred보다 좋은 성능을 달성하는 것이 목표입니다.
+실험 2: VB는 버려지는 프래그먼트들의 texture sampling / material shader 비용을 얼마나 줄이는가?
+- material수, mesh수 = 1, 인스턴스 많이 사용
+- 위 실험에서 얻은 삼각형 크기 / resolution / overdraw 조건 사용
+- 셰이더에서 텍스쳐 샘플링 / ALU 연산 횟수를 조절
+- deferred에 집중해 비교
+- 예상: 삼각형 크기가 작고 셰이더 비용이 증가할수록 이득
+
+실험 1, 2는 묶어서 진행.
+
+1차 실험
+- overdraw를 많이 했음에도 예상과 달리 forward + prepass의 depth prepass와 forward pass의 비용이 물체 정렬 순서에 상관없이 거의 같게 나왔습니다.
+2차 실험
+- 한 draw call 내부의 인스턴스들의 정렬 순서는 영향이 적을 수 있다는 것을 발젼해 여러 draw call 로 쪼갠 후 정렬 순서를 달리 해 실험했습니다.
+- 셰이더 비용이 낮다고 생각해 ALU연산을 넣어 셰이더 비용을 증가시킨 후 실험했지만 결과는 비슷했습니다.
+3차 실험
+- 최종적으로 오브젝트들을 정렬하는 코드에서 오류가 있었던 것을 확인했고, 올바르게 작성하여 테스트한 결과 정렬 순서와 알고리즘에 의존해 성능이 변하는 결과가 나왔습니다.
+
+실험 1, 2까지 해서 3주차 보고서를 만들자.
+
+
+
+
+
+
+실험 1: VB는 두 번째 래스터화와 quad낭비 비용을 얼마나 줄이는가?
+실험 2: VB는 버려지는 프래그먼트들의 texture sampling / material shader 비용을 얼마나 줄이는가?
+
+즉 1번은 앞단, 2번은 중간 단의 비용을 측정하려고 한다.
+앞단의 비용은 prepass와 비교시 전체 VS -> raster -> early-Z 까지이다. (forward는 PS와 material까지 비용이 넘어간다)
+단 visbuf도 PS에서 VS의 연산을 포함해서 하기에
+overdraw의 VS + 전체 raser, early-Z - visutil오버헤드(무게중심) 만큼의 차이가 난다
+ALU연산과는 독립적이다
+
+- ALU와는 독립이다
+- 전체 geometry에 선형 비례, prepass가 상수 클것이다(raster까지 다하니까 - 이걸 실험)
+- overdraw가 많으면 VS의 비용 추가 - 정점 많을수록 상수 클것이다
+- overdraw는 물체들의 겹치는 수, 정렬된 정도 등으로 변한다
+- VS가 compute bound가 맞을까? 이걸보는건 실험 4에서 한다 (메모리 크기와 roofline 등을 다룸)
+- 낭비 quad에 대해서(다 보이는 quad일 경우에만.), prepass는 material까지 넘어가는데 material비용에 따라 갈린다. 즉 이건 2번 실험.
+- 안보이는 quad는 상관없지 않을까 예상.
+- 낭비 quad는 VS가 아닌 PS에서만 도는거고 material비용과 관련돼있다.
+
+실험 2는 
+- forward/deferred는 삼각형이 작을수록 낭비 quad비용이 높고 ALU/texture sampling이 많을수록 비용이 커질것이다
+- TVB는 quad 상관없이 상수임
+- resolution도 조정가능.
+
+성능 모델을 그리면
+
+forward = (full geometry) (VS cost + raster) + ( (visible geometry) + (overdrawn geometry) + (quad) ) (PS cost)
+forward prepass = (full geometry) (VS cost + raster) + (full geometry) (VS cost + raster) + ( (visible geometry) + (quad) ) (PS cost)
+즉 forward prepass - forward = (full geometry) (VS cost + raster) - (overdrawn geometry) (PS cost)
+다시 말해 overdraw의 PS비용을 줄이기 위해 모든 geometry의 변환과 래스터를 한다
+
+visbuf = (full geometry) (VS cost + raster + visbuf recording) + (visutil) + (visible geometry) (PS cost)
+즉 visbuf - forward prepass = (overdraw) (visbuf recording) + (visutil) - (full geometry) (VS cost + raster) - (quad) (PS cost)
+다시 말해 prepass비용을 생략하고 (모든 geometry를 다시 변환 생략하고) quad의 PS 비용을 줄이기 위해 full geometry의 visbuf recording과 상수 visutil을 한다
+
+그러면 visbuf recording은 사실 overdraw를 제외하면 씬에 따라 크게 변할 게 없고 (overdraw가 상대적으로 영향을 더 주겠군! 이건 이미 실험결과로 나옴)
+VS비용이 증가할수록 이득, quad 낭비와 ALU가 증가할수록 이득이겠군!
+
+virbuf - forward = (overdraw) (visbuf recording) + (visutil) - (overdrawn + quad geometry) (PS cost) 이므로
+forward에 비해선 똑같이 full recording을 지불해 overdraw와 quad의 PS비용을 아끼겠군
+- 그럼 ALU비용이 낮으면 어쩌면 forward의 민감도보다 visbuf의 민감도가 클지도 모르는걸? 이아니라 얘는 32비트 두개여서 그런 일이 안 일어날듯 일단 실험은 해보자
+- 이 비교는 overdraw 상수를 비교할 떄 좋을 거 같고, 또 overdraw가 없을 때
+- (visible + quad) (visbuf record) + (visutil) - (quad) (PS) 이므로 visible/visbuf record는 overdraw없을떄 상수이므로 quad의 차이가 나겠군 그 차는 ALU비용이 결정
+
+- 그러면 ALU비용에 따라서, overdraw비용에 따라서, forward와 visbuf가 경쟁할 수 있겠고 (둘다 낮을떄만 forward가 유리하겠고)
+- geometry의 양 자체는 overdraw가 같다면 visbuf에 불리할 수 있다(미소하게)
+- overdraw가 더 심해질 때 geometry가 많다면 ALU가 적을 때 visbuf가 오히려 불리할수도
+
+forward + prepass 와 비교하면
+- overdraw가 많을수록 visbuf가 불리하겠고
+- full geometry의 cost를 prepass가 항상 부담하므로 geometry가 늘면 visbuf가 유리하겠네
+- quad가 늘면 visbuf가 유리하겠고
+
+그렇다면 해야 할 실험을 생각해 보면,
+변수: overdraw, quad, geometry, ALU
+단 여기서 overdraw와 quad는 서로 별도의 실험으로 분리해야 변수를 하나라도 줄일 수 있을 거 같고
+2차원에 plot하려면 변수는 최대 2개니 (xy축이 변수, 성능상 유리한 알고리즘의 점 혹은 등고선)
+overdraw-geometry, overdraw-ALU, geometry-ALU 세 개를 해야 하나..
+더 좋은 방법이 없나
+
+
+그럼 데이터는 한 csv에 몰아넣고
+contour plot을 variant별로 뽑은다음에 winner map그려보고
+마지막으로는 회귀 모델에 데이터를 다 넣고 돌려보는 접근을 해볼까
+
+
+ALU: 직접적 사용 X. crossover를 찾을 수 있는 두번째 축으로 사용.
+1. G - T.
+- O,Q,A,P 고정.
+2. O,A - T.
+- Q,P,G고정.
+- variant별 contour plot, 하나의 winner map.
+-> overdraw와 material비용이 어느 정도 커져야 xx알고리즘이 유리한가?
+3. Q,A - T.
+- same as 2.
+
+1. 로그스케일로 느슨한 측정하기
+2. crossover point 의심지역 부근에서 세밀한 측정하기.
+
+
+
+변수: G O Q A. 4차원이고 3차원 항을 계산한다
+하나에 2초시 33분걸려서 1000개 측정한다.
+
+문제: 사실 원래 변수는 4개임: object 수 / 순서 / division / ALU
+근데 수 -> G, O에 영향, 순서 -> O에 영향, division -> G, Q에 영향, ALU -> A에 영향
+근데 G, O, Q, A에 대해선 이들의 최대 3차항 곱(제곱 세제곱은 없음)의 선형모델일걸로 예상되는데
+A=ALU이고 수에 따른 G, O는 단순 배수이고 division에 따른 Q는 좀 복잡한 수식이지만 대충 반비례 하느 식으로 계산가능하고
+division에 따른 G는 단순 제곱 배수이고 순서에 따른 O는 이거는 사실 HW 내부 일이라 알수없지만 하한을 수식에 의해 (조화수) 계산가능
+어케하지;;
+
+데이터 측정점은 Sobol 설계.
+Scrambled Sobol sequence.
+
+26개 계수의 분산을 최소화하는 것만 목표라면 후보점 집합에서 D-optimal design을 선택할 수 있습니다.
+
+각 변수의 물리적 최소·최대 범위를 먼저 정합니다.
+계수 모델은 raw 값을 사용할 수 있지만, 실험점 생성은 변수가 몇 자릿수에 걸쳐 있느냐에 따라 달라집니다.
+
+용도	점 개수	역할
+초기 Sobol 설계	550	전역 모델 학습
+구조적 진단점	100	중앙·경계·주요 slice
+Adaptive 추가점	100	잔차나 경계가 큰 영역
+최종 holdout	150	최종 성능 평가
+
+
+실행 순서 랜덤화
+설계점 순서 그대로 실행하면 문제가 생길 수 있습니다.
+예를 들어 geometry가 낮은 값에서 높은 값 순으로 정렬되어 있으면 시간에 따른 GPU 온도 상승이나 clock 변화가 geometry 효과처럼 보일 수 있습니다.
+따라서 실행 순서는 랜덤화해야 합니다.
+
+
+Feature 생성 방식
+기본 변수들을 먼저 중심화합니다.
+범위 차이까지 제거하려면 표준화합니다.
+
+
+OLS
+항상 baseline으로 돌립니다.
+현재 문제에서는 낮은 ρ, 즉 Ridge에 가까운 Elastic Net이 선택될 가능성이 큽니다.
+λ는 사람이 한 값을 정하는 것이 아니라 CV로 고릅니다.
+
+랜덤 CV만 사용하면 안 되는 이유
+
+Sobol 점은 공간을 잘 채우므로 일반적인 shuffled K-fold도 작동합니다. 하지만 validation 점 바로 근처에 training 점이 존재할 가능성이 높아 interpolation 성능을 주로 평가합니다.
+
+따라서 두 종류를 같이 보는 것이 좋습니다.
+일반 5-fold CV
+점들을 공간적으로 균형 있게 각 fold에 분배합니다.
+이는 일반적인 interpolation 성능을 평가합니다.
+Region-blocked CV
+
+평가 지표
+frame time 예측이라면 최소한 다음을 봅니다.
+RMSE,MAE,R2
+
+
+비선형성이 발견되면
+선형모델의 잔차가 특정 영역에서 체계적으로 나타난다면 데이터를 더 모아도 됩니다.
+오히려 순차적으로 그렇게 하는 것이 효율적입니다.
+
+이론적으로 구간별 선형이라면
+하드웨어 알고리즘에서는 다음처럼 구간별 선형일 가능성이 있습니다.
+경계를 알고 있는 경우
+indicator를 직접 넣습니다.
+그리고 구간별 계수 차이를 interaction으로 표현합니다.
+
+이 방식은 해석성이 좋습니다.
+경계를 모르는 경우
+다음 방법이 적합합니다.
+segmented regression
+hinge feature
+piecewise-linear spline
+MARS
+linear model tree
+mixture of linear experts
+
+
+지역 모델이 목적
+특정 영역의 정확도만 중요하다면 그곳에 집중해서 데이터를 모아도 됩니다.
+전체 공간 모델이 목적
+특정 영역을 과도하게 oversampling하면 training loss가 그 영역에 치우칩니다.
+
+대응 방법은:
+전역 점도 계속 추가
+실제 운영 분포에 맞는 sample weight 사용
+영역별 모델을 따로 만듦
+test set은 원래 전역 분포로 유지
+
+
+________________________________________
+
+문제
+
+변수는 G, O, Q, A 인데
+컨트롤가능한건 A, 장수, 순서, division이었다.
+G = 장수 * division^2
+O = f2(순서, 장수)
+Q = f3(division)
+A = ALU
+물론 선형으로 곱해지거나 더해지는 상수도 포함
+
+일단 Q의 경우..  음
+일단 순서의 경우 앞에 역순 부분 - 뒤에 정순 부분 하면은
+앞의 역순 부분만큼만 overdraw가 됨.
+즉 이걸로 선형으로 컨트롤 가능.
+
+Q는 대략 사각형을 그릴때 O(n^2)개의 픽셀에서 O(n)개의 quad낭비가 발생하므로 1/n의 선형변환만큼임.
+따라서
+
+G = 장수 * division^2
+O = 순서, 순서 < 장수.
+Q = 1/(width/division) = division
+A = ALU
+
+O가 골치아프므로 장수는 기본적으로 많이 확보.
+순서는 overdraw가 30만 돼도 꽤 힘드므로 최소 장수가 30으로 하면 문제없음.
+
+그리고 grey box 접근식을 사용
+일단 변수는 15개
+
+________________________________________
+
+이렇게 실험을 했을 때
+- HW가 다르면 어떻게 모델링하나?
+- 렌더러가 다르면 어떻게 모델링하나?
+- 씬이 다르면 어떻게 모델링하나?
+- 인공 씬이 아니라 실제 씬에도 적용되는가?
+- 실제 렌더러에도 적용되는가?
+- fingerprint값과 잘 맞는가?
+
+- 일단 특정 HW와 렌더러와 씬에서의 crossover map이 의미있을 수 있다.
+- 그리고 일반화해 성능을 결정하는 비용항을 식별할 수 있다. (예를들어 OQA 항에 비례한다)
+- 그리고 HW/렌더러/씬 이 바뀔 경우 유지되는지 실험해보고
+- 적은 측정으로 새 HW/렌더러/씬에 이식 가능한지도 고려를 해볼 수 있다
+
+그리고 항별 기여량 map도 그릴 수 있다.
+
+그리고 민감도 (두 변수의 편미분 비율) 를 계산할 수 있다, 혹은 Elasticity라던지 -> 상수를 무시할 계획을 세움
+
+또한 roofline 분석과 HW 상수를 연결해보는 분석을 해볼 수 있다.
+프로파일링 결과와 대조.
+
+
+아무튼 얻을 수 있는게
+1. 변수 4개(screen space fingerprint)로 scene의 렌더링 비용을 예측할 수 있는가? 그럴수도 아닐수도
+2. visbuf가 언제 유리한가? 뭐보다 뭐뭐 항이 더 중요하다..
+3. crossover이 존재한다를 관찰해 수식으로 표현 (A보다 B항이 클때 이 알고리즘이 유리해진다)
+4. HW나 씬이 많다면 hierarchical regression이라던지...
+
+일단 비용 공식, crossover rule, winner map, HW병목 분석
+이렇게 4가지로 말할 수 있겠고
+이걸 3주차에 하고
+다음 계획으로는 다음 실험, 그리고 해당 데이터가 실제 렌더러, 실제 씬, fingerprint만의 정보, 다른 HW에서도 잘 맞는지 분석한다
+이렇게 정리.
+
+
++ G, O, Q, A 모델에 변수를 추가할수도 있다.
+
+
+________________________________________
+
+
+
+지금 해야 할거: 다른 문서에 작성
+
+
+
+
+
+
+
+실험 4: gbuffer bandwidth 절약이 의미있는가?
+- gbuffer 크기를 늘리며 비교
+- resolution을 조절
+- deferred, VB, VB + Gbuffer를 비교
+- 이론적 메모리 트래픽을 계산해 L2캐시 크기 등과 비교
+
+실험 5: indirect access는 얼마나 치명적인가?
+- geometry data working set개수 조절하며 다른 알고리즘과 비교.
+- L2캐시 크기와 연관지어 접근
+- VB에서 geometry가 저장되는 레이아웃을 바꿔보면서 실험
+
+실험 4, 5는 4주차 보고서에 포함될거다.
+
+실험 3: draw call 수와 PSO switch 수 줄면 얼마나 좋은가?
+- 많은 mesh/material 수, draw call을 늘리면서 scalability 비교
+- material의 비용 자체도 필요하다면 변동.
+- cpu와 gpu의 병목을 같이 측정.
+
+실험 6: material 계산 방법에 따라 성능이 어떻게 차이나는가?
+- 이건 지금 못할듯
+- 화며 상 material 분포를 다르게 조정하며 비교
+
+실험 3, 6같은 경우에는 material 관련 기능이 구현되어야 할 수 있기에 다음으로 미뤘습니다.
+
+이후: 실험과 동시에 donut 렌더러 상에서 visibility buffer방식의 렌더러를 만들어
+intel jungle ruins 씬의 특정 상황에서 donut의 deferred보다 좋은 성능을 달성하는 것이 목표입니다.
+그리고 실제 씬을 가지고 이론적 장면 결과에 해볼 수 있는 작업을 제시하자
+예를 들어 scene fingerprint를 기반해서 매개변수를 추출하고 그걸 여기서 뽑은 그래프에 점을 찍어볼 수 있습니다
+실제로 점을 찍어보던지
+
+
+
+
 
 
 

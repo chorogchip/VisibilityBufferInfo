@@ -73,7 +73,7 @@ class ProgramArgument:
     material_count: int = 1
     geometry_count: int = 1
 
-    sort_type: int = 0
+    overdraw_count: int = 0
 
     z_min: float = -1.0
     z_max: float = 1.0
