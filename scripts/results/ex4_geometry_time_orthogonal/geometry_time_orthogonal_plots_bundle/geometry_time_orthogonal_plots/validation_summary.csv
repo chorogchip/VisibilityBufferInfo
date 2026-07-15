@@ -1,0 +1,4 @@
+variant,renderer,successful_rows,max_total_error_ms,mean_total_error_ms,rows_above_tolerance,tolerance_ms,status
+1,Forward,15,0.0,0.0,0,1.1e-05,OK
+2,ForwardPrepass,15,1.0000000000065512e-05,1.9999999999808366e-06,0,1.1e-05,OK
+4,VisBuf,15,1.0000000000509601e-05,2.666666666701715e-06,0,1.1e-05,OK

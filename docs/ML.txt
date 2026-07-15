@@ -1,0 +1,77 @@
+데이터 측정점은 Sobol 설계.
+Scrambled Sobol sequence.
+
+26개 계수의 분산을 최소화하는 것만 목표라면 후보점 집합에서 D-optimal design을 선택할 수 있습니다.
+
+각 변수의 물리적 최소·최대 범위를 먼저 정합니다.
+계수 모델은 raw 값을 사용할 수 있지만, 실험점 생성은 변수가 몇 자릿수에 걸쳐 있느냐에 따라 달라집니다.
+
+용도	점 개수	역할
+초기 Sobol 설계	550	전역 모델 학습
+구조적 진단점	100	중앙·경계·주요 slice
+Adaptive 추가점	100	잔차나 경계가 큰 영역
+최종 holdout	150	최종 성능 평가
+
+
+실행 순서 랜덤화
+설계점 순서 그대로 실행하면 문제가 생길 수 있습니다.
+예를 들어 geometry가 낮은 값에서 높은 값 순으로 정렬되어 있으면 시간에 따른 GPU 온도 상승이나 clock 변화가 geometry 효과처럼 보일 수 있습니다.
+따라서 실행 순서는 랜덤화해야 합니다.
+
+
+Feature 생성 방식
+기본 변수들을 먼저 중심화합니다.
+범위 차이까지 제거하려면 표준화합니다.
+
+
+OLS
+항상 baseline으로 돌립니다.
+현재 문제에서는 낮은 ρ, 즉 Ridge에 가까운 Elastic Net이 선택될 가능성이 큽니다.
+λ는 사람이 한 값을 정하는 것이 아니라 CV로 고릅니다.
+
+랜덤 CV만 사용하면 안 되는 이유
+
+Sobol 점은 공간을 잘 채우므로 일반적인 shuffled K-fold도 작동합니다. 하지만 validation 점 바로 근처에 training 점이 존재할 가능성이 높아 interpolation 성능을 주로 평가합니다.
+
+따라서 두 종류를 같이 보는 것이 좋습니다.
+일반 5-fold CV
+점들을 공간적으로 균형 있게 각 fold에 분배합니다.
+이는 일반적인 interpolation 성능을 평가합니다.
+Region-blocked CV
+
+평가 지표
+frame time 예측이라면 최소한 다음을 봅니다.
+RMSE,MAE,R2
+
+
+비선형성이 발견되면
+선형모델의 잔차가 특정 영역에서 체계적으로 나타난다면 데이터를 더 모아도 됩니다.
+오히려 순차적으로 그렇게 하는 것이 효율적입니다.
+
+이론적으로 구간별 선형이라면
+하드웨어 알고리즘에서는 다음처럼 구간별 선형일 가능성이 있습니다.
+경계를 알고 있는 경우
+indicator를 직접 넣습니다.
+그리고 구간별 계수 차이를 interaction으로 표현합니다.
+
+이 방식은 해석성이 좋습니다.
+경계를 모르는 경우
+다음 방법이 적합합니다.
+segmented regression
+hinge feature
+piecewise-linear spline
+MARS
+linear model tree
+mixture of linear experts
+
+
+지역 모델이 목적
+특정 영역의 정확도만 중요하다면 그곳에 집중해서 데이터를 모아도 됩니다.
+전체 공간 모델이 목적
+특정 영역을 과도하게 oversampling하면 training loss가 그 영역에 치우칩니다.
+
+대응 방법은:
+전역 점도 계속 추가
+실제 운영 분포에 맞는 sample weight 사용
+영역별 모델을 따로 만듦
+test set은 원래 전역 분포로 유지

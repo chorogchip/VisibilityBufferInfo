@@ -3,13 +3,10 @@
 """Run a benchmark sweep and preserve as much CSV/JSON output as possible.
 
 Usage:
-    python run.py path/to/experiment.json
+    python run_resilient.py path/to/experiment.json
 
 Behavior:
-- Existing ``base`` + ``sweep`` Cartesian-product specs remain supported.
-- A ``samples`` array may be used instead of ``sweep`` to run explicit
-  parameter sets sequentially, in the order stored in the JSON file.
-- A failure in one benchmark run does not stop the remaining runs.
+- A failure in one benchmark run does not stop the remaining sweep.
 - Every run writes a success/failure row to the combined CSV immediately.
 - Rows produced before an executable error are still salvaged.
 - The input JSON is copied to the result directory as early as possible.
@@ -172,23 +169,6 @@ def sweep_over(
 
     for combination in itertools.product(*value_lists):
         yield {**base, **dict(zip(names, combination))}
-
-
-def samples_over(
-    base: dict[str, Any],
-    samples: Any,
-) -> Iterator[dict[str, Any]]:
-    """Yield explicit parameter samples in their JSON array order."""
-
-    if not isinstance(samples, list) or not samples:
-        fail("Experiment spec 'samples' must be a non-empty JSON array.")
-
-    for sample_index, sample in enumerate(samples):
-        normalized_sample = normalize_keys(
-            sample,
-            f"samples[{sample_index}]",
-        )
-        yield {**base, **normalized_sample}
 
 
 def trim_error(value: Any) -> str:
@@ -365,10 +345,6 @@ def run_experiment(
 
     base = normalize_keys(spec.get("base", {}), "base")
     sweep = normalize_keys(spec.get("sweep", {}), "sweep")
-    has_samples = "samples" in spec
-
-    if has_samples and sweep:
-        fail("Experiment spec cannot use both non-empty 'sweep' and 'samples'.")
 
     repeat_count = int(spec.get("repeat", 1))
     if repeat_count < 1:
@@ -383,17 +359,7 @@ def run_experiment(
 
     experiment_name = str(spec.get("experiment", spec_path.stem))
     keep_individual = bool(spec.get("keep_individual_csv", False))
-
-    if has_samples:
-        combinations = list(samples_over(base, spec["samples"]))
-        parameter_source = "samples"
-    elif sweep:
-        combinations = list(sweep_over(base, sweep))
-        parameter_source = "sweep"
-    else:
-        combinations = [base]
-        parameter_source = "base"
-
+    combinations = list(sweep_over(base, sweep)) if sweep else [base]
     defaults = asdict(ProgramArgument())
     total = len(combinations) * repeat_count
 
@@ -401,8 +367,6 @@ def run_experiment(
         {
             "experiment": experiment_name,
             "executable": str(executable),
-            "parameter_source": parameter_source,
-            "parameter_set_count": len(combinations),
             "total_runs": total,
             "successful_runs": 0,
             "salvaged_runs": 0,
@@ -595,7 +559,7 @@ def run_experiment(
 def main() -> int:
     if len(sys.argv) != 2:
         print(
-            "Usage: python run.py path/to/experiment.json",
+            "Usage: python run_resilient.py path/to/experiment.json",
             file=sys.stderr,
         )
         return 2
