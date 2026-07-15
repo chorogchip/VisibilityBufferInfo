@@ -36,3 +36,5 @@
 - 작은 삼각형이 많다 (depth pre-pass, quad)
 - 4K이상에서 G-buffer가 비싸짐
 - API, HW에서 GPU-driven rendering기반이 갖춰짐 (cluster, indirect draw, triangl ID, bindless texture, compute shader)
+
+- 이건 donut과 보면 될듯.

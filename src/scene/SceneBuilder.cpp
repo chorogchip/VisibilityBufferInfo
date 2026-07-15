@@ -1,6 +1,7 @@
 #include "scene/SceneBuilder.h"
 
 #include <random>
+#include <algorithm>
 
 #include "util/Logger.h"
 #include "scene/GenedMesh.h"
@@ -98,8 +99,14 @@ namespace scene {
 			ret->objects.push_back(obj);
 		}
 
+		std::sort(ret->objects.begin(), ret->objects.end(),
+			[](const scene::SceneDataCPU::Object& a, const scene::SceneDataCPU::Object& b)->bool {
+				if (a.mesh_index != b.mesh_index) return a.mesh_index < b.mesh_index;
+				if (a.material_index != b.material_index) return a.material_index < b.material_index;
+				return a.object_id < b.object_id;
+			});
+
 		ret->build_batches_from_objects();
-		ret->sort_objects_in_batch(info.sort_from_front, info.sort_from_back);
 
 		ret->loaded = true;
 		return ret;
@@ -117,7 +124,6 @@ namespace scene {
 
 		util::Logger::g_logger.assert_with_log(info.material_count > 0, "material count must > 0");
 		ret->build_random_material(info.material_count);
-		std::uniform_int_distribution<uint32_t> dist_material{ 0, info.material_count - 1 };
 
 		// gen mesh (duplicate same meshes)
 
@@ -165,26 +171,67 @@ namespace scene {
 			ret->meshes.push_back(mesh);
 		}
 
-		std::uniform_int_distribution<uint32_t> dist_mesh{ 0, info.mesh_count - 1 };
-
 		// gen object
 
+		/*
+			줄세워서 만들고
+			필요에 따라 셔플하거나 역정렬한뒤에
+			material / mesh 할당하고
+			batch 를 만듬
+		*/
+
 		ret->objects.reserve(info.object_count);
+		std::vector<uint32_t> indices;
+
+		if (info.sort_type == EnumSortType::RANDOM) {
+			for (uint32_t i = 0; i < info.object_count; ++i)
+				indices.push_back(i);
+			for (uint32_t i = 0; i < info.object_count; ++i) {
+				std::uniform_int_distribution<uint32_t> dist(i, info.object_count - 1);
+				uint32_t ind = dist(gen);
+				std::swap(indices[i], indices[ind]);
+			}
+		} else if (info.sort_type == EnumSortType::FROM_FRONT) {
+			for (uint32_t i = 0; i < info.object_count; ++i)
+				indices.push_back(i);
+		} else if (info.sort_type == EnumSortType::FROM_BACK) {
+			for (uint32_t i = 0; i < info.object_count; ++i)
+				indices.push_back(info.object_count - 1 - i);
+		}
+
 		for (uint32_t i = 0; i < info.object_count; ++i) {
+			uint32_t ind = indices[i];
 			SceneDataCPU::Object obj{};
 			obj.object_id = i;
-			obj.material_index = dist_material(gen);
-			obj.mesh_index = dist_mesh(gen);
+			obj.material_index = 0;
+			obj.mesh_index = 0;
 			obj.flags = 0;
 			DirectX::XMMATRIX transform =
 				DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, static_cast<float>(i) / static_cast<float>(info.object_count));
+				DirectX::XMMatrixTranslation(0.0f, 0.0f, static_cast<float>(ind) / static_cast<float>(info.object_count));
 			DirectX::XMStoreFloat4x4(&obj.transform, DirectX::XMMatrixTranspose(transform));
 			ret->objects.push_back(obj);
 		}
 
+		const uint32_t mesh_stride = std::max(1U, info.object_count / info.mesh_count);
+		const uint32_t material_stride = std::max(1U, info.object_count / info.material_count);
+		const uint32_t final_stride = std::min(mesh_stride, material_stride);
+
+		uint32_t ind = 0;
+		uint32_t mesh_ind = 0;
+		uint32_t mat_ind = 0;
+		for (uint32_t i = 0; i < info.object_count; ++i) {
+			auto& obj = ret->objects[i];
+			obj.mesh_index = mesh_ind;
+			obj.material_index = mat_ind;
+			if (++ind == final_stride) {
+				ind = 0;
+				if (++mesh_ind == info.mesh_count) mesh_ind = 0;
+				if (++mat_ind == info.material_count) mat_ind = 0;
+			}
+		}
+
 		ret->build_batches_from_objects();
-		ret->sort_objects_in_batch(info.sort_from_front, info.sort_from_back);
 
 		ret->loaded = true;
 		return ret;

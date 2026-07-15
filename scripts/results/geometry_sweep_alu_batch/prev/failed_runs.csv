@@ -1,0 +1,8 @@
+runner_status,runner_error,param_renderer_variant,param_material_count,param_sort_type,param_object_count,renderer-variant,material-count,sort-type,object-count
+fatal_error,Illegal trailing comma before end of object: line 51 column 36 (char 1420),,,,,,,,
+failed,Process exited with code 3221226505.,1.0,10.0,2.0,4096.0,,,,
+failed,Process exited with code 3221226505.,1.0,10.0,2.0,16384.0,,,,
+failed,Process exited with code 3221226505.,1.0,20.0,2.0,4096.0,,,,
+failed,Process exited with code 3221226505.,1.0,20.0,2.0,16384.0,,,,
+failed,Process exited with code 3221226505.,1.0,30.0,2.0,4096.0,,,,
+failed,Process exited with code 3221226505.,1.0,30.0,2.0,16384.0,,,,

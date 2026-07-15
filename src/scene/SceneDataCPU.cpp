@@ -5,32 +5,9 @@
 namespace scene {
 
 
-	void SceneDataCPU::sort_objects_in_batch(bool sort_from_front, bool sort_from_back) {
-
-		if (sort_from_front == sort_from_back) return;
-
-		if (sort_from_front) {
-			for (const auto& batch : this->batches) {
-				std::sort(
-					this->objects.begin() + batch.object_index,
-					this->objects.begin() + batch.object_index + batch.object_count,
-					[](const scene::SceneDataCPU::Object& a, const scene::SceneDataCPU::Object& b)->bool {
-						return a.transform._43 < b.transform._43;
-					});
-			}
-		} else if (sort_from_back) {
-			for (const auto& batch : this->batches) {
-				std::sort(
-					this->objects.begin() + batch.object_index,
-					this->objects.begin() + batch.object_index + batch.object_count,
-					[](const scene::SceneDataCPU::Object& a, const scene::SceneDataCPU::Object& b)->bool {
-						return a.transform._43 > b.transform._43;
-					});
-			}
-		}
-	}
-
 	void SceneDataCPU::build_random_material(size_t material_count) {
+
+		this->materials.clear();
 		this->materials.reserve(material_count);
 		for (size_t i = 0; i < material_count; ++i) {
 			this->materials.push_back(SceneDataCPU::Material{});
@@ -45,13 +22,6 @@ namespace scene {
 
 		util::Logger::g_logger.assert_with_log(
 			obj_cnt <= std::numeric_limits<uint32_t>::max(), "obj cnt over UINT_MAX");
-
-		std::sort(this->objects.begin(), this->objects.end(),
-			[](const scene::SceneDataCPU::Object& a, const scene::SceneDataCPU::Object& b)->bool {
-				if (a.mesh_index != b.mesh_index) return a.mesh_index < b.mesh_index;
-				if (a.material_index != b.material_index) return a.material_index < b.material_index;
-				return a.object_id < b.object_id;
-			});
 
 		ObjectBatch batch{};
 		batch.object_index = 0;
