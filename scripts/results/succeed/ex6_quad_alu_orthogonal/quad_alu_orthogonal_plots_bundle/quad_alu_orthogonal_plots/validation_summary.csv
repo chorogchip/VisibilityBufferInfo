@@ -1,4 +1,0 @@
-variant,renderer,aggregated_grid_rows,max_total_error_ms,mean_total_error_ms,rows_above_tolerance,tolerance_ms,status
-1,Forward,121,0.0,0.0,0,1.1e-05,OK
-2,ForwardPrepass,121,1.0000000000509601e-05,2.8925619835157727e-06,0,1.1e-05,OK
-4,VisBuf,121,1.0000000000065512e-05,2.5619834710903615e-06,0,1.1e-05,OK
