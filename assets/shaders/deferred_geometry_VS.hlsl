@@ -1,3 +1,5 @@
+#include "common_input_struct.hlsli"
+
 cbuffer MatricesCB : register(b0)
 {
     float4x4 gView;
@@ -19,26 +21,6 @@ cbuffer DrawCB : register(b1)
 {
     uint gObjectIndex;
 }
-
-struct VSInput
-{
-    float3 position : POSITION;
-    float3 normal : NORMAL;
-    float2 texcoord0 : TEXCOORD0;
-    float2 texcoord1 : TEXCOORD1;
-    float3 tangent : TANGENT;
-};
-
-struct PSInput
-{
-    float4 position : SV_POSITION;
-    float3 normal : NORMAL;
-    float2 texcoord0 : TEXCOORD0;
-    float2 texcoord1 : TEXCOORD1;
-    float3 tangent : TANGENT;
-    float3 world_pos : WORLDPOS;
-    nointerpolation uint material_index : MATERIAL;
-};
 
 PSInput main(VSInput input, uint instanceID : SV_InstanceID)
 {
