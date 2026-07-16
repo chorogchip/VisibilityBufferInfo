@@ -1,0 +1,12 @@
+quad,first_sampled_alu_where_forward_is_not_winner,first_sampled_alu_where_visbuf_is_winner,first_sampled_alu_where_forwardprepass_is_winner,first_sampled_alu_where_visbuf_beats_forward,first_sampled_alu_where_forwardprepass_beats_forward,first_sampled_alu_where_visbuf_beats_forwardprepass
+8,96.0,96.0,nan,96.0,nan,2.0
+12,96.0,96.0,nan,96.0,nan,16.0
+16,64.0,64.0,nan,64.0,nan,16.0
+24,64.0,64.0,nan,64.0,nan,16.0
+32,32.0,32.0,nan,32.0,nan,8.0
+48,32.0,32.0,nan,32.0,96.0,8.0
+64,16.0,16.0,nan,16.0,64.0,8.0
+96,16.0,16.0,nan,16.0,nan,8.0
+128,8.0,8.0,nan,8.0,nan,4.0
+192,8.0,8.0,nan,8.0,128.0,4.0
+384,4.0,4.0,nan,4.0,nan,1.0

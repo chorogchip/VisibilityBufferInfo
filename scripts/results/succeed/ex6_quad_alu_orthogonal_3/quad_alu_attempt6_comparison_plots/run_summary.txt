@@ -1,0 +1,47 @@
+Experiment Attempt 6 — Quad Waste × ALU Comparison Plot Summary
+===============================================================
+Successful raw rows used: 363
+Non-success raw rows: 1
+Aggregated renderer/grid rows: 363
+Repeat counts per renderer/grid point: [1]
+Waste-quad control samples (11): ['8', '12', '16', '24', '32', '48', '64', '96', '128', '192', '384']
+ALU samples (11): ['0', '1', '2', '4', '8', '16', '32', '64', '96', '128', '192']
+Logical comparison graphs generated: 13
+PNG/SVG files generated: 26
+
+Winner counts over the sampled 11 × 11 grid:
+- Forward: 63 / 121
+- ForwardPrepass: 0 / 121
+- VisBuf: 58 / 121
+- Median winner margin (second-best / best): 1.305×
+- Minimum winner margin: 1.009×
+- Maximum winner margin: 2.302×
+
+Direct observations from the sampled grid:
+- Forward is fastest in 63 cells; VisBuf is fastest in 58 cells; ForwardPrepass is never the overall winner.
+- As waste-quad control increases, the sampled ALU threshold at which VisBuf wins moves downward.
+- Near crossover cells, the best/second-best margin can be close to 1.0×, so adjacent measurements and profiling should be checked before making a strong claim.
+
+Validation:
+- Variant 1 · Forward: max total-minus-pass-sum error=0 ms [OK]
+- Variant 2 · ForwardPrepass: max total-minus-pass-sum error=1.00000000001e-05 ms [OK]
+- Variant 4 · VisBuf: max total-minus-pass-sum error=1.00000000001e-05 ms [OK]
+
+Graph set:
+- 01-03: total-time contour plot for each renderer variant
+- 04: discrete fastest-renderer winner map
+- 05: winner margin map
+- 06: per-variant time relative to the fastest renderer
+- 07: speedup against Forward with empirical crossover contours
+- 08: VisBuf versus ForwardPrepass pairwise crossover
+- 09: selected ALU-axis slices
+- 10: selected waste-quad-axis slices
+- 11: pairwise total-time difference maps in milliseconds
+- 12: estimated pairwise crossover ALU thresholds
+- 13: representative pass-time breakdown bars
+
+Interpretation cautions:
+- The waste-quad axis is the experiment control/proxy (geometry division), not a hardware counter measuring literal wasted quads.
+- Winner maps are direct sampled measurements; contour boundaries and crossover thresholds interpolate between samples.
+- Only one runner_repeat exists per grid point, so run-to-run uncertainty cannot be estimated from this CSV.
+- Results are specific to the measured hardware, renderer implementation, resolution, shader, and scene configuration.
