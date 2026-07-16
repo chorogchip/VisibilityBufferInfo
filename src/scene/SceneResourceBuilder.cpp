@@ -12,9 +12,12 @@
 #include "util/Macros.h"
 
 namespace scene {
-    std::unique_ptr<SceneDataGPU> SceneResourceBuilder::build(const SceneDataCPU& src,
-        ID3D12Device* p_device, ID3D12GraphicsCommandList* p_list,
+    std::unique_ptr<SceneDataGPU> SceneResourceBuilder::build(
+        const SceneDataCPU& src,
+        ID3D12Device* p_device,
+        ID3D12GraphicsCommandList* p_list,
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+
         std::unique_ptr<SceneDataGPU> ret{ new SceneDataGPU{} };
 
         struct Material {
@@ -28,29 +31,40 @@ namespace scene {
 
         constexpr size_t buffer_size_limit = std::numeric_limits<UINT>::max();
 
-        util::Logger::g_logger.assert_with_log(src.vertices.size() > 0,
+        util::Logger::g_logger.assert_with_log(
+            src.vertices.size() > 0,
             "vertex buffer must not be empty");
+
         util::Logger::g_logger.assert_with_log_mul_overflow(
             src.vertices.size(), sizeof(decltype(src.vertices)::value_type), buffer_size_limit,
             "vertex buffer size overflow"
         );
 
-        util::Logger::g_logger.assert_with_log(src.indices.size() > 0,
+
+        util::Logger::g_logger.assert_with_log(
+            src.indices.size() > 0,
             "index buffer must not be empty");
+
         util::Logger::g_logger.assert_with_log_mul_overflow(
             src.indices.size(), sizeof(decltype(src.indices)::value_type), buffer_size_limit,
             "index buffer size overflow"
         );
 
-        util::Logger::g_logger.assert_with_log(src.objects.size() > 0,
+
+        util::Logger::g_logger.assert_with_log(
+            src.objects.size() > 0,
             "object buffer must not be empty");
+
         util::Logger::g_logger.assert_with_log_mul_overflow(
             src.objects.size(), sizeof(decltype(src.objects)::value_type), buffer_size_limit,
             "object buffer size overflow"
         );
 
-        util::Logger::g_logger.assert_with_log(materials.size() > 0,
+
+        util::Logger::g_logger.assert_with_log(
+            materials.size() > 0,
             "material buffer must not be empty");
+
         util::Logger::g_logger.assert_with_log_mul_overflow(
             materials.size(), sizeof(decltype(materials)::value_type), buffer_size_limit,
             "material buffer size overflow"

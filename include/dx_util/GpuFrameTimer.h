@@ -17,7 +17,10 @@ namespace dxutl {
         static constexpr UINT BUF_COUNT = FRAME_COUNT * PASS_COUNT * 2;
 
     public:
-        void init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue);
+        void init(
+            ID3D12Device* p_device,
+            ID3D12CommandQueue* p_queue);
+
         std::vector<double> read_timestamp(UINT frame_index);
         void start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass);
         void end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass);

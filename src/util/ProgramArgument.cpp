@@ -15,7 +15,9 @@ namespace util {
 
 #define X(type, name, defl, arg) \
         if (args[i] == std::string("--" #arg)) { \
-            if (i + 1 >= args.size()) throw std::runtime_error("Missing value for --" #arg); \
+            if (i + 1 >= args.size()) { \
+                throw std::runtime_error("Missing value for --" #arg); \
+            } \
             ret.name = util::parse_value<type>(args[i + 1]); \
             ++i; \
             continue; \

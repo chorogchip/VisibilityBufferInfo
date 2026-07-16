@@ -3,7 +3,13 @@
 #include <stdexcept>
 #include <utility>
 
-void Win32Window::create(HINSTANCE h_instance, int n_show_cmd, uint32_t width, uint32_t height, const wchar_t* title) {
+void Win32Window::create(
+    HINSTANCE h_instance,
+    int n_show_cmd,
+    uint32_t width,
+    uint32_t height,
+    const wchar_t* title) {
+
     WNDCLASSEX wc{};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -53,16 +59,23 @@ void Win32Window::set_key_down_handler(std::function<bool(WPARAM)> handler) {
     key_down_handler_ = std::move(handler);
 }
 
-LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK Win32Window::WndProc
+(HWND hwnd,
+    UINT msg,
+    WPARAM wParam,
+    LPARAM lParam) {
+
     Win32Window* window = nullptr;
 
     if (msg == WM_NCCREATE) {
         auto* create_struct = reinterpret_cast<CREATESTRUCT*>(lParam);
         window = static_cast<Win32Window*>(create_struct->lpCreateParams);
         window->hwnd_ = hwnd;
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
+        SetWindowLongPtr(
+            hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
     } else {
-        window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+        window = reinterpret_cast<Win32Window*>(
+            GetWindowLongPtr(hwnd, GWLP_USERDATA));
     }
 
     if (window) {
@@ -72,7 +85,11 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT Win32Window::handle_message(UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT Win32Window::handle_message(
+    UINT msg,
+    WPARAM wParam,
+    LPARAM lParam) {
+
     switch (msg) {
     case WM_DESTROY:
         PostQuitMessage(0);

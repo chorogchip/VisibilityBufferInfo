@@ -45,7 +45,8 @@ protected:
     virtual void create_extra_depth_stencil_views();
 
     virtual UINT rtv_descriptor_count() const;
-    virtual void create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle);
+    virtual void create_extra_render_target_views(
+        D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle);
 
     virtual UINT srv_descriptor_count() const;
     virtual void create_shader_resources();
@@ -54,7 +55,8 @@ protected:
     virtual void create_pso() = 0;
 
     void copy_camera_data();
-    void create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
+    void create_texture_srv_descriptors(
+        D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
 
 private:
     void create_command_objects();

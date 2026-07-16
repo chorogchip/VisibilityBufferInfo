@@ -50,7 +50,12 @@ namespace util {
             }
         };
 
-		void init(int dimension, uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate);
+		void init(
+            int dimension,
+            uint64_t frame_to_start_measure,
+            uint64_t frame_to_end_measure,
+            uint64_t frame_to_terminate);
+
 		void tick(std::vector<double>& measure);
 		std::vector<CountedData> summarize();
 		bool to_terminate() const;

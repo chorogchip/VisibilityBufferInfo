@@ -17,11 +17,24 @@ namespace util {
 		Logger& operator=(const Logger&) = delete;
 
 		void add_logging_info(const char* log_info);
-		void assert_with_log(bool expression, const char* log_info,
+
+		void assert_with_log(
+			bool expression,
+			const char* log_info,
 			const std::source_location& loc = std::source_location::current());
-		void assert_with_log_add_overflow(size_t a, size_t b, size_t limit, const char* log_info,
+
+		void assert_with_log_add_overflow(
+			size_t a,
+			size_t b,
+			size_t limit,
+			const char* log_info,
 			const std::source_location& loc = std::source_location::current());
-		void assert_with_log_mul_overflow(size_t a, size_t b, size_t limit, const char* log_info,
+
+		void assert_with_log_mul_overflow(
+			size_t a,
+			size_t b,
+			size_t limit,
+			const char* log_info,
 			const std::source_location& loc = std::source_location::current());
 
 		template<typename T>

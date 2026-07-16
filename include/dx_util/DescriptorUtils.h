@@ -14,7 +14,9 @@ namespace dxutl {
         D3D12_DESCRIPTOR_HEAP_FLAGS flags,
         const char* error_message = "create descriptor heap");
 
-    UINT descriptor_size(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    UINT descriptor_size(
+        ID3D12Device* device,
+        D3D12_DESCRIPTOR_HEAP_TYPE type);
 
     D3D12_CPU_DESCRIPTOR_HANDLE offset_cpu_descriptor(
         D3D12_CPU_DESCRIPTOR_HANDLE handle,

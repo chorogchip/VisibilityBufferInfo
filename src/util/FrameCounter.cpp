@@ -5,7 +5,12 @@
 
 namespace util {
 
-	void FrameCounter::init(int dimension, uint64_t frame_to_start_measure, uint64_t frame_to_end_measure, uint64_t frame_to_terminate) {
+	void FrameCounter::init(
+		int dimension,
+		uint64_t frame_to_start_measure,
+		uint64_t frame_to_end_measure,
+		uint64_t frame_to_terminate) {
+
 		frame_times_ = std::vector<std::vector<double>>(dimension, std::vector<double>());
 		frames_ = 0;
 		frame_to_start_measure_ = frame_to_start_measure;

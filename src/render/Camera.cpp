@@ -75,7 +75,9 @@ namespace rndr {
 		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw_);
 		XMScalarSinCos(&sin_pitch, &cos_pitch, pitch_);
 
-		XMVECTOR forward = XMVectorSet(sin_yaw * cos_pitch, sin_pitch, cos_yaw * cos_pitch, 0.0f);
+		XMVECTOR forward = XMVectorSet(
+			sin_yaw * cos_pitch, sin_pitch, cos_yaw * cos_pitch, 0.0f);
+
 		XMVECTOR target = XMVectorAdd(pos, forward);
 		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		return XMMatrixLookAtLH(pos, target, up);

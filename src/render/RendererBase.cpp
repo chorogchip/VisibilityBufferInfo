@@ -16,10 +16,7 @@
 #include "scene/SceneLoader.h"
 #include "scene/SceneResourceBuilder.h"
 
-#ifdef max
-#undef max
-#undef min
-#endif
+#include "util/Macros.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -36,13 +33,24 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     program_arguments_ = std::make_unique<const util::ProgramArgument>(arg);
 
-    frame_counter_.init(dxutl::GpuFrameTimer::PASS_COUNT + 1, arg.warmup_frames, arg.warmup_frames + arg.measure_frames,
+    frame_counter_.init(
+        dxutl::GpuFrameTimer::PASS_COUNT + 1,
+        arg.warmup_frames,
+        arg.warmup_frames + arg.measure_frames,
         arg.warmup_frames + arg.measure_frames + 60);
 
     device_ = dxutl::create_device(factory_);
+
     this->create_command_objects();
+
     swapchain_ = dxutl::create_swapchain(
-        factory_.Get(), command_queue_.Get(), hwnd_, width_, height_, FRAME_COUNT);
+        factory_.Get(),
+        command_queue_.Get(),
+        hwnd_,
+        width_,
+        height_,
+        FRAME_COUNT);
+
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 
     fence_.init(device_.Get(), command_queue_.Get());
@@ -51,9 +59,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     this->init_viewport_scissorrect();
 
-    // Pass resources must be created before descriptor counts and views are configured.
     this->create_pass_resources();
-
     this->create_meshbuffers();
     this->create_dummy_textures();
     this->create_constbuffers();
@@ -111,7 +117,8 @@ void RendererBase::close() {
     util::Logger::g_logger.assert_with_log_mul_overflow(val_div, val_div,
         std::numeric_limits<size_t>::max(), "val_div ^2 overflow");
 
-    const size_t val_div_sq = static_cast<size_t>(val_div) * static_cast<size_t>(val_div);
+    const size_t val_div_sq =
+        static_cast<size_t>(val_div) * static_cast<size_t>(val_div);
 
     util::Logger::g_logger.assert_with_log_mul_overflow(val_cnt, val_div_sq,
         std::numeric_limits<size_t>::max(), "cnt * val_div overflow");
@@ -132,7 +139,8 @@ void RendererBase::create_command_objects() {
     for (int i = 0; i < FRAME_COUNT; ++i) {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(command_allocator_[i].ReleaseAndGetAddressOf())), "create command allocator");
+            IID_PPV_ARGS(command_allocator_[i].ReleaseAndGetAddressOf())),
+            "create command allocator");
     }
 
     Utils::throw_if_failed(device_->CreateCommandList(
@@ -140,7 +148,8 @@ void RendererBase::create_command_objects() {
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         command_allocator_[0].Get(),
         nullptr,
-        IID_PPV_ARGS(command_list_.ReleaseAndGetAddressOf())), "create command list");
+        IID_PPV_ARGS(command_list_.ReleaseAndGetAddressOf())),
+        "create command list");
 
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
@@ -175,7 +184,8 @@ UINT RendererBase::rtv_descriptor_count() const {
     return FRAME_COUNT;
 }
 
-void RendererBase::create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE) {}
+void RendererBase::create_extra_render_target_views(
+    D3D12_CPU_DESCRIPTOR_HANDLE) {}
 
 UINT RendererBase::srv_descriptor_count() const {
     return 0;
@@ -189,7 +199,10 @@ void RendererBase::create_depth_stencil_resources() {
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
         dsv_descriptor_count(),
         D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    dsv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    dsv_descriptor_size_ = dxutl::descriptor_size(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
         device_.Get(),
@@ -213,13 +226,23 @@ void RendererBase::create_render_target_views() {
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
         rtv_descriptor_count(),
         D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    rtv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    rtv_descriptor_size_ = dxutl::descriptor_size(
+        device_.Get(),
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     dxutl::create_swapchain_render_target_views(
-        device_.Get(), swapchain_.Get(), rtv_heap_.Get(), rtv_descriptor_size_, FRAME_COUNT, render_targets_);
+        device_.Get(),
+        swapchain_.Get(),
+        rtv_heap_.Get(),
+        rtv_descriptor_size_,
+        FRAME_COUNT,
+        render_targets_);
 
     create_extra_render_target_views(dxutl::offset_cpu_descriptor(
-        rtv_heap_->GetCPUDescriptorHandleForHeapStart(), rtv_descriptor_size_, FRAME_COUNT));
+        rtv_heap_->GetCPUDescriptorHandleForHeapStart(),
+        rtv_descriptor_size_,
+        FRAME_COUNT));
 }
 
 void RendererBase::create_shader_visible_srv_heap() {
@@ -316,8 +339,14 @@ void RendererBase::create_dummy_textures() {
     const UINT texture_count = program_arguments_->texture_count;
     const UINT texture_size = program_arguments_->texture_size;
 
-    util::Logger::g_logger.assert_with_log(texture_count > 0, "texture count must > 0");
-    util::Logger::g_logger.assert_with_log(texture_size > 0, "texture size must > 0");
+    util::Logger::g_logger.assert_with_log(
+        texture_count > 0,
+        "texture count must > 0");
+
+    util::Logger::g_logger.assert_with_log(
+        texture_size > 0,
+        "texture size must > 0");
+
     const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     dummy_textures_.clear();
@@ -341,7 +370,9 @@ void RendererBase::create_dummy_textures() {
     UINT row_count = 0;
     UINT64 row_size_in_bytes = 0;
     device_->GetCopyableFootprints(
-        &texture_desc, 0, 1, 0, &footprint, &row_count, &row_size_in_bytes, &upload_size);
+        &texture_desc, 0, 1, 0, &footprint,
+        &row_count, &row_size_in_bytes, &upload_size);
+
     (void)row_count;
     (void)row_size_in_bytes;
 
@@ -353,7 +384,8 @@ void RendererBase::create_dummy_textures() {
 
     for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
 
-        auto texture_data = util::create_dummy_texture_data(texture_size, texture_size, texture_index);
+        auto texture_data = util::create_dummy_texture_data(
+            texture_size, texture_size, texture_index);
 
         dummy_textures_[texture_index] = dxutl::create_committed_resource(
             device_.Get(),
@@ -361,7 +393,11 @@ void RendererBase::create_dummy_textures() {
             D3D12_HEAP_TYPE_DEFAULT,
             D3D12_RESOURCE_STATE_COPY_DEST);
 
-        upload_buffers[texture_index] = dxutl::create_buffer(device_.Get(), upload_size, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        upload_buffers[texture_index] = dxutl::create_buffer(
+            device_.Get(),
+            upload_size,
+            D3D12_HEAP_TYPE_UPLOAD,
+            D3D12_RESOURCE_STATE_GENERIC_READ);
 
         void* mapped_data = dxutl::map_upload_buffer(upload_buffers[texture_index].Get());
 
@@ -396,9 +432,15 @@ void RendererBase::create_dummy_textures() {
         src_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
         src_location.PlacedFootprint = footprint;
 
-        command_list_->CopyTextureRegion(&dst_location, 0, 0, 0, &src_location, nullptr);
-        dxutl::transition_resource(command_list_.Get(), dummy_textures_[texture_index].Get(),
-            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        command_list_->CopyTextureRegion(
+            &dst_location, 0, 0, 0,
+            &src_location, nullptr);
+
+        dxutl::transition_resource(
+            command_list_.Get(),
+            dummy_textures_[texture_index].Get(),
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
     Utils::throw_if_failed(command_list_->Close(),
@@ -410,43 +452,68 @@ void RendererBase::create_dummy_textures() {
 
 void RendererBase::create_constbuffers() {
 
-    camera_.set_pos(program_arguments_->camera_pos_x, program_arguments_->camera_pos_y, program_arguments_->camera_pos_z);
-    camera_.lookat(program_arguments_->camera_lookat_x, program_arguments_->camera_lookat_y, program_arguments_->camera_lookat_z);
-    camera_.set_fovy_nearz_farz(program_arguments_->camera_fov, program_arguments_->camera_near_z,
+    camera_.set_pos(
+        program_arguments_->camera_pos_x,
+        program_arguments_->camera_pos_y,
+        program_arguments_->camera_pos_z);
+
+    camera_.lookat(
+        program_arguments_->camera_lookat_x,
+        program_arguments_->camera_lookat_y,
+        program_arguments_->camera_lookat_z);
+
+    camera_.set_fovy_nearz_farz(
+        program_arguments_->camera_fov,
+        program_arguments_->camera_near_z,
         program_arguments_->camera_far_z);
 
-    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_,
+    DirectX::XMStoreFloat4x4(
+        &matrix_buf_cpu_.mat_view_,
         DirectX::XMMatrixTranspose(camera_.get_mat_view()));
+
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
-    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
+
+    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(
+        static_cast<float>(width_), static_cast<float>(height_));
 
     constexpr size_t matrix_buf_size_aligned =
         Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
 
     for (int i = 0; i < FRAME_COUNT; ++i) {
-        buf_constant_[i] = dxutl::create_buffer(device_.Get(), matrix_buf_size_aligned, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        buf_constant_[i] = dxutl::create_buffer(
+            device_.Get(),
+            matrix_buf_size_aligned,
+            D3D12_HEAP_TYPE_UPLOAD,
+            D3D12_RESOURCE_STATE_GENERIC_READ);
 
-        buf_constant_mapped_[i] = dxutl::map_upload_buffer(buf_constant_[i].Get());
+        buf_constant_mapped_[i] =
+            dxutl::map_upload_buffer(buf_constant_[i].Get());
     }
 }
 
 void RendererBase::copy_camera_data() {
 
-    DirectX::XMStoreFloat4x4(&matrix_buf_cpu_.mat_view_,
+    DirectX::XMStoreFloat4x4(
+        &matrix_buf_cpu_.mat_view_,
         DirectX::XMMatrixTranspose(camera_.get_mat_view()));
+
     DirectX::XMStoreFloat4x4(
         &matrix_buf_cpu_.mat_proj_,
         DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
 
-    matrix_buf_cpu_.viewport_size_ =
-        DirectX::XMFLOAT2(static_cast<float>(width_), static_cast<float>(height_));
+    matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(
+        static_cast<float>(width_), static_cast<float>(height_));
 
-    memcpy(buf_constant_mapped_[frame_index_], &matrix_buf_cpu_, sizeof(matrix_buf_cpu_));
+    memcpy(
+        buf_constant_mapped_[frame_index_],
+        &matrix_buf_cpu_,
+        sizeof(matrix_buf_cpu_));
 }
 
-void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+void RendererBase::create_texture_srv_descriptors(
+    D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
     srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -455,8 +522,14 @@ void RendererBase::create_texture_srv_descriptors(D3D12_CPU_DESCRIPTOR_HANDLE sr
     srv_desc.Texture2D.MipLevels = 1;
 
     for (UINT i = 0; i < program_arguments_->texture_count; ++i) {
-        device_->CreateShaderResourceView(dummy_textures_[i].Get(), &srv_desc, srv_handle);
-        srv_handle.ptr += device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+        device_->CreateShaderResourceView(
+            dummy_textures_[i].Get(),
+            &srv_desc,
+            srv_handle);
+
+        srv_handle.ptr += device_->GetDescriptorHandleIncrementSize(
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 }
 

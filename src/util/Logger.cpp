@@ -21,7 +21,11 @@ namespace util {
         logging_stream_ << log_info << '\n';
     }
 
-    void Logger::assert_with_log(bool expression, const char* log_info, const std::source_location& loc) {
+    void Logger::assert_with_log(
+        bool expression,
+        const char* log_info,
+        const std::source_location& loc) {
+
         if (expression) return;
 
         std::string log_str;
@@ -81,14 +85,26 @@ namespace util {
         std::abort();
     }
 
-    void Logger::assert_with_log_add_overflow(size_t a, size_t b, size_t limit, const char* log_info, const std::source_location& loc) {
+    void Logger::assert_with_log_add_overflow(
+        size_t a,
+        size_t b,
+        size_t limit,
+        const char* log_info,
+        const std::source_location& loc) {
+
         const bool no_overflow =
             a <= limit &&
             b <= limit - a;
         this->assert_with_log(no_overflow, log_info, loc);
     }
 
-    void Logger::assert_with_log_mul_overflow(size_t a, size_t b, size_t limit, const char* log_info, const std::source_location& loc) {
+    void Logger::assert_with_log_mul_overflow(
+        size_t a,
+        size_t b,
+        size_t limit,
+        const char* log_info,
+        const std::source_location& loc) {
+
         const bool no_overflow =
             a == 0 ||
             b <= limit / a;

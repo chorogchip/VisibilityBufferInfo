@@ -10,8 +10,10 @@
 namespace scene {
 	class SceneResourceBuilder {
 	public:
-		static std::unique_ptr<SceneDataGPU> build(const SceneDataCPU& src,
-			ID3D12Device* p_device, ID3D12GraphicsCommandList* p_list,
+		static std::unique_ptr<SceneDataGPU> build(
+			const SceneDataCPU& src,
+			ID3D12Device* p_device,
+			ID3D12GraphicsCommandList* p_list,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps);
 	};
 }

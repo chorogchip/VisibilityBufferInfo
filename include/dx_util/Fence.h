@@ -16,7 +16,10 @@ namespace dxutl {
 		Fence(const Fence&) = delete;
 		Fence& operator=(const Fence&) = delete;
 
-		void init(ID3D12Device* p_device, ID3D12CommandQueue* p_queue);
+		void init(
+			ID3D12Device* p_device,
+			ID3D12CommandQueue* p_queue);
+
 		UINT64 signal();
 		void wait_for_value(UINT64 value);
 		void wait_for_gpu();

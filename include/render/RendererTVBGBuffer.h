@@ -17,7 +17,8 @@ namespace rndr {
 		void create_pass_resources() override;
 
 		UINT rtv_descriptor_count() const override;
-		void create_extra_render_target_views(D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) override;
+		void create_extra_render_target_views(
+			D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle) override;
 		UINT srv_descriptor_count() const override;
 		void create_shader_resources() override;
 		void create_root_signature() override;

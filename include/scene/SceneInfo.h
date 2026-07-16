@@ -13,6 +13,6 @@ namespace scene {
 		float xy_minmax;
 		float radius;
 		uint32_t mesh_division;
-		uint32_t gbuffer_resource_count;  // g버퍼 장수	
+		uint32_t gbuffer_resource_count;
 	};
 }

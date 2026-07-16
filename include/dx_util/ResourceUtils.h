@@ -51,7 +51,8 @@ namespace dxutl {
         const void* source,
         size_t size_in_bytes);
 
-    void* map_upload_buffer(ID3D12Resource* upload_buffer);
+    void* map_upload_buffer(
+        ID3D12Resource* upload_buffer);
 
     void transition_resource(
         ID3D12GraphicsCommandList* command_list,
