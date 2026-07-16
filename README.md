@@ -1,138 +1,76 @@
-\# Triangle Visibility Buffer의 성능 조건 분석
+# Visibility Buffer의 성능 조건 분석
 
-\## 개요
+## 개요
 
-\### 목적
+### 목적
+- Visibility Buffer 기법이 기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
+### 배경
+- The Visibility Buffer: A Cache-Friendly Approach to Deferred Shading, 2013
+	-기존G-buffer 대신 triangle ID, depth 만 저장, shading pass에서 속성을 재구성
+- Triangle Visibility Buffer 1.0 (GDC 2016) GPU cluster culling/filtering, indirect draw
+- Triangle Visibility Buffer 2.0 (I3D 2024 The Forge Industry Talk) compute shader로 직접 rasterize, quad단위 회피
+	- 장점: G-buffer에 필요한 메모리 대역폭 절약, 텍스쳐 샘플링 지연, G-buffer 포맷에 덜 종속적인 material
+	- 단점: 삼각형 데이터의 indirect access, cache locality 떨어짐, ddx ddy 정보복원 어려움
+- visbuf가 실제로 유리해지는 조건을 실험을 통해 규명하고자 함
 
-\- Triangle Visibility Buffer(TVB) 기법이 기존 Forward / Deferred 렌더링 대비 성능상 유리한 조건을 실험적으로 규명
+### 비교 알고리즘
+- Forward: overdraw 발생
+- Forward + Depth Pre-Pass : Geometry 두 번 처리
+- Deferred: G-buffer에 큰 메모리 대역폭
+- Deferred + Depth Pre-Pass
+- Visbuf: indirect access
+- Visbuf + gbuffer
 
-\### 배경
+### 장면 구성 1: synthetic primitive scene 사용, 파라미터된 구 여러 개
 
-\- The Visibility Buffer: A Cache-Friendly Approach to Deferred Shading, 2013-기존G-buffer 대신triangle ID, depth 만저장, shading pass에서속성을재### 구성
-
-\- Triangle Visibility Buffer 1.0 -GDC 2016-GPU cluster culling/filtering, indirect draw
-
-\- Triangle Visibility Buffer 2.0  -I3D 2024 The Forge Industry Talk-compute shader로직접rasterize, quad단위회피-장점: G-buffer에필요한메모리대역폭절약, 텍스쳐샘플링지연, G-buffer 포맷에덜종속적인material-단점: 삼각형데이터의indirect access, cache locality 떨어짐, ddxddy정보복원어려움
-
-\- TVB가 실제로 유리해지는 조건을 실험을 통해 규명하고자 함
-
-\### 비교 알고리즘
-
-\- Forward: overdraw 발생
-
-\- Forward + Depth Pre-Pass : Geometry 두 번 처리
-
-\- Deferred: G-buffer에 큰 메모리 대역폭
-
-\- Deferred + Depth Pre-Pass
-
-\- TVB: indirect access
-
-\- TVB + gbuffer
-
-
-
-\### 장면 구성 1: synthetic primitive scene 사용, 파라미터된 구 여러 개
-
-\- 기본적으로 파라미터에 따라 생성된 구 여러 개의 scene을 사용
-
-\- 시드에 따라 생성
-
-\- 구의 개수, 크기, 삼각형 수, 머티리얼 수, 메쉬 수, 분포 좌표 최대최소값 등을 파라미터화
-
-\- 사용 이유: 여러 수치들의 파라미터화가 용이
+- 기본적으로 파라미터에 따라 생성된 구 여러 개의 scene을 사용
+- 시드에 따라 생성
+- 구의 개수, 크기, 삼각형 수, 머티리얼 수, 메쉬 수, 분포 좌표 최대최소값 등을 파라미터화
+- 사용 이유: 여러 수치들의 파라미터화가 용이
 
 장면 1로 할 것들:
+- Tradeoff 관찰:  overdraw, material, G-buffer, triangle size 등등에 따라 각 알고리즘의 성능 분석, 변수에 따른 민감도 관찰
+- Crossover Point 찾기: 위와 같은 맥락으로 유리해지는 알고리즘이 바뀌는 지점 찾기
+- 데이터와 맞게 성능 모델을 수립
+- Roofline 분석: VRAM bandwidth, ALU, texture sampling, rasterization, L2 cache 등에 의한 roofline 분석
 
-\- Tradeoff 관찰:  overdraw, material, G-buffer, triangle size 등등에 따라 각 알고리즘의 성능 분석, 변수에 따른 민감도 관찰
-
-\- Crossover Point 찾기: 위와 같은 맥락으로 유리해지는 알고리즘이 바뀌는 지점 찾기
-
-\- 데이터와 맞게 성능 모델을 수립
-
-\- Roofline 분석: VRAM bandwidth, ALU, texture sampling, rasterization, L2 cache 등에 의한 roofline 분석
-
-
-
-\### 장면 구성 2: 인터넷에서 접근 가능한 실제 씬
-
+### 장면 구성 2: 인터넷에서 접근 가능한 실제 씬
 장면 2로 할 것들:
+- Scene fingerprint 추출 (각 씬의 geometry/material/texture/overdraw 특성 수치화)
+- 구에서 세운 모델이 현실에서도 통하는지 가설을 세우고 검증
+- HW 프로파일링을 동반
+- 안 통한다면 이유를 찾기
+- VIsbuf 약점, 강점 케이스 찾기
+- material binning / sorting 실험 (확장)
 
-\- Scene fingerprint 추출 (각 씬의 geometry/material/texture/overdraw 특성 수치화)
-
-\- 구에서 세운 모델이 현실에서도 통하는지 가설을 세우고 검증
-
-\- HW 프로파일링을 동반
-
-\- 안 통한다면 이유를 찾기
-
-\- TVB 약점, 강점 케이스 찾기
-
-\- material binning / sorting 실험 (확장)
-
-
-
-\### 추가 파라미터
-
+### 추가 파라미터
 공용 파라미터:
+- G-buffer 크기, 화면 해상도, 텍스쳐 해상도, Sampling 수, Shader 연산량
+- MSAA, SSAO 등 다른 패스, draw call 순서, 삼각형 데이터 레이아웃, 인덱스 포맷 등
+- 조명은 사용하지 않고 공용 파라미터로 인위적 모사
 
-\- G-buffer 크기, 화면 해상도, 텍스쳐 해상도, Sampling 수, Shader 연산량
+### Pipeline
+- 인자파싱, Scene 생성, Warm-up, N Frame 측정, 결과기록, 자동종료
+- Python 스크립트로 다양한 옵션의 배치 실행 자동화
 
-\- MSAA, SSAO 등 다른 패스, draw call 순서, 삼각형 데이터 레이아웃, 인덱스 포맷 등
+### Metric
+- Frame Time: Min, Max, Avg, Median, P90, P99, P99.9
+- Overdraw직접측정: 초기엔Query로측정, 별도버퍼에atomic add로 overdraw 정확히 측정
+- Pass별 GPU Timestamp, Nsight Graphics 등으로 HW 지표분석
 
-\+ 조명은 사용하지 않고 공용 파라미터로 인위적 모사
+### API: Direct3D 12
+- 이유: GPU를 저수준에서 명시적 제어, pass별 GPU timestamp 측정, 크로스 플랫폼은 고려하지 않음
 
+### 매트릭
+- Warm-up 후 N프레임 측정 (VSync off)
+- Frame Time (Average, Median, Min, Max, P90, P95, P99, 0.1% low, 0.01% low 등)
+- GPU Timestamp Query
+- NVIDIA Nsight Graphics 혹은 유사 프로파일러로 HW 지표 측정
+- 초기 버전은 일정 시간 대기 후 정지 화면에서 측정
+- 추후 개선: 카메라 자동 이동
 
-
-\### Pipeline
-
-\-인자파싱, Scene 생성, Warm-up, N Frame 측정, 결과기록, 자동종료
-
-\-Python 스크립트로 다양한 옵션의 배치 실행 자동화
-
-
-
-\### Metric
-
-\-Frame Time: Min, Max, Avg, Median, P90, P99, P99.9
-
-\-Overdraw직접측정: 초기엔Query로측정, 별도버퍼에atomic add로 overdraw 정확히 측정
-
-\-Pass별 GPU Timestamp, Nsight Graphics 등으로 HW 지표분석
-
-
-
-\### API: Direct3D 12
-
-\- 이유: GPU를 저수준에서 명시적 제어, pass별 GPU timestamp 측정, 크로스 플랫폼은 고려하지 않음
-
-
-
-\### 매트릭
-
-\- Warm-up 후 N프레임 측정 (VSync off)
-
-\- Frame Time (Average, Median, Min, Max, P90, P95, P99, 0.1% low, 0.01% low 등)
-
-\- GPU Timestamp Query
-
-\- NVIDIA Nsight Graphics 혹은 유사 프로파일러로 HW 지표 측정
-
-\- 초기 버전은 일정 시간 대기 후 정지 화면에서 측정
-
-\- 추후 개선: 카메라 자동 이동
-
-
-
-\### TVB 구현 확장 방향
-
-\- material sorting을 통한 shader branch divergence 완화
-
-\- material별 work queue를 구성해 binning으로 별도의 shader 사용
-
-\- 기타 material에 대한 다양한 접근
-
-
-
-
+### VisBuf 구현 확장 방향
+- material sorting을 통한 shader branch divergence 완화
+- material별 work queue를 구성해 binning으로 별도의 shader 사용
+- 기타 material에 대한 다양한 접근
 
