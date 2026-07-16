@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "util/ProgramArgument.h"
+#include "ProgramArgument.h"
 #include "scene/SceneDataCPU.h"
 
 namespace scene {

@@ -3,9 +3,9 @@
 #include <Windows.h>
 #include <memory>
 
-#include "util/ProgramArgument.h"
-#include "render/RendererBase.h"
+#include "ProgramArgument.h"
 #include "Win32Window.h"
+#include "render/RendererBase.h"
 
 class Application {
 public:

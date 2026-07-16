@@ -29,7 +29,7 @@ namespace scene {
 		batch.material_index = objects[0].material_index;
 		batch.mesh_index = objects[0].mesh_index;
 
-		for (size_t i = 1; i < obj_cnt; ++i) {
+		for (uint32_t i = 1; i < static_cast<uint32_t>(obj_cnt); ++i) {
 			if (this->objects[i].material_index == batch.material_index &&
 				this->objects[i].mesh_index == batch.mesh_index) {
 				batch.object_count++;

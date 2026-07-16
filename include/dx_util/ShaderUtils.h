@@ -5,7 +5,7 @@
 #include <d3dcompiler.h>
 #include <string>
 
-#include "util/ProgramArgument.h"
+#include "ProgramArgument.h"
 
 namespace dxutl {
 

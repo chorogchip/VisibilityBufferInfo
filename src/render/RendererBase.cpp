@@ -114,16 +114,17 @@ void RendererBase::close() {
     const auto val_div = program_arguments_->geometry_div;
     const auto val_alu = program_arguments_->alu_calc_count;
 
-    util::Logger::g_logger.assert_with_log_mul_overflow(val_div, val_div,
-        std::numeric_limits<size_t>::max(), "val_div ^2 overflow");
+    const size_t val_div_p1 = static_cast<size_t>(val_div + 1);
 
-    const size_t val_div_sq =
-        static_cast<size_t>(val_div) * static_cast<size_t>(val_div);
+    util::Logger::g_logger.assert_with_log_mul_overflow(val_div_p1, val_div_p1,
+        std::numeric_limits<uint32_t>::max(), "val_div ^2 overflow");
 
-    util::Logger::g_logger.assert_with_log_mul_overflow(val_cnt, val_div_sq,
-        std::numeric_limits<size_t>::max(), "cnt * val_div overflow");
+    const uint32_t val_div_p1_sq = static_cast<uint32_t>(val_div_p1 * val_div_p1);
 
-    result.variable_geometry_count = val_cnt * val_div_sq;
+    util::Logger::g_logger.assert_with_log_mul_overflow(val_cnt, val_div_p1_sq,
+        std::numeric_limits<uint32_t>::max(), "cnt * val_div overflow");
+
+    result.variable_geometry_count = val_cnt * val_div_p1_sq;
     result.variable_overdraw_count = val_ovd;
     result.variable_waste_quad_count = val_div;
     result.variable_alu_op_count = val_alu;

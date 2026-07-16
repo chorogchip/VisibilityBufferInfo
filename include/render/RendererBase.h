@@ -9,8 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "ProgramArgument.h"
 #include "util/Logger.h"
-#include "util/ProgramArgument.h"
 #include "util/FrameCounter.h"
 #include "dx_util/GPUFrameTimer.h"
 #include "dx_util/Fence.h"

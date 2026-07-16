@@ -5,7 +5,7 @@
 #include <string>
 
 #include "scene/SceneDataCPU.h"
-#include "util/ProgramArgument.h"
+#include "ProgramArgument.h"
 
 namespace scene {
 

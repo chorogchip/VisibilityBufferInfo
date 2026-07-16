@@ -8,6 +8,7 @@ namespace scene {
 		uint32_t material_count;
 		uint32_t mesh_count;
 		uint32_t overdraw_count;
+		bool to_remain_only_in_camera;
 		float z_min;
 		float z_max;
 		float xy_minmax;
