@@ -11,11 +11,10 @@ namespace rndr {
 
     void RendererDeferred::make_programresult(util::ProgramResult& result) {
         result.renderer_name = do_prepass_ ? "DeferredPrepass" : "Deferred";
-        result.pass_name_0 = do_prepass_ ? "depth_prepass" : "geometry";
-        result.pass_name_1 = do_prepass_ ? "geometry" : "lighting";
         if (do_prepass_)
-            result.pass_name_2 = "lighting";
-        result.pass_name_3 = "total";
+            result.pass_names[0] = "depth_prepass";
+        result.pass_names[1] = "geometry";
+        result.pass_names[2] = "lighting";
     }
 
     void RendererDeferred::create_renderer_resources() {
@@ -42,18 +41,17 @@ namespace rndr {
             "command list reset on render start");
         copy_camera_data();
 
-        UINT pass_index = 0;
         if (do_prepass_) {
-            frame_time_.start_timestamp(command_list_.Get(), frame_index_, pass_index);
+            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-            frame_time_.end_timestamp(command_list_.Get(), frame_index_, pass_index++);
+            frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
         }
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, pass_index);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
         pass_gbuffer_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, pass_index++);
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, pass_index);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
         pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, pass_index);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
 
         Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
         graphics_queue_.execute(command_list_.Get());

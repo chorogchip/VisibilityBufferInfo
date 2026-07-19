@@ -1,8 +1,12 @@
 #include "render/renderer/RendererBase.h"
 
+#include <chrono>
 #include <cstring>
+#include <ctime>
 #include <algorithm>
+#include <iomanip>
 #include <numeric>
+#include <sstream>
 #include <string>
 
 #include "util/Utils.h"
@@ -19,6 +23,19 @@
 #include "util/Macros.h"
 
 using Microsoft::WRL::ComPtr;
+
+namespace {
+    std::string make_current_time_string() {
+        const auto now = std::chrono::system_clock::now();
+        const std::time_t current_time = std::chrono::system_clock::to_time_t(now);
+        std::tm local_time{};
+        localtime_s(&local_time, &current_time);
+
+        std::ostringstream stream;
+        stream << std::put_time(&local_time, "%Y-%m-%dT%H:%M:%S");
+        return stream.str();
+    }
+}
 
 RendererBase::~RendererBase() {
     graphics_queue_.wait_idle();
@@ -86,25 +103,26 @@ void RendererBase::close() {
     if (path == "") return;
 
     util::ProgramResult result{};
+    result.run_current_time = make_current_time_string();
     auto results = frame_counter_.summarize();
 
-#define COPY_PASS_RESULT(index) \
-    do { if (results.size() > index) { \
-        result.pass_##index##_time_min_ms = results[index].time_min_ms; \
-        result.pass_##index##_time_median_ms = results[index].time_median_ms; \
-        result.pass_##index##_time_max_ms = results[index].time_max_ms; \
-        result.pass_##index##_time_avg_ms = results[index].time_avg_ms; \
-        result.pass_##index##_time_p01_ms = results[index].time_p01_ms; \
-        result.pass_##index##_time_p10_ms = results[index].time_p10_ms; \
-        result.pass_##index##_time_p90_ms = results[index].time_p90_ms; \
-        result.pass_##index##_time_p99_ms = results[index].time_p99_ms; \
-    } } while (false)
+    static_assert(util::ProgramResult::PASS_COUNT == dxutl::GpuFrameTimer::PASS_COUNT);
+    util::Logger::g_logger.assert_with_log(
+        results.size() == util::ProgramResult::PASS_COUNT + 1,
+        "unexpected benchmark result count");
 
-    COPY_PASS_RESULT(0);
-    COPY_PASS_RESULT(1);
-    COPY_PASS_RESULT(2);
-    COPY_PASS_RESULT(3);
-#undef COPY_PASS_RESULT
+    for (size_t i = 0; i < util::ProgramResult::PASS_COUNT; ++i)
+        result.pass_time_avg_ms[i] = results[i].time_avg_ms;
+
+    const auto& total = results[util::ProgramResult::PASS_COUNT];
+    result.total_time_min_ms = total.time_min_ms;
+    result.total_time_median_ms = total.time_median_ms;
+    result.total_time_max_ms = total.time_max_ms;
+    result.total_time_avg_ms = total.time_avg_ms;
+    result.total_time_p01_ms = total.time_p01_ms;
+    result.total_time_p10_ms = total.time_p10_ms;
+    result.total_time_p90_ms = total.time_p90_ms;
+    result.total_time_p99_ms = total.time_p99_ms;
 
     const auto val_cnt = program_arguments_->object_count;
     const auto val_ovd = program_arguments_->overdraw_count;

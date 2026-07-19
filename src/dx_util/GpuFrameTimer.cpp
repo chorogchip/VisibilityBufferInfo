@@ -1,6 +1,7 @@
 #include "dx_util/GpuFrameTimer.h"
 
 #include "util/Utils.h"
+#include "util/Logger.h"
 #include "dx_util/ResourceUtils.h"
 
 namespace dxutl {
@@ -35,6 +36,8 @@ namespace dxutl {
         const UINT timestamp_base = frame_index * PASS_COUNT * 2;
 
         for (UINT pass = 0; pass < PASS_COUNT; ++pass) {
+            if (!resolved_[frame_index][pass]) continue;
+
             const UINT timestamp_index = timestamp_base + pass * 2;
             const UINT64 start = readback_buffer_mapped_[timestamp_index + 0];
             const UINT64 end = readback_buffer_mapped_[timestamp_index + 1];
@@ -48,6 +51,10 @@ namespace dxutl {
 
     void GpuFrameTimer::start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
 
+        util::Logger::g_logger.assert_with_log(
+            frame_index < FRAME_COUNT && pass < PASS_COUNT,
+            "GPU timestamp index is out of range");
+
         const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;
 
         p_list->EndQuery(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_index);
@@ -55,11 +62,16 @@ namespace dxutl {
 
     void GpuFrameTimer::end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
 
+        util::Logger::g_logger.assert_with_log(
+            frame_index < FRAME_COUNT && pass < PASS_COUNT,
+            "GPU timestamp index is out of range");
+
         const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;
 
         p_list->EndQuery(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_index + 1);
         p_list->ResolveQueryData(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
             timestamp_index, 2,
             readback_buffer_.Get(), sizeof(UINT64) * timestamp_index);
+        resolved_[frame_index][pass] = true;
     }
 }

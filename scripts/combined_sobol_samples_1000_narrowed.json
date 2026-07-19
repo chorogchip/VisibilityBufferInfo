@@ -1,16 +1,12 @@
 {
-  "experiment": "combined_sobol_1000_narrowed",
   "executable": "../out/build/x64-Release/bin/TVBPerf.exe",
-  "output": "combined_sobol_1000_narrowed.csv",
   "repeat": 1,
   "keep_individual_csv": false,
   "base": {
     "run_id": 0,
     "run_name": "no-run-name",
-    "run_current_time": "",
     "output_filepath": "temp.csv",
     "_renderer_variant": 1,
-    "renderer_variant_name": "no-variant-name",
     "variable": 1,
     "to_use_scene": false,
     "scene_path": "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -9,10 +10,8 @@ namespace util {
 #define ProgramArgument_MAC \
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
-    X(std::string, run_current_time, "", run-current-time) \
     X(std::string, output_filepath, "temp.csv", output-filepath) \
     X(uint32_t, renderer_variant, 1, renderer-variant) \
-    X(std::string, renderer_variant_name, "no-variant-name", renderer-variant-name) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, false, to-use-scene) \
     X(std::string, scene_path, "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf", scene-path) \
@@ -48,26 +47,17 @@ namespace util {
     X(uint32_t, alu_calc_count, 1, alu-calc-count)
 
 
-#define ProgramResultPass_MAC(X, index) \
-    X(double, pass_##index##_time_min_ms, pass_##index##_time_min_ms) \
-    X(double, pass_##index##_time_median_ms, pass_##index##_time_median_ms) \
-    X(double, pass_##index##_time_max_ms, pass_##index##_time_max_ms) \
-    X(double, pass_##index##_time_avg_ms, pass_##index##_time_avg_ms) \
-    X(double, pass_##index##_time_p01_ms, pass_##index##_time_p01_ms) \
-    X(double, pass_##index##_time_p10_ms, pass_##index##_time_p10_ms) \
-    X(double, pass_##index##_time_p90_ms, pass_##index##_time_p90_ms) \
-    X(double, pass_##index##_time_p99_ms, pass_##index##_time_p99_ms)
-
 #define ProgramResult_MAC \
     X(std::string, renderer_name, renderer_name) \
-    X(std::string, pass_name_0, pass_name_0) \
-    X(std::string, pass_name_1, pass_name_1) \
-    X(std::string, pass_name_2, pass_name_2) \
-    X(std::string, pass_name_3, pass_name_3) \
-    ProgramResultPass_MAC(X, 0) \
-    ProgramResultPass_MAC(X, 1) \
-    ProgramResultPass_MAC(X, 2) \
-    ProgramResultPass_MAC(X, 3) \
+    X(std::string, run_current_time, run_current_time) \
+    X(double, total_time_min_ms, total_time_min_ms) \
+    X(double, total_time_median_ms, total_time_median_ms) \
+    X(double, total_time_max_ms, total_time_max_ms) \
+    X(double, total_time_avg_ms, total_time_avg_ms) \
+    X(double, total_time_p01_ms, total_time_p01_ms) \
+    X(double, total_time_p10_ms, total_time_p10_ms) \
+    X(double, total_time_p90_ms, total_time_p90_ms) \
+    X(double, total_time_p99_ms, total_time_p99_ms) \
     X(std::uint32_t, variable_geometry_count, variable-geometry-count) \
     X(std::uint32_t, variable_overdraw_count, variable-overdraw-count) \
     X(std::uint32_t, variable_waste_quad_count, variable-waste-quad-count) \
@@ -90,8 +80,13 @@ namespace util {
     };
 
     struct ProgramResult {
+        static constexpr std::size_t PASS_COUNT = 32;
+
+        std::array<std::string, PASS_COUNT> pass_names{};
+        std::array<double, PASS_COUNT> pass_time_avg_ms{};
+
 #define X(type, name, arg) \
-    type name;
+        type name{};
         ProgramResult_MAC
 #undef X
     public:

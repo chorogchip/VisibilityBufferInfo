@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <array>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -13,7 +14,7 @@ namespace dxutl {
 
     public:
         static constexpr UINT FRAME_COUNT = 2;
-        static constexpr UINT PASS_COUNT = 3;
+        static constexpr UINT PASS_COUNT = 32;
         static constexpr UINT BUF_COUNT = FRAME_COUNT * PASS_COUNT * 2;
 
     public:
@@ -30,6 +31,7 @@ namespace dxutl {
         Microsoft::WRL::ComPtr<ID3D12Resource> readback_buffer_;
         UINT64* readback_buffer_mapped_ = nullptr;
         double timestamp_frequency_rcp_ = 0;
+        std::array<std::array<bool, PASS_COUNT>, FRAME_COUNT> resolved_{};
     };
 
 }

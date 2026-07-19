@@ -11,7 +11,6 @@ namespace rndr {
 		explicit RendererForward(bool do_prepass);
 		~RendererForward() override = default;
 
-
 	private:
 		virtual void make_programresult(util::ProgramResult& result) override;
 		void render_() override;

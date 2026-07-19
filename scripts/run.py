@@ -42,9 +42,6 @@ def run_experiment(
     report: dict[str, Any],
 ) -> int:
     """Execute every parameter set and checkpoint each run immediately."""
-    if "output" not in spec:
-        fail("Experiment spec requires 'output'.")
-
     executable = Path(str(spec.get("executable", "../out/build/x64-Release/bin/TVBPerf.exe")))
     if not executable.is_absolute():
         executable = (spec_path.parent / executable).resolve()
@@ -59,7 +56,7 @@ def run_experiment(
     if timeout_seconds is not None and timeout_seconds <= 0:
         fail("'timeout_seconds' must be greater than 0.")
 
-    experiment_name = str(spec.get("experiment", spec_path.stem))
+    experiment_name = spec_path.stem
     keep_individual = bool(spec.get("keep_individual_csv", False))
     total = len(combinations) * repeat_count
 
@@ -355,11 +352,7 @@ def handle_fatal_error(
             [
                 {
                     "runner_status": "fatal_error",
-                    "runner_experiment": (
-                        str(spec.get("experiment", spec_path.stem))
-                        if isinstance(spec, dict)
-                        else spec_path.stem
-                    ),
+                    "runner_experiment": spec_path.stem,
                     "runner_repeat": "",
                     "runner_run_index": fatal_run_index,
                     "runner_result_row": "",

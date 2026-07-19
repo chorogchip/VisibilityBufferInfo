@@ -9,11 +9,9 @@ class ProgramArgument:
 
     run_id: int = 0
     run_name: str = "no-run-name"
-    run_current_time: str = ""
     output_filepath: str = "temp.csv"
 
     renderer_variant: int = 1
-    renderer_variant_name: str = "no-variant-name"
     variable: int = 0
 
     to_use_scene: bool = False
@@ -61,3 +59,32 @@ class ProgramArgument:
 
 
 VALID_ARGUMENTS = {field.name for field in fields(ProgramArgument)}
+
+
+PROGRAM_RESULT_PASS_COUNT = 32
+PROGRAM_RESULT_FIELDS = (
+    [
+        field_name
+        for pass_index in range(PROGRAM_RESULT_PASS_COUNT)
+        for field_name in (
+            f"pass_name_{pass_index}",
+            f"pass_{pass_index}_time_avg_ms",
+        )
+    ]
+    + [
+        "renderer_name",
+        "run_current_time",
+        "total_time_min_ms",
+        "total_time_median_ms",
+        "total_time_max_ms",
+        "total_time_avg_ms",
+        "total_time_p01_ms",
+        "total_time_p10_ms",
+        "total_time_p90_ms",
+        "total_time_p99_ms",
+        "variable-geometry-count",
+        "variable-overdraw-count",
+        "variable-waste-quad-count",
+        "variable-alu-op-count",
+    ]
+)

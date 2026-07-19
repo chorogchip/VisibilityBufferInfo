@@ -9,14 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from .common import fail, render_argument, trim_error
+from .models import PROGRAM_RESULT_FIELDS
 
 
-def result_paths(spec_path: Path, spec: dict[str, Any] | None) -> tuple[Path, Path, Path, Path]:
-    fallback_output = f"{spec_path.stem}.csv"
-    output_value = str(spec["output"]) if spec is not None and "output" in spec else fallback_output
-    output_name = Path(output_value).name or fallback_output
-    if Path(output_name).suffix.lower() != ".csv":
-        output_name = f"{Path(output_name).stem or spec_path.stem}.csv"
+def result_paths(spec_path: Path, _spec: dict[str, Any] | None) -> tuple[Path, Path, Path, Path]:
+    output_name = f"{spec_path.stem}.csv"
 
     output_stem = Path(output_name).stem
     output_dir = spec_path.parent / "results" / output_stem
@@ -44,6 +41,16 @@ def read_result_rows(path: Path) -> list[dict[str, str]]:
         reader = csv.DictReader(file)
         if not reader.fieldnames:
             fail(f"Benchmark output CSV has no header: {path}")
+        missing_fields = [
+            field_name
+            for field_name in PROGRAM_RESULT_FIELDS
+            if field_name not in reader.fieldnames
+        ]
+        if missing_fields:
+            fail(
+                "Benchmark output CSV is missing ProgramResult fields: "
+                + ", ".join(missing_fields)
+            )
         rows: list[dict[str, str]] = []
         for row in reader:
             normalized = {

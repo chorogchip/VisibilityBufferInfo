@@ -118,6 +118,12 @@ namespace util {
 
     std::string ProgramResult::get_header_string() {
         std::ostringstream stream;
+
+        for (size_t i = 0; i < PASS_COUNT; ++i) {
+            stream << "pass_name_" << i << ',';
+            stream << "pass_" << i << "_time_avg_ms,";
+        }
+
 #define X(type, name, argname) \
         stream << (#argname) << ',';
         ProgramResult_MAC;
@@ -130,6 +136,12 @@ namespace util {
     std::string ProgramResult::to_string() const {
         std::ostringstream stream;
         stream << std::fixed << std::setprecision(5);
+
+        for (size_t i = 0; i < PASS_COUNT; ++i) {
+            stream << pass_names[i] << ',';
+            stream << pass_time_avg_ms[i] << ',';
+        }
+
 #define X(type, name, argname) \
         stream << (this->name) << ',';
         ProgramResult_MAC;

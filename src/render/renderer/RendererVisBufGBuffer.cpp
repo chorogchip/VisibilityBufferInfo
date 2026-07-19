@@ -13,10 +13,9 @@ namespace rndr {
 
     void RendererVisBufGBuffer::make_programresult(util::ProgramResult& result) {
         result.renderer_name = "VisBuf";
-        result.pass_name_0 = "visibility";
-        result.pass_name_1 = "gbuffer";
-        result.pass_name_2 = "lighting";
-        result.pass_name_3 = "total";
+        result.pass_names[0] = "visibility";
+        result.pass_names[1] = "gbuffer";
+        result.pass_names[2] = "lighting";
     }
 
     void RendererVisBufGBuffer::create_renderer_resources() {

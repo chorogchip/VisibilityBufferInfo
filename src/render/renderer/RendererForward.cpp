@@ -14,10 +14,9 @@ namespace rndr {
 
     void RendererForward::make_programresult(util::ProgramResult& result) {
         result.renderer_name = do_prepass_ ? "ForwardPrepass" : "Forward";
-        result.pass_name_0 = do_prepass_ ? "depth_prepass" : "forward";
         if (do_prepass_)
-            result.pass_name_1 = "forward";
-        result.pass_name_3 = "total";
+            result.pass_names[0] = "depth_prepass";
+        result.pass_names[1] = "forward";
     }
 
     void RendererForward::render_() {
@@ -31,15 +30,11 @@ namespace rndr {
             frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
             frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
-            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
-        }
-        else {
-            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
         }
 
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
         pass_forward_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, do_prepass_ ? 1 : 0);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         Utils::throw_if_failed(command_list_->Close(), "command list clonse on framne end");
 
         graphics_queue_.execute(command_list_.Get());

@@ -13,9 +13,8 @@ namespace rndr {
 
     void RendererVisBuf::make_programresult(util::ProgramResult& result) {
         result.renderer_name = "VisBuf";
-        result.pass_name_0 = "visibility";
-        result.pass_name_1 = "resolve";
-        result.pass_name_3 = "total";
+        result.pass_names[0] = "visibility";
+        result.pass_names[1] = "resolve";
     }
 
     void RendererVisBuf::create_renderer_resources() {
