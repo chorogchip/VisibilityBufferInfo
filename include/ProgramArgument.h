@@ -83,6 +83,7 @@ namespace util {
 #undef X
     public:
         static ProgramArgument from_args(const std::vector<std::string>& args);
+        void validate() const;
 
         static std::string get_header_string();
         std::string to_string() const;

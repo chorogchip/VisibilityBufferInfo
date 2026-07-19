@@ -23,6 +23,7 @@ void Application::parse_args() {
     LocalFree(argv);
 
     program_argument_ = util::ProgramArgument::from_args(args);
+    program_argument_.validate();
 }
 
 void Application::run(HINSTANCE h_instance, int n_show_cmd) {
