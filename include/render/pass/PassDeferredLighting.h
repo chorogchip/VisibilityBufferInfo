@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 
@@ -10,7 +11,7 @@ namespace rndr {
     struct PassDeferredLightingResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* back_buffers[2]{};
+        ID3D12Resource* back_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* gbuffers[8]{};
         UINT gbuffer_count = 0;
     };

@@ -3,6 +3,11 @@
 #include <DirectXMath.h>
 
 namespace rndr {
+	struct CameraPose {
+		DirectX::XMFLOAT3 position{};
+		DirectX::XMFLOAT4 rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+	};
+
 	class Camera {
 	public:
 		Camera() = default;
@@ -16,14 +21,15 @@ namespace rndr {
 		void move_right(float distance);
 
 		void set_fovy_nearz_farz(float fovy_radian, float near_z, float far_z);
+		CameraPose get_pose() const;
+		void set_pose(const CameraPose& pose);
 
 		DirectX::XMMATRIX get_mat_view() const;
 		DirectX::XMMATRIX get_mat_proj(unsigned width, unsigned height) const;
 
 	private:
 		DirectX::XMFLOAT3 position_{};
-		float yaw_ = 0.0f;
-		float pitch_ = 0.0f;
+		DirectX::XMFLOAT4 rotation_{ 0.0f, 0.0f, 0.0f, 1.0f };
 		float fovy_ = DirectX::XM_PIDIV4;
 		float near_z_ = 0.1f, far_z_ = 1000.0f;
 	};

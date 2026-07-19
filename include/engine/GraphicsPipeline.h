@@ -23,7 +23,7 @@ namespace eng {
         [[nodiscard]] ID3D12RootSignature* get_root_signature() const { return root_signature_.Get(); }
 
     private:
-        HRESULT build_root_signature();
+        void build_root_signature();
 
         ID3D12Device* device_ = nullptr;
         UINT texture_count_ = 0;

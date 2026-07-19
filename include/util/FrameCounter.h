@@ -50,6 +50,11 @@ namespace util {
             }
         };
 
+        struct WindowedData {
+            uint64_t frame = 0;
+            std::vector<double> time_avg_ms;
+        };
+
 		void init(
             int dimension,
             uint64_t frame_to_start_measure,
@@ -58,6 +63,7 @@ namespace util {
 
 		void tick(std::vector<double>& measure);
 		std::vector<CountedData> summarize();
+		std::vector<WindowedData> summarize_windows(uint32_t window_frames) const;
 		bool to_terminate() const;
 
 	private:

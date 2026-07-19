@@ -3,6 +3,7 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "render/RootParameter.h"
 #include "render/pass/PassDescriptorRequests.h"
@@ -17,11 +18,11 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
 
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
-        resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
+        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
         if (use_prepass_depth_)
-            resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY, resources_.depth);
+            resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY, resources_.depth);
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
 
         auto vertex_shader = dxutl::compile_shader(
@@ -66,7 +67,8 @@ namespace rndr {
             command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
-        ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get(), resources_.sampler_heap };
+        ID3D12DescriptorHeap* heaps[] = {
+            resources_.shader_manager->get(), resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(
             root_param(EnumRootParamScene::FRAME_CONSTANT),
@@ -82,7 +84,8 @@ namespace rndr {
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(
             root_param(EnumRootParamScene::BENCH_MATERIAL_SAMPLER),
-            resources_.sampler_heap->GetGPUDescriptorHandleForHeapStart());
+            resources_.sampler_manager->get_gpu_adr(
+                eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);

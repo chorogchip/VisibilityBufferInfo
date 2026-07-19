@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Windows.h>
+#include <array>
 #include <cstdint>
-#include <functional>
+#include <utility>
 
 class Win32Window {
 public:
@@ -16,7 +17,8 @@ public:
     bool process_messages();
 
     HWND hwnd() const { return hwnd_; }
-    void set_key_down_handler(std::function<bool(WPARAM)> handler);
+    bool is_key_down(uint32_t key) const;
+    std::pair<int, int> consume_mouse_delta();
 
 private:
 
@@ -31,5 +33,10 @@ private:
         LPARAM lParam);
 
     HWND hwnd_ = nullptr;
-    std::function<bool(WPARAM)> key_down_handler_;
+    std::array<bool, 256> key_states_{};
+    bool rotating_camera_ = false;
+    int mouse_x_ = 0;
+    int mouse_y_ = 0;
+    int mouse_delta_x_ = 0;
+    int mouse_delta_y_ = 0;
 };

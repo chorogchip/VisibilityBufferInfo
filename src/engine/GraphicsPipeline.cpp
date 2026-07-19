@@ -1,6 +1,6 @@
 #include "engine/GraphicsPipeline.h"
 
-#include "render/RootParameter.h"
+#include "engine/RootSignatureBuilder.h"
 #include "util/Logger.h"
 
 namespace eng {
@@ -74,8 +74,7 @@ namespace eng {
     }
 
     void GraphicsPipeline::build() {
-        HRESULT result = build_root_signature();
-        util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create graphics root signature");
+        build_root_signature();
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
         desc.InputLayout = fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} : default_input_layout();
@@ -124,158 +123,48 @@ namespace eng {
         desc.DSVFormat = fullscreen_ ? DXGI_FORMAT_UNKNOWN : DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
 
-        result = device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_));
+        const HRESULT result = device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_));
         util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create graphics pipeline state");
     }
 
-    HRESULT GraphicsPipeline::build_root_signature() {
+    void GraphicsPipeline::build_root_signature() {
+        RootSignatureBuilder builder;
+
         if (fullscreen_) {
             if (bench_scene_resolve_) {
-                D3D12_DESCRIPTOR_RANGE ranges[4]{};
-                ranges[0] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1,
-                    D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-                ranges[1] = { D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 1,
-                    D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-                ranges[2] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0, 0,
-                    D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-                ranges[3] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texture_count_, 8, 0,
-                    D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-                D3D12_DESCRIPTOR_RANGE bench_sampler{
-                    D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 0,
-                    D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-
-                D3D12_ROOT_PARAMETER parameters[
-                    rndr::root_param(rndr::EnumRootParamFullscreen::COUNT)]{};
-                auto set_table = [&](rndr::EnumRootParamFullscreen index,
-                                     D3D12_DESCRIPTOR_RANGE& range) {
-                    auto& parameter = parameters[rndr::root_param(index)];
-                    parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                    parameter.DescriptorTable = { 1, &range };
-                    parameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-                };
-                auto& constants = parameters[rndr::root_param(
-                    rndr::EnumRootParamFullscreen::PASS_CONSTANT)];
-                constants.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-                constants.Descriptor.ShaderRegister = 0;
-                constants.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-                set_table(rndr::EnumRootParamFullscreen::INPUT_SRV, ranges[0]);
-                set_table(rndr::EnumRootParamFullscreen::SAMPLER, ranges[1]);
-                set_table(rndr::EnumRootParamFullscreen::BENCH_INPUT_SRV, ranges[2]);
-                set_table(rndr::EnumRootParamFullscreen::BENCH_MATERIAL_TEXTURE, ranges[3]);
-                set_table(rndr::EnumRootParamFullscreen::BENCH_MATERIAL_SAMPLER, bench_sampler);
-
-                D3D12_ROOT_SIGNATURE_DESC desc{};
-                desc.NumParameters = _countof(parameters);
-                desc.pParameters = parameters;
-                Microsoft::WRL::ComPtr<ID3DBlob> signature;
-                Microsoft::WRL::ComPtr<ID3DBlob> error;
-                HRESULT result = D3D12SerializeRootSignature(
-                    &desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-                if (FAILED(result)) return result;
-                return device_->CreateRootSignature(0, signature->GetBufferPointer(),
-                    signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_));
+                builder
+                    .add_root_cbv(0, 0, D3D12_SHADER_VISIBILITY_PIXEL)
+                    .srv_table().base(0).cnt(1).spc(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                    .sampler_table().base(0).cnt(1).spc(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                    .srv_table().base(0).cnt(6).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                    .srv_table().base(8).cnt(texture_count_).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                    .sampler_table().base(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add();
             }
-
-            D3D12_DESCRIPTOR_RANGE ranges[2]{};
-            ranges[0] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, fullscreen_input_count_, 0, 0,
-                D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-            ranges[1] = { D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 0,
-                D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-
-            D3D12_ROOT_PARAMETER parameters[3]{};
-            auto& constants = parameters[rndr::root_param(rndr::EnumRootParamFullscreen::PASS_CONSTANT)];
-            constants.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-            constants.Descriptor.ShaderRegister = 0;
-            auto& inputs = parameters[rndr::root_param(rndr::EnumRootParamFullscreen::INPUT_SRV)];
-            inputs.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            inputs.DescriptorTable = { 1, &ranges[0] };
-            auto& sampler = parameters[rndr::root_param(rndr::EnumRootParamFullscreen::SAMPLER)];
-            sampler.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            sampler.DescriptorTable = { 1, &ranges[1] };
-
-            D3D12_ROOT_SIGNATURE_DESC desc{};
-            desc.NumParameters = _countof(parameters);
-            desc.pParameters = parameters;
-            Microsoft::WRL::ComPtr<ID3DBlob> signature;
-            Microsoft::WRL::ComPtr<ID3DBlob> error;
-            HRESULT result = D3D12SerializeRootSignature(
-                &desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-            if (FAILED(result))
-                return result;
-            return device_->CreateRootSignature(0, signature->GetBufferPointer(),
-                signature->GetBufferSize(), IID_PPV_ARGS(&root_signature_));
+            else {
+                builder
+                    .add_root_cbv(0)
+                    .srv_table().base(0).cnt(fullscreen_input_count_).add()
+                    .sampler_table().base(0).cnt(1).add();
+            }
+        }
+        else {
+            const UINT texture_descriptor_count = texture_count_ > 0 ? texture_count_ : 1;
+            builder
+                .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
+                .add_root_cbv(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
+                .add_constants(1, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX)
+                .add_root_srv(0, 1, D3D12_SHADER_VISIBILITY_VERTEX)
+                .add_root_srv(1, 1, D3D12_SHADER_VISIBILITY_PIXEL)
+                .srv_table().base(2).cnt(3).spc(1).add()
+                .srv_table().base(0).cnt(texture_descriptor_count).spc(2).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                .sampler_table().base(0).cnt(1).spc(2).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                .add_root_srv(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
+                .add_root_srv(1, 0, D3D12_SHADER_VISIBILITY_PIXEL)
+                .srv_table().base(8).cnt(texture_descriptor_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+                .sampler_table().base(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add();
         }
 
-        D3D12_DESCRIPTOR_RANGE ranges[5]{};
-        ranges[0] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 2, 1,
-            D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-        ranges[1] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texture_count_, 0, 2,
-            D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-        ranges[2] = { D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 2,
-            D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-        ranges[3] = { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, texture_count_, 8, 0,
-            D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-        ranges[4] = { D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 0,
-            D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND };
-
-        D3D12_ROOT_PARAMETER parameters[
-            rndr::root_param(rndr::EnumRootParamScene::COUNT)]{};
-
-        auto& frame = parameters[rndr::root_param(rndr::EnumRootParamScene::FRAME_CONSTANT)];
-        frame.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        frame.Descriptor.ShaderRegister = 0;
-        frame.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-        auto& draw = parameters[rndr::root_param(rndr::EnumRootParamScene::DRAW_CONSTANT)];
-        draw.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        draw.Constants.ShaderRegister = 1;
-        draw.Constants.Num32BitValues = 1;
-        draw.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-
-        auto set_srv = [&](rndr::EnumRootParamScene index, UINT shader_register,
-                           UINT space, D3D12_SHADER_VISIBILITY visibility) {
-            auto& parameter = parameters[rndr::root_param(index)];
-            parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-            parameter.Descriptor.ShaderRegister = shader_register;
-            parameter.Descriptor.RegisterSpace = space;
-            parameter.ShaderVisibility = visibility;
-        };
-        set_srv(rndr::EnumRootParamScene::INSTANCE_BUFFER, 0, 1, D3D12_SHADER_VISIBILITY_VERTEX);
-        set_srv(rndr::EnumRootParamScene::MATERIAL_BUFFER, 1, 1, D3D12_SHADER_VISIBILITY_PIXEL);
-        set_srv(rndr::EnumRootParamScene::BENCH_INSTANCE_BUFFER, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-        set_srv(rndr::EnumRootParamScene::BENCH_MATERIAL_BUFFER, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-
-        auto set_table = [&](rndr::EnumRootParamScene index, D3D12_DESCRIPTOR_RANGE& range,
-                             D3D12_SHADER_VISIBILITY visibility) {
-            auto& parameter = parameters[rndr::root_param(index)];
-            parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            parameter.DescriptorTable.NumDescriptorRanges = 1;
-            parameter.DescriptorTable.pDescriptorRanges = &range;
-            parameter.ShaderVisibility = visibility;
-        };
-        set_table(rndr::EnumRootParamScene::GEOMETRY_BUFFER, ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-        set_table(rndr::EnumRootParamScene::MATERIAL_TEXTURE, ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
-        set_table(rndr::EnumRootParamScene::MATERIAL_SAMPLER, ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-        set_table(rndr::EnumRootParamScene::BENCH_MATERIAL_TEXTURE, ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
-        set_table(rndr::EnumRootParamScene::BENCH_MATERIAL_SAMPLER, ranges[4], D3D12_SHADER_VISIBILITY_PIXEL);
-
-        D3D12_ROOT_SIGNATURE_DESC root_desc{};
-        root_desc.NumParameters = _countof(parameters);
-        root_desc.pParameters = parameters;
-        root_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        Microsoft::WRL::ComPtr<ID3DBlob> signature;
-        Microsoft::WRL::ComPtr<ID3DBlob> error;
-        HRESULT result = D3D12SerializeRootSignature(
-            &root_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-        if (FAILED(result))
-            return result;
-
-        return device_->CreateRootSignature(
-            0,
-            signature->GetBufferPointer(),
-            signature->GetBufferSize(),
-            IID_PPV_ARGS(&root_signature_));
+        root_signature_ = builder.build(device_);
     }
 
 }

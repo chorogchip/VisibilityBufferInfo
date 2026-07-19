@@ -1,6 +1,6 @@
 #include "Win32Window.h"
 
-#include <utility>
+#include <windowsx.h>
 
 #include "util/Logger.h"
 
@@ -56,8 +56,15 @@ bool Win32Window::process_messages() {
     return true;
 }
 
-void Win32Window::set_key_down_handler(std::function<bool(WPARAM)> handler) {
-    key_down_handler_ = std::move(handler);
+bool Win32Window::is_key_down(uint32_t key) const {
+    return key < key_states_.size() && key_states_[key];
+}
+
+std::pair<int, int> Win32Window::consume_mouse_delta() {
+    const std::pair<int, int> delta{ mouse_delta_x_, mouse_delta_y_ };
+    mouse_delta_x_ = 0;
+    mouse_delta_y_ = 0;
+    return delta;
 }
 
 LRESULT CALLBACK Win32Window::WndProc
@@ -102,11 +109,43 @@ LRESULT Win32Window::handle_message(
             return 0;
         }
 
-        if (key_down_handler_ && key_down_handler_(wParam)) {
-            return 0;
-        }
+        if (wParam < key_states_.size()) key_states_[wParam] = true;
+        return 0;
 
-        break;
+    case WM_KEYUP:
+        if (wParam < key_states_.size()) key_states_[wParam] = false;
+        return 0;
+
+    case WM_RBUTTONDOWN:
+        rotating_camera_ = true;
+        mouse_x_ = GET_X_LPARAM(lParam);
+        mouse_y_ = GET_Y_LPARAM(lParam);
+        SetCapture(hwnd_);
+        return 0;
+
+    case WM_RBUTTONUP:
+        rotating_camera_ = false;
+        ReleaseCapture();
+        return 0;
+
+    case WM_MOUSEMOVE:
+        if (rotating_camera_) {
+            const int x = GET_X_LPARAM(lParam);
+            const int y = GET_Y_LPARAM(lParam);
+            mouse_delta_x_ += x - mouse_x_;
+            mouse_delta_y_ += y - mouse_y_;
+            mouse_x_ = x;
+            mouse_y_ = y;
+        }
+        return 0;
+
+    case WM_KILLFOCUS:
+        key_states_.fill(false);
+        rotating_camera_ = false;
+        mouse_delta_x_ = 0;
+        mouse_delta_y_ = 0;
+        if (GetCapture() == hwnd_) ReleaseCapture();
+        return 0;
     }
 
     return DefWindowProc(hwnd_, msg, wParam, lParam);

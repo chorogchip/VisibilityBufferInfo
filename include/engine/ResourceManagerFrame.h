@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <d3d12.h>
 #include <wrl.h>
 
@@ -37,9 +36,8 @@ namespace eng {
         };
 
         void init(ID3D12Device* device);
-        void request_rtv(EnumRTV position, ID3D12Resource* texture);
-        void request_dsv(EnumDSV position, ID3D12Resource* texture);
-        void build();
+        void create_rtv(EnumRTV position, ID3D12Resource* texture);
+        void create_dsv(EnumDSV position, ID3D12Resource* texture);
 
         [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_rtv(EnumRTV position) const;
         [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_dsv(EnumDSV position) const;
@@ -47,13 +45,7 @@ namespace eng {
     private:
         static constexpr UINT RTV_COUNT = static_cast<UINT>(EnumRTV::COUNT);
         static constexpr UINT DSV_COUNT = static_cast<UINT>(EnumDSV::COUNT);
-        static constexpr UINT INVALID_INDEX = UINT_MAX;
-
         ID3D12Device* device_ = nullptr;
-        std::array<UINT, RTV_COUNT> rtv_indices_{};
-        std::array<UINT, DSV_COUNT> dsv_indices_{};
-        std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, RTV_COUNT> rtv_resources_;
-        std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, DSV_COUNT> dsv_resources_;
         UINT rtv_size_ = 0;
         UINT dsv_size_ = 0;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtv_heap_;

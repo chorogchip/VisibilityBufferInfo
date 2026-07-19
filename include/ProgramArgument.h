@@ -18,6 +18,11 @@ namespace util {
     X(uint32_t, warmup_frames, 600, warmup-frames) \
     X(uint32_t, measure_frames, 120, measure-frames) \
     X(bool, auto_terminate, false, auto-terminate) \
+    X(bool, vsync, false, vsync) \
+    X(uint32_t, camera_mode, 2, camera-mode) \
+    X(std::string, camera_filepath, "camera.csv", camera-filepath) \
+    X(uint32_t, camera_keyframe_interval, 10, camera-keyframe-interval) \
+    X(uint32_t, profile_window_frames, 10, profile-window-frames) \
     X(uint32_t, window_width, 1280, window-width) \
     X(uint32_t, window_height, 720, window-height) \
     X(uint32_t, seed, 0, seed) \
@@ -50,6 +55,7 @@ namespace util {
 #define ProgramResult_MAC \
     X(std::string, renderer_name, renderer_name) \
     X(std::string, run_current_time, run_current_time) \
+    X(std::string, camera_mode_name, camera-mode-name) \
     X(double, total_time_min_ms, total_time_min_ms) \
     X(double, total_time_median_ms, total_time_median_ms) \
     X(double, total_time_max_ms, total_time_max_ms) \
@@ -67,12 +73,17 @@ namespace util {
 
 
     struct ProgramArgument {
+        static constexpr uint32_t CAMERA_MODE_FREE = 0;
+        static constexpr uint32_t CAMERA_MODE_RECORD = 1;
+        static constexpr uint32_t CAMERA_MODE_PLAYBACK = 2;
+
 #define X(type, name, defl, arg) \
 	type name = defl;
         ProgramArgument_MAC
 #undef X
     public:
         static ProgramArgument from_args(const std::vector<std::string>& args);
+        static std::string camera_mode_to_string(uint32_t mode);
         void validate() const;
 
         static std::string get_header_string();

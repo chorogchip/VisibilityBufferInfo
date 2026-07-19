@@ -1,6 +1,8 @@
 #include "Application.h"
 
 #include <Windows.h>
+#include <algorithm>
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -21,7 +23,7 @@ void Application::parse_args() {
         args.push_back(Utils::wstring_to_string(argv[i]));
 
     LocalFree(argv);
-
+    
     program_argument_ = util::ProgramArgument::from_args(args);
     program_argument_.validate();
 }
@@ -34,10 +36,10 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
         L"Visibility Buffer Performance");
 
     renderer_ = rndr::create_renderer(program_argument_.renderer_variant);
-    window_.set_key_down_handler([this](WPARAM key) { return handle_key_down(key); });
     renderer_->init(window_.hwnd(), program_argument_);
 
     bool running = true;
+    auto previous_time = std::chrono::steady_clock::now();
     while (running) {
         if (program_argument_.auto_terminate && renderer_->to_terminate()) {
             PostQuitMessage(0);
@@ -45,51 +47,39 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
         }
 
         running = window_.process_messages();
-        if (running) renderer_->render();
+        if (running) {
+            const auto current_time = std::chrono::steady_clock::now();
+            const float delta_seconds = (std::min)(
+                std::chrono::duration<float>(current_time - previous_time).count(), 0.1f);
+            previous_time = current_time;
+            update_camera_input(delta_seconds);
+            renderer_->render();
+        }
     }
 
     renderer_->close();
     renderer_ = nullptr;
 }
 
-bool Application::handle_key_down(WPARAM key) {
-    if (!renderer_) return false;
-
-    constexpr float move_speed = 0.3f;
-    constexpr float turn_speed = 3.0f * 0.01f;
-
-    switch (key) {
-    case 'W':
-        renderer_->camera_.move_forward(move_speed);
-        return true;
-    case 'S':
-        renderer_->camera_.move_forward(-move_speed);
-        return true;
-    case 'A':
-        renderer_->camera_.move_right(-move_speed);
-        return true;
-    case 'D':
-        renderer_->camera_.move_right(move_speed);
-        return true;
-    case 'Q':
-        renderer_->camera_.turn_right(-turn_speed);
-        return true;
-    case 'E':
-        renderer_->camera_.turn_right(turn_speed);
-        return true;
-    case 'R':
-        renderer_->camera_.turn_up(turn_speed);
-        return true;
-    case 'F':
-        renderer_->camera_.turn_up(-turn_speed);
-        return true;
-    case VK_SPACE:
-        renderer_->camera_.move_pos(0.0f, move_speed, 0.0f);
-        return true;
-    case VK_SHIFT:
-        renderer_->camera_.move_pos(0.0f, -move_speed, 0.0f);
-        return true;
+void Application::update_camera_input(float delta_seconds) {
+    if (!renderer_ ||
+        program_argument_.camera_mode == util::ProgramArgument::CAMERA_MODE_PLAYBACK) {
+        window_.consume_mouse_delta();
+        return;
     }
 
-    return false;
+    constexpr float MOVE_SPEED = 6.0f;
+    constexpr float MOUSE_SENSITIVITY = 0.003f;
+    const float distance = MOVE_SPEED * delta_seconds;
+
+    if (window_.is_key_down('W')) renderer_->camera_.move_forward(distance);
+    if (window_.is_key_down('S')) renderer_->camera_.move_forward(-distance);
+    if (window_.is_key_down('A')) renderer_->camera_.move_right(-distance);
+    if (window_.is_key_down('D')) renderer_->camera_.move_right(distance);
+    if (window_.is_key_down(VK_SPACE)) renderer_->camera_.move_pos(0.0f, distance, 0.0f);
+    if (window_.is_key_down(VK_SHIFT)) renderer_->camera_.move_pos(0.0f, -distance, 0.0f);
+
+    const auto [mouse_x, mouse_y] = window_.consume_mouse_delta();
+    renderer_->camera_.turn_right(static_cast<float>(mouse_x) * MOUSE_SENSITIVITY);
+    renderer_->camera_.turn_up(static_cast<float>(mouse_y) * MOUSE_SENSITIVITY);
 }

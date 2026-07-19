@@ -5,14 +5,15 @@
 #include "render/RootParameter.h"
 #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 
 namespace rndr {
     void PassVisBufResolve::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisBufResolveResources& resources) {
         resources_ = resources;
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
         request_visbuf_scene(*resources_.shader_manager,
             resources_.vertex_buffer, resources_.index_buffer, resources_.mesh_buffer,
             resources_.instance_buffer, resources_.material_buffer,
@@ -35,7 +36,8 @@ namespace rndr {
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
-        ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get(), resources_.sampler_heap };
+        ID3D12DescriptorHeap* heaps[] = {
+            resources_.shader_manager->get(), resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(root_param(EnumRootParamFullscreen::PASS_CONSTANT),
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
@@ -44,7 +46,8 @@ namespace rndr {
         command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamFullscreen::BENCH_MATERIAL_TEXTURE),
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamFullscreen::BENCH_MATERIAL_SAMPLER),
-            resources_.sampler_heap->GetGPUDescriptorHandleForHeapStart());
+            resources_.sampler_manager->get_gpu_adr(
+                eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
         const auto rtv = resources_.frame_manager->get_rtv(frame_index == 0

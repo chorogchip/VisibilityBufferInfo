@@ -13,7 +13,7 @@ namespace rndr {
         const util::ProgramArgument& arguments,
         const PassDepthPreResources& resources) {
         resources_ = resources;
-        resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
 
         auto vertex_shader = dxutl::compile_shader(
             L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0", "main", arguments);

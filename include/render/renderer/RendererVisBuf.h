@@ -22,7 +22,6 @@ namespace rndr {
 		void init_passes() override;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> vis_buffer_;
-		Microsoft::WRL::ComPtr<ID3D12Resource> mesh_buffer_;
 		PassVisibility pass_visibility_;
 		PassVisBufResolve pass_resolve_;
 	};

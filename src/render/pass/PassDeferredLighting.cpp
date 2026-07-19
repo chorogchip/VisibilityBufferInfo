@@ -11,8 +11,8 @@ namespace rndr {
     void PassDeferredLighting::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassDeferredLightingResources& resources) {
         resources_ = resources;
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
         
         auto vs = dxutl::compile_shader(L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0", "main", arguments);
         auto ps = dxutl::compile_shader(L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", "main", arguments);

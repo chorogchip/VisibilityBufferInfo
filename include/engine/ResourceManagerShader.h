@@ -2,7 +2,6 @@
 
 #include <d3d12.h>
 #include <wrl.h>
-#include <vector>
 
 namespace eng {
 
@@ -29,6 +28,7 @@ namespace eng {
             DONUT_TAA_FEEDBACK = 22,
             DONUT_EXPOSURE = 23,
             DONUT_COLOR_LUT = 24,
+            DONUT_HDR_COLOR_UAV = 25,
 
             BENCH_VISIBILITY_BUFFER = 32,
             BENCH_VERTEX_BUFFER = 33,
@@ -47,13 +47,17 @@ namespace eng {
             BENCH_MATERIAL_TEXTURE_BEGIN = 46
         };
 
-        void init(ID3D12Device* device);
-        void request(
+        void init(ID3D12Device* device, UINT descriptor_count);
+        void create_srv(
             EnumDescPos position,
             ID3D12Resource* resource,
             const D3D12_SHADER_RESOURCE_VIEW_DESC* desc = nullptr,
             UINT offset = 0);
-        void build();
+        void create_uav(
+            EnumDescPos position,
+            ID3D12Resource* resource,
+            const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc = nullptr,
+            UINT offset = 0);
 
         [[nodiscard]] ID3D12DescriptorHeap* get() const { return heap_.Get(); }
         [[nodiscard]] UINT get_size() const { return descriptor_size_; }
@@ -72,19 +76,10 @@ namespace eng {
         }
 
     private:
-        struct PendingDescriptor {
-            UINT index = 0;
-            Microsoft::WRL::ComPtr<ID3D12Resource> resource;
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
-            bool has_desc = false;
-        };
-
         ID3D12Device* device_ = nullptr;
-        UINT requested_count_ = 0;
         UINT descriptor_size_ = 0;
         UINT descriptor_count_ = 0;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_;
-        std::vector<PendingDescriptor> pending_descriptors_;
     };
 
 }

@@ -23,6 +23,11 @@ class ProgramArgument:
     warmup_frames: int = 600
     measure_frames: int = 120
     auto_terminate: bool = False
+    vsync: bool = False
+    camera_mode: int = 2
+    camera_filepath: str = "camera.csv"
+    camera_keyframe_interval: int = 10
+    profile_window_frames: int = 10
 
     window_width: int = 1280
     window_height: int = 720
@@ -74,6 +79,7 @@ PROGRAM_RESULT_FIELDS = (
     + [
         "renderer_name",
         "run_current_time",
+        "camera-mode-name",
         "total_time_min_ms",
         "total_time_median_ms",
         "total_time_max_ms",

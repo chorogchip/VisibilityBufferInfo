@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include <vector>
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
     struct PassVisBufGBufferResources {
@@ -21,8 +22,8 @@ namespace rndr {
         const scene::SceneDataCPU* scene = nullptr;
         ID3D12Resource* gbuffers[8]{};
         UINT gbuffer_count = 0;
-        ID3D12Resource* constant_buffers[2]{};
-        ID3D12DescriptorHeap* sampler_heap = nullptr;
+        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
     };
 
     class PassVisBufGBuffer {

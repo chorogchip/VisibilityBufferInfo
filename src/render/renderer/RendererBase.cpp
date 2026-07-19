@@ -51,16 +51,21 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     height_ = arg.window_height;
 
     program_arguments_ = std::make_unique<const util::ProgramArgument>(arg);
+    camera_path_controller_.init(arg);
 
     frame_counter_.init(
         dxutl::GpuFrameTimer::PASS_COUNT + 1,
         arg.warmup_frames,
-        arg.warmup_frames + arg.measure_frames,
-        arg.warmup_frames + arg.measure_frames + 60);
+        arg.warmup_frames + camera_path_controller_.measurement_frames(),
+        arg.warmup_frames + camera_path_controller_.measurement_frames() + 60);
 
     device_ = dxutl::create_device(factory_);
     resource_manager_frame_.init(device_.Get());
-    resource_manager_shader_.init(device_.Get());
+    resource_manager_sampler_.init(device_.Get());
+    const UINT shader_descriptor_count = static_cast<UINT>(
+        eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN)
+        + arg.texture_count;
+    resource_manager_shader_.init(device_.Get(), shader_descriptor_count);
 
     this->create_command_objects();
 
@@ -70,7 +75,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         hwnd_,
         width_,
         height_,
-        FRAME_COUNT);
+        util::FRAME_COUNT);
 
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 
@@ -86,24 +91,38 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     this->create_back_buffer_resources();
     this->create_benchmark_resources();
     this->init_passes();
-    this->build_resource_managers();
 }
 
 void RendererBase::render() {
 
+    camera_path_controller_.before_render(camera_);
+
     this->render_();
 
     this->move_to_next_frame();
+    camera_path_controller_.after_render();
 }
 
 void RendererBase::close() {
     graphics_queue_.wait_idle();
+    camera_path_controller_.close(camera_);
 
     const std::string& path = program_arguments_->output_filepath;
     if (path == "") return;
 
     util::ProgramResult result{};
     result.run_current_time = make_current_time_string();
+    result.camera_mode_name = util::ProgramArgument::camera_mode_to_string(
+        program_arguments_->camera_mode);
+    this->make_programresult(result);
+
+    if (camera_path_controller_.is_playback()) {
+        const auto windows = frame_counter_.summarize_windows(
+            program_arguments_->profile_window_frames);
+        util::write_windowed_benchmark_csv(path, result.pass_names, windows);
+        return;
+    }
+
     auto results = frame_counter_.summarize();
 
     static_assert(util::ProgramResult::PASS_COUNT == dxutl::GpuFrameTimer::PASS_COUNT);
@@ -144,15 +163,13 @@ void RendererBase::close() {
     result.variable_waste_quad_count = val_div;
     result.variable_alu_op_count = val_alu;
 
-    this->make_programresult(result);
-
     util::write_benchmark_csv(path, *program_arguments_, result);
 }
 
 void RendererBase::create_command_objects() {
     graphics_queue_.init(device_.Get());
 
-    for (int i = 0; i < FRAME_COUNT; ++i) {
+    for (UINT i = 0; i < util::FRAME_COUNT; ++i) {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             IID_PPV_ARGS(command_allocator_[i].ReleaseAndGetAddressOf())),
@@ -191,65 +208,22 @@ D3D12_RESOURCE_STATES RendererBase::depth_stencil_initial_state() const {
 }
 
 void RendererBase::create_back_buffer_resources() {
-    for (UINT i = 0; i < FRAME_COUNT; ++i)
+    for (UINT i = 0; i < util::FRAME_COUNT; ++i)
         swapchain_->GetBuffer(i, IID_PPV_ARGS(render_targets_[i].ReleaseAndGetAddressOf()));
 }
 
-void RendererBase::create_sampler_heap() {
-    const UINT sampler_count = 1;
-
-    util::Logger::g_logger.assert_with_log(
-        sampler_count > 0,
-        "sampler count must > 0");
-
-    D3D12_DESCRIPTOR_HEAP_DESC heap_desc{};
-    heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-    heap_desc.NumDescriptors = sampler_count;
-    heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    const HRESULT result = device_->CreateDescriptorHeap(
-        &heap_desc, IID_PPV_ARGS(sampler_heap_.ReleaseAndGetAddressOf()));
-    util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create sampler descriptor heap");
-
-    sampler_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(
-        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-}
-
-void RendererBase::create_texture_sampler_descriptors() {
-    D3D12_CPU_DESCRIPTOR_HANDLE sampler_handle =
-        sampler_heap_->GetCPUDescriptorHandleForHeapStart();
-
-    const UINT sampler_count = 1;
-
-    for (UINT i = 0; i < sampler_count; ++i) {
-        D3D12_SAMPLER_DESC sampler_desc{};
-
-        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-
-        sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-
-        sampler_desc.MipLODBias = 0.0f;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-
-        sampler_desc.BorderColor[0] = 0.0f;
-        sampler_desc.BorderColor[1] = 0.0f;
-        sampler_desc.BorderColor[2] = 0.0f;
-        sampler_desc.BorderColor[3] = 0.0f;
-
-        sampler_desc.MinLOD = 0.0f;
-        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-
-        device_->CreateSampler(&sampler_desc, sampler_handle);
-
-        sampler_handle.ptr += sampler_descriptor_size_;
-    }
-}
-
-void RendererBase::build_resource_managers() {
-    resource_manager_frame_.build();
-    resource_manager_shader_.build();
+void RendererBase::create_sampler_descriptors() {
+    D3D12_SAMPLER_DESC sampler_desc{};
+    sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampler_desc.MaxAnisotropy = 1;
+    sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
+    resource_manager_sampler_.request(
+        eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL,
+        sampler_desc);
 }
 
 void RendererBase::load_scene() {
@@ -389,8 +363,7 @@ void RendererBase::create_benchmark_resources() {
     graphics_queue_.execute(command_list_.Get());
     graphics_queue_.wait_idle();
 
-    create_sampler_heap();
-    create_texture_sampler_descriptors();
+    create_sampler_descriptors();
 }
 
 void RendererBase::create_frame_resources() {
@@ -421,19 +394,8 @@ void RendererBase::create_frame_resources() {
     matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(
         static_cast<float>(width_), static_cast<float>(height_));
 
-    constexpr size_t matrix_buf_size_aligned =
-        Utils::GetAlignedAddress(sizeof(ConstBufMatrices), 256ULL);
-
-    for (int i = 0; i < FRAME_COUNT; ++i) {
-        buf_constant_[i] = dxutl::create_buffer(
-            device_.Get(),
-            matrix_buf_size_aligned,
-            D3D12_HEAP_TYPE_UPLOAD,
-            D3D12_RESOURCE_STATE_GENERIC_READ);
-
-        buf_constant_mapped_[i] =
-            dxutl::map_upload_buffer(buf_constant_[i].Get());
-    }
+    for (UINT i = 0; i < util::FRAME_COUNT; ++i)
+        buf_constant_[i].init(device_.Get());
 
     depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
         device_.Get(),
@@ -456,10 +418,13 @@ void RendererBase::copy_camera_data() {
     matrix_buf_cpu_.viewport_size_ = DirectX::XMFLOAT2(
         static_cast<float>(width_), static_cast<float>(height_));
 
-    memcpy(
-        buf_constant_mapped_[frame_index_],
-        &matrix_buf_cpu_,
-        sizeof(matrix_buf_cpu_));
+    buf_constant_[frame_index_].update(matrix_buf_cpu_);
+}
+
+void RendererBase::present() {
+    const UINT sync_interval = program_arguments_->vsync ? 1 : 0;
+    const UINT flags = program_arguments_->vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
+    Utils::throw_if_failed(swapchain_->Present(sync_interval, flags), "swapchain present");
 }
 
 void RendererBase::move_to_next_frame() {

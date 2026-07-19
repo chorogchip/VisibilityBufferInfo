@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/SceneDataCPU.h"
 #include <vector>
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
 
@@ -15,11 +16,11 @@ namespace rndr {
         ID3D12Resource* gbuffers[8]{};
         UINT gbuffer_count = 0;
         ID3D12Resource* depth = nullptr;
-        ID3D12Resource* constant_buffers[2]{};
+        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         ID3D12Resource* material_buffer = nullptr;
         std::vector<ID3D12Resource*> material_textures;
-        ID3D12DescriptorHeap* sampler_heap = nullptr;
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
         const scene::SceneDataCPU* scene = nullptr;

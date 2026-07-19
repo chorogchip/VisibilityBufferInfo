@@ -9,18 +9,22 @@
 #include <memory>
 #include <vector>
 
+#include "Constants.h"
 #include "ProgramArgument.h"
 #include "util/Logger.h"
 #include "util/FrameCounter.h"
 #include "dx_util/GPUFrameTimer.h"
+#include "dx_util/UploadConstBuf.h"
 #include "engine/GraphicsQueue.h"
 #include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 
 #include "scene/SceneDataCPU.h"
 #include "scene/SceneDataGPU.h"
 
 #include "render/Camera.h"
+#include "render/CameraPathController.h"
 
 class RendererBase
 {
@@ -28,8 +32,6 @@ class RendererBase
     using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 public:
-    static constexpr UINT FRAME_COUNT = 2;
-
     virtual ~RendererBase();
     void init(HWND hwnd, const util::ProgramArgument&);
     void render();
@@ -46,6 +48,7 @@ protected:
     virtual void init_passes() = 0;
 
     void copy_camera_data();
+    void present();
 
 private:
     void create_command_objects();
@@ -56,10 +59,7 @@ private:
     void create_frame_resources();
     void create_back_buffer_resources();
     void create_benchmark_resources();
-    void create_sampler_heap();
-    void create_texture_sampler_descriptors();
-    void build_resource_managers();
-
+    void create_sampler_descriptors();
     void move_to_next_frame();
 
 protected:
@@ -71,7 +71,7 @@ protected:
     ComPtr<ID3D12Device> device_;
 
     eng::GraphicsQueue graphics_queue_;
-    ComPtr<ID3D12CommandAllocator> command_allocator_[FRAME_COUNT];
+    ComPtr<ID3D12CommandAllocator> command_allocator_[util::FRAME_COUNT];
     ComPtr<ID3D12GraphicsCommandList> command_list_;
 
     ComPtr<IDXGISwapChain3> swapchain_;
@@ -79,15 +79,12 @@ protected:
 
     constexpr static DXGI_FORMAT DEPTH_STENCIL_FORMAT_ = DXGI_FORMAT_D32_FLOAT;
     ComPtr<ID3D12Resource> depth_stencil_buffer_;
-    ComPtr<ID3D12Resource> render_targets_[FRAME_COUNT];
-
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> sampler_heap_;
-    UINT sampler_descriptor_size_ = 0;
+    ComPtr<ID3D12Resource> render_targets_[util::FRAME_COUNT];
 
     D3D12_VIEWPORT viewport_{};
     D3D12_RECT scissor_rect_{};
 
-    UINT64 fence_values_[FRAME_COUNT]{};
+    UINT64 fence_values_[util::FRAME_COUNT]{};
 
     std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
     std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
@@ -96,15 +93,15 @@ protected:
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
         DirectX::XMFLOAT2 viewport_size_;
-    } matrix_buf_cpu_{};
-    ComPtr<ID3D12Resource> buf_constant_[FRAME_COUNT];
-    void* buf_constant_mapped_[FRAME_COUNT]{};
+    };
+    ConstBufMatrices matrix_buf_cpu_{};
+    dxutl::UploadConstBuf<ConstBufMatrices> buf_constant_[util::FRAME_COUNT];
 
     std::vector<ComPtr<ID3D12Resource>> dummy_textures_;
 
-    static_assert(dxutl::GpuFrameTimer::FRAME_COUNT == FRAME_COUNT, "");
     dxutl::GpuFrameTimer frame_time_;
     util::FrameCounter frame_counter_;
+    rndr::CameraPathController camera_path_controller_;
 
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
 
@@ -112,6 +109,7 @@ protected:
 
 protected:
     eng::ResourceManagerFrame resource_manager_frame_;
+    eng::ResourceManagerSampler resource_manager_sampler_;
     eng::ResourceManagerShader resource_manager_shader_;
     
 public:

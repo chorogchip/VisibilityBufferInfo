@@ -5,6 +5,7 @@
 #include "render/RootParameter.h"
 #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 
 namespace rndr {
@@ -15,10 +16,10 @@ namespace rndr {
         use_prepass_depth_ = use_prepass_depth;
 
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            resources_.frame_manager->request_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
+            resources_.frame_manager->create_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
                 static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i),
                 resources_.gbuffers[i]);
-        resources_.frame_manager->request_dsv(use_prepass_depth_
+        resources_.frame_manager->create_dsv(use_prepass_depth_
             ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
             : eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
@@ -28,7 +29,7 @@ namespace rndr {
         gbuffer_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         gbuffer_desc.Texture2D.MipLevels = 1;
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            resources_.shader_manager->request(
+            resources_.shader_manager->create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0,
                 resources_.gbuffers[i], &gbuffer_desc, i);
 
@@ -54,7 +55,8 @@ namespace rndr {
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
-        ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get(), resources_.sampler_heap };
+        ID3D12DescriptorHeap* heaps[] = {
+            resources_.shader_manager->get(), resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
@@ -67,7 +69,8 @@ namespace rndr {
         command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamScene::BENCH_MATERIAL_TEXTURE),
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamScene::BENCH_MATERIAL_SAMPLER),
-            resources_.sampler_heap->GetGPUDescriptorHandleForHeapStart());
+            resources_.sampler_manager->get_gpu_adr(
+                eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[8]{};
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {

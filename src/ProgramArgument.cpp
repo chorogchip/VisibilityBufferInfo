@@ -32,6 +32,15 @@ namespace util {
         return ret;
     }
 
+    std::string ProgramArgument::camera_mode_to_string(uint32_t mode) {
+        switch (mode) {
+        case CAMERA_MODE_FREE: return "free";
+        case CAMERA_MODE_RECORD: return "record";
+        case CAMERA_MODE_PLAYBACK: return "playback";
+        default: return "unknown";
+        }
+    }
+
     void ProgramArgument::validate() const {
         auto& logger = util::Logger::g_logger;
 
@@ -40,6 +49,13 @@ namespace util {
         logger.assert_with_log(window_width > 0, "window_width must be greater than 0");
         logger.assert_with_log(window_height > 0, "window_height must be greater than 0");
         logger.assert_with_log(measure_frames > 0, "measure_frames must be greater than 0");
+        logger.assert_with_log(camera_mode <= CAMERA_MODE_PLAYBACK,
+            "camera_mode must be 0 (free), 1 (record), or 2 (playback)");
+        logger.assert_with_log(!camera_filepath.empty(), "camera_filepath must not be empty");
+        logger.assert_with_log(camera_keyframe_interval > 0,
+            "camera_keyframe_interval must be greater than 0");
+        logger.assert_with_log(profile_window_frames > 0,
+            "profile_window_frames must be greater than 0");
 
         logger.assert_with_log(std::isfinite(camera_pos_x), "camera_pos_x must be finite");
         logger.assert_with_log(std::isfinite(camera_pos_y), "camera_pos_y must be finite");

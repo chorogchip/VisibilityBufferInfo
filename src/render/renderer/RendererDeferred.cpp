@@ -55,7 +55,7 @@ namespace rndr {
 
         Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
         graphics_queue_.execute(command_list_.Get());
-        Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
+        present();
     }
 
     D3D12_RESOURCE_STATES RendererDeferred::depth_stencil_initial_state() const {
@@ -71,13 +71,13 @@ namespace rndr {
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
             gbuffer.gbuffers[i] = gbuffers_[i].Get();
         gbuffer.depth = depth_stencil_buffer_.Get();
-        gbuffer.constant_buffers[0] = buf_constant_[0].Get();
-        gbuffer.constant_buffers[1] = buf_constant_[1].Get();
+        gbuffer.constant_buffers[0] = buf_constant_[0].get();
+        gbuffer.constant_buffers[1] = buf_constant_[1].get();
         gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
         gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
         for (const auto& texture : dummy_textures_)
             gbuffer.material_textures.push_back(texture.Get());
-        gbuffer.sampler_heap = sampler_heap_.Get();
+        gbuffer.sampler_manager = &resource_manager_sampler_;
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
         gbuffer.scene = scene_cpu_.get();
@@ -87,8 +87,8 @@ namespace rndr {
             depth.frame_manager = &resource_manager_frame_;
             depth.shader_manager = &resource_manager_shader_;
             depth.depth = depth_stencil_buffer_.Get();
-            depth.constant_buffers[0] = buf_constant_[0].Get();
-            depth.constant_buffers[1] = buf_constant_[1].Get();
+            depth.constant_buffers[0] = buf_constant_[0].get();
+            depth.constant_buffers[1] = buf_constant_[1].get();
             depth.instance_buffer = scene_gpu_->object_buffer.Get();
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth.index_buffer_view = scene_gpu_->index_buffer_view;

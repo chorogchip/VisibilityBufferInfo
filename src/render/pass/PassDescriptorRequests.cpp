@@ -7,7 +7,7 @@ namespace rndr {
         eng::ResourceManagerShader& manager,
         const std::vector<ID3D12Resource*>& textures) {
         for (UINT i = 0; i < textures.size(); ++i)
-            manager.request(
+            manager.create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
                 textures[i], nullptr, i);
     }
@@ -30,23 +30,23 @@ namespace rndr {
 
         desc.Buffer.StructureByteStride = sizeof(scene->vertices[0]);
         desc.Buffer.NumElements = static_cast<UINT>(scene->vertices.size());
-        manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+        manager.create_srv(eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
             vertex_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(scene->indices[0]);
         desc.Buffer.NumElements = static_cast<UINT>(scene->indices.size());
-        manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+        manager.create_srv(eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
             index_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
         desc.Buffer.NumElements = static_cast<UINT>(scene->meshes.size());
-        manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+        manager.create_srv(eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
             mesh_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(scene->objects[0]);
         desc.Buffer.NumElements = static_cast<UINT>(scene->objects.size());
-        manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+        manager.create_srv(eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
             instance_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
         desc.Buffer.NumElements = static_cast<UINT>(scene->materials.size());
-        manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
+        manager.create_srv(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
             material_buffer, &desc);
         request_material_textures(manager, material_textures);
     }

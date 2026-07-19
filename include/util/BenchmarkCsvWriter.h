@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "ProgramArgument.h"
+#include "util/FrameCounter.h"
 
 namespace util {
 
@@ -13,4 +14,9 @@ namespace util {
         const std::filesystem::path& path,
         const ProgramArgument& arguments,
         const ProgramResult& result);
+
+    void write_windowed_benchmark_csv(
+        const std::filesystem::path& path,
+        const std::array<std::string, ProgramResult::PASS_COUNT>& pass_names,
+        const std::vector<FrameCounter::WindowedData>& windows);
 }

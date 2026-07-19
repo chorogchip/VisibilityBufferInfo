@@ -18,5 +18,5 @@ private:
     std::unique_ptr<RendererBase> renderer_;
 
 	void parse_args();
-    bool handle_key_down(WPARAM key);
+    void update_camera_input(float delta_seconds);
 };

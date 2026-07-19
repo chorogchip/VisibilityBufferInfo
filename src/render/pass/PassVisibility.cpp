@@ -11,9 +11,9 @@ namespace rndr {
     void PassVisibility::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisibilityResources& resources) {
         resources_ = resources;
-        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY, resources_.visibility);
-        resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
-        resources_.shader_manager->request(
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY, resources_.visibility);
+        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
             resources_.visibility);
 

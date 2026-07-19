@@ -8,6 +8,23 @@ using namespace DirectX;
 namespace rndr {
 	static constexpr float PITCH_MAX = 85.0f * XM_PI / 180.0f;
 
+	static XMVECTOR rotation_from_yaw_pitch(float yaw, float pitch) {
+		return XMQuaternionRotationRollPitchYaw(pitch, yaw, 0.0f);
+	}
+
+	static void store_rotation(XMFLOAT4& rotation, float yaw, float pitch) {
+		XMStoreFloat4(&rotation, XMQuaternionNormalize(rotation_from_yaw_pitch(yaw, pitch)));
+	}
+
+	static void get_yaw_pitch(const XMFLOAT4& rotation, float& yaw, float& pitch) {
+		const XMVECTOR forward = XMVector3Rotate(
+			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMLoadFloat4(&rotation));
+		XMFLOAT3 direction{};
+		XMStoreFloat3(&direction, forward);
+		yaw = std::atan2(direction.x, direction.z);
+		pitch = std::asin(std::clamp(direction.y, -1.0f, 1.0f));
+	}
+
 	void Camera::move_pos(float dx, float dy, float dz) {
 		position_.x += dx;
 		position_.y += dy;
@@ -26,34 +43,45 @@ namespace rndr {
 		float dist_sq_xz = dx * dx + dz * dz;
 		if (dist_sq_xz <= 0.0000001f) return;
 
-		yaw_ = std::atan2(dx, dz);
-		pitch_ = std::atan2(dy, std::sqrt(dist_sq_xz));
+		float yaw = std::atan2(dx, dz);
+		float pitch = std::atan2(dy, std::sqrt(dist_sq_xz));
 
-		yaw_ = std::remainder(yaw_, XM_2PI);
-		pitch_ = std::clamp(pitch_, -PITCH_MAX, PITCH_MAX);
+		yaw = std::remainder(yaw, XM_2PI);
+		pitch = std::clamp(pitch, -PITCH_MAX, PITCH_MAX);
+		store_rotation(rotation_, yaw, pitch);
 	}
 
 	void Camera::turn_right(float yaw_radian) {
-		yaw_ = std::remainder(yaw_ + yaw_radian, XM_2PI);
+		float yaw = 0.0f, pitch = 0.0f;
+		get_yaw_pitch(rotation_, yaw, pitch);
+		yaw = std::remainder(yaw + yaw_radian, XM_2PI);
+		store_rotation(rotation_, yaw, pitch);
 	}
 
 	void Camera::turn_up(float pitch_radian) {
-		pitch_ = std::clamp(pitch_ + pitch_radian, -PITCH_MAX, PITCH_MAX);
+		float yaw = 0.0f, pitch = 0.0f;
+		get_yaw_pitch(rotation_, yaw, pitch);
+		pitch = std::clamp(pitch + pitch_radian, -PITCH_MAX, PITCH_MAX);
+		store_rotation(rotation_, yaw, pitch);
 	}
 
 	void Camera::move_forward(float distance) {
+		float yaw = 0.0f, pitch = 0.0f;
+		get_yaw_pitch(rotation_, yaw, pitch);
 		float sin_yaw = 0.0f;
 		float cos_yaw = 0.0f;
-		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw_);
+		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw);
 
 		position_.x += sin_yaw * distance;
 		position_.z += cos_yaw * distance;
 	}
 
 	void Camera::move_right(float distance) {
+		float yaw = 0.0f, pitch = 0.0f;
+		get_yaw_pitch(rotation_, yaw, pitch);
 		float sin_yaw = 0.0f;
 		float cos_yaw = 0.0f;
-		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw_);
+		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw);
 
 		position_.x += cos_yaw * distance;
 		position_.z -= sin_yaw * distance;
@@ -65,21 +93,30 @@ namespace rndr {
 		far_z_ = far_z;
 	}
 
+	CameraPose Camera::get_pose() const {
+		return CameraPose{ position_, rotation_ };
+	}
+
+	void Camera::set_pose(const CameraPose& pose) {
+		position_ = pose.position;
+		XMVECTOR rotation = XMLoadFloat4(&pose.rotation);
+		const float length_sq = XMVectorGetX(XMVector4LengthSq(rotation));
+		if (length_sq <= 0.0000001f) rotation = XMQuaternionIdentity();
+		rotation = XMQuaternionNormalize(rotation);
+		XMStoreFloat4(&rotation_, rotation);
+
+	}
+
 	XMMATRIX Camera::get_mat_view() const {
 		XMVECTOR pos = XMLoadFloat3(&position_);
 
-		float sin_yaw = 0.0f;
-		float cos_yaw = 0.0f;
-		float sin_pitch = 0.0f;
-		float cos_pitch = 0.0f;
-		XMScalarSinCos(&sin_yaw, &cos_yaw, yaw_);
-		XMScalarSinCos(&sin_pitch, &cos_pitch, pitch_);
-
-		XMVECTOR forward = XMVectorSet(
-			sin_yaw * cos_pitch, sin_pitch, cos_yaw * cos_pitch, 0.0f);
+		XMVECTOR rotation = XMQuaternionNormalize(XMLoadFloat4(&rotation_));
+		XMVECTOR forward = XMVector3Rotate(
+			XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), rotation);
+		XMVECTOR up = XMVector3Rotate(
+			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), rotation);
 
 		XMVECTOR target = XMVectorAdd(pos, forward);
-		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		return XMMatrixLookAtLH(pos, target, up);
 	}
 

@@ -22,7 +22,6 @@ namespace rndr {
 		void init_passes() override;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> vis_buffer_;
-		Microsoft::WRL::ComPtr<ID3D12Resource> mesh_buffer_;
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> gbuffers_;
 		PassVisibility pass_visibility_;
 		PassVisBufGBuffer pass_gbuffer_;

@@ -1,17 +1,18 @@
 #pragma once
 
+#include "Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include <vector>
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
     struct PassVisBufResolveResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* back_buffers[2]{};
+        ID3D12Resource* back_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* visibility = nullptr;
         ID3D12Resource* vertex_buffer = nullptr;
         ID3D12Resource* index_buffer = nullptr;
@@ -20,8 +21,8 @@ namespace rndr {
         ID3D12Resource* material_buffer = nullptr;
         std::vector<ID3D12Resource*> material_textures;
         const scene::SceneDataCPU* scene = nullptr;
-        ID3D12Resource* constant_buffers[2]{};
-        ID3D12DescriptorHeap* sampler_heap = nullptr;
+        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
     };
 
     class PassVisBufResolve {

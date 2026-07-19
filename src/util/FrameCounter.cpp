@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "util/Logger.h"
+
 namespace util {
 
 	void FrameCounter::init(
@@ -54,6 +56,28 @@ namespace util {
 			ret.time_avg_ms = static_cast<float>(sum / static_cast<double>(sz));
 		}
 		return rets;
+	}
+
+	std::vector<FrameCounter::WindowedData> FrameCounter::summarize_windows(
+		uint32_t window_frames) const {
+		Logger::g_logger.assert_with_log(window_frames > 0, "profile window must be greater than 0");
+		std::vector<WindowedData> results;
+
+		const size_t sample_count = frame_times_.empty() ? 0 : frame_times_.front().size();
+		for (size_t begin = 0; begin < sample_count; begin += window_frames) {
+			const size_t end = (std::min)(begin + window_frames, sample_count);
+			WindowedData result{};
+			result.frame = begin;
+			result.time_avg_ms.resize(frame_times_.size());
+			for (size_t pass = 0; pass < frame_times_.size(); ++pass) {
+				double sum = 0.0;
+				for (size_t frame = begin; frame < end; ++frame)
+					sum += frame_times_[pass][frame];
+				result.time_avg_ms[pass] = sum / static_cast<double>(end - begin);
+			}
+			results.push_back(std::move(result));
+		}
+		return results;
 	}
 	
 	bool FrameCounter::to_terminate() const {

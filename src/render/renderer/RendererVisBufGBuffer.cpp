@@ -7,7 +7,6 @@
 #include "dx_util/ResourceUtils.h"
 #include "engine/MaterialGPU.h"
 #include "dx_util/ShaderUtils.h"
-#include "render/VisBufResourceBuilder.h"
 
 namespace rndr {
 
@@ -41,7 +40,7 @@ namespace rndr {
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             &clear_value);
-
+        
         for (uint32_t i = 0; i < program_arguments_->gbuffer_cnt; ++i) {
 
             gbuffers_.emplace_back();
@@ -63,8 +62,10 @@ namespace rndr {
 
     void RendererVisBufGBuffer::render_() {
         Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
-        Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr), "command list reset on render start");
+        Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
+            "command list reset on render start");
         copy_camera_data();
+
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
         pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
@@ -76,29 +77,51 @@ namespace rndr {
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
         Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
         graphics_queue_.execute(command_list_.Get());
-        Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
+        present();
     }
+
     void RendererVisBufGBuffer::init_passes() {
-        mesh_buffer_ = VisBufResourceBuilder::build_mesh_buffer(
-            device_.Get(), command_list_.Get(), command_allocator_[frame_index_].Get(),
-            graphics_queue_, scene_gpu_->vertex_buffer.Get(),
-            scene_gpu_->index_buffer.Get(), scene_gpu_->object_buffer.Get(), scene_cpu_.get());
-        PassVisibilityResources v{}; v.frame_manager=&resource_manager_frame_; v.shader_manager=&resource_manager_shader_; v.visibility=vis_buffer_.Get(); v.depth=depth_stencil_buffer_.Get();
-        v.constant_buffers[0]=buf_constant_[0].Get(); v.constant_buffers[1]=buf_constant_[1].Get();
-        v.instance_buffer=scene_gpu_->object_buffer.Get(); v.vertex_buffer_view=scene_gpu_->vertex_buffer_view;
-        v.index_buffer_view=scene_gpu_->index_buffer_view; v.scene=scene_cpu_.get();
-        pass_visibility_.init(device_.Get(), *program_arguments_, v);
-        PassVisBufGBufferResources g{}; g.frame_manager=&resource_manager_frame_; g.shader_manager=&resource_manager_shader_; g.visibility=vis_buffer_.Get();
-        g.vertex_buffer=scene_gpu_->vertex_buffer.Get(); g.index_buffer=scene_gpu_->index_buffer.Get();
-        g.mesh_buffer=mesh_buffer_.Get(); g.instance_buffer=scene_gpu_->object_buffer.Get();
-        g.material_buffer=scene_gpu_->material_buffer.Get(); g.scene=scene_cpu_.get();
-        for(const auto& texture : dummy_textures_) g.material_textures.push_back(texture.Get());
-        g.gbuffer_count=program_arguments_->gbuffer_cnt;
-        for(UINT i=0;i<g.gbuffer_count;++i) g.gbuffers[i]=gbuffers_[i].Get();
-        g.constant_buffers[0]=buf_constant_[0].Get(); g.constant_buffers[1]=buf_constant_[1].Get(); g.sampler_heap=sampler_heap_.Get();
-        pass_gbuffer_.init(device_.Get(), *program_arguments_, g);
-        PassDeferredLightingResources l{}; l.frame_manager=&resource_manager_frame_; l.shader_manager=&resource_manager_shader_; l.back_buffers[0]=render_targets_[0].Get(); l.back_buffers[1]=render_targets_[1].Get();
-        l.gbuffer_count=program_arguments_->gbuffer_cnt; for(UINT i=0;i<l.gbuffer_count;++i) l.gbuffers[i]=gbuffers_[i].Get();
-        pass_lighting_.init(device_.Get(), *program_arguments_, l);
+        PassVisibilityResources visibility{};
+        visibility.frame_manager = &resource_manager_frame_;
+        visibility.shader_manager = &resource_manager_shader_;
+        visibility.visibility = vis_buffer_.Get();
+        visibility.depth = depth_stencil_buffer_.Get();
+        visibility.constant_buffers[0] = buf_constant_[0].get();
+        visibility.constant_buffers[1] = buf_constant_[1].get();
+        visibility.instance_buffer = scene_gpu_->object_buffer.Get();
+        visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
+        visibility.index_buffer_view = scene_gpu_->index_buffer_view;
+        visibility.scene = scene_cpu_.get();
+        pass_visibility_.init(device_.Get(), *program_arguments_, visibility);
+
+        PassVisBufGBufferResources gbuffer{};
+        gbuffer.frame_manager = &resource_manager_frame_;
+        gbuffer.shader_manager = &resource_manager_shader_;
+        gbuffer.visibility = vis_buffer_.Get();
+        gbuffer.vertex_buffer = scene_gpu_->vertex_buffer.Get();
+        gbuffer.index_buffer = scene_gpu_->index_buffer.Get();
+        gbuffer.mesh_buffer = scene_gpu_->mesh_buffer.Get();
+        gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
+        gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
+        gbuffer.scene = scene_cpu_.get();
+        for (const auto& texture : dummy_textures_)
+            gbuffer.material_textures.push_back(texture.Get());
+        gbuffer.gbuffer_count = program_arguments_->gbuffer_cnt;
+        for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
+            gbuffer.gbuffers[i] = gbuffers_[i].Get();
+        gbuffer.constant_buffers[0] = buf_constant_[0].get();
+        gbuffer.constant_buffers[1] = buf_constant_[1].get();
+        gbuffer.sampler_manager = &resource_manager_sampler_;
+        pass_gbuffer_.init(device_.Get(), *program_arguments_, gbuffer);
+
+        PassDeferredLightingResources lighting{};
+        lighting.frame_manager = &resource_manager_frame_;
+        lighting.shader_manager = &resource_manager_shader_;
+        lighting.back_buffers[0] = render_targets_[0].Get();
+        lighting.back_buffers[1] = render_targets_[1].Get();
+        lighting.gbuffer_count = program_arguments_->gbuffer_cnt;
+        for (UINT i = 0; i < lighting.gbuffer_count; ++i)
+            lighting.gbuffers[i] = gbuffers_[i].Get();
+        pass_lighting_.init(device_.Get(), *program_arguments_, lighting);
     }
 }
