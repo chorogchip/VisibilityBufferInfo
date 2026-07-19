@@ -1,15 +1,14 @@
 #pragma once
 
 #include <Windows.h>
-#include <stdexcept>
 #include <string>
+
+#include "util/Logger.h"
 
 class Utils {
 public:
     static void throw_if_failed(HRESULT hr, const char* message) {
-        if (FAILED(hr)) {
-            throw std::runtime_error(std::string("HRESULT failed on ") + message);
-        }
+        util::Logger::g_logger.assert_with_log(SUCCEEDED(hr), message);
     }
 
     static void throw_win32_lasterr(const char* message) {

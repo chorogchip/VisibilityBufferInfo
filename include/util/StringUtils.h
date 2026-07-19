@@ -1,10 +1,11 @@
 #pragma once
 
 #include <charconv>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
+
+#include "util/Logger.h"
 
 namespace util {
 
@@ -21,9 +22,8 @@ namespace util {
                 if (s == "true" || s == "1") return true;
                 if (s == "false" || s == "0") return false;
 
-                throw std::runtime_error{
-                    "parse bool error: " + std::string{ s }
-                };
+                Logger::g_logger << "parse bool error: " << s << '\n';
+                Logger::g_logger.assert_with_log(false, "failed to parse bool value");
             }
             else if constexpr (std::is_arithmetic_v<T>) {
                 T value{};
@@ -32,9 +32,8 @@ namespace util {
 
                 const auto [ptr, ec] = std::from_chars(begin, end, value);
                 if (ec != std::errc{} || ptr != end) {
-                    throw std::runtime_error{
-                        "parse value error: " + std::string{ s }
-                    };
+                    Logger::g_logger << "parse value error: " << s << '\n';
+                    Logger::g_logger.assert_with_log(false, "failed to parse arithmetic value");
                 }
 
                 return value;

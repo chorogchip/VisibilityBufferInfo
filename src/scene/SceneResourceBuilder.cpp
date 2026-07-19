@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstring>
 #include <limits>
-#include <stdexcept>
 #include <unordered_map>
 
 #include "engine/MaterialGPU.h"
@@ -66,10 +65,10 @@ namespace scene {
                 return eng::MaterialGPU::invalid_texture_index;
             }
 
-            if (loaded.metadata.arraySize > std::numeric_limits<UINT16>::max()
-                || loaded.metadata.mipLevels > std::numeric_limits<UINT16>::max()) {
-                throw std::runtime_error("Texture array or mip count is too large: " + resolved_path.string());
-            }
+            util::Logger::g_logger.assert_with_log(
+                loaded.metadata.arraySize <= std::numeric_limits<UINT16>::max()
+                    && loaded.metadata.mipLevels <= std::numeric_limits<UINT16>::max(),
+                "Texture array or mip count is too large");
 
             const DXGI_FORMAT texture_format = srgb
                 ? DirectX::MakeSRGB(loaded.metadata.format)
@@ -112,9 +111,8 @@ namespace scene {
                     const UINT subresource = static_cast<UINT>(
                         item * loaded.metadata.mipLevels + mip);
                     const DirectX::Image* image = loaded.image.GetImage(mip, item, 0);
-                    if (image == nullptr) {
-                        throw std::runtime_error("Missing texture subresource: " + resolved_path.string());
-                    }
+                    util::Logger::g_logger.assert_with_log(
+                        image != nullptr, "Missing texture subresource");
 
                     std::byte* destination = mapped + footprints[subresource].Offset;
                     for (UINT row = 0; row < row_counts[subresource]; ++row) {

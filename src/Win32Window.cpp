@@ -1,7 +1,8 @@
 #include "Win32Window.h"
 
-#include <stdexcept>
 #include <utility>
+
+#include "util/Logger.h"
 
 void Win32Window::create(
     HINSTANCE h_instance,
@@ -35,7 +36,7 @@ void Win32Window::create(
         window_rect.bottom - window_rect.top,
         nullptr, nullptr, h_instance, this);
 
-    if (!hwnd_) throw std::runtime_error("CreateWindowEx failed");
+    util::Logger::g_logger.assert_with_log(hwnd_ != nullptr, "CreateWindowEx failed");
 
     ShowWindow(hwnd_, n_show_cmd);
     UpdateWindow(hwnd_);
