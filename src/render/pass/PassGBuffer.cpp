@@ -2,11 +2,23 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
-#include "render/RootParameter.h"
+#include "engine/GPUResource.h"
 #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/RootSignatureBuilder.h"
+
+namespace {
+    enum RootParam : UINT {
+        FRAME_CONSTANT,
+        DRAW_CONSTANT,
+        INSTANCE_BUFFER,
+        MATERIAL_BUFFER,
+        MATERIAL_TEXTURE,
+        MATERIAL_SAMPLER
+    };
+}
 
 namespace rndr {
 
@@ -18,10 +30,10 @@ namespace rndr {
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
             resources_.frame_manager->create_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
                 static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i),
-                resources_.gbuffers[i]);
+                resources_.gbuffers[i]->get());
         resources_.frame_manager->create_dsv(use_prepass_depth_
             ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
-            : eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+            : eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
         gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -31,12 +43,21 @@ namespace rndr {
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
             resources_.shader_manager->create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0,
-                resources_.gbuffers[i], &gbuffer_desc, i);
+                resources_.gbuffers[i]->get(), &gbuffer_desc, i);
 
         auto vs = dxutl::compile_shader(L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0", "main", arguments);
         auto ps = dxutl::compile_shader(L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", "main", arguments);
         pso_.init(device);
-        pso_.set_texture_count(arguments.texture_count);
+        auto root_signature = eng::RootSignatureBuilder{}
+            .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
+            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .constant().reg(1).cnt(1).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .srv_tabl().reg(8).cnt(arguments.texture_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .spl_tabl().reg(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .build(device);
+        pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vs.Get(), ps.Get());
         pso_.set_render_targets(resources_.gbuffer_count, DXGI_FORMAT_R32G32B32A32_FLOAT);
         if (use_prepass_depth_)
@@ -47,11 +68,9 @@ namespace rndr {
     void PassGBuffer::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
         const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            dxutl::transition_resource(command_list, resources_.gbuffers[i],
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            resources_.gbuffers[i]->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         if (use_prepass_depth_)
-            dxutl::transition_resource(command_list, resources_.depth,
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
+            resources_.depth->transition(command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
@@ -60,15 +79,15 @@ namespace rndr {
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
-        command_list->SetGraphicsRootConstantBufferView(root_param(EnumRootParamScene::FRAME_CONSTANT),
+        command_list->SetGraphicsRootConstantBufferView(FRAME_CONSTANT,
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootShaderResourceView(root_param(EnumRootParamScene::BENCH_INSTANCE_BUFFER),
+        command_list->SetGraphicsRootShaderResourceView(INSTANCE_BUFFER,
             resources_.instance_buffer->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootShaderResourceView(root_param(EnumRootParamScene::BENCH_MATERIAL_BUFFER),
+        command_list->SetGraphicsRootShaderResourceView(MATERIAL_BUFFER,
             resources_.material_buffer->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamScene::BENCH_MATERIAL_TEXTURE),
+        command_list->SetGraphicsRootDescriptorTable(MATERIAL_TEXTURE,
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
-        command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamScene::BENCH_MATERIAL_SAMPLER),
+        command_list->SetGraphicsRootDescriptorTable(MATERIAL_SAMPLER,
             resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
@@ -91,7 +110,7 @@ namespace rndr {
         command_list->IASetIndexBuffer(&resources_.index_buffer_view);
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
-            command_list->SetGraphicsRoot32BitConstant(root_param(EnumRootParamScene::DRAW_CONSTANT),
+            command_list->SetGraphicsRoot32BitConstant(DRAW_CONSTANT,
                 batch.object_index, 0);
             command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,
                 mesh.index_start, mesh.vertex_start, 0);

@@ -2,11 +2,21 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
-#include "render/RootParameter.h"
+#include "engine/GPUResource.h"
 #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/RootSignatureBuilder.h"
+
+namespace {
+    enum RootParam : UINT {
+        PASS_CONSTANT,
+        SCENE_INPUT,
+        MATERIAL_TEXTURE,
+        MATERIAL_SAMPLER
+    };
+}
 
 namespace rndr {
     void PassVisBufGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
@@ -14,7 +24,7 @@ namespace rndr {
         resources_ = resources;
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
             resources_.frame_manager->create_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
-                static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i), resources_.gbuffers[i]);
+                static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i), resources_.gbuffers[i]->get());
         request_visbuf_scene(*resources_.shader_manager,
             resources_.vertex_buffer, resources_.index_buffer, resources_.mesh_buffer,
             resources_.instance_buffer, resources_.material_buffer,
@@ -27,37 +37,40 @@ namespace rndr {
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
             resources_.shader_manager->create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0,
-                resources_.gbuffers[i], &gbuffer_desc, i);
+                resources_.gbuffers[i]->get(), &gbuffer_desc, i);
         auto vs = dxutl::compile_shader(L"assets/shaders/visbuf_lighting_VS.hlsl", "vs_5_0", "main", arguments);
         auto ps = dxutl::compile_shader(L"assets/shaders/visbuf_gbuffer_PS.hlsl", "ps_5_0", "main", arguments);
         pso_.init(device);
-        pso_.set_texture_count(arguments.texture_count);
+        auto root_signature = eng::RootSignatureBuilder{}
+            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .srv_tabl().reg(0).cnt(6).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .srv_tabl().reg(8).cnt(arguments.texture_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .spl_tabl().reg(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .build(device);
+        pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vs.Get(), ps.Get());
         pso_.set_fullscreen();
-        pso_.set_bench_scene_resolve();
         pso_.set_render_targets(resources_.gbuffer_count, DXGI_FORMAT_R32G32B32A32_FLOAT);
         pso_.build();
     }
 
     void PassVisBufGBuffer::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
         const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
-        dxutl::transition_resource(command_list, resources_.visibility,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        resources_.visibility->transition(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            dxutl::transition_resource(command_list, resources_.gbuffers[i],
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            resources_.gbuffers[i]->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = {
             resources_.shader_manager->get(), resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-        command_list->SetGraphicsRootConstantBufferView(root_param(EnumRootParamFullscreen::PASS_CONSTANT),
+        command_list->SetGraphicsRootConstantBufferView(PASS_CONSTANT,
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamFullscreen::BENCH_INPUT_SRV),
+        command_list->SetGraphicsRootDescriptorTable(SCENE_INPUT,
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER));
-        command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamFullscreen::BENCH_MATERIAL_TEXTURE),
+        command_list->SetGraphicsRootDescriptorTable(MATERIAL_TEXTURE,
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
-        command_list->SetGraphicsRootDescriptorTable(root_param(EnumRootParamFullscreen::BENCH_MATERIAL_SAMPLER),
+        command_list->SetGraphicsRootDescriptorTable(MATERIAL_SAMPLER,
             resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
         command_list->RSSetViewports(1, &viewport);

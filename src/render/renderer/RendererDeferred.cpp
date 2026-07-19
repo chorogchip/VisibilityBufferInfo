@@ -2,14 +2,13 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "util/Logger.h"
-#include "util/Utils.h"
 
 namespace rndr {
 
     RendererDeferred::RendererDeferred(bool do_prepass)
         : do_prepass_(do_prepass) {}
 
-    void RendererDeferred::make_programresult(util::ProgramResult& result) {
+    void RendererDeferred::init_programresult_(util::ProgramResult& result) {
         result.renderer_name = do_prepass_ ? "DeferredPrepass" : "Deferred";
         if (do_prepass_)
             result.pass_names[0] = "depth_prepass";
@@ -17,7 +16,7 @@ namespace rndr {
         result.pass_names[2] = "lighting";
     }
 
-    void RendererDeferred::create_renderer_resources() {
+    void RendererDeferred::init_renderer_resources_() {
         util::Logger::g_logger.assert_with_log(
             program_arguments_->gbuffer_cnt > 0 && program_arguments_->gbuffer_cnt <= 8,
             "gbuffer count must be between 1 and 8 in deferred");
@@ -28,19 +27,16 @@ namespace rndr {
             clear.Color[1] = .1f;
             clear.Color[2] = .15f;
             clear.Color[3] = 1.f;
-            gbuffers_.push_back(dxutl::create_texture2d(device_.Get(), width_, height_,
+            auto gbuffer = dxutl::create_texture2d(device_.Get(), width_, height_,
                 DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_HEAP_TYPE_DEFAULT,
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, &clear));
+                D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, &clear);
+            gbuffers_.emplace_back();
+            gbuffers_.back().attach(gbuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
     }
 
-    void RendererDeferred::render_() {
-        Utils::throw_if_failed(command_allocator_[frame_index_]->Reset(), "reset command allocator");
-        Utils::throw_if_failed(command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
-            "command list reset on render start");
-        copy_camera_data();
-
+    void RendererDeferred::record_render_commands_() {
         if (do_prepass_) {
             frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
@@ -53,24 +49,16 @@ namespace rndr {
         pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
 
-        Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
-        graphics_queue_.execute(command_list_.Get());
-        present();
     }
 
-    D3D12_RESOURCE_STATES RendererDeferred::depth_stencil_initial_state() const {
-        return do_prepass_ ? D3D12_RESOURCE_STATE_DEPTH_READ : D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    }
-
-
-    void RendererDeferred::init_passes() {
+    void RendererDeferred::init_passes_() {
         PassGBufferResources gbuffer{};
         gbuffer.frame_manager = &resource_manager_frame_;
         gbuffer.shader_manager = &resource_manager_shader_;
         gbuffer.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
-            gbuffer.gbuffers[i] = gbuffers_[i].Get();
-        gbuffer.depth = depth_stencil_buffer_.Get();
+            gbuffer.gbuffers[i] = &gbuffers_[i];
+        gbuffer.depth = &depth_stencil_buffer_;
         gbuffer.constant_buffers[0] = buf_constant_[0].get();
         gbuffer.constant_buffers[1] = buf_constant_[1].get();
         gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
@@ -86,7 +74,7 @@ namespace rndr {
             PassDepthPreResources depth{};
             depth.frame_manager = &resource_manager_frame_;
             depth.shader_manager = &resource_manager_shader_;
-            depth.depth = depth_stencil_buffer_.Get();
+            depth.depth = &depth_stencil_buffer_;
             depth.constant_buffers[0] = buf_constant_[0].get();
             depth.constant_buffers[1] = buf_constant_[1].get();
             depth.instance_buffer = scene_gpu_->object_buffer.Get();
@@ -100,11 +88,11 @@ namespace rndr {
         PassDeferredLightingResources lighting{};
         lighting.frame_manager = &resource_manager_frame_;
         lighting.shader_manager = &resource_manager_shader_;
-        lighting.back_buffers[0] = render_targets_[0].Get();
-        lighting.back_buffers[1] = render_targets_[1].Get();
+        lighting.back_buffers[0] = &render_targets_[0];
+        lighting.back_buffers[1] = &render_targets_[1];
         lighting.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < lighting.gbuffer_count; ++i)
-            lighting.gbuffers[i] = gbuffers_[i].Get();
+            lighting.gbuffers[i] = &gbuffers_[i];
         pass_lighting_.init(device_.Get(), *program_arguments_, lighting);
     }
 

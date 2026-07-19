@@ -6,14 +6,14 @@
 #include <vector>
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
     struct PassVisBufResolveResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* back_buffers[util::FRAME_COUNT]{};
-        ID3D12Resource* visibility = nullptr;
+        eng::GPUResource* back_buffers[util::FRAME_COUNT]{};
+        eng::GPUResource* visibility = nullptr;
         ID3D12Resource* vertex_buffer = nullptr;
         ID3D12Resource* index_buffer = nullptr;
         ID3D12Resource* mesh_buffer = nullptr;

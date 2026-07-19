@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "engine/GPUResource.h"
 #include "render/renderer/RendererBase.h"
 #include "render/pass/PassVisibility.h"
 #include "render/pass/PassVisBufResolve.h"
@@ -13,15 +14,15 @@ namespace rndr {
 		RendererVisBuf() = default;
 		~RendererVisBuf() override = default;
 
-		void create_renderer_resources() override;
-		void render_() override;
+		void init_renderer_resources_() override;
+		void record_render_commands_() override;
 
 	private:
-		void make_programresult(util::ProgramResult& result) override;
+		void init_programresult_(util::ProgramResult& result) override;
 
-		void init_passes() override;
+		void init_passes_() override;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> vis_buffer_;
+		eng::GPUResource vis_buffer_;
 		PassVisibility pass_visibility_;
 		PassVisBufResolve pass_resolve_;
 	};

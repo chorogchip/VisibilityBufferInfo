@@ -1,4 +1,4 @@
-#include "render/CameraPath.h"
+#include "render/camera/CameraPath.h"
 
 #include <DirectXMath.h>
 #include <algorithm>

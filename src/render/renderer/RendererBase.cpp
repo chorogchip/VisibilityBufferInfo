@@ -43,7 +43,13 @@ RendererBase::~RendererBase() {
 }
 
 void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
+    init_runtime(hwnd, arg);
+    init_gpu(arg);
+    init_scene();
+    init_renderer();
+}
 
+void RendererBase::init_runtime(HWND hwnd, const util::ProgramArgument& arg) {
     eng::TextureLoader::init();
 
     hwnd_ = hwnd;
@@ -58,7 +64,9 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         arg.warmup_frames,
         arg.warmup_frames + camera_path_controller_.measurement_frames(),
         arg.warmup_frames + camera_path_controller_.measurement_frames() + 60);
+}
 
+void RendererBase::init_gpu(const util::ProgramArgument& arg) {
     device_ = dxutl::create_device(factory_);
     resource_manager_frame_.init(device_.Get());
     resource_manager_sampler_.init(device_.Get());
@@ -83,22 +91,29 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     frame_time_.init(device_.Get(), graphics_queue_.get());
 
     this->init_viewport_scissor_rect();
+}
 
+void RendererBase::init_scene() {
     this->load_scene();
     this->create_scene_resources();
-    this->create_renderer_resources();
+}
+
+void RendererBase::init_renderer() {
+    this->init_renderer_resources_();
     this->create_frame_resources();
     this->create_back_buffer_resources();
     this->create_benchmark_resources();
-    this->init_passes();
+    this->init_passes_();
 }
 
 void RendererBase::render() {
 
     camera_path_controller_.before_render(camera_);
-
-    this->render_();
-
+    copy_camera_data();
+    begin_frame();
+    this->record_render_commands_();
+    submit_frame();
+    present();
     this->move_to_next_frame();
     camera_path_controller_.after_render();
 }
@@ -114,7 +129,7 @@ void RendererBase::close() {
     result.run_current_time = make_current_time_string();
     result.camera_mode_name = util::ProgramArgument::camera_mode_to_string(
         program_arguments_->camera_mode);
-    this->make_programresult(result);
+    this->init_programresult_(result);
 
     if (camera_path_controller_.is_playback()) {
         const auto windows = frame_counter_.summarize_windows(
@@ -187,7 +202,23 @@ void RendererBase::create_command_objects() {
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
 
-void RendererBase::create_renderer_resources() {}
+void RendererBase::begin_frame() {
+    Utils::throw_if_failed(
+        command_allocator_[frame_index_]->Reset(),
+        "reset command allocator");
+    Utils::throw_if_failed(
+        command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
+        "command list reset on render start");
+}
+
+void RendererBase::submit_frame() {
+    Utils::throw_if_failed(
+        command_list_->Close(),
+        "command list close on frame end");
+    graphics_queue_.execute(command_list_.Get());
+}
+
+void RendererBase::init_renderer_resources_() {}
 
 void RendererBase::init_viewport_scissor_rect() {
     viewport_.TopLeftX = 0.0f;
@@ -203,13 +234,12 @@ void RendererBase::init_viewport_scissor_rect() {
     scissor_rect_.bottom = static_cast<LONG>(height_);
 }
 
-D3D12_RESOURCE_STATES RendererBase::depth_stencil_initial_state() const {
-    return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-}
-
 void RendererBase::create_back_buffer_resources() {
-    for (UINT i = 0; i < util::FRAME_COUNT; ++i)
-        swapchain_->GetBuffer(i, IID_PPV_ARGS(render_targets_[i].ReleaseAndGetAddressOf()));
+    for (UINT i = 0; i < util::FRAME_COUNT; ++i) {
+        ComPtr<ID3D12Resource> back_buffer;
+        swapchain_->GetBuffer(i, IID_PPV_ARGS(back_buffer.GetAddressOf()));
+        render_targets_[i].attach(back_buffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
+    }
 }
 
 void RendererBase::create_sampler_descriptors() {
@@ -397,12 +427,13 @@ void RendererBase::create_frame_resources() {
     for (UINT i = 0; i < util::FRAME_COUNT; ++i)
         buf_constant_[i].init(device_.Get());
 
-    depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
+    auto depth_stencil_buffer = dxutl::create_depth_stencil_buffer(
         device_.Get(),
         width_,
         height_,
         DEPTH_STENCIL_FORMAT_,
-        depth_stencil_initial_state());
+        D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    depth_stencil_buffer_.attach(depth_stencil_buffer.Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 }
 
 void RendererBase::copy_camera_data() {

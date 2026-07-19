@@ -8,43 +8,50 @@
 
 namespace eng {
 
-    RootSignatureBuilder::DescriptorTableProxy::DescriptorTableProxy(
+    RootSignatureBuilder::ParameterProxy::ParameterProxy(
         RootSignatureBuilder& owner,
-        D3D12_DESCRIPTOR_RANGE_TYPE type)
-        : owner_(owner), type_(type) {}
+        D3D12_ROOT_PARAMETER_TYPE root_type,
+        D3D12_DESCRIPTOR_RANGE_TYPE range_type)
+        : owner_(owner), root_type_(root_type), range_type_(range_type) {}
 
-    RootSignatureBuilder::DescriptorTableProxy&
-        RootSignatureBuilder::DescriptorTableProxy::base(UINT shader_register) {
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::reg(UINT shader_register) {
         base_shader_register_ = shader_register;
         return *this;
     }
 
-    RootSignatureBuilder::DescriptorTableProxy&
-        RootSignatureBuilder::DescriptorTableProxy::cnt(UINT descriptor_count) {
-        descriptor_count_ = descriptor_count;
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::cnt(UINT count) {
+        count_ = count;
         return *this;
     }
 
-    RootSignatureBuilder::DescriptorTableProxy&
-        RootSignatureBuilder::DescriptorTableProxy::spc(UINT register_space) {
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::spc(UINT register_space) {
         register_space_ = register_space;
         return *this;
     }
 
-    RootSignatureBuilder::DescriptorTableProxy&
-        RootSignatureBuilder::DescriptorTableProxy::vis(
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::vis(
             D3D12_SHADER_VISIBILITY visibility) {
         visibility_ = visibility;
         return *this;
     }
 
-    RootSignatureBuilder& RootSignatureBuilder::DescriptorTableProxy::add() {
-        return owner_.add_descriptor_table(
-            type_,
-            base_shader_register_,
-            descriptor_count_,
-            register_space_,
-            visibility_);
+    RootSignatureBuilder& RootSignatureBuilder::ParameterProxy::add() {
+        if (root_type_ == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS) {
+            return owner_.add_constants(
+                base_shader_register_, count_, register_space_, visibility_);
+        }
+        if (root_type_ == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
+            return owner_.add_descriptor_table(
+                range_type_, base_shader_register_, count_, register_space_, visibility_);
+        }
+        util::Logger::g_logger.assert_with_log(
+            count_ == 0, "root descriptors do not accept cnt()");
+        return owner_.add_root_descriptor(
+            root_type_, base_shader_register_, register_space_, visibility_);
     }
 
     RootSignatureBuilder& RootSignatureBuilder::reset() {
@@ -78,49 +85,41 @@ namespace eng {
         return *this;
     }
 
-    RootSignatureBuilder& RootSignatureBuilder::add_root_cbv(
-        UINT shader_register,
-        UINT register_space,
-        D3D12_SHADER_VISIBILITY visibility) {
-        return add_root_descriptor(
-            D3D12_ROOT_PARAMETER_TYPE_CBV,
-            shader_register,
-            register_space,
-            visibility);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::constant() {
+        return ParameterProxy(*this, D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS);
     }
 
-    RootSignatureBuilder& RootSignatureBuilder::add_root_srv(
-        UINT shader_register,
-        UINT register_space,
-        D3D12_SHADER_VISIBILITY visibility) {
-        return add_root_descriptor(
-            D3D12_ROOT_PARAMETER_TYPE_SRV,
-            shader_register,
-            register_space,
-            visibility);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::root_cbv() {
+        return ParameterProxy(*this, D3D12_ROOT_PARAMETER_TYPE_CBV);
     }
 
-    RootSignatureBuilder& RootSignatureBuilder::add_root_uav(
-        UINT shader_register,
-        UINT register_space,
-        D3D12_SHADER_VISIBILITY visibility) {
-        return add_root_descriptor(
-            D3D12_ROOT_PARAMETER_TYPE_UAV,
-            shader_register,
-            register_space,
-            visibility);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::root_srv() {
+        return ParameterProxy(*this, D3D12_ROOT_PARAMETER_TYPE_SRV);
     }
 
-    RootSignatureBuilder::DescriptorTableProxy RootSignatureBuilder::srv_table() {
-        return DescriptorTableProxy(*this, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::root_uav() {
+        return ParameterProxy(*this, D3D12_ROOT_PARAMETER_TYPE_UAV);
     }
 
-    RootSignatureBuilder::DescriptorTableProxy RootSignatureBuilder::uav_table() {
-        return DescriptorTableProxy(*this, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::srv_tabl() {
+        return ParameterProxy(
+            *this,
+            D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
     }
 
-    RootSignatureBuilder::DescriptorTableProxy RootSignatureBuilder::sampler_table() {
-        return DescriptorTableProxy(*this, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER);
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::uav_tabl() {
+        return ParameterProxy(
+            *this,
+            D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+    }
+
+    RootSignatureBuilder::ParameterProxy RootSignatureBuilder::spl_tabl() {
+        return ParameterProxy(
+            *this,
+            D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER);
     }
 
     RootSignatureBuilder& RootSignatureBuilder::add_root_descriptor(

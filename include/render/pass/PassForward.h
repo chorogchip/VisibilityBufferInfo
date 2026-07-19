@@ -8,15 +8,15 @@
 #include "scene/SceneDataCPU.h"
 #include <vector>
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
 
     struct PassForwardResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* back_buffers[util::FRAME_COUNT]{};
-        ID3D12Resource* depth = nullptr;
+        eng::GPUResource* back_buffers[util::FRAME_COUNT]{};
+        eng::GPUResource* depth = nullptr;
         ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         ID3D12Resource* material_buffer = nullptr;

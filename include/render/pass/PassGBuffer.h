@@ -6,16 +6,16 @@
 #include "scene/SceneDataCPU.h"
 #include <vector>
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
 
 namespace rndr {
 
     struct PassGBufferResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* gbuffers[8]{};
+        eng::GPUResource* gbuffers[8]{};
         UINT gbuffer_count = 0;
-        ID3D12Resource* depth = nullptr;
+        eng::GPUResource* depth = nullptr;
         ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         ID3D12Resource* material_buffer = nullptr;

@@ -9,7 +9,7 @@ if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 endif()
 
-# C++17
+# C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -124,7 +124,7 @@ add_executable(TVBPerf WIN32
     ${TVBPERF_SHADER_FILES}
 )
 
-target_compile_features(TVBPerf PRIVATE cxx_std_17)
+target_compile_features(TVBPerf PRIVATE cxx_std_20)
 
 # include 경로
 target_include_directories(TVBPerf

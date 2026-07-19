@@ -12,11 +12,10 @@ namespace rndr {
 		~RendererForward() override = default;
 
 	private:
-		virtual void make_programresult(util::ProgramResult& result) override;
-		void render_() override;
+		virtual void init_programresult_(util::ProgramResult& result) override;
+		void record_render_commands_() override;
 
-		D3D12_RESOURCE_STATES depth_stencil_initial_state() const override;
-        void init_passes() override;
+        void init_passes_() override;
 
 		bool do_prepass_ = false;
 		PassDepthPre pass_depth_pre_;

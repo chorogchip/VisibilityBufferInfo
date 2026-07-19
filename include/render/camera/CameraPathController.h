@@ -5,8 +5,8 @@
 #include <string>
 
 #include "ProgramArgument.h"
-#include "render/Camera.h"
-#include "render/CameraPath.h"
+#include "render/camera/Camera.h"
+#include "render/camera/CameraPath.h"
 
 namespace rndr {
 	class CameraPathController {

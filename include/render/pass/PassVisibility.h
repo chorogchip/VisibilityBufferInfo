@@ -5,15 +5,15 @@
 #include "engine/GraphicsPipeline.h"
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerShader; }
 
 namespace rndr {
 
     struct PassVisibilityResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* visibility = nullptr;
-        ID3D12Resource* depth = nullptr;
+        eng::GPUResource* visibility = nullptr;
+        eng::GPUResource* depth = nullptr;
         ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};

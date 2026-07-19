@@ -9,31 +9,33 @@ namespace eng {
 
     class RootSignatureBuilder {
     public:
-        class DescriptorTableProxy {
+        class ParameterProxy {
         public:
-            DescriptorTableProxy(const DescriptorTableProxy&) = delete;
-            DescriptorTableProxy& operator=(const DescriptorTableProxy&) = delete;
-            DescriptorTableProxy(DescriptorTableProxy&&) = delete;
-            DescriptorTableProxy& operator=(DescriptorTableProxy&&) = delete;
+            ParameterProxy(const ParameterProxy&) = delete;
+            ParameterProxy& operator=(const ParameterProxy&) = delete;
+            ParameterProxy(ParameterProxy&&) = delete;
+            ParameterProxy& operator=(ParameterProxy&&) = delete;
 
-            DescriptorTableProxy& base(UINT shader_register);
-            DescriptorTableProxy& cnt(UINT descriptor_count);
-            DescriptorTableProxy& spc(UINT register_space);
-            DescriptorTableProxy& vis(D3D12_SHADER_VISIBILITY visibility);
+            ParameterProxy& reg(UINT shader_register);
+            ParameterProxy& cnt(UINT count);
+            ParameterProxy& spc(UINT register_space);
+            ParameterProxy& vis(D3D12_SHADER_VISIBILITY visibility);
 
             RootSignatureBuilder& add();
 
         private:
             friend class RootSignatureBuilder;
 
-            DescriptorTableProxy(
+            ParameterProxy(
                 RootSignatureBuilder& owner,
-                D3D12_DESCRIPTOR_RANGE_TYPE type);
+                D3D12_ROOT_PARAMETER_TYPE root_type,
+                D3D12_DESCRIPTOR_RANGE_TYPE range_type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
 
             RootSignatureBuilder& owner_;
-            D3D12_DESCRIPTOR_RANGE_TYPE type_;
+            D3D12_ROOT_PARAMETER_TYPE root_type_;
+            D3D12_DESCRIPTOR_RANGE_TYPE range_type_;
             UINT base_shader_register_ = 0;
-            UINT descriptor_count_ = 0;
+            UINT count_ = 0;
             UINT register_space_ = 0;
             D3D12_SHADER_VISIBILITY visibility_ = D3D12_SHADER_VISIBILITY_ALL;
         };
@@ -42,30 +44,13 @@ namespace eng {
 
         RootSignatureBuilder& set_flags(D3D12_ROOT_SIGNATURE_FLAGS flags);
 
-        RootSignatureBuilder& add_constants(
-            UINT shader_register,
-            UINT value_count,
-            UINT register_space = 0,
-            D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
-
-        RootSignatureBuilder& add_root_cbv(
-            UINT shader_register,
-            UINT register_space = 0,
-            D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
-
-        RootSignatureBuilder& add_root_srv(
-            UINT shader_register,
-            UINT register_space = 0,
-            D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
-
-        RootSignatureBuilder& add_root_uav(
-            UINT shader_register,
-            UINT register_space = 0,
-            D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
-
-        [[nodiscard]] DescriptorTableProxy srv_table();
-        [[nodiscard]] DescriptorTableProxy uav_table();
-        [[nodiscard]] DescriptorTableProxy sampler_table();
+        [[nodiscard]] ParameterProxy constant();
+        [[nodiscard]] ParameterProxy root_cbv();
+        [[nodiscard]] ParameterProxy root_srv();
+        [[nodiscard]] ParameterProxy root_uav();
+        [[nodiscard]] ParameterProxy srv_tabl();
+        [[nodiscard]] ParameterProxy uav_tabl();
+        [[nodiscard]] ParameterProxy spl_tabl();
 
         [[nodiscard]] Microsoft::WRL::ComPtr<ID3D12RootSignature> build(
             ID3D12Device* device) const;
@@ -86,6 +71,12 @@ namespace eng {
             UINT value_or_descriptor_count = 0;
             D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
         };
+
+        RootSignatureBuilder& add_constants(
+            UINT shader_register,
+            UINT value_count,
+            UINT register_space,
+            D3D12_SHADER_VISIBILITY visibility);
 
         RootSignatureBuilder& add_root_descriptor(
             D3D12_ROOT_PARAMETER_TYPE type,

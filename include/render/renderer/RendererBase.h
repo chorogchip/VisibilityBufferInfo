@@ -16,6 +16,7 @@
 #include "dx_util/GPUFrameTimer.h"
 #include "dx_util/UploadConstBuf.h"
 #include "engine/GraphicsQueue.h"
+#include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
@@ -23,8 +24,8 @@
 #include "scene/SceneDataCPU.h"
 #include "scene/SceneDataGPU.h"
 
-#include "render/Camera.h"
-#include "render/CameraPathController.h"
+#include "render/camera/Camera.h"
+#include "render/camera/CameraPathController.h"
 
 class RendererBase
 {
@@ -39,18 +40,21 @@ public:
     bool to_terminate() const { return frame_counter_.to_terminate(); }
 
 protected:
-    virtual void render_() = 0;
-
-    virtual void make_programresult(util::ProgramResult& result) = 0;
-    virtual void create_renderer_resources();
-
-    virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
-    virtual void init_passes() = 0;
-
-    void copy_camera_data();
-    void present();
+    virtual void init_programresult_(util::ProgramResult& result) = 0;
+    virtual void init_renderer_resources_();
+    virtual void init_passes_() = 0;
+    virtual void record_render_commands_() = 0;
 
 private:
+    void init_runtime(HWND hwnd, const util::ProgramArgument& arg);
+    void init_gpu(const util::ProgramArgument& arg);
+    void init_scene();
+    void init_renderer();
+
+    void copy_camera_data();
+    void begin_frame();
+    void submit_frame();
+    void present();
     void create_command_objects();
 
     void init_viewport_scissor_rect();
@@ -78,8 +82,8 @@ protected:
     UINT frame_index_ = 0;
 
     constexpr static DXGI_FORMAT DEPTH_STENCIL_FORMAT_ = DXGI_FORMAT_D32_FLOAT;
-    ComPtr<ID3D12Resource> depth_stencil_buffer_;
-    ComPtr<ID3D12Resource> render_targets_[util::FRAME_COUNT];
+    eng::GPUResource depth_stencil_buffer_;
+    eng::GPUResource render_targets_[util::FRAME_COUNT];
 
     D3D12_VIEWPORT viewport_{};
     D3D12_RECT scissor_rect_{};

@@ -2,11 +2,23 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
+#include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
-#include "render/RootParameter.h"
+#include "engine/RootSignatureBuilder.h"
 #include "render/pass/PassDescriptorRequests.h"
+
+namespace {
+    enum RootParam : UINT {
+        FRAME_CONSTANT,
+        DRAW_CONSTANT,
+        INSTANCE_BUFFER,
+        MATERIAL_BUFFER,
+        MATERIAL_TEXTURE,
+        MATERIAL_SAMPLER
+    };
+}
 
 namespace rndr {
 
@@ -18,11 +30,11 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
 
-        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]);
-        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]);
-        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]->get());
+        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]->get());
+        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
         if (use_prepass_depth_)
-            resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY, resources_.depth);
+            resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY, resources_.depth->get());
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
 
         auto vertex_shader = dxutl::compile_shader(
@@ -31,7 +43,16 @@ namespace rndr {
             L"assets/shaders/forward_PS.hlsl", "ps_5_0", "main", arguments);
 
         pso_.init(device);
-        pso_.set_texture_count(arguments.texture_count);
+        auto root_signature = eng::RootSignatureBuilder{}
+            .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
+            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .constant().reg(1).cnt(1).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .srv_tabl().reg(8).cnt(arguments.texture_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .spl_tabl().reg(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .build(device);
+        pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vertex_shader.Get(), pixel_shader.Get());
         if (use_prepass_depth_)
             pso_.set_depth_equal();
@@ -44,15 +65,13 @@ namespace rndr {
         const D3D12_VIEWPORT& viewport,
         const D3D12_RECT& scissor_rect) {
         command_list->SetPipelineState(pso_.get());
-        dxutl::transition_resource(command_list, resources_.back_buffers[frame_index],
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        resources_.back_buffers[frame_index]->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         const auto rtv = resources_.frame_manager->get_rtv(frame_index == 0
             ? eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0
             : eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1);
         if (use_prepass_depth_)
-            dxutl::transition_resource(command_list, resources_.depth,
-                D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_DEPTH_READ);
+            resources_.depth->transition(command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
 
         const auto dsv = resources_.frame_manager->get_dsv(use_prepass_depth_
             ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
@@ -71,19 +90,19 @@ namespace rndr {
             resources_.shader_manager->get(), resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(
-            root_param(EnumRootParamScene::FRAME_CONSTANT),
+            FRAME_CONSTANT,
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            root_param(EnumRootParamScene::BENCH_INSTANCE_BUFFER),
+            INSTANCE_BUFFER,
             resources_.instance_buffer->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            root_param(EnumRootParamScene::BENCH_MATERIAL_BUFFER),
+            MATERIAL_BUFFER,
             resources_.material_buffer->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
-            root_param(EnumRootParamScene::BENCH_MATERIAL_TEXTURE),
+            MATERIAL_TEXTURE,
             resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(
-            root_param(EnumRootParamScene::BENCH_MATERIAL_SAMPLER),
+            MATERIAL_SAMPLER,
             resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
@@ -94,13 +113,12 @@ namespace rndr {
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
-                root_param(EnumRootParamScene::DRAW_CONSTANT), batch.object_index, 0);
+                DRAW_CONSTANT, batch.object_index, 0);
             command_list->DrawIndexedInstanced(
                 mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
         }
 
-        dxutl::transition_resource(command_list, resources_.back_buffers[frame_index],
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        resources_.back_buffers[frame_index]->transition(command_list, D3D12_RESOURCE_STATE_PRESENT);
     }
 
 }

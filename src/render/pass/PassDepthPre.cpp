@@ -2,9 +2,18 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
+#include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerShader.h"
-#include "render/RootParameter.h"
+#include "engine/RootSignatureBuilder.h"
+
+namespace {
+    enum RootParam : UINT {
+        FRAME_CONSTANT,
+        DRAW_CONSTANT,
+        INSTANCE_BUFFER
+    };
+}
 
 namespace rndr {
 
@@ -13,13 +22,19 @@ namespace rndr {
         const util::ProgramArgument& arguments,
         const PassDepthPreResources& resources) {
         resources_ = resources;
-        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
 
         auto vertex_shader = dxutl::compile_shader(
             L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0", "main", arguments);
 
         pso_.init(device);
-        pso_.set_texture_count(arguments.texture_count);
+        auto root_signature = eng::RootSignatureBuilder{}
+            .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
+            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .constant().reg(1).cnt(1).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
+            .build(device);
+        pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vertex_shader.Get(), nullptr);
         pso_.set_depth_only();
         pso_.build();
@@ -30,18 +45,17 @@ namespace rndr {
         UINT frame_index,
         const D3D12_VIEWPORT& viewport,
         const D3D12_RECT& scissor_rect) {
-        dxutl::transition_resource(command_list, resources_.depth,
-            D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        resources_.depth->transition(command_list, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
         command_list->SetGraphicsRootConstantBufferView(
-            root_param(EnumRootParamScene::FRAME_CONSTANT),
+            FRAME_CONSTANT,
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            root_param(EnumRootParamScene::BENCH_INSTANCE_BUFFER),
+            INSTANCE_BUFFER,
             resources_.instance_buffer->GetGPUVirtualAddress());
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -55,7 +69,7 @@ namespace rndr {
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
-                root_param(EnumRootParamScene::DRAW_CONSTANT), batch.object_index, 0);
+                DRAW_CONSTANT, batch.object_index, 0);
             command_list->DrawIndexedInstanced(
                 mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
         }

@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "render/Camera.h"
+#include "render/camera/Camera.h"
 
 namespace rndr {
 
