@@ -18,7 +18,7 @@ namespace util {
             if (i + 1 >= args.size()) { \
                 throw std::runtime_error("Missing value for --" #arg); \
             } \
-            ret.name = util::parse_value<type>(args[i + 1]); \
+            ret.name = util::StringUtils::parse_value<type>(args[i + 1]); \
             ++i; \
             continue; \
         }

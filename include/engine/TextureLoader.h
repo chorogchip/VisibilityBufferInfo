@@ -1,24 +1,29 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
 
-#include "engine/Texture.h"
-#include "engine/TextureHandle.h"
+#include <DirectXTex.h>
 
 namespace eng {
 
-	class TextureLoader {
+    struct TextureLoadResult {
+        DirectX::ScratchImage image;
+        DirectX::TexMetadata metadata{};
+        HRESULT status = E_FAIL;
+        std::string error_message;
 
-	public:
+        [[nodiscard]] bool succeeded() const noexcept {
+            return SUCCEEDED(status);
+        }
+    };
 
-		static void init(
-			ID3D12Device* device,
-			ID3D12CommandQueue* queue,
-			ID3D12DescriptorHeap* srv_heap,
-			uint32_t srv_index_start
-		);
-		static void close();
-		static eng::TextureHandle load_texture(std::filesystem::path path);
-		static eng::Texture& get_texture(eng::TextureHandle handle);
-	};
+    class TextureLoader {
+    public:
+        static void init();
+        static void close();
+
+        [[nodiscard]] static TextureLoadResult load(
+            const std::filesystem::path& path);
+    };
 }

@@ -1,45 +1,64 @@
 #include "engine/TextureLoader.h"
 
-#include 
+#include <format>
+
+#include "util/Utils.h"
+#include "util/StringUtils.h"
 
 namespace eng {
+    void TextureLoader::init() {
+        Utils::throw_if_failed(
+            CoInitializeEx(nullptr, COINIT_MULTITHREADED),
+            "initialize COM for texture loading");
+    }
 
-	static struct TextureLoaderData {
-		ID3D12Device* device;
-		ID3D12CommandQueue* queue;
-		ID3D12DescriptorHeap* srv_heap;
-		uint32_t srv_heap_desc_size;
-		uint32_t srv_heap_start;
-	};
-	static TextureLoaderData data_;
+    void TextureLoader::close() {
+        CoUninitialize();
+    }
 
-	void init(
-		ID3D12Device* device,
-		ID3D12CommandQueue* queue,
-		ID3D12DescriptorHeap* srv_heap,
-		uint32_t srv_index_start) {
+    TextureLoadResult TextureLoader::load(const std::filesystem::path& path) {
+        TextureLoadResult result;
 
+        if (path.empty()) {
+            result.status = E_INVALIDARG;
+            result.error_message = "Texture path must not be empty.";
+            return result;
+        }
 
-		data_.device = device;
-		data_.queue = queue;
-		data_.srv_heap = srv_heap;
-		data_.srv_heap_desc_size = device->GetDescriptorHandleIncrementSize(
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		data_.srv_heap_start = srv_index_start;
-	}
-	static void close() {
+        if (!std::filesystem::is_regular_file(path)) {
+            result.status = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+            result.error_message = "Texture file does not exist: " + path.string();
+            return result;
+        }
 
-	}
+        const std::wstring extension = path.extension().wstring();
+        if (util::StringUtils::equals_ignore_case(extension, L".dds")) {
+            result.status = DirectX::LoadFromDDSFile(
+                path.c_str(), DirectX::DDS_FLAGS_NONE,
+                &result.metadata, result.image);
+        }
+        else if (util::StringUtils::equals_ignore_case(extension, L".tga")) {
+            result.status = DirectX::LoadFromTGAFile(
+                path.c_str(), DirectX::TGA_FLAGS_NONE,
+                &result.metadata, result.image);
+        }
+        else if (util::StringUtils::equals_ignore_case(extension, L".hdr")) {
+            result.status = DirectX::LoadFromHDRFile(
+                path.c_str(), &result.metadata, result.image);
+        }
+        else {
+            result.status = DirectX::LoadFromWICFile(
+                path.c_str(), DirectX::WIC_FLAGS_NONE,
+                &result.metadata, result.image);
+        }
 
-	eng::TextureHandle TextureLoader::load_texture(std::filesystem::path path) {
-		
-		// device (wic?)
+        if (FAILED(result.status)) {
+            result.error_message = std::format(
+                "Failed to load texture: {}, HRESULT=0x{:08X}",
+                path.string(), static_cast<uint32_t>(result.status));
+        }
 
+        return result;
+    }
 
-	}
-
-	eng::Texture& get_texture(eng::TextureHandle handle) {
-
-	}
 }
-

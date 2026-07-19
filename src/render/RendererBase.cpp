@@ -11,6 +11,7 @@
 #include "dx_util/DeviceUtils.h"
 #include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
+#include "engine/TextureLoader.h"
 
 #include "scene/SceneFingerprint.h"
 #include "scene/SceneLoader.h"
@@ -23,9 +24,12 @@ using Microsoft::WRL::ComPtr;
 RendererBase::~RendererBase() {
     if (command_queue_ && fence_)
         fence_.wait_for_gpu();
+    eng::TextureLoader::close();
 }
 
 void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
+
+    eng::TextureLoader::init();
 
     hwnd_ = hwnd;
     width_ = arg.window_width;

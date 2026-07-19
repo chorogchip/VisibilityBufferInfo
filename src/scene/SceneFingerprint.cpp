@@ -1,6 +1,7 @@
 #include "scene/SceneFingerprint.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -267,8 +268,20 @@ namespace scene {
 
 		std::set<std::string> unique_textures;
 		for (const auto& material : scene.materials) {
-			metrics.texture_reference_count += static_cast<uint32_t>(material.texture_paths.size());
-			for (const auto& texture_path : material.texture_paths) {
+			const std::array<const eng::MaterialCPU::TexturePath*, 6> texture_slots = {
+				&material.base_color_texture,
+				&material.normal_texture,
+				&material.metal_roughness_texture,
+				&material.emissive_texture,
+				&material.occlusion_texture,
+				&material.opacity_texture
+			};
+
+			for (const auto* texture_slot : texture_slots) {
+				if (!*texture_slot) continue;
+
+				const auto& texture_path = **texture_slot;
+				++metrics.texture_reference_count;
 				unique_textures.insert(path_string(texture_path));
 				if (!texture_path.empty() && texture_path.string()[0] != '*') {
 					const std::filesystem::path resolved = scene.source_path.parent_path() / texture_path;

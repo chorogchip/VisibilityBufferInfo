@@ -2,6 +2,7 @@
 
 #include <d3d12.h>
 #include <wrl.h>
+#include <vector>
 
 #include "scene/SceneDataCPU.h"
 
@@ -16,5 +17,7 @@ namespace scene {
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> object_buffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> material_buffer;
+
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures;
 	};
 }

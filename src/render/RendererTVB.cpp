@@ -5,6 +5,7 @@
 
 #include "util/Utils.h"
 #include "dx_util/ResourceUtils.h"
+#include "engine/MaterialGPU.h"
 #include "dx_util/ShaderUtils.h"
 #include "dx_util/DescriptorUtils.h"
 
@@ -223,7 +224,7 @@ namespace rndr {
         device_->CreateShaderResourceView(scene_gpu_->object_buffer.Get(), &srv_desc, srv_handle);
         srv_handle.ptr += srv_descriptor_size_;
 
-        srv_desc.Buffer.StructureByteStride = sizeof(float) * 4;
+        srv_desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
         srv_desc.Buffer.NumElements = static_cast<UINT>(scene_cpu_->materials.size());
         device_->CreateShaderResourceView(scene_gpu_->material_buffer.Get(), &srv_desc, srv_handle);
         srv_handle.ptr += srv_descriptor_size_;

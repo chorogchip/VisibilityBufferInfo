@@ -1,11 +1,7 @@
 #include "common_material.hlsli"
+#include "common_material_data.hlsli"
 #include "common_gbuffer.hlsli"
 #include "common_input_struct.hlsli"
-
-struct MaterialData
-{
-    float4 base_color;
-};
 
 StructuredBuffer<MaterialData> gMaterials : register(t1);
 

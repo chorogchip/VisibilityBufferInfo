@@ -38,15 +38,15 @@ namespace scene {
         return fallback_color(material_index);
     }
 
-    static void append_texture_paths(const aiMaterial* material, aiTextureType type, SceneDataCPU::Material& imported_material) {
-        if (material == nullptr) return;
+    static void read_first_texture_path(
+        const aiMaterial* material,
+        aiTextureType type,
+        eng::MaterialCPU::TexturePath& destination) {
+        if (material == nullptr || destination || material->GetTextureCount(type) == 0) return;
 
-        const uint32_t count = material->GetTextureCount(type);
-        for (uint32_t texture_index = 0; texture_index < count; ++texture_index) {
-            aiString texture_path;
-            if (material->GetTexture(type, texture_index, &texture_path) == AI_SUCCESS) {
-                imported_material.texture_paths.emplace_back(texture_path.C_Str());
-            }
+        aiString texture_path;
+        if (material->GetTexture(type, 0, &texture_path) == AI_SUCCESS) {
+            destination = std::filesystem::path(texture_path.C_Str());
         }
     }
 
@@ -91,7 +91,7 @@ namespace scene {
         res->materials.reserve(assimp_scene->mNumMaterials);
         for (uint32_t material_index = 0; material_index < assimp_scene->mNumMaterials; ++material_index) {
             const aiMaterial* material = assimp_scene->mMaterials[material_index];
-            SceneDataCPU::Material imported_material;
+            eng::MaterialCPU imported_material;
             imported_material.base_color = read_material_color(material, material_index);
 
             if (material != nullptr) {
@@ -101,14 +101,15 @@ namespace scene {
                 }
             }
 
-            append_texture_paths(material, aiTextureType_DIFFUSE, imported_material);
-            append_texture_paths(material, aiTextureType_BASE_COLOR, imported_material);
-            append_texture_paths(material, aiTextureType_NORMALS, imported_material);
-            append_texture_paths(material, aiTextureType_SPECULAR, imported_material);
-            append_texture_paths(material, aiTextureType_METALNESS, imported_material);
-            append_texture_paths(material, aiTextureType_DIFFUSE_ROUGHNESS, imported_material);
-            append_texture_paths(material, aiTextureType_EMISSIVE, imported_material);
-            append_texture_paths(material, aiTextureType_OPACITY, imported_material);
+            read_first_texture_path(material, aiTextureType_BASE_COLOR, imported_material.base_color_texture);
+            read_first_texture_path(material, aiTextureType_DIFFUSE, imported_material.base_color_texture);
+            read_first_texture_path(material, aiTextureType_NORMALS, imported_material.normal_texture);
+            read_first_texture_path(material, aiTextureType_METALNESS, imported_material.metal_roughness_texture);
+            read_first_texture_path(material, aiTextureType_DIFFUSE_ROUGHNESS, imported_material.metal_roughness_texture);
+            read_first_texture_path(material, aiTextureType_EMISSIVE, imported_material.emissive_texture);
+            read_first_texture_path(material, aiTextureType_AMBIENT_OCCLUSION, imported_material.occlusion_texture);
+            read_first_texture_path(material, aiTextureType_LIGHTMAP, imported_material.occlusion_texture);
+            read_first_texture_path(material, aiTextureType_OPACITY, imported_material.opacity_texture);
 
             res->materials.push_back(std::move(imported_material));
         }

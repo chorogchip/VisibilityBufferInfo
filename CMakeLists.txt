@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(TVBPerf LANGUAGES CXX RC)
 
+include(FetchContent)
+
 # Visual Studio 멀티 구성 generator용 구성 명시
 if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
@@ -22,6 +24,27 @@ set(TVBPERF_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
 set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
+
+# ------------------------------------------------------------
+# DirectXTex
+# ------------------------------------------------------------
+# Texture decoding only. GPU resources and uploads are managed by TVBPerf.
+set(BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_SAMPLE OFF CACHE BOOL "" FORCE)
+set(BUILD_DX11 OFF CACHE BOOL "" FORCE)
+set(BUILD_DX12 OFF CACHE BOOL "" FORCE)
+set(BC_USE_OPENMP OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    directxtex
+    GIT_REPOSITORY https://github.com/microsoft/DirectXTex.git
+    GIT_TAG may2026
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(directxtex)
+
+set_target_properties(DirectXTex PROPERTIES FOLDER "External/DirectXTex")
 
 # ------------------------------------------------------------
 # Assimp
@@ -162,6 +185,7 @@ endif()
 target_link_libraries(TVBPerf
     PRIVATE
         assimp
+        DirectXTex
         d3d12
         dxgi
         d3dcompiler

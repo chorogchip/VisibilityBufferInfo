@@ -1,5 +1,6 @@
 #include "common_barycentric.hlsli"
 #include "common_material.hlsli"
+#include "common_material_data.hlsli"
 #include "common_gbuffer.hlsli"
 
 struct PSInput
@@ -30,11 +31,6 @@ struct ObjectData
     uint mesh_index;
     uint flags;
     float4x4 World;
-};
-
-struct MaterialData
-{
-    float4 base_color;
 };
 
 cbuffer MatricesCB : register(b0)

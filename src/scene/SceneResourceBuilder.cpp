@@ -3,8 +3,14 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include <cstddef>
+#include <cstring>
 #include <limits>
+#include <stdexcept>
+#include <unordered_map>
 
+#include "engine/MaterialGPU.h"
+#include "engine/TextureLoader.h"
 #include "util/Logger.h"
 #include "util/Utils.h"
 #include "dx_util/ResourceUtils.h"
@@ -20,14 +26,161 @@ namespace scene {
 
         std::unique_ptr<SceneDataGPU> ret{ new SceneDataGPU{} };
 
-        struct Material {
-            DirectX::XMFLOAT4 base_color;
+        std::unordered_map<std::string, uint32_t> texture_indices;
+        std::vector<eng::MaterialGPU> materials;
+        materials.reserve(src.materials.size());
+
+        auto load_texture = [&](
+            const eng::MaterialCPU::TexturePath& texture_path,
+            bool srgb) -> uint32_t {
+            if (!texture_path || texture_path->empty()) {
+                return eng::MaterialGPU::invalid_texture_index;
+            }
+
+            if (texture_path->native()[0] == L'*') {
+                return eng::MaterialGPU::invalid_texture_index;
+            }
+
+            std::filesystem::path resolved_path = *texture_path;
+            if (resolved_path.is_relative()) {
+                resolved_path = src.source_path.parent_path() / resolved_path;
+            }
+            resolved_path = resolved_path.lexically_normal();
+
+            const std::string cache_key = resolved_path.generic_string()
+                + (srgb ? "|srgb" : "|linear");
+            const auto cached = texture_indices.find(cache_key);
+            if (cached != texture_indices.end()) return cached->second;
+
+            eng::TextureLoadResult loaded = eng::TextureLoader::load(resolved_path);
+            if (!loaded.succeeded()) {
+                util::Logger::g_logger << loaded.error_message << '\n';
+                return eng::MaterialGPU::invalid_texture_index;
+            }
+
+            if (loaded.metadata.dimension != DirectX::TEX_DIMENSION_TEXTURE2D
+                || DirectX::IsPlanar(loaded.metadata.format)) {
+                util::Logger::g_logger
+                    << "Unsupported texture dimension or planar format: "
+                    << resolved_path.string() << '\n';
+                return eng::MaterialGPU::invalid_texture_index;
+            }
+
+            if (loaded.metadata.arraySize > std::numeric_limits<UINT16>::max()
+                || loaded.metadata.mipLevels > std::numeric_limits<UINT16>::max()) {
+                throw std::runtime_error("Texture array or mip count is too large: " + resolved_path.string());
+            }
+
+            const DXGI_FORMAT texture_format = srgb
+                ? DirectX::MakeSRGB(loaded.metadata.format)
+                : DirectX::MakeLinear(loaded.metadata.format);
+
+            D3D12_RESOURCE_DESC texture_desc{};
+            texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            texture_desc.Width = loaded.metadata.width;
+            texture_desc.Height = static_cast<UINT>(loaded.metadata.height);
+            texture_desc.DepthOrArraySize = static_cast<UINT16>(loaded.metadata.arraySize);
+            texture_desc.MipLevels = static_cast<UINT16>(loaded.metadata.mipLevels);
+            texture_desc.Format = texture_format;
+            texture_desc.SampleDesc.Count = 1;
+            texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+            Microsoft::WRL::ComPtr<ID3D12Resource> texture =
+                dxutl::create_committed_resource(
+                    p_device, texture_desc, D3D12_HEAP_TYPE_DEFAULT,
+                    D3D12_RESOURCE_STATE_COPY_DEST);
+
+            const UINT subresource_count =
+                static_cast<UINT>(loaded.metadata.arraySize * loaded.metadata.mipLevels);
+            std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> footprints(subresource_count);
+            std::vector<UINT> row_counts(subresource_count);
+            std::vector<UINT64> row_sizes(subresource_count);
+            UINT64 upload_size = 0;
+
+            p_device->GetCopyableFootprints(
+                &texture_desc, 0, subresource_count, 0,
+                footprints.data(), row_counts.data(), row_sizes.data(), &upload_size);
+
+            Microsoft::WRL::ComPtr<ID3D12Resource> upload =
+                dxutl::create_buffer(
+                    p_device, upload_size, D3D12_HEAP_TYPE_UPLOAD,
+                    D3D12_RESOURCE_STATE_GENERIC_READ);
+
+            auto* mapped = static_cast<std::byte*>(dxutl::map_upload_buffer(upload.Get()));
+            for (size_t item = 0; item < loaded.metadata.arraySize; ++item) {
+                for (size_t mip = 0; mip < loaded.metadata.mipLevels; ++mip) {
+                    const UINT subresource = static_cast<UINT>(
+                        item * loaded.metadata.mipLevels + mip);
+                    const DirectX::Image* image = loaded.image.GetImage(mip, item, 0);
+                    if (image == nullptr) {
+                        throw std::runtime_error("Missing texture subresource: " + resolved_path.string());
+                    }
+
+                    std::byte* destination = mapped + footprints[subresource].Offset;
+                    for (UINT row = 0; row < row_counts[subresource]; ++row) {
+                        std::memcpy(
+                            destination + static_cast<size_t>(row) * footprints[subresource].Footprint.RowPitch,
+                            image->pixels + static_cast<size_t>(row) * image->rowPitch,
+                            static_cast<size_t>(row_sizes[subresource]));
+                    }
+                }
+            }
+            upload->Unmap(0, nullptr);
+
+            for (UINT subresource = 0; subresource < subresource_count; ++subresource) {
+                D3D12_TEXTURE_COPY_LOCATION destination{};
+                destination.pResource = texture.Get();
+                destination.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                destination.SubresourceIndex = subresource;
+
+                D3D12_TEXTURE_COPY_LOCATION source{};
+                source.pResource = upload.Get();
+                source.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+                source.PlacedFootprint = footprints[subresource];
+
+                p_list->CopyTextureRegion(&destination, 0, 0, 0, &source, nullptr);
+            }
+
+            dxutl::transition_resource(
+                p_list, texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            const uint32_t texture_index = static_cast<uint32_t>(ret->textures.size());
+            ret->textures.emplace_back(std::move(texture));
+            used_upload_heaps.emplace_back(std::move(upload));
+            texture_indices.emplace(cache_key, texture_index);
+            return texture_index;
         };
 
-        std::vector<Material> materials;
-        materials.reserve(src.materials.size());
-        for (const auto& material : src.materials)
-            materials.push_back({ material.base_color });
+        for (const auto& material : src.materials) {
+            eng::MaterialGPU gpu_material{};
+            gpu_material.base_color = material.base_color;
+            gpu_material.emissive_color = material.emissive_color;
+            gpu_material.emissive_intensity = material.emissive_intensity;
+            gpu_material.metalness = material.metalness;
+            gpu_material.roughness = material.roughness;
+            gpu_material.opacity = material.opacity;
+            gpu_material.alpha_cutoff = material.alpha_cutoff;
+            gpu_material.normal_scale = material.normal_scale;
+            gpu_material.occlusion_strength = material.occlusion_strength;
+
+            gpu_material.base_color_texture = load_texture(material.base_color_texture, true);
+            gpu_material.normal_texture = load_texture(material.normal_texture, false);
+            gpu_material.metal_roughness_texture = load_texture(material.metal_roughness_texture, false);
+            gpu_material.emissive_texture = load_texture(material.emissive_texture, true);
+            gpu_material.occlusion_texture = load_texture(material.occlusion_texture, false);
+            gpu_material.opacity_texture = load_texture(material.opacity_texture, false);
+
+            gpu_material.flags =
+                (gpu_material.base_color_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 0 : 0)
+                | (gpu_material.normal_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 1 : 0)
+                | (gpu_material.metal_roughness_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 2 : 0)
+                | (gpu_material.emissive_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 3 : 0)
+                | (gpu_material.occlusion_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 4 : 0)
+                | (gpu_material.opacity_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 5 : 0);
+
+            materials.emplace_back(gpu_material);
+        }
 
         constexpr size_t buffer_size_limit = std::numeric_limits<UINT>::max();
 

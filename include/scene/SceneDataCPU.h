@@ -6,16 +6,11 @@
 #include <vector>
 #include <DirectXMath.h>
 
+#include "engine/MaterialCPU.h"
+
 namespace scene {
 
     struct SceneDataCPU {
-
-        struct Material {
-            std::string name;
-            DirectX::XMFLOAT4 base_color{ 1.0f, 1.0f, 1.0f, 1.0f };
-            std::vector<std::filesystem::path> texture_paths;
-            // todo develop material
-        };
 
         struct Vertex {
             DirectX::XMFLOAT3 position{};
@@ -54,7 +49,7 @@ namespace scene {
         bool loaded = false;
         std::string error_message;
 
-        std::vector<Material> materials;
+        std::vector<eng::MaterialCPU> materials;
         std::vector<Vertex> vertices;
         std::vector<Index> indices;
         std::vector<Mesh> meshes;

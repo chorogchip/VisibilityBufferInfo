@@ -10,7 +10,7 @@ namespace scene {
 		this->materials.clear();
 		this->materials.reserve(material_count);
 		for (size_t i = 0; i < material_count; ++i) {
-			this->materials.push_back(SceneDataCPU::Material{});
+			this->materials.push_back(eng::MaterialCPU{});
 		}
 	}
 
