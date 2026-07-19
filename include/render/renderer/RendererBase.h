@@ -14,9 +14,11 @@
 #include "util/FrameCounter.h"
 #include "dx_util/GPUFrameTimer.h"
 #include "dx_util/Fence.h"
+#include "engine/ResourceManagers.h"
 
 #include "scene/SceneDataCPU.h"
 #include "scene/SceneDataGPU.h"
+#include "scene/SceneResources.h"
 
 #include "render/Camera.h"
 
@@ -27,6 +29,9 @@ class RendererBase
 
 public:
     static constexpr UINT FRAME_COUNT = 2;
+
+    static void init_managers(ID3D12Device* device);
+    static eng::ResourceManagers& get_resource_manager();
 
     virtual ~RendererBase();
     void init(HWND hwnd, const util::ProgramArgument&);
@@ -40,23 +45,11 @@ protected:
     virtual void make_programresult(util::ProgramResult& result) = 0;
     virtual void create_pass_resources();
 
-    virtual UINT dsv_descriptor_count() const;
     virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
-    virtual void create_extra_depth_stencil_views();
-
-    virtual UINT rtv_descriptor_count() const;
-    virtual void create_extra_render_target_views(
-        D3D12_CPU_DESCRIPTOR_HANDLE next_rtv_handle);
-
-    virtual UINT srv_descriptor_count() const;
-    virtual void create_shader_resources();
-
-    virtual void create_root_signature() = 0;
-    virtual void create_pso() = 0;
+    virtual void init_passes() = 0;
 
     void copy_camera_data();
-    void create_texture_srv_descriptors(
-        D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
+    scene::SceneResources get_scene_resources() const;
 
 private:
     void create_command_objects();
@@ -65,9 +58,8 @@ private:
     void create_meshbuffers();
     void create_dummy_textures();
     void create_constbuffers();
-    void create_depth_stencil_resources();
-    void create_render_target_views();
-    void create_shader_visible_srv_heap();
+    void create_depth_stencil_resource();
+    void get_back_buffers();
     void create_sampler_heap();
     void create_texture_sampler_descriptors();
 
@@ -89,22 +81,11 @@ protected:
     UINT frame_index_ = 0;
 
     constexpr static DXGI_FORMAT DEPTH_STENCIL_FORMAT_ = DXGI_FORMAT_D32_FLOAT;
-    ComPtr<ID3D12DescriptorHeap> dsv_heap_;
     ComPtr<ID3D12Resource> depth_stencil_buffer_;
-    UINT dsv_descriptor_size_ = 0;
-
-    ComPtr<ID3D12DescriptorHeap> rtv_heap_;
-    UINT rtv_descriptor_size_ = 0;
     ComPtr<ID3D12Resource> render_targets_[FRAME_COUNT];
-
-    ComPtr<ID3D12DescriptorHeap> srv_heap_;
-    UINT srv_descriptor_size_ = 0;
 
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> sampler_heap_;
     UINT sampler_descriptor_size_ = 0;
-
-    ComPtr<ID3D12RootSignature> root_signature_;
-    ComPtr<ID3D12PipelineState> pipeline_state_;
 
     D3D12_VIEWPORT viewport_{};
     D3D12_RECT scissor_rect_{};
@@ -132,6 +113,9 @@ protected:
     static constexpr float CLEAR_COLOR_[] = { 0.1f, 0.1f, 0.15f, 1.0f };
 
     std::unique_ptr<const util::ProgramArgument> program_arguments_;
+
+private:
+    static eng::ResourceManagers resource_managers_;
     
 public:
     rndr::Camera camera_{};

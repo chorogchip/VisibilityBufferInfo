@@ -17,7 +17,6 @@ namespace scene {
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> object_buffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> material_buffer;
-
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures;
 	};
 }

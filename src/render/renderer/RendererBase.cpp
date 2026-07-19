@@ -1,4 +1,4 @@
-#include "render/RendererBase.h"
+#include "render/renderer/RendererBase.h"
 
 #include <cstring>
 #include <algorithm>
@@ -20,6 +20,17 @@
 #include "util/Macros.h"
 
 using Microsoft::WRL::ComPtr;
+
+eng::ResourceManagers RendererBase::resource_managers_{};
+
+void RendererBase::init_managers(ID3D12Device* device) {
+    resource_managers_.frame.init(device);
+    resource_managers_.shader.init(device);
+}
+
+eng::ResourceManagers& RendererBase::get_resource_manager() {
+    return resource_managers_;
+}
 
 RendererBase::~RendererBase() {
     if (command_queue_ && fence_)
@@ -44,6 +55,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         arg.warmup_frames + arg.measure_frames + 60);
 
     device_ = dxutl::create_device(factory_);
+    init_managers(device_.Get());
 
     this->create_command_objects();
 
@@ -68,15 +80,13 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     this->create_dummy_textures();
     this->create_constbuffers();
 
-    this->create_depth_stencil_resources();
-    this->create_render_target_views();
-    this->create_shader_visible_srv_heap();
+    this->create_depth_stencil_resource();
+    this->get_back_buffers();
     this->create_sampler_heap();
     this->create_texture_sampler_descriptors();
-    this->create_shader_resources();
-
-    this->create_root_signature();
-    this->create_pso();
+    this->init_passes();
+    resource_managers_.frame.build();
+    resource_managers_.shader.build();
 }
 
 void RendererBase::render() {
@@ -175,40 +185,26 @@ void RendererBase::init_viewport_scissorrect() {
     scissor_rect_.bottom = static_cast<LONG>(height_);
 }
 
-UINT RendererBase::dsv_descriptor_count() const {
-    return 1;
-}
-
 D3D12_RESOURCE_STATES RendererBase::depth_stencil_initial_state() const {
     return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 }
 
-void RendererBase::create_extra_depth_stencil_views() {}
-
-UINT RendererBase::rtv_descriptor_count() const {
-    return FRAME_COUNT;
+scene::SceneResources RendererBase::get_scene_resources() const {
+    scene::SceneResources resources{};
+    resources.vertex_buffer = scene_gpu_->vertex_buffer.Get();
+    resources.index_buffer = scene_gpu_->index_buffer.Get();
+    resources.instance_buffer = scene_gpu_->object_buffer.Get();
+    resources.material_buffer = scene_gpu_->material_buffer.Get();
+    resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
+    resources.index_buffer_view = scene_gpu_->index_buffer_view;
+    resources.cpu = scene_cpu_.get();
+    resources.material_textures.reserve(dummy_textures_.size());
+    for (const auto& texture : dummy_textures_)
+        resources.material_textures.push_back(texture.Get());
+    return resources;
 }
 
-void RendererBase::create_extra_render_target_views(
-    D3D12_CPU_DESCRIPTOR_HANDLE) {}
-
-UINT RendererBase::srv_descriptor_count() const {
-    return 0;
-}
-
-void RendererBase::create_shader_resources() {}
-
-void RendererBase::create_depth_stencil_resources() {
-    dsv_heap_ = dxutl::create_descriptor_heap(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        dsv_descriptor_count(),
-        D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-
-    dsv_descriptor_size_ = dxutl::descriptor_size(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
+void RendererBase::create_depth_stencil_resource() {
     depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
         device_.Get(),
         width_,
@@ -216,51 +212,11 @@ void RendererBase::create_depth_stencil_resources() {
         DEPTH_STENCIL_FORMAT_,
         depth_stencil_initial_state());
 
-    dxutl::create_depth_stencil_view(
-        device_.Get(),
-        depth_stencil_buffer_.Get(),
-        DEPTH_STENCIL_FORMAT_,
-        dsv_heap_->GetCPUDescriptorHandleForHeapStart());
-
-    create_extra_depth_stencil_views();
 }
 
-void RendererBase::create_render_target_views() {
-    rtv_heap_ = dxutl::create_descriptor_heap(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-        rtv_descriptor_count(),
-        D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-
-    rtv_descriptor_size_ = dxutl::descriptor_size(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    dxutl::create_swapchain_render_target_views(
-        device_.Get(),
-        swapchain_.Get(),
-        rtv_heap_.Get(),
-        rtv_descriptor_size_,
-        FRAME_COUNT,
-        render_targets_);
-
-    create_extra_render_target_views(dxutl::offset_cpu_descriptor(
-        rtv_heap_->GetCPUDescriptorHandleForHeapStart(),
-        rtv_descriptor_size_,
-        FRAME_COUNT));
-}
-
-void RendererBase::create_shader_visible_srv_heap() {
-    const UINT descriptor_count = srv_descriptor_count();
-    if (descriptor_count == 0) return;
-
-    srv_heap_ = dxutl::create_descriptor_heap(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        descriptor_count,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        "create srv descriptor heap");
-    srv_descriptor_size_ = dxutl::descriptor_size(device_.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+void RendererBase::get_back_buffers() {
+    for (UINT i = 0; i < FRAME_COUNT; ++i)
+        swapchain_->GetBuffer(i, IID_PPV_ARGS(render_targets_[i].ReleaseAndGetAddressOf()));
 }
 
 void RendererBase::create_sampler_heap() {
@@ -326,7 +282,7 @@ void RendererBase::create_meshbuffers() {
 
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
     Utils::throw_if_failed(command_list_->Reset(
-        command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
+        command_allocator_[frame_index_].Get(), nullptr));
 
     scene_gpu_ = scene::SceneResourceBuilder::build(
         *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps);
@@ -385,7 +341,7 @@ void RendererBase::create_dummy_textures() {
     upload_buffers.resize(texture_count);
 
     Utils::throw_if_failed(command_list_->Reset(
-        command_allocator_[frame_index_].Get(), pipeline_state_.Get()));
+        command_allocator_[frame_index_].Get(), nullptr));
 
     for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
 
@@ -515,27 +471,6 @@ void RendererBase::copy_camera_data() {
         buf_constant_mapped_[frame_index_],
         &matrix_buf_cpu_,
         sizeof(matrix_buf_cpu_));
-}
-
-void RendererBase::create_texture_srv_descriptors(
-    D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Texture2D.MipLevels = 1;
-
-    for (UINT i = 0; i < program_arguments_->texture_count; ++i) {
-
-        device_->CreateShaderResourceView(
-            dummy_textures_[i].Get(),
-            &srv_desc,
-            srv_handle);
-
-        srv_handle.ptr += device_->GetDescriptorHandleIncrementSize(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    }
 }
 
 void RendererBase::move_to_next_frame() {
