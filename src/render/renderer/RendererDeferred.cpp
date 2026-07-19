@@ -18,7 +18,7 @@ namespace rndr {
         result.pass_name_3 = "total";
     }
 
-    void RendererDeferred::create_pass_resources() {
+    void RendererDeferred::create_renderer_resources() {
         util::Logger::g_logger.assert_with_log(
             program_arguments_->gbuffer_cnt > 0 && program_arguments_->gbuffer_cnt <= 8,
             "gbuffer count must be between 1 and 8 in deferred");
@@ -56,8 +56,7 @@ namespace rndr {
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, pass_index);
 
         Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
-        ID3D12CommandList* lists[] = { command_list_.Get() };
-        command_queue_->ExecuteCommandLists(_countof(lists), lists);
+        graphics_queue_.execute(command_list_.Get());
         Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
     }
 
@@ -68,26 +67,41 @@ namespace rndr {
 
     void RendererDeferred::init_passes() {
         PassGBufferResources gbuffer{};
+        gbuffer.frame_manager = &resource_manager_frame_;
+        gbuffer.shader_manager = &resource_manager_shader_;
         gbuffer.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
             gbuffer.gbuffers[i] = gbuffers_[i].Get();
         gbuffer.depth = depth_stencil_buffer_.Get();
         gbuffer.constant_buffers[0] = buf_constant_[0].Get();
         gbuffer.constant_buffers[1] = buf_constant_[1].Get();
-        gbuffer.scene = get_scene_resources();
+        gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
+        gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
+        for (const auto& texture : dummy_textures_)
+            gbuffer.material_textures.push_back(texture.Get());
         gbuffer.sampler_heap = sampler_heap_.Get();
+        gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
+        gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
+        gbuffer.scene = scene_cpu_.get();
 
         if (do_prepass_) {
             PassDepthPreResources depth{};
+            depth.frame_manager = &resource_manager_frame_;
+            depth.shader_manager = &resource_manager_shader_;
             depth.depth = depth_stencil_buffer_.Get();
             depth.constant_buffers[0] = buf_constant_[0].Get();
             depth.constant_buffers[1] = buf_constant_[1].Get();
-            depth.scene = get_scene_resources();
+            depth.instance_buffer = scene_gpu_->object_buffer.Get();
+            depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
+            depth.index_buffer_view = scene_gpu_->index_buffer_view;
+            depth.scene = scene_cpu_.get();
             pass_depth_pre_.init(device_.Get(), *program_arguments_, depth);
         }
         pass_gbuffer_.init(device_.Get(), *program_arguments_, gbuffer, do_prepass_);
 
         PassDeferredLightingResources lighting{};
+        lighting.frame_manager = &resource_manager_frame_;
+        lighting.shader_manager = &resource_manager_shader_;
         lighting.back_buffers[0] = render_targets_[0].Get();
         lighting.back_buffers[1] = render_targets_[1].Get();
         lighting.gbuffer_count = program_arguments_->gbuffer_cnt;

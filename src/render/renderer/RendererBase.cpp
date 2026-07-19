@@ -9,7 +9,6 @@
 #include "util/BenchmarkCsvWriter.h"
 #include "util/DummyTextureGen.h"
 #include "dx_util/DeviceUtils.h"
-#include "dx_util/DescriptorUtils.h"
 #include "dx_util/ResourceUtils.h"
 #include "engine/TextureLoader.h"
 
@@ -21,20 +20,8 @@
 
 using Microsoft::WRL::ComPtr;
 
-eng::ResourceManagers RendererBase::resource_managers_{};
-
-void RendererBase::init_managers(ID3D12Device* device) {
-    resource_managers_.frame.init(device);
-    resource_managers_.shader.init(device);
-}
-
-eng::ResourceManagers& RendererBase::get_resource_manager() {
-    return resource_managers_;
-}
-
 RendererBase::~RendererBase() {
-    if (command_queue_ && fence_)
-        fence_.wait_for_gpu();
+    graphics_queue_.wait_idle();
     eng::TextureLoader::close();
 }
 
@@ -55,13 +42,14 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         arg.warmup_frames + arg.measure_frames + 60);
 
     device_ = dxutl::create_device(factory_);
-    init_managers(device_.Get());
+    resource_manager_frame_.init(device_.Get());
+    resource_manager_shader_.init(device_.Get());
 
     this->create_command_objects();
 
     swapchain_ = dxutl::create_swapchain(
         factory_.Get(),
-        command_queue_.Get(),
+        graphics_queue_.get(),
         hwnd_,
         width_,
         height_,
@@ -69,24 +57,19 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
 
-    fence_.init(device_.Get(), command_queue_.Get());
     fence_values_[frame_index_] = 1;
-    frame_time_.init(device_.Get(), command_queue_.Get());
+    frame_time_.init(device_.Get(), graphics_queue_.get());
 
-    this->init_viewport_scissorrect();
+    this->init_viewport_scissor_rect();
 
-    this->create_pass_resources();
-    this->create_meshbuffers();
-    this->create_dummy_textures();
-    this->create_constbuffers();
-
-    this->create_depth_stencil_resource();
-    this->get_back_buffers();
-    this->create_sampler_heap();
-    this->create_texture_sampler_descriptors();
+    this->load_scene();
+    this->create_scene_resources();
+    this->create_renderer_resources();
+    this->create_frame_resources();
+    this->create_back_buffer_resources();
+    this->create_benchmark_resources();
     this->init_passes();
-    resource_managers_.frame.build();
-    resource_managers_.shader.build();
+    this->build_resource_managers();
 }
 
 void RendererBase::render() {
@@ -97,7 +80,7 @@ void RendererBase::render() {
 }
 
 void RendererBase::close() {
-    fence_.wait_for_gpu();
+    graphics_queue_.wait_idle();
 
     const std::string& path = program_arguments_->output_filepath;
     if (path == "") return;
@@ -149,7 +132,7 @@ void RendererBase::close() {
 }
 
 void RendererBase::create_command_objects() {
-    command_queue_ = dxutl::create_command_queue(device_.Get());
+    graphics_queue_.init(device_.Get());
 
     for (int i = 0; i < FRAME_COUNT; ++i) {
         Utils::throw_if_failed(device_->CreateCommandAllocator(
@@ -169,9 +152,9 @@ void RendererBase::create_command_objects() {
     Utils::throw_if_failed(command_list_->Close(), "command list close");
 }
 
-void RendererBase::create_pass_resources() {}
+void RendererBase::create_renderer_resources() {}
 
-void RendererBase::init_viewport_scissorrect() {
+void RendererBase::init_viewport_scissor_rect() {
     viewport_.TopLeftX = 0.0f;
     viewport_.TopLeftY = 0.0f;
     viewport_.Width = static_cast<float>(width_);
@@ -189,32 +172,7 @@ D3D12_RESOURCE_STATES RendererBase::depth_stencil_initial_state() const {
     return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 }
 
-scene::SceneResources RendererBase::get_scene_resources() const {
-    scene::SceneResources resources{};
-    resources.vertex_buffer = scene_gpu_->vertex_buffer.Get();
-    resources.index_buffer = scene_gpu_->index_buffer.Get();
-    resources.instance_buffer = scene_gpu_->object_buffer.Get();
-    resources.material_buffer = scene_gpu_->material_buffer.Get();
-    resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
-    resources.index_buffer_view = scene_gpu_->index_buffer_view;
-    resources.cpu = scene_cpu_.get();
-    resources.material_textures.reserve(dummy_textures_.size());
-    for (const auto& texture : dummy_textures_)
-        resources.material_textures.push_back(texture.Get());
-    return resources;
-}
-
-void RendererBase::create_depth_stencil_resource() {
-    depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
-        device_.Get(),
-        width_,
-        height_,
-        DEPTH_STENCIL_FORMAT_,
-        depth_stencil_initial_state());
-
-}
-
-void RendererBase::get_back_buffers() {
+void RendererBase::create_back_buffer_resources() {
     for (UINT i = 0; i < FRAME_COUNT; ++i)
         swapchain_->GetBuffer(i, IID_PPV_ARGS(render_targets_[i].ReleaseAndGetAddressOf()));
 }
@@ -226,17 +184,16 @@ void RendererBase::create_sampler_heap() {
         sampler_count > 0,
         "sampler count must > 0");
 
-    sampler_heap_ = dxutl::create_descriptor_heap(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
-        sampler_count,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        "create sampler descriptor heap");
+    D3D12_DESCRIPTOR_HEAP_DESC heap_desc{};
+    heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+    heap_desc.NumDescriptors = sampler_count;
+    heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    const HRESULT result = device_->CreateDescriptorHeap(
+        &heap_desc, IID_PPV_ARGS(sampler_heap_.ReleaseAndGetAddressOf()));
+    util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create sampler descriptor heap");
 
-    sampler_descriptor_size_ = dxutl::descriptor_size(
-        device_.Get(),
-        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-    );
+    sampler_descriptor_size_ = device_->GetDescriptorHandleIncrementSize(
+        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 void RendererBase::create_texture_sampler_descriptors() {
@@ -272,14 +229,20 @@ void RendererBase::create_texture_sampler_descriptors() {
     }
 }
 
-void RendererBase::create_meshbuffers() {
+void RendererBase::build_resource_managers() {
+    resource_manager_frame_.build();
+    resource_manager_shader_.build();
+}
 
+void RendererBase::load_scene() {
     scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
     scene::SceneFingerprint::write_csv(
         util::get_scene_fingerprint_output_path(program_arguments_->output_filepath),
         *scene_cpu_,
         *program_arguments_);
+}
 
+void RendererBase::create_scene_resources() {
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
     Utils::throw_if_failed(command_list_->Reset(
         command_allocator_[frame_index_].Get(), nullptr));
@@ -290,12 +253,11 @@ void RendererBase::create_meshbuffers() {
     Utils::throw_if_failed(command_list_->Close(),
         "close list on resource creation");
 
-    ID3D12CommandList* command_lists[] = { command_list_.Get() };
-    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-    fence_.wait_for_gpu();
+    graphics_queue_.execute(command_list_.Get());
+    graphics_queue_.wait_idle();
 }
 
-void RendererBase::create_dummy_textures() {
+void RendererBase::create_benchmark_resources() {
 
     const UINT texture_count = program_arguments_->texture_count;
     const UINT texture_size = program_arguments_->texture_size;
@@ -406,12 +368,14 @@ void RendererBase::create_dummy_textures() {
 
     Utils::throw_if_failed(command_list_->Close(),
         "close list on dummy texture creation");
-    ID3D12CommandList* command_lists[] = { command_list_.Get() };
-    command_queue_->ExecuteCommandLists(_countof(command_lists), command_lists);
-    fence_.wait_for_gpu();
+    graphics_queue_.execute(command_list_.Get());
+    graphics_queue_.wait_idle();
+
+    create_sampler_heap();
+    create_texture_sampler_descriptors();
 }
 
-void RendererBase::create_constbuffers() {
+void RendererBase::create_frame_resources() {
 
     camera_.set_pos(
         program_arguments_->camera_pos_x,
@@ -452,6 +416,13 @@ void RendererBase::create_constbuffers() {
         buf_constant_mapped_[i] =
             dxutl::map_upload_buffer(buf_constant_[i].Get());
     }
+
+    depth_stencil_buffer_ = dxutl::create_depth_stencil_buffer(
+        device_.Get(),
+        width_,
+        height_,
+        DEPTH_STENCIL_FORMAT_,
+        depth_stencil_initial_state());
 }
 
 void RendererBase::copy_camera_data() {
@@ -475,9 +446,9 @@ void RendererBase::copy_camera_data() {
 
 void RendererBase::move_to_next_frame() {
     const UINT finished_frame_index = frame_index_;
-    fence_values_[finished_frame_index] = fence_.signal();
+    fence_values_[finished_frame_index] = graphics_queue_.signal();
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
-    fence_.wait_for_value(fence_values_[frame_index_]);
+    graphics_queue_.wait(fence_values_[frame_index_]);
 
     std::vector<double> passes = frame_time_.read_timestamp(frame_index_);
     passes.push_back(std::accumulate(passes.begin(), passes.end(), 0.0));

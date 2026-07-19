@@ -1,13 +1,25 @@
 #pragma once
 
 #include "ProgramArgument.h"
-#include "dx_util/DxGraphicsPSO.h"
-#include "render/VisBufResources.h"
+#include "engine/GraphicsPipeline.h"
+#include <vector>
+#include "scene/SceneDataCPU.h"
+
+namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
 
 namespace rndr {
     struct PassVisBufResolveResources {
+        eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerShader* shader_manager = nullptr;
         ID3D12Resource* back_buffers[2]{};
-        VisBufResources visbuf{};
+        ID3D12Resource* visibility = nullptr;
+        ID3D12Resource* vertex_buffer = nullptr;
+        ID3D12Resource* index_buffer = nullptr;
+        ID3D12Resource* mesh_buffer = nullptr;
+        ID3D12Resource* instance_buffer = nullptr;
+        ID3D12Resource* material_buffer = nullptr;
+        std::vector<ID3D12Resource*> material_textures;
+        const scene::SceneDataCPU* scene = nullptr;
         ID3D12Resource* constant_buffers[2]{};
         ID3D12DescriptorHeap* sampler_heap = nullptr;
     };
@@ -18,6 +30,6 @@ namespace rndr {
         void render(ID3D12GraphicsCommandList*, UINT, const D3D12_VIEWPORT&, const D3D12_RECT&);
     private:
         PassVisBufResolveResources resources_{};
-        dxutl::DxGraphicsPSO pso_;
+        eng::GraphicsPipeline pso_;
     };
 }

@@ -1,10 +1,24 @@
 #include "engine/ResourceManagerFrame.h"
 
-#include "dx_util/DescriptorUtils.h"
+#include "util/Logger.h"
 
 namespace eng {
 
     namespace {
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> create_heap(
+            ID3D12Device* device,
+            D3D12_DESCRIPTOR_HEAP_TYPE type,
+            UINT count) {
+            D3D12_DESCRIPTOR_HEAP_DESC desc{};
+            desc.Type = type;
+            desc.NumDescriptors = count;
+            Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap;
+            const HRESULT result = device->CreateDescriptorHeap(
+                &desc, IID_PPV_ARGS(heap.ReleaseAndGetAddressOf()));
+            util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create frame descriptor heap");
+            return heap;
+        }
+
         UINT index(ResourceManagerFrame::EnumRTV position) {
             return static_cast<UINT>(position);
         }
@@ -53,9 +67,9 @@ namespace eng {
         rtv_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         dsv_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
         if (rtv_count > 0)
-            rtv_heap_ = dxutl::create_descriptor_heap(device_, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtv_count, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+            rtv_heap_ = create_heap(device_, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtv_count);
         if (dsv_count > 0)
-            dsv_heap_ = dxutl::create_descriptor_heap(device_, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsv_count, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+            dsv_heap_ = create_heap(device_, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsv_count);
 
         for (UINT i = 0; i < RTV_COUNT; ++i) {
             if (rtv_resources_[i])

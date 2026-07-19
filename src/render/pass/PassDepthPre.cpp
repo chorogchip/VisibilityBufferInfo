@@ -2,7 +2,8 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
-#include "render/renderer/RendererBase.h"
+#include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerShader.h"
 #include "render/RootParameter.h"
 
 namespace rndr {
@@ -12,9 +13,7 @@ namespace rndr {
         const util::ProgramArgument& arguments,
         const PassDepthPreResources& resources) {
         resources_ = resources;
-
-        auto& managers = RendererBase::get_resource_manager();
-        managers.frame.request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
 
         auto vertex_shader = dxutl::compile_shader(
             L"assets/shaders/depth_prepass_VS.hlsl", "vs_5_0", "main", arguments);
@@ -31,8 +30,6 @@ namespace rndr {
         UINT frame_index,
         const D3D12_VIEWPORT& viewport,
         const D3D12_RECT& scissor_rect) {
-        auto& managers = RendererBase::get_resource_manager();
-
         dxutl::transition_resource(command_list, resources_.depth,
             D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
@@ -45,18 +42,18 @@ namespace rndr {
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             root_param(EnumRootParamScene::BENCH_INSTANCE_BUFFER),
-            resources_.scene.instance_buffer->GetGPUVirtualAddress());
+            resources_.instance_buffer->GetGPUVirtualAddress());
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        command_list->IASetVertexBuffers(0, 1, &resources_.scene.vertex_buffer_view);
-        command_list->IASetIndexBuffer(&resources_.scene.index_buffer_view);
+        command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
+        command_list->IASetIndexBuffer(&resources_.index_buffer_view);
 
-        const auto dsv = managers.frame.get_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH);
+        const auto dsv = resources_.frame_manager->get_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH);
         command_list->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
         command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const auto& batch : resources_.scene.cpu->batches) {
-            const auto& mesh = resources_.scene.cpu->meshes[batch.mesh_index];
+        for (const auto& batch : resources_.scene->batches) {
+            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
                 root_param(EnumRootParamScene::DRAW_CONSTANT), batch.object_index, 0);
             command_list->DrawIndexedInstanced(

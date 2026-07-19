@@ -4,9 +4,9 @@
 #include <d3dcompiler.h>
 #include <wrl.h>
 
-namespace dxutl {
+namespace eng {
 
-    class DxGraphicsPSO {
+    class GraphicsPipeline {
     public:
         void init(ID3D12Device* device);
         void set_texture_count(UINT texture_count);

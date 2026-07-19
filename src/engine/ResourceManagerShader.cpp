@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 
-#include "dx_util/DescriptorUtils.h"
+#include "util/Logger.h"
 
 namespace eng {
 
@@ -55,12 +55,14 @@ namespace eng {
     void ResourceManagerShader::build() {
         descriptor_count_ = requested_count_;
         descriptor_size_ = device_->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        heap_ = dxutl::create_descriptor_heap(
-            device_,
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            descriptor_count_,
-            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-            "create shader resource descriptor heap");
+        D3D12_DESCRIPTOR_HEAP_DESC heap_desc{};
+        heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        heap_desc.NumDescriptors = descriptor_count_;
+        heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        const HRESULT result = device_->CreateDescriptorHeap(
+            &heap_desc, IID_PPV_ARGS(heap_.ReleaseAndGetAddressOf()));
+        util::Logger::g_logger.assert_with_log(
+            SUCCEEDED(result), "create shader resource descriptor heap");
 
         for (const auto& pending : pending_descriptors_) {
             D3D12_SHADER_RESOURCE_VIEW_DESC inferred{};

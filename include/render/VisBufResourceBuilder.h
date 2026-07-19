@@ -3,8 +3,8 @@
 #include <d3d12.h>
 #include <wrl.h>
 
-#include "dx_util/Fence.h"
-#include "scene/SceneResources.h"
+#include "engine/GraphicsQueue.h"
+#include "scene/SceneDataCPU.h"
 
 namespace rndr {
     class VisBufResourceBuilder {
@@ -13,8 +13,10 @@ namespace rndr {
             ID3D12Device* device,
             ID3D12GraphicsCommandList* command_list,
             ID3D12CommandAllocator* command_allocator,
-            ID3D12CommandQueue* command_queue,
-            dxutl::Fence& fence,
-            const scene::SceneResources& scene);
+            eng::GraphicsQueue& graphics_queue,
+            ID3D12Resource* vertex_buffer,
+            ID3D12Resource* index_buffer,
+            ID3D12Resource* instance_buffer,
+            const scene::SceneDataCPU* scene);
     };
 }

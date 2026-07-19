@@ -7,7 +7,6 @@
 #include "dx_util/ResourceUtils.h"
 #include "engine/MaterialGPU.h"
 #include "dx_util/ShaderUtils.h"
-#include "dx_util/DescriptorUtils.h"
 #include "render/VisBufResourceBuilder.h"
 
 namespace rndr {
@@ -19,7 +18,7 @@ namespace rndr {
         result.pass_name_3 = "total";
     }
 
-    void RendererVisBuf::create_pass_resources() {
+    void RendererVisBuf::create_renderer_resources() {
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;
         clear_value.Color[0] = 0.0f;
@@ -45,22 +44,26 @@ namespace rndr {
         pass_resolve_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         Utils::throw_if_failed(command_list_->Close(), "command list close on frame end");
-        ID3D12CommandList* lists[] = { command_list_.Get() };
-        command_queue_->ExecuteCommandLists(_countof(lists), lists);
+        graphics_queue_.execute(command_list_.Get());
         Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING), "swapchain present");
     }
     void RendererVisBuf::init_passes() {
-        const auto scene = get_scene_resources();
         mesh_buffer_ = VisBufResourceBuilder::build_mesh_buffer(
             device_.Get(), command_list_.Get(), command_allocator_[frame_index_].Get(),
-            command_queue_.Get(), fence_, scene);
-        VisBufResources visbuf{ vis_buffer_.Get(), mesh_buffer_.Get(), scene };
-        PassVisibilityResources v{}; v.visibility=vis_buffer_.Get(); v.depth=depth_stencil_buffer_.Get();
+            graphics_queue_, scene_gpu_->vertex_buffer.Get(),
+            scene_gpu_->index_buffer.Get(), scene_gpu_->object_buffer.Get(), scene_cpu_.get());
+        PassVisibilityResources v{}; v.frame_manager=&resource_manager_frame_; v.shader_manager=&resource_manager_shader_; v.visibility=vis_buffer_.Get(); v.depth=depth_stencil_buffer_.Get();
         v.constant_buffers[0]=buf_constant_[0].Get(); v.constant_buffers[1]=buf_constant_[1].Get();
-        v.scene = scene;
+        v.instance_buffer=scene_gpu_->object_buffer.Get(); v.vertex_buffer_view=scene_gpu_->vertex_buffer_view;
+        v.index_buffer_view=scene_gpu_->index_buffer_view; v.scene=scene_cpu_.get();
         pass_visibility_.init(device_.Get(), *program_arguments_, v);
-        PassVisBufResolveResources r{}; r.back_buffers[0]=render_targets_[0].Get(); r.back_buffers[1]=render_targets_[1].Get();
-        r.visbuf=visbuf; r.constant_buffers[0]=buf_constant_[0].Get(); r.constant_buffers[1]=buf_constant_[1].Get();
-        r.sampler_heap=sampler_heap_.Get(); pass_resolve_.init(device_.Get(), *program_arguments_, r);
+        PassVisBufResolveResources r{}; r.frame_manager=&resource_manager_frame_; r.shader_manager=&resource_manager_shader_; r.back_buffers[0]=render_targets_[0].Get(); r.back_buffers[1]=render_targets_[1].Get();
+        r.visibility=vis_buffer_.Get(); r.vertex_buffer=scene_gpu_->vertex_buffer.Get();
+        r.index_buffer=scene_gpu_->index_buffer.Get(); r.mesh_buffer=mesh_buffer_.Get();
+        r.instance_buffer=scene_gpu_->object_buffer.Get(); r.material_buffer=scene_gpu_->material_buffer.Get();
+        for(const auto& texture : dummy_textures_) r.material_textures.push_back(texture.Get());
+        r.scene=scene_cpu_.get(); r.constant_buffers[0]=buf_constant_[0].Get(); r.constant_buffers[1]=buf_constant_[1].Get();
+        r.sampler_heap=sampler_heap_.Get();
+        pass_resolve_.init(device_.Get(), *program_arguments_, r);
     }
 }

@@ -48,18 +48,6 @@ namespace dxutl {
         return device;
     }
 
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> create_command_queue(ID3D12Device* device) {
-        D3D12_COMMAND_QUEUE_DESC queue_desc{};
-        queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-
-        Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
-        Utils::throw_if_failed(device->CreateCommandQueue(
-            &queue_desc,
-            IID_PPV_ARGS(command_queue.ReleaseAndGetAddressOf())), "create command queue");
-        return command_queue;
-    }
-
     Microsoft::WRL::ComPtr<IDXGISwapChain3> create_swapchain(
         IDXGIFactory4* factory,
         ID3D12CommandQueue* command_queue,

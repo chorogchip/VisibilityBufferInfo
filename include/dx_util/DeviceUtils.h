@@ -10,9 +10,6 @@ namespace dxutl {
     Microsoft::WRL::ComPtr<ID3D12Device> create_device(
         Microsoft::WRL::ComPtr<IDXGIFactory4>& factory);
 
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> create_command_queue(
-        ID3D12Device* device);
-
     Microsoft::WRL::ComPtr<IDXGISwapChain3> create_swapchain(
         IDXGIFactory4* factory,
         ID3D12CommandQueue* command_queue,

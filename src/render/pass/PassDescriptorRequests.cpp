@@ -5,16 +5,22 @@
 namespace rndr {
     void request_material_textures(
         eng::ResourceManagerShader& manager,
-        const scene::SceneResources& resources) {
-        for (UINT i = 0; i < resources.material_textures.size(); ++i)
+        const std::vector<ID3D12Resource*>& textures) {
+        for (UINT i = 0; i < textures.size(); ++i)
             manager.request(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                resources.material_textures[i], nullptr, i);
+                textures[i], nullptr, i);
     }
 
     void request_visbuf_scene(
         eng::ResourceManagerShader& manager,
-        const VisBufResources& resources) {
+        ID3D12Resource* vertex_buffer,
+        ID3D12Resource* index_buffer,
+        ID3D12Resource* mesh_buffer,
+        ID3D12Resource* instance_buffer,
+        ID3D12Resource* material_buffer,
+        const std::vector<ID3D12Resource*>& material_textures,
+        const scene::SceneDataCPU* scene) {
         D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
         desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -22,26 +28,26 @@ namespace rndr {
         desc.Buffer.FirstElement = 0;
         desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        desc.Buffer.StructureByteStride = sizeof(resources.scene.cpu->vertices[0]);
-        desc.Buffer.NumElements = static_cast<UINT>(resources.scene.cpu->vertices.size());
+        desc.Buffer.StructureByteStride = sizeof(scene->vertices[0]);
+        desc.Buffer.NumElements = static_cast<UINT>(scene->vertices.size());
         manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
-            resources.scene.vertex_buffer, &desc);
-        desc.Buffer.StructureByteStride = sizeof(resources.scene.cpu->indices[0]);
-        desc.Buffer.NumElements = static_cast<UINT>(resources.scene.cpu->indices.size());
+            vertex_buffer, &desc);
+        desc.Buffer.StructureByteStride = sizeof(scene->indices[0]);
+        desc.Buffer.NumElements = static_cast<UINT>(scene->indices.size());
         manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
-            resources.scene.index_buffer, &desc);
+            index_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
-        desc.Buffer.NumElements = static_cast<UINT>(resources.scene.cpu->meshes.size());
+        desc.Buffer.NumElements = static_cast<UINT>(scene->meshes.size());
         manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
-            resources.mesh_buffer, &desc);
-        desc.Buffer.StructureByteStride = sizeof(resources.scene.cpu->objects[0]);
-        desc.Buffer.NumElements = static_cast<UINT>(resources.scene.cpu->objects.size());
+            mesh_buffer, &desc);
+        desc.Buffer.StructureByteStride = sizeof(scene->objects[0]);
+        desc.Buffer.NumElements = static_cast<UINT>(scene->objects.size());
         manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
-            resources.scene.instance_buffer, &desc);
+            instance_buffer, &desc);
         desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
-        desc.Buffer.NumElements = static_cast<UINT>(resources.scene.cpu->materials.size());
+        desc.Buffer.NumElements = static_cast<UINT>(scene->materials.size());
         manager.request(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
-            resources.scene.material_buffer, &desc);
-        request_material_textures(manager, resources.scene);
+            material_buffer, &desc);
+        request_material_textures(manager, material_textures);
     }
 }

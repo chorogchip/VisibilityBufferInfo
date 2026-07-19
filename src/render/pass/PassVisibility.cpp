@@ -3,17 +3,17 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "render/RootParameter.h"
-#include "render/renderer/RendererBase.h"
+#include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerShader.h"
 
 namespace rndr {
 
     void PassVisibility::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisibilityResources& resources) {
         resources_ = resources;
-        auto& frame = RendererBase::get_resource_manager().frame;
-        frame.request_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY, resources_.visibility);
-        frame.request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
-        RendererBase::get_resource_manager().shader.request(
+        resources_.frame_manager->request_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY, resources_.visibility);
+        resources_.frame_manager->request_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth);
+        resources_.shader_manager->request(
             eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
             resources_.visibility);
 
@@ -30,7 +30,6 @@ namespace rndr {
 
     void PassVisibility::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
         const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
-        auto& frame = RendererBase::get_resource_manager().frame;
         dxutl::transition_resource(command_list, resources_.visibility,
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -43,20 +42,20 @@ namespace rndr {
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             root_param(EnumRootParamScene::BENCH_INSTANCE_BUFFER),
-            resources_.scene.instance_buffer->GetGPUVirtualAddress());
+            resources_.instance_buffer->GetGPUVirtualAddress());
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        command_list->IASetVertexBuffers(0, 1, &resources_.scene.vertex_buffer_view);
-        command_list->IASetIndexBuffer(&resources_.scene.index_buffer_view);
+        command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
+        command_list->IASetIndexBuffer(&resources_.index_buffer_view);
 
-        const auto rtv = frame.get_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY);
-        const auto dsv = frame.get_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH);
+        const auto rtv = resources_.frame_manager->get_rtv(eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY);
+        const auto dsv = resources_.frame_manager->get_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH);
         command_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
         constexpr float clear[] = { 0.f, 0.f, 0.f, 0.f };
         command_list->ClearRenderTargetView(rtv, clear, 0, nullptr);
         command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const auto& batch : resources_.scene.cpu->batches) {
-            const auto& mesh = resources_.scene.cpu->meshes[batch.mesh_index];
+        for (const auto& batch : resources_.scene->batches) {
+            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
                 root_param(EnumRootParamScene::DRAW_CONSTANT), batch.object_index, 0);
             command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,

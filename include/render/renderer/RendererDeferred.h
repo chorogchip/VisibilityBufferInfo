@@ -17,7 +17,7 @@ namespace rndr {
 	private:
 		void render_() override;
 		void make_programresult(util::ProgramResult& result) override;
-		void create_pass_resources() override;
+		void create_renderer_resources() override;
 
 		D3D12_RESOURCE_STATES depth_stencil_initial_state() const override;
 		void init_passes() override;

@@ -1,11 +1,15 @@
 #pragma once
 
 #include "ProgramArgument.h"
-#include "dx_util/DxGraphicsPSO.h"
+#include "engine/GraphicsPipeline.h"
+
+namespace eng { class ResourceManagerFrame; class ResourceManagerShader; }
 
 namespace rndr {
 
     struct PassDeferredLightingResources {
+        eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerShader* shader_manager = nullptr;
         ID3D12Resource* back_buffers[2]{};
         ID3D12Resource* gbuffers[8]{};
         UINT gbuffer_count = 0;
@@ -20,7 +24,7 @@ namespace rndr {
 
     private:
         PassDeferredLightingResources resources_{};
-        dxutl::DxGraphicsPSO pso_;
+        eng::GraphicsPipeline pso_;
     };
 
 }

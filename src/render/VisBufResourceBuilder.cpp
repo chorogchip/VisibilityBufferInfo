@@ -10,13 +10,15 @@ namespace rndr {
         ID3D12Device* device,
         ID3D12GraphicsCommandList* command_list,
         ID3D12CommandAllocator* command_allocator,
-        ID3D12CommandQueue* command_queue,
-        dxutl::Fence& fence,
-        const scene::SceneResources& scene) {
+        eng::GraphicsQueue& graphics_queue,
+        ID3D12Resource* vertex_buffer,
+        ID3D12Resource* index_buffer,
+        ID3D12Resource* instance_buffer,
+        const scene::SceneDataCPU* scene) {
         struct MeshGPU { uint32_t vertex_start; uint32_t index_start; };
         std::vector<MeshGPU> meshes;
-        meshes.reserve(scene.cpu->meshes.size());
-        for (const auto& mesh : scene.cpu->meshes)
+        meshes.reserve(scene->meshes.size());
+        for (const auto& mesh : scene->meshes)
             meshes.push_back({ mesh.vertex_start, mesh.index_start });
 
         const size_t size = meshes.size() * sizeof(MeshGPU);
@@ -31,20 +33,19 @@ namespace rndr {
         command_list->CopyBufferRegion(mesh_buffer.Get(), 0, upload.Get(), 0, size);
         dxutl::transition_resource(command_list, mesh_buffer.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        dxutl::transition_resource(command_list, scene.vertex_buffer,
+        dxutl::transition_resource(command_list, vertex_buffer,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        dxutl::transition_resource(command_list, scene.index_buffer,
+        dxutl::transition_resource(command_list, index_buffer,
             D3D12_RESOURCE_STATE_INDEX_BUFFER,
             D3D12_RESOURCE_STATE_INDEX_BUFFER | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        dxutl::transition_resource(command_list, scene.instance_buffer,
+        dxutl::transition_resource(command_list, instance_buffer,
             D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         result = command_list->Close();
         util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "close list for VisBuf resources");
-        ID3D12CommandList* lists[] = { command_list };
-        command_queue->ExecuteCommandLists(_countof(lists), lists);
-        fence.wait_for_gpu();
+        graphics_queue.execute(command_list);
+        graphics_queue.wait_idle();
         return mesh_buffer;
     }
 }

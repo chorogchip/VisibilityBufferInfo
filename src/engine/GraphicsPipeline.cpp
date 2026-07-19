@@ -1,12 +1,29 @@
-#include "dx_util/DxGraphicsPSO.h"
+#include "engine/GraphicsPipeline.h"
 
-#include "dx_util/DescriptorUtils.h"
 #include "render/RootParameter.h"
 #include "util/Logger.h"
 
-namespace dxutl {
+namespace eng {
 
-    void DxGraphicsPSO::init(ID3D12Device* device) {
+    namespace {
+        D3D12_INPUT_LAYOUT_DESC default_input_layout() {
+            static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,
+                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24,
+                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 32,
+                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 40,
+                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+            };
+            return { elements, _countof(elements) };
+        }
+    }
+
+    void GraphicsPipeline::init(ID3D12Device* device) {
         device_ = device;
         texture_count_ = 0;
         vertex_shader_.Reset();
@@ -22,46 +39,46 @@ namespace dxutl {
         bench_scene_resolve_ = false;
     }
 
-    void DxGraphicsPSO::set_texture_count(UINT texture_count) {
+    void GraphicsPipeline::set_texture_count(UINT texture_count) {
         texture_count_ = texture_count;
     }
 
-    void DxGraphicsPSO::set_shaders(ID3DBlob* vertex_shader, ID3DBlob* pixel_shader) {
+    void GraphicsPipeline::set_shaders(ID3DBlob* vertex_shader, ID3DBlob* pixel_shader) {
         vertex_shader_ = vertex_shader;
         pixel_shader_ = pixel_shader;
     }
 
-    void DxGraphicsPSO::set_depth_only() {
+    void GraphicsPipeline::set_depth_only() {
         depth_only_ = true;
     }
 
-    void DxGraphicsPSO::set_depth_equal() {
+    void GraphicsPipeline::set_depth_equal() {
         depth_equal_ = true;
     }
 
-    void DxGraphicsPSO::set_render_targets(UINT count, DXGI_FORMAT format) {
+    void GraphicsPipeline::set_render_targets(UINT count, DXGI_FORMAT format) {
         render_target_count_ = count;
         render_target_format_ = format;
     }
 
-    void DxGraphicsPSO::set_fullscreen() {
+    void GraphicsPipeline::set_fullscreen() {
         fullscreen_ = true;
     }
 
-    void DxGraphicsPSO::set_fullscreen_input_count(UINT count) {
+    void GraphicsPipeline::set_fullscreen_input_count(UINT count) {
         fullscreen_input_count_ = count;
     }
 
-    void DxGraphicsPSO::set_bench_scene_resolve() {
+    void GraphicsPipeline::set_bench_scene_resolve() {
         bench_scene_resolve_ = true;
     }
 
-    void DxGraphicsPSO::build() {
+    void GraphicsPipeline::build() {
         HRESULT result = build_root_signature();
         util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create graphics root signature");
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-        desc.InputLayout = fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} : get_default_input_layout_desc();
+        desc.InputLayout = fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} : default_input_layout();
         desc.pRootSignature = root_signature_.Get();
         desc.VS = { vertex_shader_->GetBufferPointer(), vertex_shader_->GetBufferSize() };
         if (pixel_shader_)
@@ -111,7 +128,7 @@ namespace dxutl {
         util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create graphics pipeline state");
     }
 
-    HRESULT DxGraphicsPSO::build_root_signature() {
+    HRESULT GraphicsPipeline::build_root_signature() {
         if (fullscreen_) {
             if (bench_scene_resolve_) {
                 D3D12_DESCRIPTOR_RANGE ranges[4]{};

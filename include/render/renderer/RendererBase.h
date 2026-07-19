@@ -13,12 +13,12 @@
 #include "util/Logger.h"
 #include "util/FrameCounter.h"
 #include "dx_util/GPUFrameTimer.h"
-#include "dx_util/Fence.h"
-#include "engine/ResourceManagers.h"
+#include "engine/GraphicsQueue.h"
+#include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerShader.h"
 
 #include "scene/SceneDataCPU.h"
 #include "scene/SceneDataGPU.h"
-#include "scene/SceneResources.h"
 
 #include "render/Camera.h"
 
@@ -30,9 +30,6 @@ class RendererBase
 public:
     static constexpr UINT FRAME_COUNT = 2;
 
-    static void init_managers(ID3D12Device* device);
-    static eng::ResourceManagers& get_resource_manager();
-
     virtual ~RendererBase();
     void init(HWND hwnd, const util::ProgramArgument&);
     void render();
@@ -43,25 +40,25 @@ protected:
     virtual void render_() = 0;
 
     virtual void make_programresult(util::ProgramResult& result) = 0;
-    virtual void create_pass_resources();
+    virtual void create_renderer_resources();
 
     virtual D3D12_RESOURCE_STATES depth_stencil_initial_state() const;
     virtual void init_passes() = 0;
 
     void copy_camera_data();
-    scene::SceneResources get_scene_resources() const;
 
 private:
     void create_command_objects();
 
-    void init_viewport_scissorrect();
-    void create_meshbuffers();
-    void create_dummy_textures();
-    void create_constbuffers();
-    void create_depth_stencil_resource();
-    void get_back_buffers();
+    void init_viewport_scissor_rect();
+    void load_scene();
+    void create_scene_resources();
+    void create_frame_resources();
+    void create_back_buffer_resources();
+    void create_benchmark_resources();
     void create_sampler_heap();
     void create_texture_sampler_descriptors();
+    void build_resource_managers();
 
     void move_to_next_frame();
 
@@ -73,7 +70,7 @@ protected:
     ComPtr<IDXGIFactory4> factory_;
     ComPtr<ID3D12Device> device_;
 
-    ComPtr<ID3D12CommandQueue> command_queue_;
+    eng::GraphicsQueue graphics_queue_;
     ComPtr<ID3D12CommandAllocator> command_allocator_[FRAME_COUNT];
     ComPtr<ID3D12GraphicsCommandList> command_list_;
 
@@ -91,7 +88,6 @@ protected:
     D3D12_RECT scissor_rect_{};
 
     UINT64 fence_values_[FRAME_COUNT]{};
-    dxutl::Fence fence_;
 
     std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
     std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
@@ -114,8 +110,9 @@ protected:
 
     std::unique_ptr<const util::ProgramArgument> program_arguments_;
 
-private:
-    static eng::ResourceManagers resource_managers_;
+protected:
+    eng::ResourceManagerFrame resource_manager_frame_;
+    eng::ResourceManagerShader resource_manager_shader_;
     
 public:
     rndr::Camera camera_{};

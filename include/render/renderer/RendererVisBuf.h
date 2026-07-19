@@ -13,7 +13,7 @@ namespace rndr {
 		RendererVisBuf() = default;
 		~RendererVisBuf() override = default;
 
-		void create_pass_resources() override;
+		void create_renderer_resources() override;
 		void render_() override;
 
 	private:
