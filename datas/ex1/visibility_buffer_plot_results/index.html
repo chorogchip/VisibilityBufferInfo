@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>VisibilityBufferInfo Timing Plots</title>
+<style>
+body { font-family: sans-serif; max-width: 1500px; margin: 30px auto; padding: 0 20px; }
+img { width: 100%; height: auto; border: 1px solid #ddd; }
+section { margin-bottom: 50px; }
+code { background: #eee; padding: 2px 5px; }
+</style>
+</head>
+<body>
+<h1>VisibilityBufferInfo Camera-Path Timing Plots</h1>
+<p>Total은 각 CSV의 pass 열 합으로 계산했다. 시간 단위는 프로젝트 맥락상 ms로 표기했다.</p>
+<section><h2>01_total_time_by_frame</h2><img src="01_total_time_by_frame.png" alt="01_total_time_by_frame"></section>
+<section><h2>02_rolling_mean_by_frame</h2><img src="02_rolling_mean_by_frame.png" alt="02_rolling_mean_by_frame"></section>
+<section><h2>03_relative_to_forward</h2><img src="03_relative_to_forward.png" alt="03_relative_to_forward"></section>
+<section><h2>04_time_distribution_boxplot</h2><img src="04_time_distribution_boxplot.png" alt="04_time_distribution_boxplot"></section>
+<section><h2>05_mean_median_p95</h2><img src="05_mean_median_p95.png" alt="05_mean_median_p95"></section>
+<section><h2>06_mean_pass_breakdown</h2><img src="06_mean_pass_breakdown.png" alt="06_mean_pass_breakdown"></section>
+<section><h2>07_pairwise_overhead_by_frame</h2><img src="07_pairwise_overhead_by_frame.png" alt="07_pairwise_overhead_by_frame"></section>
+<section><h2>08_winner_timeline</h2><img src="08_winner_timeline.png" alt="08_winner_timeline"></section>
+<section><h2>09_renderer_correlation</h2><img src="09_renderer_correlation.png" alt="09_renderer_correlation"></section>
+<section><h2>10_shared_pass_consistency</h2><img src="10_shared_pass_consistency.png" alt="10_shared_pass_consistency"></section>
+</body>
+</html>

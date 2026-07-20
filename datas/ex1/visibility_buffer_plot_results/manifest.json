@@ -1,0 +1,16 @@
+{
+  "inputs": {
+    "Forward": "/mnt/data/temp_forward.csv",
+    "Forward + Prepass": "/mnt/data/temp_forward_prepass.csv",
+    "Deferred": "/mnt/data/temp_deferred.csv",
+    "Deferred + Prepass": "/mnt/data/temp_deferred_prepass.csv",
+    "TVB": "/mnt/data/temp_visbuf.csv",
+    "TVB + G-buffer": "/mnt/data/temp_visbuf_gbuffer.csv"
+  },
+  "sample_count": 133,
+  "frame_min": 0,
+  "frame_max": 1320,
+  "frame_step": 10,
+  "total_definition": "sum of pass columns",
+  "unit_assumption": "milliseconds based on project context; CSV has no explicit unit metadata"
+}

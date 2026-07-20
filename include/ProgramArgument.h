@@ -13,10 +13,10 @@ namespace util {
     X(std::string, output_filepath, "temp.csv", output-filepath) \
     X(uint32_t, renderer_variant, 1, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
-    X(bool, to_use_scene, false, to-use-scene) \
+    X(bool, to_use_scene, true, to-use-scene) \
     X(std::string, scene_path, "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf", scene-path) \
-    X(uint32_t, warmup_frames, 600, warmup-frames) \
-    X(uint32_t, measure_frames, 120, measure-frames) \
+    X(uint32_t, warmup_frames, 60, warmup-frames) \
+    X(uint32_t, measure_frames, 2400, measure-frames) \
     X(bool, auto_terminate, false, auto-terminate) \
     X(bool, vsync, false, vsync) \
     X(uint32_t, camera_mode, 0, camera-mode) \
