@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <DirectXMath.h>
 
 namespace scene::dnt {
@@ -135,6 +136,24 @@ namespace scene::dnt {
         uint32_t        normalOffset;
         uint32_t        tangentOffset;
     };
+
+    static_assert(sizeof(MaterialConstants) == 208);
+    static_assert(sizeof(GeometryData) == 64);
+    static_assert(sizeof(InstanceData) == 112);
+    static_assert(sizeof(GBufferPushConstants) == 28);
+    static_assert(offsetof(MaterialConstants, flags) == 12);
+    static_assert(offsetof(MaterialConstants, materialID) == 28);
+    static_assert(offsetof(MaterialConstants, domain) == 44);
+    static_assert(offsetof(MaterialConstants, baseOrDiffuseTextureIndex) == 76);
+    static_assert(offsetof(MaterialConstants, metalRoughOrSpecularTextureIndex) == 80);
+    static_assert(offsetof(MaterialConstants, normalTextureIndex) == 88);
+    static_assert(offsetof(MaterialConstants, opacityTextureIndex) == 100);
+    static_assert(offsetof(MaterialConstants, hairDiffuseReflectionWeight) == 204);
+    static_assert(offsetof(GeometryData, materialIndex) == 48);
+    static_assert(offsetof(GeometryData, positionOffset) == 20);
+    static_assert(offsetof(GeometryData, tangentOffset) == 40);
+    static_assert(offsetof(InstanceData, transform) == 16);
+    static_assert(offsetof(InstanceData, prevTransform) == 64);
 }
 
 /*
