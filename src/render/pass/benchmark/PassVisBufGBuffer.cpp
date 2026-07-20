@@ -1,4 +1,4 @@
-#include "render/pass/PassVisBufGBuffer.h"
+#include "render/pass/benchmark/PassVisBufGBuffer.h"
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"

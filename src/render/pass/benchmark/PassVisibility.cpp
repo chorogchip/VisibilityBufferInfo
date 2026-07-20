@@ -1,4 +1,4 @@
-#include "render/pass/PassVisibility.h"
+#include "render/pass/benchmark/PassVisibility.h"
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"

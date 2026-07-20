@@ -4,9 +4,9 @@
 
 #include "engine/GPUResource.h"
 #include "render/renderer/benchmark/RendererBenchmark.h"
-#include "render/pass/PassDeferredLighting.h"
-#include "render/pass/PassDepthPre.h"
-#include "render/pass/PassGBuffer.h"
+#include "render/pass/benchmark/PassDeferredLighting.h"
+#include "render/pass/benchmark/PassDepthPre.h"
+#include "render/pass/benchmark/PassGBuffer.h"
 
 namespace rndr {
 

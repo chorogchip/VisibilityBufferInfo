@@ -4,8 +4,8 @@
 
 #include "engine/GPUResource.h"
 #include "render/renderer/benchmark/RendererBenchmark.h"
-#include "render/pass/PassVisibility.h"
-#include "render/pass/PassVisBufResolve.h"
+#include "render/pass/benchmark/PassVisibility.h"
+#include "render/pass/benchmark/PassVisBufResolve.h"
 
 namespace rndr {
 

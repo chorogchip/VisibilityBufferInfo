@@ -1,4 +1,4 @@
-#include "render/pass/PassGBuffer.h"
+#include "render/pass/benchmark/PassGBuffer.h"
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
@@ -24,6 +24,7 @@ namespace rndr {
 
     void PassGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassGBufferResources& resources, bool use_prepass_depth) {
+
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
 
@@ -34,9 +35,10 @@ namespace rndr {
                 resources_.gbuffers[i]->get());
         }
 
-        resources_.frame_manager->create_dsv(use_prepass_depth_
-            ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
-            : eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
+        resources_.frame_manager->create_dsv(
+            use_prepass_depth_ ?
+            eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY : 
+            eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
         gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -80,9 +82,11 @@ namespace rndr {
     void PassGBuffer::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
         const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            resources_.gbuffers[i]->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            resources_.gbuffers[i]->transition(
+                command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
         if (use_prepass_depth_)
-            resources_.depth->transition(command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
+            resources_.depth->transition(
+                command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
@@ -92,6 +96,7 @@ namespace rndr {
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
+
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::FRAME_CONSTANT),
             resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());

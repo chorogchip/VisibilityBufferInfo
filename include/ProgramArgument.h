@@ -19,7 +19,7 @@ namespace util {
     X(uint32_t, measure_frames, 120, measure-frames) \
     X(bool, auto_terminate, false, auto-terminate) \
     X(bool, vsync, false, vsync) \
-    X(uint32_t, camera_mode, 2, camera-mode) \
+    X(uint32_t, camera_mode, 0, camera-mode) \
     X(std::string, camera_filepath, "camera.csv", camera-filepath) \
     X(uint32_t, camera_keyframe_interval, 10, camera-keyframe-interval) \
     X(uint32_t, profile_window_frames, 10, profile-window-frames) \

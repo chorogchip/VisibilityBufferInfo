@@ -1,8 +1,8 @@
 #pragma once
 
 #include "render/renderer/benchmark/RendererBenchmark.h"
-#include "render/pass/PassDepthPre.h"
-#include "render/pass/PassForward.h"
+#include "render/pass/benchmark/PassDepthPre.h"
+#include "render/pass/benchmark/PassForward.h"
 
 namespace rndr {
 

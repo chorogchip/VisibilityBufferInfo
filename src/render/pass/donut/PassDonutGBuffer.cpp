@@ -1,0 +1,162 @@
+#include "render/pass/donut/PassDonutGBuffer.h"
+
+#include "util/Assertion.h"
+#include "dx_util/ResourceUtils.h"
+#include "dx_util/ShaderUtils.h"
+#include "engine/GPUResource.h"
+#include "render/pass/PassDescriptorRequests.h"
+#include "engine/ResourceManagerFrame.h"
+#include "engine/ResourceManagerSampler.h"
+#include "engine/ResourceManagerShader.h"
+#include "engine/RootSignatureBuilder.h"
+
+namespace rndr {
+
+    namespace {
+        enum class RootParam : UINT {
+            CONSTANT_BUFFER,
+            GEOMETRY_DATA,
+        };
+    }
+
+    void PassDonutGBuffer::init(
+        ID3D12Device* device,
+        const util::ProgramArgument& arguments,
+        const PassDonutGBufferResources& resources,
+        bool use_prepass_depth) {
+
+        resources_ = resources;
+        use_prepass_depth_ = use_prepass_depth;
+
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
+            resources_.instance_buffer->get());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER,
+            resources_.vertex_buffer->get());
+
+        util::assure_contiguous<
+            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER>();
+
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0,
+            resources_.gbuffers[0]->get());
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_1,
+            resources_.gbuffers[1]->get());
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_2,
+            resources_.gbuffers[2]->get());
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3,
+            resources_.gbuffers[3]->get());
+
+        util::assure_contiguous<
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0,
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_1,
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_2,
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3>();
+
+        resources_.frame_manager->create_dsv(
+            use_prepass_depth ?
+            eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY :
+            eng::ResourceManagerFrame::EnumDSV::DEPTH,
+            resources_.depth->get());
+
+        auto vs = dxutl::compile_shader(
+            L"assets/shaders/donut_gbuffer_VS.hlsl",
+            "vs_5_0", "buffer_loads", arguments);
+        auto ps = dxutl::compile_shader(
+            L"assets/shaders/donut_gbuffer_PS.hlsl",
+            "ps_5_0", "main", arguments);
+
+        pso_.init(device);
+        auto root_signature = eng::RootSignatureBuilder{}
+            .root_cbv().reg(0).add()                        // CONSTANT_BUFFER
+            .srv_tabl().reg(0).cnt(2)
+                .vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // GEOMETRY_DATA
+            .build(device);
+        pso_.set_root_signature(root_signature.Get());
+        pso_.set_shader_vertex(vs.Get());
+        pso_.set_shader_pixel(ps.Get());
+        pso_.set_render_targets(4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+        if (use_prepass_depth_)
+            pso_.set_depth_equal();
+        pso_.build();
+    }
+
+    void PassDonutGBuffer::render(
+        ID3D12GraphicsCommandList* command_list,
+        UINT frame_index,
+        const D3D12_VIEWPORT& viewport,
+        const D3D12_RECT& scissor_rect) {
+
+        resources_.gbuffers[0]->transition(
+            command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        resources_.gbuffers[1]->transition(
+            command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        resources_.gbuffers[2]->transition(
+            command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        resources_.gbuffers[3]->transition(
+            command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        if (use_prepass_depth_)
+            resources_.depth->transition(
+                command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
+
+        command_list->SetPipelineState(pso_.get());
+        command_list->SetGraphicsRootSignature(pso_.get_root_signature());
+        ID3D12DescriptorHeap* heaps[] = {
+            resources_.shader_manager->get(),
+            resources_.sampler_manager->get() };
+        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
+        command_list->RSSetViewports(1, &viewport);
+        command_list->RSSetScissorRects(1, &scissor_rect);
+
+        command_list->SetGraphicsRootConstantBufferView(
+            static_cast<UINT>(RootParam::CONSTANT_BUFFER),
+            resources_.constant_buffers[frame_index]->get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootDescriptorTable(
+            static_cast<UINT>(RootParam::GEOMETRY_DATA),
+            resources_.shader_manager->get_gpu_adr(
+                eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER));
+
+
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvs[4]{};
+        rtvs[0] = resources_.frame_manager->get_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0);
+        rtvs[1] = resources_.frame_manager->get_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_1);
+        rtvs[2] = resources_.frame_manager->get_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_2);
+        rtvs[3] = resources_.frame_manager->get_rtv(
+            eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3);
+
+        constexpr float clear[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+        command_list->ClearRenderTargetView(rtvs[0], clear, 0, nullptr);
+        command_list->ClearRenderTargetView(rtvs[1], clear, 0, nullptr);
+        command_list->ClearRenderTargetView(rtvs[2], clear, 0, nullptr);
+        command_list->ClearRenderTargetView(rtvs[3], clear, 0, nullptr);
+
+        const auto dsv = resources_.frame_manager->get_dsv(
+            use_prepass_depth_ ?
+            eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY :
+            eng::ResourceManagerFrame::EnumDSV::DEPTH);
+
+        command_list->OMSetRenderTargets(4, rtvs, FALSE, &dsv);
+
+        if (!use_prepass_depth_)
+            command_list->ClearDepthStencilView(
+                dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
+
+        command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        //  command_list->DrawInstanced(3, 1, 0, 0);
+        for (const auto& batch : resources_.scene->batches) {
+            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
+            command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,
+                mesh.index_start, mesh.vertex_start, 0);
+        }
+    }
+}

@@ -19,17 +19,13 @@ namespace rndr {
 
     struct PassDonutGBufferResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* depth = nullptr;  // PS
         eng::GPUResource* gbuffers[4]{};  // PS
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};  // shared
-        ID3D12Resource* instance_buffer = nullptr;  // VS
-        ID3D12Resource* vertex_buffer = nullptr;  // VS
-
-        std::vector<ID3D12Resource*> material_textures;
-        eng::ResourceManagerSampler* sampler_manager = nullptr;
-        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
-        D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
+        eng::GPUResource* constant_buffers[util::FRAME_COUNT]{};  // shared
+        eng::GPUResource* instance_buffer = nullptr;  // VS
+        eng::GPUResource* vertex_buffer = nullptr;  // VS
         const scene::SceneDataCPU* scene = nullptr;
     };
 
@@ -53,5 +49,4 @@ namespace rndr {
         eng::GraphicsPipeline pso_;
         bool use_prepass_depth_ = false;
     };
-
 }

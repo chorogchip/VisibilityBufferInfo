@@ -1,4 +1,4 @@
-#include "render/pass/PassDeferredLighting.h"
+#include "render/pass/benchmark/PassDeferredLighting.h"
 
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
