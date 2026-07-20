@@ -39,6 +39,17 @@ namespace eng {
         return *this;
     }
 
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::vis_vtx() {
+        visibility_ = D3D12_SHADER_VISIBILITY_VERTEX;
+        return *this;
+    }
+    RootSignatureBuilder::ParameterProxy&
+        RootSignatureBuilder::ParameterProxy::vis_pxl() {
+        visibility_ = D3D12_SHADER_VISIBILITY_PIXEL;
+        return *this;
+    }
+
     RootSignatureBuilder& RootSignatureBuilder::ParameterProxy::add() {
         if (root_type_ == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS) {
             return owner_.add_constants(

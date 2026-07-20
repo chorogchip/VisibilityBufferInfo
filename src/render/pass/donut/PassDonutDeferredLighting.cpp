@@ -117,7 +117,7 @@ namespace rndr {
 
         auto cs = dxutl::compile_shader(
             L"assets/shaders/donut_deferred_lighting_CS_copy.hlsl",
-            "cs_5_0", "main", arguments
+            "cs_5_1", "main", arguments
         );
 
         pso_.init(device);

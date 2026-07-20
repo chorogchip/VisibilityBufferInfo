@@ -20,3 +20,10 @@ benchmark renderer와 donut renderer이 서로 다른거 상속받도록 해서 
 셰이더가 너무 많아졌으므로 폴더 나누기.
 
 back buffer들에 대해 RendererBase의 끝에서 transition 직접 해주기. (기존 각 렌더러가 하던 책임 제외)
+
+Embedded texture 로딩을 현재 지원하는지
+
+total GPU time잴때 pass별 합산 대신 전체를 한 번 더 세는 방안
+
+
+최우선: Donut 참고해서 모델 같은 구조로 읽어야 함 (vertex buf, instance buf, material buf, material tex 만들기)

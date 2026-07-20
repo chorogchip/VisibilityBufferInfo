@@ -1,4 +1,4 @@
-#include "render/pass/donut/PassDonutGBuffer.h"
+﻿#include "render/pass/donut/PassDonutGBuffer.h"
 
 #include "util/Assertion.h"
 #include "dx_util/ResourceUtils.h"
@@ -13,9 +13,16 @@
 namespace rndr {
 
     namespace {
+
         enum class RootParam : UINT {
-            CONSTANT_BUFFER,
-            GEOMETRY_DATA,
+            PUSH_CONSTANT,      // push constant, 7 DWORD (VS, b1, space1)
+            VIEW_CONSTANT,      // gbuffer view constant buf (VS +PS, b2, space2)
+            GEOMETRY_DATA,      // instances(StrBuf), vertices(BAdrBuf)
+                                // (VS, t10~t11, space1)
+            MATERIAL_CONSTANT,  // material const buf (PS, b0, space0)
+            MATERIAL_TEXTURES,  // base, rough, norm, emisv, occlus, transmit, opac
+                                // (PS, t0~t6, space0)
+            MATERIAL_SAMPLER,   // (PS, s0, space2)
         };
     }
 
@@ -27,7 +34,9 @@ namespace rndr {
 
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
+        use_motion_vectors_ = false;
 
+        // TODO modify desc (structuredbuf, byteaddressbuf)
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
             resources_.instance_buffer->get());
@@ -66,16 +75,23 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/donut_gbuffer_VS.hlsl",
-            "vs_5_0", "buffer_loads", arguments);
+            "vs_5_1", "buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/donut_gbuffer_PS.hlsl",
-            "ps_5_0", "main", arguments);
+            "ps_5_1", "main", arguments);
+
+        const D3D12_SHADER_VISIBILITY view_vis = use_motion_vectors_ ?
+            D3D12_SHADER_VISIBILITY_ALL :
+            D3D12_SHADER_VISIBILITY_VERTEX;
 
         pso_.init(device);
         auto root_signature = eng::RootSignatureBuilder{}
-            .root_cbv().reg(0).add()                        // CONSTANT_BUFFER
-            .srv_tabl().reg(0).cnt(2)
-                .vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // GEOMETRY_DATA
+            .constant().reg( 1).cnt(7).spc(1).vis_vtx().add()  // PUSH_CONSTANT
+            .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()  // VIEW_CONSTANT
+            .srv_tabl().reg(10).cnt(2).spc(1).vis_vtx().add()  // GEOMETRY_DATA
+            .root_cbv().reg( 0)       .spc(0).vis_pxl().add()  // MATERIAL_CONSTANT
+            .srv_tabl().reg( 0).cnt(7).spc(0).vis_pxl().add()  // MATERIAL_TEXTURES
+            .spl_tabl().reg( 0).cnt(1).spc(2).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
@@ -114,14 +130,32 @@ namespace rndr {
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
 
+        command_list->SetGraphicsRoot32BitConstants(
+            static_cast<UINT>(RootParam::PUSH_CONSTANT),
+            7, &push_constants_, 0);
         command_list->SetGraphicsRootConstantBufferView(
-            static_cast<UINT>(RootParam::CONSTANT_BUFFER),
-            resources_.constant_buffers[frame_index]->get()->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::VIEW_CONSTANT),
+            resources_.material_constant_buffers[frame_index]->get()->
+            GetGPUVirtualAddress()); // TODO aligned offset
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::GEOMETRY_DATA),
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER));
+        command_list->SetGraphicsRootConstantBufferView(
+            static_cast<UINT>(RootParam::MATERIAL_CONSTANT),
+            resources_.gbuf_constant_buffers[frame_index]->get()->
+            GetGPUVirtualAddress()); // TODO aligned offset
+        command_list->SetGraphicsRootDescriptorTable(
+            static_cast<UINT>(RootParam::MATERIAL_TEXTURES),
+            resources_.shader_manager->get_gpu_adr(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_0));  // TODO wrong
+        // make pos of PBR texture in srv heap and use this instead gbuffer
 
+        command_list->SetGraphicsRootDescriptorTable(
+            static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
+            resources_.sampler_manager->get_gpu_adr(
+                eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW));  // TODO wrong
+        // add material sampler
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[4]{};
         rtvs[0] = resources_.frame_manager->get_rtv(
@@ -152,6 +186,7 @@ namespace rndr {
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+        // TODO modify batch when data is correctly set
         //  command_list->DrawInstanced(3, 1, 0, 0);
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
