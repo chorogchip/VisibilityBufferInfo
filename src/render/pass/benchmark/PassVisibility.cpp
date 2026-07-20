@@ -6,6 +6,7 @@
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -23,6 +24,11 @@ namespace rndr {
         const PassVisibilityResources& resources) {
 
         resources_ = resources;
+
+        util::assure_next<
+            RootParam::FRAME_CONSTANT,
+            RootParam::DRAW_CONSTANT,
+            RootParam::INSTANCE_BUFFER>();
 
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::BENCH_VISIBILITY,

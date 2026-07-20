@@ -8,7 +8,8 @@ namespace rndr {
 	public:
 		virtual ~RendererDonut() = 0;
 
-	private:
+	protected:
+		void init_shader_resources_() override;
 
 	};
 }

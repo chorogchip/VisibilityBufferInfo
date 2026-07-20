@@ -21,9 +21,6 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 
-#include "scene/SceneDataCPU.h"
-#include "scene/SceneDataGPU.h"
-
 #include "render/camera/Camera.h"
 #include "render/camera/CameraPathController.h"
 
@@ -41,6 +38,8 @@ public:
 
 protected:
     virtual void init_programresult_(util::ProgramResult& result) = 0;
+    virtual void init_scene_() {}
+    virtual void init_shader_resources_() = 0;
     virtual void init_renderer_resources_();
     virtual void init_passes_() = 0;
     virtual void record_render_commands_() = 0;
@@ -48,7 +47,6 @@ protected:
 private:
     void init_runtime(HWND hwnd, const util::ProgramArgument& arg);
     void init_gpu(const util::ProgramArgument& arg);
-    void init_scene();
     void init_renderer();
 
     void copy_camera_data();
@@ -58,12 +56,9 @@ private:
     void create_command_objects();
 
     void init_viewport_scissor_rect();
-    void load_scene();
-    void create_scene_resources();
     void create_frame_resources();
     void create_back_buffer_resources();
-    void create_benchmark_resources();
-    void create_sampler_descriptors();
+    void transition_back_buffers_();
     void move_to_next_frame();
 
 protected:
@@ -90,9 +85,6 @@ protected:
 
     UINT64 fence_values_[util::FRAME_COUNT]{};
 
-    std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
-    std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
-
     struct ConstBufMatrices {
         DirectX::XMFLOAT4X4 mat_view_;
         DirectX::XMFLOAT4X4 mat_proj_;
@@ -100,8 +92,6 @@ protected:
     };
     ConstBufMatrices matrix_buf_cpu_{};
     dxutl::UploadConstBuf<ConstBufMatrices> buf_constant_[util::FRAME_COUNT];
-
-    std::vector<ComPtr<ID3D12Resource>> dummy_textures_;
 
     dxutl::GpuFrameTimer frame_time_;
     util::FrameCounter frame_counter_;

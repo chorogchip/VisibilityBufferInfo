@@ -8,6 +8,7 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -23,6 +24,12 @@ namespace rndr {
     void PassVisBufGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisBufGBufferResources& resources) {
         resources_ = resources;
+        util::assure_next<
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
             resources_.frame_manager->create_rtv(
                 static_cast<eng::ResourceManagerFrame::EnumRTV>(

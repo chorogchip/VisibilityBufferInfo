@@ -8,6 +8,7 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -26,6 +27,16 @@ namespace rndr {
         const PassVisBufResolveResources& resources) {
 
         resources_ = resources;
+
+        util::assure_next<
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1>();
+        util::assure_next<
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
 
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
@@ -109,7 +120,5 @@ namespace rndr {
         command_list->ClearRenderTargetView(rtv, clear, 0, nullptr);
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->DrawInstanced(3, 1, 0, 0);
-        resources_.back_buffers[frame_index]->transition(
-            command_list, D3D12_RESOURCE_STATE_PRESENT);
     }
 }

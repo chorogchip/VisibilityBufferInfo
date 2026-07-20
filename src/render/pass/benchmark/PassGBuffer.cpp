@@ -8,6 +8,7 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -27,6 +28,14 @@ namespace rndr {
 
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
+
+        util::assure_next<
+            RootParam::FRAME_CONSTANT,
+            RootParam::DRAW_CONSTANT,
+            RootParam::INSTANCE_BUFFER,
+            RootParam::MATERIAL_BUFFER,
+            RootParam::MATERIAL_TEXTURE,
+            RootParam::MATERIAL_SAMPLER>();
 
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
             resources_.frame_manager->create_rtv(

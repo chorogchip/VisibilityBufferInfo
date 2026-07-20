@@ -16,6 +16,8 @@ namespace rndr {
     }
 
     void RendererVisBuf::init_renderer_resources_() {
+        RendererBenchmark::init_renderer_resources_();
+
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;
         clear_value.Color[0] = 0.0f;
@@ -52,7 +54,7 @@ namespace rndr {
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
-        pass_visibility_.init(device_.Get(), *program_arguments_, visibility);
+        pass_visibility_.init(device_.Get(), benchmark_program_arguments(), visibility);
 
         PassVisBufResolveResources resolve{};
         resolve.frame_manager = &resource_manager_frame_;
@@ -65,12 +67,12 @@ namespace rndr {
         resolve.mesh_buffer = scene_gpu_->mesh_buffer.Get();
         resolve.instance_buffer = scene_gpu_->object_buffer.Get();
         resolve.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : dummy_textures_)
+        for (const auto& texture : material_textures())
             resolve.material_textures.push_back(texture.Get());
         resolve.scene = scene_cpu_.get();
         resolve.constant_buffers[0] = buf_constant_[0].get();
         resolve.constant_buffers[1] = buf_constant_[1].get();
         resolve.sampler_manager = &resource_manager_sampler_;
-        pass_resolve_.init(device_.Get(), *program_arguments_, resolve);
+        pass_resolve_.init(device_.Get(), benchmark_program_arguments(), resolve);
     }
 }

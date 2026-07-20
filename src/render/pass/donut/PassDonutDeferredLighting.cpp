@@ -45,7 +45,7 @@ namespace rndr {
             SRVDescPos::DONUT_ENVIRONMENT_BRDF,
             resources_.buf_env_brdf->get());
 
-        util::assure_contiguous<
+        util::assure_next<
             SRVDescPos::DONUT_SHADOW_MAP_ARRAY,
             SRVDescPos::DONUT_DIFFUSE_LIGHT_PROBE,
             SRVDescPos::DONUT_SPECULAR_LIGHT_PROBE,
@@ -73,7 +73,7 @@ namespace rndr {
             eng::ResourceManagerSampler::EnumDescPos::DONUT_BRDF,
             sampler_desc);
 
-        util::assure_contiguous<
+        util::assure_next<
             eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW,
             eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW_COMPARISON,
             eng::ResourceManagerSampler::EnumDescPos::DONUT_LIGHT_PROBE,
@@ -90,7 +90,7 @@ namespace rndr {
         resources_.shader_manager->create_srv(
             SRVDescPos::DONUT_GBUFFER_3, resources_.gbuffers[3]->get());
 
-        util::assure_contiguous<
+        util::assure_next<
             SRVDescPos::DONUT_GBUFFER_DEPTH,
             SRVDescPos::DONUT_GBUFFER_0,
             SRVDescPos::DONUT_GBUFFER_1,
@@ -106,7 +106,7 @@ namespace rndr {
         resources_.shader_manager->create_srv(
             SRVDescPos::DONUT_AMBIENT_OCCLUSION, resources_.buf_ao->get());
 
-        util::assure_contiguous<
+        util::assure_next<
             SRVDescPos::DONUT_INDIRECT_DIFFUSE,
             SRVDescPos::DONUT_INDIRECT_SPECULAR,
             SRVDescPos::DONUT_SHADOW_CHANNELS,
@@ -116,7 +116,7 @@ namespace rndr {
             SRVDescPos::DONUT_HDR_COLOR_UAV, resources_.uav_output->get());
 
         auto cs = dxutl::compile_shader(
-            L"assets/shaders/donut_deferred_lighting_CS_copy.hlsl",
+            L"assets/shaders/donut/donut_deferred_lighting_CS_copy.hlsl",
             "cs_5_1", "main", arguments
         );
 

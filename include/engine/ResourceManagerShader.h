@@ -44,7 +44,8 @@ namespace eng {
             BENCH_GBUFFER_5 = 43,
             BENCH_GBUFFER_6 = 44,
             BENCH_GBUFFER_7 = 45,
-            BENCH_MATERIAL_TEXTURE_BEGIN = 46
+            BENCH_MATERIAL_TEXTURE_BEGIN = 46,
+            COUNT = BENCH_MATERIAL_TEXTURE_BEGIN
         };
 
         void init(ID3D12Device* device, UINT descriptor_count);

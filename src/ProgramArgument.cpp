@@ -44,8 +44,8 @@ namespace util {
     void ProgramArgument::validate() const {
         auto& logger = util::Logger::g_logger;
 
-        logger.assert_with_log(renderer_variant >= 1 && renderer_variant <= 6,
-            "renderer_variant must be between 1 and 6");
+        logger.assert_with_log(renderer_variant >= 1 && renderer_variant <= 8,
+            "renderer_variant must be between 1 and 8");
         logger.assert_with_log(window_width > 0, "window_width must be greater than 0");
         logger.assert_with_log(window_height > 0, "window_height must be greater than 0");
         logger.assert_with_log(measure_frames > 0, "measure_frames must be greater than 0");

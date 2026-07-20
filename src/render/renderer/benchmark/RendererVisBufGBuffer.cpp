@@ -17,6 +17,7 @@ namespace rndr {
     }
 
     void RendererVisBufGBuffer::init_renderer_resources_() {
+        RendererBenchmark::init_renderer_resources_();
 
         util::Logger::g_logger.assert_with_log(
             program_arguments_->gbuffer_cnt > 0,
@@ -84,7 +85,7 @@ namespace rndr {
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
-        pass_visibility_.init(device_.Get(), *program_arguments_, visibility);
+        pass_visibility_.init(device_.Get(), benchmark_program_arguments(), visibility);
 
         PassVisBufGBufferResources gbuffer{};
         gbuffer.frame_manager = &resource_manager_frame_;
@@ -96,7 +97,7 @@ namespace rndr {
         gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
         gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
         gbuffer.scene = scene_cpu_.get();
-        for (const auto& texture : dummy_textures_)
+        for (const auto& texture : material_textures())
             gbuffer.material_textures.push_back(texture.Get());
         gbuffer.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
@@ -104,7 +105,7 @@ namespace rndr {
         gbuffer.constant_buffers[0] = buf_constant_[0].get();
         gbuffer.constant_buffers[1] = buf_constant_[1].get();
         gbuffer.sampler_manager = &resource_manager_sampler_;
-        pass_gbuffer_.init(device_.Get(), *program_arguments_, gbuffer);
+        pass_gbuffer_.init(device_.Get(), benchmark_program_arguments(), gbuffer);
 
         PassDeferredLightingResources lighting{};
         lighting.frame_manager = &resource_manager_frame_;
@@ -114,6 +115,6 @@ namespace rndr {
         lighting.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < lighting.gbuffer_count; ++i)
             lighting.gbuffers[i] = &gbuffers_[i];
-        pass_lighting_.init(device_.Get(), *program_arguments_, lighting);
+        pass_lighting_.init(device_.Get(), benchmark_program_arguments(), lighting);
     }
 }

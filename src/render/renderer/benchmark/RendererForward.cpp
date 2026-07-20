@@ -43,7 +43,7 @@ namespace rndr {
             depth_resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth_resources.index_buffer_view = scene_gpu_->index_buffer_view;
             depth_resources.scene = scene_cpu_.get();
-            pass_depth_pre_.init(device_.Get(), *program_arguments_, depth_resources);
+            pass_depth_pre_.init(device_.Get(), benchmark_program_arguments(), depth_resources);
         }
 
         PassForwardResources resources{};
@@ -56,13 +56,13 @@ namespace rndr {
         resources.constant_buffers[1] = buf_constant_[1].get();
         resources.instance_buffer = scene_gpu_->object_buffer.Get();
         resources.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : dummy_textures_)
+        for (const auto& texture : material_textures())
             resources.material_textures.push_back(texture.Get());
         resources.sampler_manager = &resource_manager_sampler_;
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;
         resources.scene = scene_cpu_.get();
 
-        pass_forward_.init(device_.Get(), *program_arguments_, resources, do_prepass_);
+        pass_forward_.init(device_.Get(), benchmark_program_arguments(), resources, do_prepass_);
     }
 }

@@ -17,6 +17,8 @@ namespace rndr {
     }
 
     void RendererDeferred::init_renderer_resources_() {
+        RendererBenchmark::init_renderer_resources_();
+
         util::Logger::g_logger.assert_with_log(
             program_arguments_->gbuffer_cnt > 0 && program_arguments_->gbuffer_cnt <= 8,
             "gbuffer count must be between 1 and 8 in deferred");
@@ -63,7 +65,7 @@ namespace rndr {
         gbuffer.constant_buffers[1] = buf_constant_[1].get();
         gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
         gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : dummy_textures_)
+        for (const auto& texture : material_textures())
             gbuffer.material_textures.push_back(texture.Get());
         gbuffer.sampler_manager = &resource_manager_sampler_;
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
@@ -81,9 +83,9 @@ namespace rndr {
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth.index_buffer_view = scene_gpu_->index_buffer_view;
             depth.scene = scene_cpu_.get();
-            pass_depth_pre_.init(device_.Get(), *program_arguments_, depth);
+            pass_depth_pre_.init(device_.Get(), benchmark_program_arguments(), depth);
         }
-        pass_gbuffer_.init(device_.Get(), *program_arguments_, gbuffer, do_prepass_);
+        pass_gbuffer_.init(device_.Get(), benchmark_program_arguments(), gbuffer, do_prepass_);
 
         PassDeferredLightingResources lighting{};
         lighting.frame_manager = &resource_manager_frame_;
@@ -93,7 +95,7 @@ namespace rndr {
         lighting.gbuffer_count = program_arguments_->gbuffer_cnt;
         for (UINT i = 0; i < lighting.gbuffer_count; ++i)
             lighting.gbuffers[i] = &gbuffers_[i];
-        pass_lighting_.init(device_.Get(), *program_arguments_, lighting);
+        pass_lighting_.init(device_.Get(), benchmark_program_arguments(), lighting);
     }
 
 }

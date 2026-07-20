@@ -21,7 +21,8 @@ namespace scene {
         const SceneDataCPU& src,
         ID3D12Device* p_device,
         ID3D12GraphicsCommandList* p_list,
-        std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+        std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps,
+        bool to_load_textures) {
 
         std::unique_ptr<SceneDataGPU> ret{ new SceneDataGPU{} };
 
@@ -37,6 +38,10 @@ namespace scene {
         auto load_texture = [&](
             const eng::MaterialCPU::TexturePath& texture_path,
             bool srgb) -> uint32_t {
+            if (!to_load_textures) {
+                return eng::MaterialGPU::invalid_texture_index;
+            }
+
             if (!texture_path || texture_path->empty()) {
                 return eng::MaterialGPU::invalid_texture_index;
             }

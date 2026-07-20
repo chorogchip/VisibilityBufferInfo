@@ -30,13 +30,13 @@ namespace scene::donut {
 
         uint32_t to_uint32(size_t value, const char* message) {
             util::Logger::g_logger.assert_with_log(
-                value <= std::numeric_limits<uint32_t>::max(), message);
+                value <= (std::numeric_limits<uint32_t>::max)(), message);
             return static_cast<uint32_t>(value);
         }
 
         uint32_t to_uint(size_t value, const char* message) {
             util::Logger::g_logger.assert_with_log(
-                value <= std::numeric_limits<UINT>::max(), message);
+                value <= (std::numeric_limits<UINT>::max)(), message);
             return static_cast<uint32_t>(value);
         }
 
@@ -47,11 +47,11 @@ namespace scene::donut {
             uint32_t& offset) {
             const size_t stream_offset = align_16(destination.size());
             util::Logger::g_logger.assert_with_log(
-                source.size() <= std::numeric_limits<size_t>::max() / sizeof(T),
+                source.size() <= (std::numeric_limits<size_t>::max)() / sizeof(T),
                 "Donut vertex stream size overflow");
             const size_t stream_size = source.size() * sizeof(T);
             util::Logger::g_logger.assert_with_log(
-                stream_offset <= std::numeric_limits<size_t>::max() - stream_size,
+                stream_offset <= (std::numeric_limits<size_t>::max)() - stream_size,
                 "Donut vertex buffer size overflow");
             offset = to_uint32(stream_offset, "Donut vertex offset exceeds 32-bit addressing");
             destination.resize(stream_offset + stream_size);
@@ -197,9 +197,9 @@ namespace scene::donut {
 
             if (loaded.metadata.dimension != DirectX::TEX_DIMENSION_TEXTURE2D ||
                 DirectX::IsPlanar(loaded.metadata.format) ||
-                loaded.metadata.arraySize > std::numeric_limits<UINT16>::max() ||
-                loaded.metadata.mipLevels > std::numeric_limits<UINT16>::max() ||
-                loaded.metadata.height > std::numeric_limits<UINT>::max()) {
+                loaded.metadata.arraySize > (std::numeric_limits<UINT16>::max)() ||
+                loaded.metadata.mipLevels > (std::numeric_limits<UINT16>::max)() ||
+                loaded.metadata.height > (std::numeric_limits<UINT>::max)()) {
                 util::Logger::g_logger << "Unsupported Donut material texture: "
                     << resolved_path.string() << '\n';
                 return std::nullopt;
@@ -317,7 +317,7 @@ namespace scene::donut {
             vertex_data.size(), "Donut vertex buffer exceeds 32-bit addressing");
 
         util::Logger::g_logger.assert_with_log(
-            source.indices.size() <= std::numeric_limits<UINT>::max() / sizeof(uint32_t),
+            source.indices.size() <= (std::numeric_limits<UINT>::max)() / sizeof(uint32_t),
             "Donut index buffer exceeds D3D12 limits");
 
         destination->geometry_data.reserve(source.geometries.size());
@@ -415,7 +415,7 @@ namespace scene::donut {
         const size_t material_byte_size = destination->material_data.size() * sizeof(dnt::MaterialConstants);
 
         util::Logger::g_logger.assert_with_log(
-            index_byte_size <= std::numeric_limits<UINT>::max(),
+            index_byte_size <= (std::numeric_limits<UINT>::max)(),
             "Donut index buffer view exceeds D3D12 limits");
 
         upload_buffer(

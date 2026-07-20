@@ -3,7 +3,7 @@
 namespace rndr {
 
 
-	explicit RendererDonutDeferred::RendererDonutDeferred(bool do_prepass)
+	RendererDonutDeferred::RendererDonutDeferred(bool do_prepass)
 		: do_prepass_(do_prepass) {}
 
 	void RendererDonutDeferred::init_programresult_(util::ProgramResult& result) {

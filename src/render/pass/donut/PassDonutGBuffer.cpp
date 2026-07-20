@@ -44,7 +44,7 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER,
             resources_.vertex_buffer->get());
 
-        util::assure_contiguous<
+        util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
             eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER>();
 
@@ -61,7 +61,7 @@ namespace rndr {
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3,
             resources_.gbuffers[3]->get());
 
-        util::assure_contiguous<
+        util::assure_next<
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0,
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_1,
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_2,
@@ -74,10 +74,10 @@ namespace rndr {
             resources_.depth->get());
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/donut_gbuffer_VS.hlsl",
+            L"assets/shaders/donut/donut_gbuffer_VS.hlsl",
             "vs_5_1", "buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/donut_gbuffer_PS.hlsl",
+            L"assets/shaders/donut/donut_gbuffer_PS.hlsl",
             "ps_5_1", "main", arguments);
 
         const D3D12_SHADER_VISIBILITY view_vis = use_motion_vectors_ ?

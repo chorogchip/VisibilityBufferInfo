@@ -1,7 +1,6 @@
 #include "render/renderer/RendererBase.h"
 
 #include <chrono>
-#include <cstring>
 #include <ctime>
 #include <algorithm>
 #include <iomanip>
@@ -11,14 +10,9 @@
 
 #include "util/Utils.h"
 #include "util/BenchmarkCsvWriter.h"
-#include "util/DummyTextureGen.h"
 #include "dx_util/DeviceUtils.h"
 #include "dx_util/ResourceUtils.h"
 #include "engine/TextureLoader.h"
-
-#include "scene/SceneFingerprint.h"
-#include "scene/SceneLoader.h"
-#include "scene/SceneResourceBuilder.h"
 
 #include "util/Macros.h"
 
@@ -45,7 +39,8 @@ RendererBase::~RendererBase() {
 void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     init_runtime(hwnd, arg);
     init_gpu(arg);
-    init_scene();
+    init_scene_();
+    init_shader_resources_();
     init_renderer();
 }
 
@@ -67,13 +62,10 @@ void RendererBase::init_runtime(HWND hwnd, const util::ProgramArgument& arg) {
 }
 
 void RendererBase::init_gpu(const util::ProgramArgument& arg) {
+    (void)arg;
     device_ = dxutl::create_device(factory_);
     resource_manager_frame_.init(device_.Get());
     resource_manager_sampler_.init(device_.Get());
-    const UINT shader_descriptor_count = static_cast<UINT>(
-        eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN)
-        + arg.texture_count;
-    resource_manager_shader_.init(device_.Get(), shader_descriptor_count);
 
     this->create_command_objects();
 
@@ -93,16 +85,10 @@ void RendererBase::init_gpu(const util::ProgramArgument& arg) {
     this->init_viewport_scissor_rect();
 }
 
-void RendererBase::init_scene() {
-    this->load_scene();
-    this->create_scene_resources();
-}
-
 void RendererBase::init_renderer() {
     this->init_renderer_resources_();
     this->create_frame_resources();
     this->create_back_buffer_resources();
-    this->create_benchmark_resources();
     this->init_passes_();
 }
 
@@ -112,6 +98,7 @@ void RendererBase::render() {
     copy_camera_data();
     begin_frame();
     this->record_render_commands_();
+    this->transition_back_buffers_();
     submit_frame();
     present();
     this->move_to_next_frame();
@@ -242,158 +229,9 @@ void RendererBase::create_back_buffer_resources() {
     }
 }
 
-void RendererBase::create_sampler_descriptors() {
-    D3D12_SAMPLER_DESC sampler_desc{};
-    sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    sampler_desc.MaxAnisotropy = 1;
-    sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-    resource_manager_sampler_.create_sampler(
-        eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL,
-        sampler_desc);
-}
-
-void RendererBase::load_scene() {
-    scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
-    scene::SceneFingerprint::write_csv(
-        util::get_scene_fingerprint_output_path(program_arguments_->output_filepath),
-        *scene_cpu_,
-        *program_arguments_);
-}
-
-void RendererBase::create_scene_resources() {
-    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
-    Utils::throw_if_failed(command_list_->Reset(
-        command_allocator_[frame_index_].Get(), nullptr));
-
-    scene_gpu_ = scene::SceneResourceBuilder::build(
-        *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps);
-
-    Utils::throw_if_failed(command_list_->Close(),
-        "close list on resource creation");
-
-    graphics_queue_.execute(command_list_.Get());
-    graphics_queue_.wait_idle();
-}
-
-void RendererBase::create_benchmark_resources() {
-
-    const UINT texture_count = program_arguments_->texture_count;
-    const UINT texture_size = program_arguments_->texture_size;
-
-    util::Logger::g_logger.assert_with_log(
-        texture_count > 0,
-        "texture count must > 0");
-
-    util::Logger::g_logger.assert_with_log(
-        texture_size > 0,
-        "texture size must > 0");
-
-    const DXGI_FORMAT texture_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-    dummy_textures_.clear();
-    dummy_textures_.resize(texture_count);
-
-    D3D12_RESOURCE_DESC texture_desc{};
-    texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    texture_desc.Alignment = 0;
-    texture_desc.Width = texture_size;
-    texture_desc.Height = texture_size;
-    texture_desc.DepthOrArraySize = 1;
-    texture_desc.MipLevels = 1;
-    texture_desc.Format = texture_format;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    UINT64 upload_size = 0;
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
-    UINT row_count = 0;
-    UINT64 row_size_in_bytes = 0;
-    device_->GetCopyableFootprints(
-        &texture_desc, 0, 1, 0, &footprint,
-        &row_count, &row_size_in_bytes, &upload_size);
-
-    (void)row_count;
-    (void)row_size_in_bytes;
-
-    std::vector<ComPtr<ID3D12Resource>> upload_buffers;
-    upload_buffers.resize(texture_count);
-
-    Utils::throw_if_failed(command_list_->Reset(
-        command_allocator_[frame_index_].Get(), nullptr));
-
-    for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
-
-        auto texture_data = util::create_dummy_texture_data(
-            texture_size, texture_size, texture_index);
-
-        dummy_textures_[texture_index] = dxutl::create_committed_resource(
-            device_.Get(),
-            texture_desc,
-            D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_RESOURCE_STATE_COPY_DEST);
-
-        upload_buffers[texture_index] = dxutl::create_buffer(
-            device_.Get(),
-            upload_size,
-            D3D12_HEAP_TYPE_UPLOAD,
-            D3D12_RESOURCE_STATE_GENERIC_READ);
-
-        void* mapped_data = dxutl::map_upload_buffer(upload_buffers[texture_index].Get());
-
-        const std::size_t source_row_pitch = static_cast<std::size_t>(texture_size) * 4u;
-        auto* dest = static_cast<unsigned char*>(mapped_data);
-
-        for (UINT y = 0; y < texture_size; ++y) {
-            unsigned char* destination_row =
-                dest +
-                footprint.Offset +
-                static_cast<std::size_t>(y) * footprint.Footprint.RowPitch;
-
-            const unsigned char* source_row =
-                texture_data.data() +
-                static_cast<std::size_t>(y) * source_row_pitch;
-
-            std::memcpy(
-                destination_row,
-                source_row,
-                source_row_pitch);
-        }
-
-        upload_buffers[texture_index]->Unmap(0, nullptr);
-
-        D3D12_TEXTURE_COPY_LOCATION dst_location{};
-        dst_location.pResource = dummy_textures_[texture_index].Get();
-        dst_location.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        dst_location.SubresourceIndex = 0;
-
-        D3D12_TEXTURE_COPY_LOCATION src_location{};
-        src_location.pResource = upload_buffers[texture_index].Get();
-        src_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        src_location.PlacedFootprint = footprint;
-
-        command_list_->CopyTextureRegion(
-            &dst_location, 0, 0, 0,
-            &src_location, nullptr);
-
-        dxutl::transition_resource(
-            command_list_.Get(),
-            dummy_textures_[texture_index].Get(),
-            D3D12_RESOURCE_STATE_COPY_DEST,
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    }
-
-    Utils::throw_if_failed(command_list_->Close(),
-        "close list on dummy texture creation");
-    graphics_queue_.execute(command_list_.Get());
-    graphics_queue_.wait_idle();
-
-    create_sampler_descriptors();
+void RendererBase::transition_back_buffers_() {
+    for (auto& render_target : render_targets_)
+        render_target.transition(command_list_.Get(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void RendererBase::create_frame_resources() {

@@ -14,6 +14,7 @@ namespace scene {
 			const SceneDataCPU& src,
 			ID3D12Device* p_device,
 			ID3D12GraphicsCommandList* p_list,
-			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps);
+			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps,
+			bool to_load_textures = false);
 	};
 }

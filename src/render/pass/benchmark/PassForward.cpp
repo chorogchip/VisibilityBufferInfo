@@ -8,6 +8,7 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
 #include "render/pass/PassDescriptorRequests.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -30,6 +31,14 @@ namespace rndr {
 
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
+
+        util::assure_next<
+            RootParam::FRAME_CONSTANT,
+            RootParam::DRAW_CONSTANT,
+            RootParam::INSTANCE_BUFFER,
+            RootParam::MATERIAL_BUFFER,
+            RootParam::MATERIAL_TEXTURE,
+            RootParam::MATERIAL_SAMPLER>();
 
         resources_.frame_manager->create_rtv
         (eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
@@ -141,7 +150,6 @@ namespace rndr {
                 mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
         }
 
-        resources_.back_buffers[frame_index]->transition(command_list, D3D12_RESOURCE_STATE_PRESENT);
     }
 
 }
