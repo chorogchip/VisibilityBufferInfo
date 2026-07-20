@@ -47,7 +47,8 @@ namespace rndr {
             .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()         // INSTANCE_BUFFER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shaders(vs.Get(), ps.Get());
+        pso_.set_shader_vertex(vs.Get());
+        pso_.set_shader_pixel(ps.Get());
         pso_.set_render_targets(1, DXGI_FORMAT_R32G32_UINT);
         pso_.build();
     }

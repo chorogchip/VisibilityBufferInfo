@@ -24,7 +24,7 @@ namespace eng {
             SUCCEEDED(result), "create sampler descriptor heap");
     }
 
-    void ResourceManagerSampler::request(
+    void ResourceManagerSampler::create_sampler(
         EnumDescPos position,
         const D3D12_SAMPLER_DESC& desc) {
         const UINT index = static_cast<UINT>(position);

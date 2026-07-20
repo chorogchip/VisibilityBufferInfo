@@ -1,0 +1,12 @@
+
+set desc heap 등은 한 번만 필요하므로 패스에서 미담당, heap 얻는걸 전역 구조로 바꾸기
+별도의 compute queue만들기, async 실행
+Pass*Resources에서 ID3d12Resource*와 GPUResource를 혼재해서 쓰고 있음. GPUResource로 통일하면 좋음.
+	- 자원들을 만드는 클래스를 지원하면 좋음.
+create_rtv 등에서 이미 있는지 여부 검사해야함. desc등의 정보까지 비교하는게 더 정확하긴 함. 지금은 연속해서 쓰는 경우 없음.
+	- 지금 유일하게 겹치는 경우인 VisBuf의 instnace buffer는 첫 번쨰에선 root descriptor 로 넣음. 이거를 개선해야함.
+pso에서 fullscreen_ 확실히 처리
+
+PSO에 D3D12_COMPUTE_PIPELINE_STATE_DESC, CreateComputePipelineState 추가
+
+donut 소스 보고 PassDonutDeferredLighting desc값 검증하기

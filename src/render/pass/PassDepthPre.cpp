@@ -27,7 +27,7 @@ namespace rndr {
             eng::ResourceManagerFrame::EnumDSV::DEPTH,
             resources_.depth->get());
 
-        auto vertex_shader = dxutl::compile_shader(
+        auto vs = dxutl::compile_shader(
             L"assets/shaders/depth_prepass_VS.hlsl",
             "vs_5_0", "main", arguments);
 
@@ -39,7 +39,7 @@ namespace rndr {
             .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()         // INSTANCE_BUFFER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shaders(vertex_shader.Get(), nullptr);
+        pso_.set_shader_vertex(vs.Get());
         pso_.set_depth_only();
         pso_.build();
     }

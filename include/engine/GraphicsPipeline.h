@@ -8,9 +8,13 @@ namespace eng {
 
     class GraphicsPipeline {
     public:
+        enum class EnumShader { VS, PS, CS };
+
         void init(ID3D12Device* device);
         void set_root_signature(ID3D12RootSignature* root_signature);
-        void set_shaders(ID3DBlob* vertex_shader, ID3DBlob* pixel_shader);
+        void set_shader_vertex(ID3DBlob* shader);
+        void set_shader_pixel(ID3DBlob* shader);
+        void set_shader_compute(ID3DBlob* shader);
         void set_depth_only();
         void set_depth_equal();
         void set_render_targets(UINT count, DXGI_FORMAT format);
@@ -24,6 +28,7 @@ namespace eng {
         ID3D12Device* device_ = nullptr;
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_;
+        Microsoft::WRL::ComPtr<ID3DBlob> compute_shader_;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_;
         Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_;
         bool depth_only_ = false;

@@ -251,7 +251,7 @@ void RendererBase::create_sampler_descriptors() {
     sampler_desc.MaxAnisotropy = 1;
     sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-    resource_manager_sampler_.request(
+    resource_manager_sampler_.create_sampler(
         eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL,
         sampler_desc);
 }

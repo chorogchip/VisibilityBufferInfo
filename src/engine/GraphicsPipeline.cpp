@@ -4,22 +4,20 @@
 
 namespace eng {
 
-    namespace {
-        D3D12_INPUT_LAYOUT_DESC default_input_layout() {
-            static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,
-                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24,
-                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 32,
-                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 40,
-                    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
-            return { elements, _countof(elements) };
-        }
+    static D3D12_INPUT_LAYOUT_DESC default_input_layout() {
+        static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 32,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 40,
+                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
+        return { elements, _countof(elements) };
     }
 
     void GraphicsPipeline::init(ID3D12Device* device) {
@@ -39,9 +37,15 @@ namespace eng {
         root_signature_ = root_signature;
     }
 
-    void GraphicsPipeline::set_shaders(ID3DBlob* vertex_shader, ID3DBlob* pixel_shader) {
-        vertex_shader_ = vertex_shader;
-        pixel_shader_ = pixel_shader;
+
+    void GraphicsPipeline::set_shader_vertex(ID3DBlob* shader) {
+        vertex_shader_ = shader;
+    }
+    void GraphicsPipeline::set_shader_pixel(ID3DBlob* shader) {
+        pixel_shader_ = shader;
+    }
+    void GraphicsPipeline::set_shader_compute(ID3DBlob* shader) {
+        compute_shader_ = shader;
     }
 
     void GraphicsPipeline::set_depth_only() {

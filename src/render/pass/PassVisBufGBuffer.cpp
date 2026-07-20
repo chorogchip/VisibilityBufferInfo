@@ -69,7 +69,8 @@ namespace rndr {
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shaders(vs.Get(), ps.Get());
+        pso_.set_shader_vertex(vs.Get());
+        pso_.set_shader_pixel(ps.Get());
         pso_.set_fullscreen();
         pso_.set_render_targets(resources_.gbuffer_count, DXGI_FORMAT_R32G32B32A32_FLOAT);
         pso_.build();

@@ -11,7 +11,7 @@
 namespace rndr {
 
     static enum RootParam : UINT {
-        GBUFFER_INPUT = 0,
+        GBUFFER_INPUT,
     };
 
     void PassDeferredLighting::init(
@@ -39,18 +39,21 @@ namespace rndr {
 
         pso_.init(device);
         auto root_signature = eng::RootSignatureBuilder{}
-            // GBUFFER_INPUT
             .srv_tabl().reg(0).cnt(resources_.gbuffer_count)
-            .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // // GBUFFER_INPUT
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shaders(vs.Get(), ps.Get());
+        pso_.set_shader_vertex(vs.Get());
+        pso_.set_shader_pixel(ps.Get());
         pso_.set_fullscreen();
         pso_.build();
     }
     
-    void PassDeferredLighting::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
-        const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
+    void PassDeferredLighting::render(
+        ID3D12GraphicsCommandList* command_list,
+        UINT frame_index,
+        const D3D12_VIEWPORT& viewport,
+        const D3D12_RECT& scissor_rect) {
 
         resources_.back_buffers[frame_index]->transition(
             command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -69,9 +72,7 @@ namespace rndr {
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
         const auto rtv = resources_.frame_manager->get_rtv(
-            frame_index == 0 ?
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0 :
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1);
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, frame_index);
         command_list->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
         constexpr float clear[] = { 0.1f, 0.1f, 0.15f, 1.0f };
         command_list->ClearRenderTargetView(rtv, clear, 0, nullptr);

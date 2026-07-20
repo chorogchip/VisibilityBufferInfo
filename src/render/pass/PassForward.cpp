@@ -46,10 +46,10 @@ namespace rndr {
 
         request_material_textures(*resources_.shader_manager, resources_.material_textures);
 
-        auto vertex_shader = dxutl::compile_shader(
+        auto vs = dxutl::compile_shader(
             L"assets/shaders/forward_VS.hlsl",
             "vs_5_0", "main", arguments);
-        auto pixel_shader = dxutl::compile_shader(
+        auto ps = dxutl::compile_shader(
             L"assets/shaders/forward_PS.hlsl",
             "ps_5_0", "main", arguments);
 
@@ -67,7 +67,8 @@ namespace rndr {
                 .cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()                        // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shaders(vertex_shader.Get(), pixel_shader.Get());
+        pso_.set_shader_vertex(vs.Get());
+        pso_.set_shader_pixel(ps.Get());
         if (use_prepass_depth_)
             pso_.set_depth_equal();
         pso_.build();

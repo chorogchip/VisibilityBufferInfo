@@ -4,21 +4,38 @@
 
 #include "Constants.h"
 #include "ProgramArgument.h"
+#include "engine/GraphicsPipeline.h"
 
-namespace eng { class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerSampler;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
 
     struct PassDonutDeferredLightingResources {
         eng::ResourceManagerShader* shader_manager = nullptr;
-        ID3D12Resource* depth = nullptr;
-        ID3D12Resource* gbuffers[4]{};
-        ID3D12Resource* output = nullptr;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;
+
+        eng::GPUResource* constant_buffers[util::FRAME_COUNT]{};
+
+        eng::GPUResource* buf_shadow_map = nullptr;
+        eng::GPUResource* buf_diffuse_light_probe = nullptr;
+        eng::GPUResource* buf_specular_light_probe = nullptr;
+        eng::GPUResource* buf_env_brdf = nullptr;
+        eng::GPUResource* depth = nullptr;
+        eng::GPUResource* gbuffers[4]{};
+        eng::GPUResource* buf_ibl_diffuse = nullptr;
+        eng::GPUResource* buf_ibl_specular = nullptr;
+        eng::GPUResource* buf_shadow = nullptr;
+        eng::GPUResource* buf_ao = nullptr;
+
+        eng::GPUResource* uav_output{};
     };
 
     class PassDonutDeferredLighting {
+
     public:
         void init(
             ID3D12Device* device,
@@ -33,6 +50,7 @@ namespace rndr {
 
     private:
         PassDonutDeferredLightingResources resources_{};
+        eng::GraphicsPipeline pso_;
     };
 
 }
