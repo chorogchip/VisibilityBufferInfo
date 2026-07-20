@@ -4,6 +4,7 @@
 #include "render/renderer/benchmark/RendererDeferred.h"
 #include "render/renderer/benchmark/RendererVisBuf.h"
 #include "render/renderer/benchmark/RendererVisBufGBuffer.h"
+#include "render/renderer/donut/RendererDonutDeferred.h"
 
 namespace rndr {
 
@@ -22,6 +23,10 @@ namespace rndr {
             return std::make_unique<RendererDeferred>(true);
         case 6:
             return std::make_unique<RendererVisBufGBuffer>();
+        case 7:
+            return std::make_unique<RendererDonutDeferred>(false);
+        case 8:
+            return std::make_unique<RendererDonutDeferred>(true);
         }
     }
 
