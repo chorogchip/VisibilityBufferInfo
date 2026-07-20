@@ -3,14 +3,14 @@
 #include <vector>
 
 #include "engine/GPUResource.h"
-#include "render/renderer/RendererBase.h"
+#include "render/renderer/benchmark/RendererBenchmark.h"
 #include "render/pass/PassVisibility.h"
 #include "render/pass/PassVisBufGBuffer.h"
 #include "render/pass/PassDeferredLighting.h"
 
 namespace rndr {
 
-	class RendererVisBufGBuffer : public RendererBase {
+	class RendererVisBufGBuffer : public RendererBenchmark {
 	public:
 		RendererVisBufGBuffer() = default;
 		~RendererVisBufGBuffer() override = default;

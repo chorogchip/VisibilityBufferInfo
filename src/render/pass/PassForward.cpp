@@ -11,14 +11,16 @@
 
 namespace rndr {
 
-    static enum RootParam : UINT {
-        FRAME_CONSTANT,
-        DRAW_CONSTANT,
-        INSTANCE_BUFFER,
-        MATERIAL_BUFFER,
-        MATERIAL_TEXTURE,
-        MATERIAL_SAMPLER
-    };
+    namespace {
+        enum class RootParam : UINT {
+            FRAME_CONSTANT,
+            DRAW_CONSTANT,
+            INSTANCE_BUFFER,
+            MATERIAL_BUFFER,
+            MATERIAL_TEXTURE,
+            MATERIAL_SAMPLER,
+        };
+    }
 
     void PassForward::init(
         ID3D12Device* device,
@@ -109,16 +111,21 @@ namespace rndr {
             resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(
-            FRAME_CONSTANT, resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::FRAME_CONSTANT),
+            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            INSTANCE_BUFFER, resources_.instance_buffer->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::INSTANCE_BUFFER),
+            resources_.instance_buffer->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            MATERIAL_BUFFER, resources_.material_buffer->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::MATERIAL_BUFFER),
+            resources_.material_buffer->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
-            MATERIAL_TEXTURE, resources_.shader_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
+            resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(
-            MATERIAL_SAMPLER, resources_.sampler_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
+            resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -128,7 +135,8 @@ namespace rndr {
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
-                DRAW_CONSTANT, batch.object_index, 0);
+                static_cast<UINT>(RootParam::DRAW_CONSTANT),
+                batch.object_index, 0);
             command_list->DrawIndexedInstanced(
                 mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
         }

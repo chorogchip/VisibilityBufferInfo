@@ -1,9 +1,9 @@
 #include "render/renderer/RendererFactory.h"
 
-#include "render/renderer/RendererDeferred.h"
-#include "render/renderer/RendererForward.h"
-#include "render/renderer/RendererVisBuf.h"
-#include "render/renderer/RendererVisBufGBuffer.h"
+#include "render/renderer/benchmark/RendererForward.h"
+#include "render/renderer/benchmark/RendererDeferred.h"
+#include "render/renderer/benchmark/RendererVisBuf.h"
+#include "render/renderer/benchmark/RendererVisBufGBuffer.h"
 
 namespace rndr {
 

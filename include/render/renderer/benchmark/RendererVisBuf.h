@@ -3,13 +3,13 @@
 #include <vector>
 
 #include "engine/GPUResource.h"
-#include "render/renderer/RendererBase.h"
+#include "render/renderer/benchmark/RendererBenchmark.h"
 #include "render/pass/PassVisibility.h"
 #include "render/pass/PassVisBufResolve.h"
 
 namespace rndr {
 
-	class RendererVisBuf : public RendererBase {
+	class RendererVisBuf : public RendererBenchmark {
 	public:
 		RendererVisBuf() = default;
 		~RendererVisBuf() override = default;

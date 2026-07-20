@@ -3,14 +3,14 @@
 #include <vector>
 
 #include "engine/GPUResource.h"
-#include "render/renderer/RendererBase.h"
+#include "render/renderer/benchmark/RendererBenchmark.h"
 #include "render/pass/PassDeferredLighting.h"
 #include "render/pass/PassDepthPre.h"
 #include "render/pass/PassGBuffer.h"
 
 namespace rndr {
 
-	class RendererDeferred : public RendererBase {
+	class RendererDeferred : public RendererBenchmark {
 	public:
 		explicit RendererDeferred(bool do_prepass);
 		~RendererDeferred() override = default;

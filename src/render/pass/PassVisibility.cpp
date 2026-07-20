@@ -9,11 +9,13 @@
 
 namespace rndr {
 
-    static enum RootParam : UINT {
-        FRAME_CONSTANT,
-        DRAW_CONSTANT,
-        INSTANCE_BUFFER
-    };
+    namespace {
+        enum class RootParam : UINT {
+            FRAME_CONSTANT,
+            DRAW_CONSTANT,
+            INSTANCE_BUFFER,
+        };
+    }
 
     void PassVisibility::init(
         ID3D12Device* device,
@@ -66,9 +68,11 @@ namespace rndr {
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
         command_list->SetGraphicsRootConstantBufferView(
-            FRAME_CONSTANT, resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::FRAME_CONSTANT),
+            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
-            INSTANCE_BUFFER, resources_.instance_buffer->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::INSTANCE_BUFFER),
+            resources_.instance_buffer->GetGPUVirtualAddress());
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
         command_list->IASetIndexBuffer(&resources_.index_buffer_view);
@@ -85,7 +89,8 @@ namespace rndr {
         for (const auto& batch : resources_.scene->batches) {
             const auto& mesh = resources_.scene->meshes[batch.mesh_index];
             command_list->SetGraphicsRoot32BitConstant(
-                DRAW_CONSTANT, batch.object_index, 0);
+                static_cast<UINT>(RootParam::DRAW_CONSTANT),
+                batch.object_index, 0);
             command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,
                 mesh.index_start, mesh.vertex_start, 0);
         }

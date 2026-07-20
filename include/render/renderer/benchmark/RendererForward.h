@@ -1,12 +1,12 @@
 #pragma once
 
-#include "render/renderer/RendererBase.h"
+#include "render/renderer/benchmark/RendererBenchmark.h"
 #include "render/pass/PassDepthPre.h"
 #include "render/pass/PassForward.h"
 
 namespace rndr {
 
-	class RendererForward : public RendererBase {
+	class RendererForward : public RendererBenchmark {
 	public:
 		explicit RendererForward(bool do_prepass);
 		~RendererForward() override = default;

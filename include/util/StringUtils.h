@@ -41,6 +41,7 @@ namespace util {
             else {
                 static_assert(always_false_v<T>, "Unsupported argument type");
             }
+            return T{};
         }
 
     private:

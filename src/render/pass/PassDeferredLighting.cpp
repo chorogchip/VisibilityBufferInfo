@@ -10,9 +10,11 @@
 
 namespace rndr {
 
-    static enum RootParam : UINT {
-        GBUFFER_INPUT,
-    };
+    namespace {
+        enum class RootParam : UINT {
+            GBUFFER_INPUT,
+        };
+    }
 
     void PassDeferredLighting::init(
         ID3D12Device* device,
@@ -67,7 +69,8 @@ namespace rndr {
         ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootDescriptorTable(
-            GBUFFER_INPUT, resources_.shader_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::GBUFFER_INPUT),
+            resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0));
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
@@ -81,5 +84,4 @@ namespace rndr {
         resources_.back_buffers[frame_index]->transition(
             command_list, D3D12_RESOURCE_STATE_PRESENT);
     }
-
 }

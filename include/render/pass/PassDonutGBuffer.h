@@ -1,0 +1,57 @@
+#pragma once
+
+#include "Constants.h"
+#include "ProgramArgument.h"
+#include "engine/GraphicsPipeline.h"
+#include "scene/SceneDataCPU.h"
+#include <vector>
+
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerSampler;
+    class ResourceManagerShader;
+}
+
+namespace rndr {
+
+    // TODO make resources for GBuffer pass
+
+    struct PassDonutGBufferResources {
+        eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerShader* shader_manager = nullptr;
+        eng::GPUResource* depth = nullptr;  // PS
+        eng::GPUResource* gbuffers[4]{};  // PS
+        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};  // shared
+        ID3D12Resource* instance_buffer = nullptr;  // VS
+        ID3D12Resource* vertex_buffer = nullptr;  // VS
+
+        std::vector<ID3D12Resource*> material_textures;
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
+        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
+        D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
+        const scene::SceneDataCPU* scene = nullptr;
+    };
+
+    class PassDonutGBuffer {
+
+    public:
+        void init(
+            ID3D12Device* device,
+            const util::ProgramArgument& arguments,
+            const PassDonutGBufferResources& resources,
+            bool use_prepass_depth);
+
+        void render(
+            ID3D12GraphicsCommandList* command_list,
+            UINT frame_index,
+            const D3D12_VIEWPORT& viewport,
+            const D3D12_RECT& scissor_rect);
+
+    private:
+        PassDonutGBufferResources resources_{};
+        eng::GraphicsPipeline pso_;
+        bool use_prepass_depth_ = false;
+    };
+
+}

@@ -10,3 +10,9 @@ pso에서 fullscreen_ 확실히 처리
 PSO에 D3D12_COMPUTE_PIPELINE_STATE_DESC, CreateComputePipelineState 추가
 
 donut 소스 보고 PassDonutDeferredLighting desc값 검증하기
+
+util::assure_next 를 모든 shader pass에 다 넣기.
+
+PassDescriptorRequests.h 다른 곳으로 정리하기.
+
+benchmark renderer와 donut renderer이 서로 다른거 상속받도록 해서 공통 작업 처리하기.

@@ -11,13 +11,15 @@
 
 namespace rndr {
 
-    static enum RootParam : UINT {
-        PASS_CONSTANT,
-        SCENE_INPUT,
-        MATERIAL_TEXTURE,
-        MATERIAL_SAMPLER
+    namespace {
+        enum class RootParam : UINT {
+            PASS_CONSTANT,
+            SCENE_INPUT,
+            MATERIAL_TEXTURE,
+            MATERIAL_SAMPLER,
+        };
+    }
 
-    };
     void PassVisBufGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisBufGBufferResources& resources) {
         resources_ = resources;
@@ -92,15 +94,19 @@ namespace rndr {
             resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(
-            PASS_CONSTANT, resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            static_cast<UINT>(RootParam::PASS_CONSTANT),
+            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
-            SCENE_INPUT, resources_.shader_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::SCENE_INPUT),
+            resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER));
         command_list->SetGraphicsRootDescriptorTable(
-            MATERIAL_TEXTURE, resources_.shader_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
+                resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(
-            MATERIAL_SAMPLER, resources_.sampler_manager->get_gpu_adr(
+            static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
+            resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
