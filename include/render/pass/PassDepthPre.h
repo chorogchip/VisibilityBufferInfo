@@ -5,7 +5,11 @@
 #include "ProgramArgument.h"
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
 
@@ -21,11 +25,13 @@ namespace rndr {
     };
 
     class PassDepthPre {
+
     public:
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,
             const PassDepthPreResources& resources);
+
         void render(
             ID3D12GraphicsCommandList* command_list,
             UINT frame_index,

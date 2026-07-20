@@ -7,26 +7,41 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
 
-namespace {
-    enum RootParam : UINT {
-        GBUFFER_INPUT
-    };
-}
 
 namespace rndr {
 
-    void PassDeferredLighting::init(ID3D12Device* device, const util::ProgramArgument& arguments,
+    static enum RootParam : UINT {
+        GBUFFER_INPUT = 0,
+    };
+
+    void PassDeferredLighting::init(
+        ID3D12Device* device,
+        const util::ProgramArgument& arguments,
         const PassDeferredLightingResources& resources) {
+
         resources_ = resources;
-        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0, resources_.back_buffers[0]->get());
-        resources_.frame_manager->create_rtv(eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1, resources_.back_buffers[1]->get());
+
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
+            resources_.back_buffers[0]->get());
+
+        resources_.frame_manager->create_rtv(
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1,
+            resources_.back_buffers[1]->get());
         
-        auto vs = dxutl::compile_shader(L"assets/shaders/deferred_lighting_VS.hlsl", "vs_5_0", "main", arguments);
-        auto ps = dxutl::compile_shader(L"assets/shaders/deferred_lighting_PS.hlsl", "ps_5_0", "main", arguments);
+        auto vs = dxutl::compile_shader(
+            L"assets/shaders/deferred_lighting_VS.hlsl",
+            "vs_5_0", "main", arguments);
+
+        auto ps = dxutl::compile_shader(
+            L"assets/shaders/deferred_lighting_PS.hlsl",
+            "ps_5_0", "main", arguments);
+
         pso_.init(device);
         auto root_signature = eng::RootSignatureBuilder{}
+            // GBUFFER_INPUT
             .srv_tabl().reg(0).cnt(resources_.gbuffer_count)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vs.Get(), ps.Get());
@@ -36,27 +51,34 @@ namespace rndr {
     
     void PassDeferredLighting::render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
         const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect) {
-        resources_.back_buffers[frame_index]->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        resources_.back_buffers[frame_index]->transition(
+            command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
         for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            resources_.gbuffers[i]->transition(command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            resources_.gbuffers[i]->transition(
+                command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-        command_list->SetGraphicsRootDescriptorTable(GBUFFER_INPUT,
-            resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0));
+        command_list->SetGraphicsRootDescriptorTable(
+            GBUFFER_INPUT, resources_.shader_manager->get_gpu_adr(
+                eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0));
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
-        const auto rtv = resources_.frame_manager->get_rtv(frame_index == 0
-            ? eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0
-            : eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1);
+        const auto rtv = resources_.frame_manager->get_rtv(
+            frame_index == 0 ?
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0 :
+            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1);
         command_list->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
-        constexpr float clear[] = { .1f, .1f, .15f, 1.f };
+        constexpr float clear[] = { 0.1f, 0.1f, 0.15f, 1.0f };
         command_list->ClearRenderTargetView(rtv, clear, 0, nullptr);
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->DrawInstanced(3, 1, 0, 0);
-        resources_.back_buffers[frame_index]->transition(command_list, D3D12_RESOURCE_STATE_PRESENT);
+        resources_.back_buffers[frame_index]->transition(
+            command_list, D3D12_RESOURCE_STATE_PRESENT);
     }
 
 }

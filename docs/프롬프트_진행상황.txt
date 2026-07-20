@@ -1,0 +1,181 @@
+# VisibilityBufferInfo 진행상황 요약
+
+**기준일: 2026년 7월 20일**
+
+## 문서 범위
+
+이 문서는 제공된 프로젝트 설명과 2026년 7월 3일부터 7월 20일까지의 진행 일지, 그리고 GitHub 저장소 chorogchip/VisibilityBufferInfo의 확인 가능한 커밋 및 파일 상태만을 요약한다.
+
+프로젝트 설명의 기준점은 2026년 7월 14일 master 커밋 97ccf24c2eadddcfd625e7f558119cfe199f14e4 전후이며, 저장소에서 확인한 최신 master 커밋은 9b2d8de2b757db112b71a1b7f108a45ec2cae0d7이다.
+
+아래 내용은 완료된 항목, 진행 중인 항목, 실험에서 관찰된 결과, 작성자가 제시한 해석 또는 가설을 구분해 정리한다.
+
+
+## 1. 현재 상태 요약
+
+### 연구 우선순위
+
+- 여러 실제 씬과 실제 렌더링 부하에서 알고리즘별 성능을 측정하는 작업을 1순위로 두었다.
+- 남아 있는 synthetic 실험은 2순위로 두었다.
+- NVIDIA Donut 전체를 NVRHI 구조와 함께 사용하는 대신, Donut의 G-buffer 이후 셰이더 코드를 현재 Direct3D 12 렌더러에 가져와 적용하는 방향으로 결정했다.
+### 현재 최우선 구현 목표
+
+- 텍스처와 PBR 재질을 포함한 씬의 완전한 로딩
+- 카메라 이동 경로의 녹화·재생과 시간 측정
+- Donut Deferred 방식 셰이더의 이식과 필요한 자원 할당
+7월 20일 현재 DirectXTex 기반 텍스처 로딩과 카메라 이동 녹화·재생은 추가되었고, Donut 셰이더 적용과 Deferred pass 구성은 시작된 상태다. 실제 씬에서의 알고리즘별 시간 비교는 위 구현 이후 수행할 항목으로 기록되어 있다.
+
+
+## 2. 렌더러 및 실행 기반
+
+### 실행·측정 자동화
+
+- 커맨드라인 인자 파싱, 지정 프레임 실행 후 자동 종료, warm-up과 측정 프레임 실행 구조가 구현되었다.
+- Python 스크립트로 JSON experiment specification의 parameter 조합과 repeat를 실행하고 CSV 결과를 누적하는 흐름을 구축했다.
+- GPU timestamp query를 readback buffer로 읽어 pass별 및 total GPU 시간을 기록하고, CSV 저장과 그래프 작성을 수행한다.
+- 변수 차원이 증가한 실험을 위해 샘플 목록 실행과 Sobol sequence 기반 샘플 생성 기능을 추가했다.
+- 프로그램 인자 검증과 기록 가능한 pass 수 확장, 실험별 plot 스크립트 보강이 저장소 커밋으로 확인된다.
+### 렌더러 variant
+
+- Forward
+- Forward + Depth Pre-Pass
+- Deferred
+- Deferred + Depth Pre-Pass
+- TVB
+- TVB + G-buffer
+7월 20일 리팩토링에서는 렌더러 구조를 pass 단위로 변경했다. Prepass와 DeferredLighting 같은 pass는 여러 renderer가 공유하고, 각 renderer는 필요한 자원 할당, pass 초기화, pass 실행을 담당한다.
+
+Forward와 Forward+Prepass는 하나의 클래스에서 옵션으로 통합되었고, Deferred와 Deferred+Prepass도 동일한 방식으로 통합되었다.
+
+### 공통 기반 리팩토링
+
+- 여러 옵션으로 PSO를 생성하는 클래스
+- Proxy 방식으로 인자 의미를 드러내는 root parameter 생성 클래스
+- SRV heap과 descriptor를 종류별 고정 위치에 생성·관리하는 클래스
+- ID3D12Resource와 resource state를 함께 저장하고 필요할 때 transition하는 GPUResource 클래스
+- upload heap에 반영구적으로 map되는 constant buffer 추상화
+이 구조는 7월 13일에 기록된 variant explosion과 과도한 분기 문제를 줄이기 위해 진행된 리팩토링의 결과다.
+
+
+## 3. TVB 구현 상태
+
+- TVB는 visibility pass와 fullscreen pixel shader resolve로 구성된다.
+- visibility pass는 object와 primitive를 식별할 수 있는 정보를 기록한다.
+- resolve pass는 geometry와 material 데이터를 간접 참조해 barycentric coordinate, perspective-correct interpolation, UV derivative, texture sampling을 재구성한다.
+- barycentric 보간은 7월 8일에 구현되었고, derivative 계산까지의 확장은 7월 13일에 기록되었다.
+- TVB 결과는 직접 output을 계산하는 경로와 G-buffer를 생성하는 경로에 사용된다.
+- 현재 독립 실험 baseline에는 lighting과 material binning이 없으며, 초기 실험은 material과 mesh를 하나로 제한했다.
+
+## 4. 씬과 데이터 로딩
+
+### Synthetic scene
+
+- 구 scene은 triangle subdivision, geometry working set, 공간 분포를 변화시키는 데 사용한다.
+- 화면을 덮는 여러 장의 quad scene은 overdraw, 정렬 순서, projected triangle 크기를 제어하는 데 사용한다.
+- seed, object 수, mesh 수, material 수, primitive 크기, subdivision, XY·Z 분포를 조절할 수 있다.
+### 외부 scene
+
+- Assimp로 외부 scene을 로드하고 mesh, object, material, vertex, index, triangle 수 등 object-space 통계를 요약하는 코드가 추가되었다.
+- DirectXTex 기반 텍스처 로딩 기능이 7월 20일 진행상황과 저장소 커밋에서 확인된다.
+- 텍스처와 PBR 재질을 포함한 scene 완전 로딩은 7월 20일의 최우선 목표로 남아 있다.
+- 실제 부하 검증 대상으로 Intel Jungle Ruins와 Amazon Lumberyard Bistro가 계획되어 있으며, Jungle Ruins는 overdraw가 큰 조건을 중심으로 사용할 예정이다.
+
+## 5. 실험 진행 및 성능 모델
+
+### 통합된 실험 목적
+
+- 실험 1: TVB가 Forward+Prepass의 두 번째 geometry 처리와 rasterization, quad waste 비용을 얼마나 줄이는지 비교
+- 실험 2: overdraw와 quad inefficiency로 버려지는 fragment의 material shader 비용을 TVB가 얼마나 줄이는지 비교
+7월 15일에는 두 목적을 통합해 정점 수, overdraw, quad waste, ALU 비용을 조절하는 실험을 진행하고 Forward, Forward+Prepass, Visbuf의 성능 모델을 정리했다.
+
+### 모델 변수
+
+- G: 정점 수
+- P: 보이는 픽셀 수
+- O: overdraw 배수
+- Q: 2×2 quad로 인한 낭비 배수
+- A: material 계산의 ALU 연산 수
+- V = P × O: 변환되는 픽셀 수
+### 상수를 생략한 성능 모델
+
+> `Forward = G × VS + V × raster + P × O × Q × A`
+
+> `Forward Prepass = G × VS + V × raster + G × VS + V × raster + P × Q × A`
+
+> `Visbuf = G × VS + V × raster + V × record + P × resolve + P × A`
+
+각 모델의 차를 구하고 G, O, Q, A에 대해 편미분해 성능 우위가 어떤 변수에 민감한지 설명하는 모델을 세웠다.
+
+### 입력 변수 구성
+
+- quad 장수
+- quad 한 변의 division 수
+- 역순으로 정렬된 quad 수
+- ALU 연산 수
+기록된 실험 설정에서는 G = 장수 × division², O = 역순 quad 수, Q = division, A = ALU로 계산했다. quad waste가 division에 정비례한다는 관계는 실험을 위한 가정으로 기록되어 있다.
+
+
+## 6. 실험 관찰 결과
+
+### 7월 14일 overdraw 예비 실험
+
+- material=1, mesh=1, 많은 instance와 화면을 채우는 quad를 사용했다.
+- 무작위, front-to-back, back-to-front 정렬을 비교하고, 8레인 벡터곱 50회의 ALU 부하를 사용했다.
+- 정렬되지 않아 overdraw가 큰 조건에서는 세 알고리즘의 시간이 object 수에 따라 선형적으로 증가했고, Visibility Buffer의 기울기가 가장 낮았다.
+- Forward는 overdraw가 무거운 pixel shader ALU 연산까지 전파되어 가장 느렸다.
+- front-to-back으로 overdraw가 없는 조건에서는 Forward가 가장 좋았고, Visibility Buffer는 Forward와 비슷했으며, Forward+Prepass는 조금 더 느렸다.
+- back-to-front의 최악 overdraw 조건에서는 예상한 순서의 결과가 관찰되었고, Prepass가 Visbuf보다 좋았다.
+- Prepass가 Visbuf보다 좋았던 원인을 draw call/triangle ID 기록 비용으로 추정했으나, hardware counter 확인 전의 가설로 기록되어 있다.
+- 무작위 정렬과 front-to-back의 차이가 작았던 이유를 무작위 정렬의 overdraw가 조화수 형태의 O(log n)이기 때문이라고 해석했으나, 이 역시 기록된 해석이다.
+### 7월 15일 실험 시도 4~6
+
+- 실험 시도 4: vertex shader 비용만 있고 overdraw, quad, ALU 비용이 거의 없는 조건에서 정점 수를 증가시켰다. Forward가 항상 가장 좋았고 Forward+Prepass와 Visbuf의 crossover point가 관찰되었다. Forward+Prepass는 장기적으로 Forward의 2배에 수렴하는 결과가 기록되었다.
+- 실험 시도 5: overdraw와 ALU 비용을 조절한 winner plot에서 Forward, Forward+Prepass, Visbuf 각각이 유리한 영역을 확인했다.
+- 실험 시도 6: quad waste와 ALU 비용을 조절했으며, Prepass는 quad 문제를 해결하지 못해 유리한 영역이 없었고 Forward와 Visbuf가 영역을 나누었다.
+### 7월 16일 수정 및 추가 실행
+
+- quad-ALU tradeoff 실험의 오류를 수정한 뒤 다시 실행하고 그래프를 다시 작성했다.
+- 실험 1-4의 data point를 생성해 실행했다.
+- 실험 1-4 데이터에 머신러닝을 적용하고 그래프를 작성했다.
+
+## 7. 현재 진행 중이거나 남아 있는 항목
+
+- 텍스처와 PBR 재질을 포함한 실제 scene 완전 로딩
+- Donut Deferred 방식 셰이더의 이식과 필요한 resource binding 및 pass 구성 완료
+- 카메라 녹화·재생 경로를 사용한 실제 scene의 반복 가능한 시간 측정
+- 실제 scene에서 Forward, Forward+Prepass, Deferred, Deferred+Prepass, TVB, TVB+G-buffer 시간 비교
+- 결과 그래프의 특이점에 대한 hardware profiling과 VRAM traffic, cache behavior, ALU, texture sampling, rasterization counter 해석
+- 계획된 G-buffer bandwidth와 indirect geometry access 실험의 후속 진행
+- material binning, sorting, work queue 등 TVB material 처리 variant 비교
+- Synthetic 모델을 Intel Jungle Ruins와 Bistro의 scene fingerprint 및 실제 측정 결과와 비교해 적용 가능성을 검증
+
+## 8. 날짜별 진행 경과
+
+- **07-03**: 인자 파싱, 자동 종료, Python 실행, default heap 복사, GPU timestamp readback 기반을 구현하고 renderer별 초기 구조를 계획했다.
+- **07-06**: 외부 scene 수집·Assimp 로딩·scene 통계 구조를 추가하고 4개 알고리즘 렌더링 구조를 준비했다.
+- **07-07**: Forward, Forward+Depth Pre-Pass, Deferred, TVB를 구현했다. 당시 TVB barycentric interpolation은 미완성이었다.
+- **07-08**: TVB barycentric interpolation, 공통 sampling·ALU workload, 공정한 연산 구성, timestamp CSV와 plotting, 변수 sweep을 추가했다.
+- **07-09**: TVB+Deferred와 Deferred+Depth Pre-Pass를 추가해 여섯 variant로 확장하고 예비 실험과 발표 자료를 진행했다.
+- **07-10**: mesh와 material을 공유하는 object의 instancing, 코드 분리 리팩토링, pipeline parameter 처리 개선을 진행했다.
+- **07-13**: derivative 계산, texture sampler, layered quad scene을 추가했다. variant explosion 문제를 확인하고 제한적인 공통 helper와 renderer 구조 단순화를 검토했으며 Donut 탐색을 시작했다.
+- **07-14**: 초기 실험용 renderer 버전을 마무리하고 공통 shader workload, dummy texture, 정렬·quad parameter, 측정·plot script를 정비했다. 정렬 코드 오류를 수정한 뒤 overdraw 실험에서 알고리즘별 차이를 확인했다.
+- **07-15**: 성능 모델을 정리하고 vertex 수, overdraw-ALU, quad-ALU 실험과 winner map을 수행했다. Sobol sequence 기반 다차원 샘플 생성도 추가했다.
+- **07-16**: quad-ALU 실험 오류를 수정해 재실행하고 실험 1-4와 머신러닝 기반 plot을 수행했다. Donut의 G-buffer 이후 shader code를 차용하는 방향으로 정했다.
+- **07-20**: 실제 scene 측정을 최우선으로 전환하고 DirectXTex texture loading, Donut shader 적용 시작, camera path record/play, argument 확장과 pass 기반 renderer 리팩토링을 진행했다.
+
+## 9. GitHub에서 확인된 주요 변경
+
+아래 항목은 저장소 master의 커밋 메시지와 현재 파일 경로로 확인한 내용이다.
+
+- `97ccf24` — [Exp] 2개 실험 수행 및 object sorting bug 발견
+- `3fac945` — [Exp] 실험 5, 6 완료
+- `348083c` — [Exp] experiment 6-3 수행 및 Sobol points 추가
+- `5587d05` — [Exp] week 3 experiment 완료
+- `733133c` — [Exp] ex7 plots 추가
+- `039224e` — [Add] DirectXTex 기반 texture loading
+- `1e0e924` — [Add] NVIDIA Donut shader code 추가
+- `3bb1125` — [Refactor] pass structure로 전환
+- `f768b61` — [Add] camera auto record/play, sampler heap, root signature builder, Donut deferred pass
+- `9b2d8de` — [Add/Refactor] GPUResource 추가 및 root parameter 생성 구조 개선
+현재 저장소에는 GPUResource, PassForward, PassDepthPre, PassGBuffer, PassDeferredLighting, PassVisibility, PassVisBufResolve, PassVisBufGBuffer 및 renderer별 파일이 확인된다.
+

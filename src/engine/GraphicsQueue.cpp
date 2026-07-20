@@ -11,9 +11,9 @@ namespace eng {
         }
     }
 
-    void GraphicsQueue::init(ID3D12Device* device) {
+    void GraphicsQueue::init(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type) {
         D3D12_COMMAND_QUEUE_DESC queue_desc{};
-        queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        queue_desc.Type = type;
         queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 
         HRESULT result = device->CreateCommandQueue(

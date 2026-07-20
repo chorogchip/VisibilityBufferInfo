@@ -9,8 +9,9 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
 
-namespace {
-    enum RootParam : UINT {
+namespace rndr {
+
+    static enum RootParam : UINT {
         FRAME_CONSTANT,
         DRAW_CONSTANT,
         INSTANCE_BUFFER,
@@ -18,19 +19,19 @@ namespace {
         MATERIAL_TEXTURE,
         MATERIAL_SAMPLER
     };
-}
-
-namespace rndr {
 
     void PassGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassGBufferResources& resources, bool use_prepass_depth) {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
 
-        for (UINT i = 0; i < resources_.gbuffer_count; ++i)
-            resources_.frame_manager->create_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
-                static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i),
+        for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
+            resources_.frame_manager->create_rtv(
+                static_cast<eng::ResourceManagerFrame::EnumRTV>(
+                    static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i),
                 resources_.gbuffers[i]->get());
+        }
+
         resources_.frame_manager->create_dsv(use_prepass_depth_
             ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
             : eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
@@ -45,17 +46,25 @@ namespace rndr {
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0,
                 resources_.gbuffers[i]->get(), &gbuffer_desc, i);
 
-        auto vs = dxutl::compile_shader(L"assets/shaders/deferred_geometry_VS.hlsl", "vs_5_0", "main", arguments);
-        auto ps = dxutl::compile_shader(L"assets/shaders/deferred_geometry_PS.hlsl", "ps_5_0", "main", arguments);
+        auto vs = dxutl::compile_shader(
+            L"assets/shaders/deferred_geometry_VS.hlsl",
+            "vs_5_0", "main", arguments);
+        auto ps = dxutl::compile_shader(
+            L"assets/shaders/deferred_geometry_PS.hlsl",
+            "ps_5_0", "main", arguments);
+
         pso_.init(device);
         auto root_signature = eng::RootSignatureBuilder{}
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
-            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
-            .constant().reg(1).cnt(1).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
-            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()
-            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
-            .srv_tabl().reg(8).cnt(arguments.texture_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
-            .spl_tabl().reg(0).cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()
+            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // FRAME_CONSTANT
+            .constant().reg(1).cnt(1)
+                .vis(D3D12_SHADER_VISIBILITY_VERTEX).add()                // DRAW_CONSTANT
+            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // INSTANCE_BUFFER
+            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()   // MATERIAL_BUFFER
+            .srv_tabl().reg(8).cnt(arguments.texture_count)
+                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()                 // MATERIAL_TEXTURE
+            .spl_tabl().reg(0).cnt(1)
+                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()                 // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shaders(vs.Get(), ps.Get());
@@ -75,32 +84,35 @@ namespace rndr {
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = {
-            resources_.shader_manager->get(), resources_.sampler_manager->get() };
+            resources_.shader_manager->get(),
+            resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
-        command_list->SetGraphicsRootConstantBufferView(FRAME_CONSTANT,
-            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootShaderResourceView(INSTANCE_BUFFER,
-            resources_.instance_buffer->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootShaderResourceView(MATERIAL_BUFFER,
-            resources_.material_buffer->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootDescriptorTable(MATERIAL_TEXTURE,
-            resources_.shader_manager->get_gpu_adr(eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
-        command_list->SetGraphicsRootDescriptorTable(MATERIAL_SAMPLER,
-            resources_.sampler_manager->get_gpu_adr(
+        command_list->SetGraphicsRootConstantBufferView(
+            FRAME_CONSTANT, resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            INSTANCE_BUFFER, resources_.instance_buffer->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            MATERIAL_BUFFER, resources_.material_buffer->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootDescriptorTable(
+            MATERIAL_TEXTURE, resources_.shader_manager->get_gpu_adr(
+                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
+        command_list->SetGraphicsRootDescriptorTable(
+            MATERIAL_SAMPLER, resources_.sampler_manager->get_gpu_adr(
                 eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL));
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[8]{};
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
-            rtvs[i] = resources_.frame_manager->get_rtv(static_cast<eng::ResourceManagerFrame::EnumRTV>(
-                static_cast<UINT>(eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0) + i));
-            constexpr float clear[] = { .1f, .1f, .15f, 1.f };
+            rtvs[i] = resources_.frame_manager->get_rtv(
+                eng::ResourceManagerFrame::EnumRTV::BENCH_GBUFFER_0, +i);
+            constexpr float clear[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             command_list->ClearRenderTargetView(rtvs[i], clear, 0, nullptr);
         }
-        const auto dsv = resources_.frame_manager->get_dsv(use_prepass_depth_
-            ? eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY
-            : eng::ResourceManagerFrame::EnumDSV::DEPTH);
+        const auto dsv = resources_.frame_manager->get_dsv(
+            use_prepass_depth_ ?
+            eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY :
+            eng::ResourceManagerFrame::EnumDSV::DEPTH);
         command_list->OMSetRenderTargets(resources_.gbuffer_count, rtvs, FALSE, &dsv);
         if (!use_prepass_depth_)
             command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);

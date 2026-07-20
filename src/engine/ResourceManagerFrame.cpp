@@ -67,15 +67,15 @@ namespace eng {
         device_->CreateDepthStencilView(texture, &desc, get_dsv(position));
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerFrame::get_rtv(EnumRTV position) const {
+    D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerFrame::get_rtv(EnumRTV position, UINT offset) const {
         D3D12_CPU_DESCRIPTOR_HANDLE handle = rtv_heap_->GetCPUDescriptorHandleForHeapStart();
-        handle.ptr += static_cast<SIZE_T>(index(position)) * rtv_size_;
+        handle.ptr += static_cast<SIZE_T>(index(position) + offset) * rtv_size_;
         return handle;
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerFrame::get_dsv(EnumDSV position) const {
+    D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerFrame::get_dsv(EnumDSV position, UINT offset) const {
         D3D12_CPU_DESCRIPTOR_HANDLE handle = dsv_heap_->GetCPUDescriptorHandleForHeapStart();
-        handle.ptr += static_cast<SIZE_T>(index(position)) * dsv_size_;
+        handle.ptr += static_cast<SIZE_T>(index(position) + offset) * dsv_size_;
         return handle;
     }
 

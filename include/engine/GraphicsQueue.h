@@ -15,7 +15,7 @@ namespace eng {
         GraphicsQueue(GraphicsQueue&&) = delete;
         GraphicsQueue& operator=(GraphicsQueue&&) = delete;
 
-        void init(ID3D12Device* device);
+        void init(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
 
         void execute(ID3D12CommandList* command_list);
 

@@ -21,6 +21,7 @@ namespace rndr {
         ID3D12Resource* material_buffer,
         const std::vector<ID3D12Resource*>& material_textures,
         const scene::SceneDataCPU* scene) {
+
         D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
         desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         desc.Format = DXGI_FORMAT_UNKNOWN;

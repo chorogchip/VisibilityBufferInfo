@@ -4,7 +4,11 @@
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 
-namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
 
@@ -17,11 +21,18 @@ namespace rndr {
     };
 
     class PassDeferredLighting {
+
     public:
-        void init(ID3D12Device* device, const util::ProgramArgument& arguments,
+        void init(
+            ID3D12Device* device,
+            const util::ProgramArgument& arguments,
             const PassDeferredLightingResources& resources);
-        void render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
-            const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect);
+
+        void render(
+            ID3D12GraphicsCommandList* command_list,
+            UINT frame_index,
+            const D3D12_VIEWPORT& viewport,
+            const D3D12_RECT& scissor_rect);
 
     private:
         PassDeferredLightingResources resources_{};

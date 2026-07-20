@@ -3,6 +3,8 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include "Constants.h"
+
 namespace eng {
 
     class ResourceManagerFrame {
@@ -39,8 +41,8 @@ namespace eng {
         void create_rtv(EnumRTV position, ID3D12Resource* texture);
         void create_dsv(EnumDSV position, ID3D12Resource* texture);
 
-        [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_rtv(EnumRTV position) const;
-        [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_dsv(EnumDSV position) const;
+        [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_rtv(EnumRTV position, UINT offset = 0) const;
+        [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_dsv(EnumDSV position, UINT offset = 0) const;
 
     private:
         static constexpr UINT RTV_COUNT = static_cast<UINT>(EnumRTV::COUNT);

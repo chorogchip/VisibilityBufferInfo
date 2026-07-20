@@ -6,7 +6,12 @@
 #include <vector>
 #include "scene/SceneDataCPU.h"
 
-namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerSampler;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
     struct PassVisBufResolveResources {
@@ -26,9 +31,19 @@ namespace rndr {
     };
 
     class PassVisBufResolve {
+
     public:
-        void init(ID3D12Device*, const util::ProgramArgument&, const PassVisBufResolveResources&);
-        void render(ID3D12GraphicsCommandList*, UINT, const D3D12_VIEWPORT&, const D3D12_RECT&);
+        void init(
+            ID3D12Device* device,
+            const util::ProgramArgument& arguments,
+            const PassVisBufResolveResources& resources);
+
+        void render(
+            ID3D12GraphicsCommandList* command_list,
+            UINT frame_index,
+            const D3D12_VIEWPORT& viewport,
+            const D3D12_RECT& scissor_rect);
+
     private:
         PassVisBufResolveResources resources_{};
         eng::GraphicsPipeline pso_;

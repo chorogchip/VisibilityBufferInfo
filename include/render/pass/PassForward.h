@@ -8,7 +8,12 @@
 #include "scene/SceneDataCPU.h"
 #include <vector>
 
-namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerSampler;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
 
@@ -28,6 +33,7 @@ namespace rndr {
     };
 
     class PassForward {
+
     public:
         void init(
             ID3D12Device* device,

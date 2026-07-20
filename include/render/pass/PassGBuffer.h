@@ -6,7 +6,12 @@
 #include "scene/SceneDataCPU.h"
 #include <vector>
 
-namespace eng { class GPUResource; class ResourceManagerFrame; class ResourceManagerSampler; class ResourceManagerShader; }
+namespace eng {
+    class GPUResource;
+    class ResourceManagerFrame;
+    class ResourceManagerSampler;
+    class ResourceManagerShader;
+}
 
 namespace rndr {
 
@@ -27,11 +32,19 @@ namespace rndr {
     };
 
     class PassGBuffer {
+
     public:
-        void init(ID3D12Device* device, const util::ProgramArgument& arguments,
-            const PassGBufferResources& resources, bool use_prepass_depth);
-        void render(ID3D12GraphicsCommandList* command_list, UINT frame_index,
-            const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissor_rect);
+        void init(
+            ID3D12Device* device,
+            const util::ProgramArgument& arguments,
+            const PassGBufferResources& resources,
+            bool use_prepass_depth);
+
+        void render(
+            ID3D12GraphicsCommandList* command_list,
+            UINT frame_index,
+            const D3D12_VIEWPORT& viewport,
+            const D3D12_RECT& scissor_rect);
 
     private:
         PassGBufferResources resources_{};
