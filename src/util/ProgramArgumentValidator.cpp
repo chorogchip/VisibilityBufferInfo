@@ -21,6 +21,10 @@ namespace util {
         logger.assert_with_log(!arg.camera_filepath.empty(), "camera_filepath must not be empty");
         logger.assert_with_log(arg.camera_keyframe_interval > 0,
             "camera_keyframe_interval must be greater than 0");
+        if (arg.to_set_start_frame) {
+            logger.assert_with_log(arg.camera_mode == 0,
+                "camera_mode must be 0 when to_set_start_frame is true");
+        }
         logger.assert_with_log(arg.profile_window_frames > 0,
             "profile_window_frames must be greater than 0");
 

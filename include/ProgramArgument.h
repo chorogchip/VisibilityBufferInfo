@@ -25,6 +25,8 @@ namespace util {
     X(uint32_t, camera_mode, 1, camera-mode) \
     X(std::string, camera_filepath, "camera.csv", camera-filepath) \
     X(uint32_t, camera_keyframe_interval, 10, camera-keyframe-interval) \
+    X(bool, to_set_start_frame, false, to-set-start-frame) \
+    X(uint32_t, key_frame, 0, key-frame) \
     X(uint32_t, profile_window_frames, 10, profile-window-frames) \
     X(uint32_t, window_width, 1280, window-width) \
     X(uint32_t, window_height, 720, window-height) \
