@@ -25,7 +25,7 @@ class ProgramArgument:
     measure_frames: int = 2400
     auto_terminate: bool = False
     vsync: bool = False
-    camera_mode: int = 0
+    camera_mode: int = 1
     camera_filepath: str = "camera.csv"
     camera_keyframe_interval: int = 10
     profile_window_frames: int = 10

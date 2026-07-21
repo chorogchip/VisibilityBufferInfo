@@ -40,7 +40,7 @@ namespace rndr {
 	}
 
 	void CameraPathController::close(const Camera& camera) {
-		if (mode_ != 2) return;
+		if (mode_ != 1) return;
 		if (path_.empty() || path_.end_frame() < render_frame_)
 			path_.add_keyframe(render_frame_, camera.get_pose());
 		path_.save_csv(filepath_);
