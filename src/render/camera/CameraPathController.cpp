@@ -15,7 +15,7 @@ namespace rndr {
 	}
 
 	void CameraPathController::before_render(Camera& camera) {
-		if (mode_ == 2) {
+		if (mode_ == 1) {
 			if (render_frame_ % keyframe_interval_ == 0) {
 				const CameraPose pose = camera.get_pose();
 				if (pose_changed(pose)) {

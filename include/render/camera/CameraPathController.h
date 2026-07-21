@@ -17,7 +17,7 @@ namespace rndr {
 		void close(const Camera& camera);
 
 		uint64_t measurement_frames() const;
-		bool is_playback() const { return mode_ == 1; }
+		bool is_playback() const { return mode_ == 2; }
 
 	private:
 		bool pose_changed(const CameraPose& pose) const;

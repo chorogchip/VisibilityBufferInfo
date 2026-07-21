@@ -20,9 +20,6 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN);
 
         resource_manager_frame_.init(device_.Get());
-        resource_manager_shader_.init(device_.Get(),
-            texture_begin + program_argument_.texture_count);
-        resource_manager_sampler_.init(device_.Get());
 
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             buf_constant_[i].init(device_.Get());
@@ -53,6 +50,10 @@ namespace rndr {
 
         if (program_argument_.to_load_texture)
             program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
+
+        resource_manager_sampler_.init(device_.Get());
+        resource_manager_shader_.init(device_.Get(),
+            texture_begin + program_argument_.texture_count);
 
         this->create_dummy_textures();
 

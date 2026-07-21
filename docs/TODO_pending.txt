@@ -34,3 +34,7 @@ total GPU time잴때 pass별 합산 대신 전체를 한 번 더 세는 방안
 
 최우선: Donut 참고해서 모델 같은 구조로 읽어야 함 (vertex buf, instance buf, material buf, material tex 만들기)
 
+
+
+
+씬 데이터 캐싱하는 기능 있으면 좋을듯..

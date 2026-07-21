@@ -14,17 +14,18 @@ class ProgramArgument:
     renderer_variant: int = 1
     variable: int = 0
 
-    to_use_scene: bool = False
+    to_use_scene: bool = True
+    to_load_texture: bool = False
     scene_path: str = (
-        "assets/scenes/unpacked/main_sponza/"
-        "NewSponza_Main_glTF_003.gltf"
+        "assets/scenes/unpacked/Bistro_v5_2/"
+        "BistroExterior.fbx"
     )
 
-    warmup_frames: int = 600
-    measure_frames: int = 120
+    warmup_frames: int = 60
+    measure_frames: int = 2400
     auto_terminate: bool = False
     vsync: bool = False
-    camera_mode: int = 2
+    camera_mode: int = 0
     camera_filepath: str = "camera.csv"
     camera_keyframe_interval: int = 10
     profile_window_frames: int = 10
@@ -60,7 +61,7 @@ class ProgramArgument:
     texture_count: int = 1
     texture_size: int = 256
     texture_sampling_count: int = 1
-    alu_calc_count: int = 1
+    alu_calc_count: int = 100
 
 
 VALID_ARGUMENTS = {field.name for field in fields(ProgramArgument)}
