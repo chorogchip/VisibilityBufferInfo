@@ -113,6 +113,13 @@ Desktop.ini
 *.swp
 *.swo
 
+# Python cache
+__pycache__/
+*.pyc
+
+# Local ad-hoc benchmark runner output
+scripts/results/default/
+
 # Crash dumps
 *.dmp
 *.mdmp
