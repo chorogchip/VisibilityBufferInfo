@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <d3d12.h>
 #include <d3dcompiler.h>
 #include <wrl.h>
@@ -18,6 +20,7 @@ namespace eng {
         void set_depth_only();
         void set_depth_equal();
         void set_render_targets(UINT count, DXGI_FORMAT format);
+        void set_render_targets(UINT count, const DXGI_FORMAT* formats);
         void set_fullscreen();
         void build();
 
@@ -35,7 +38,7 @@ namespace eng {
         bool depth_equal_ = false;
         bool fullscreen_ = false;
         UINT render_target_count_ = 1;
-        DXGI_FORMAT render_target_format_ = DXGI_FORMAT_R8G8B8A8_UNORM;
+        std::array<DXGI_FORMAT, D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT> render_target_formats_{};
     };
 
 }

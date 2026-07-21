@@ -10,6 +10,7 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/RenderConstants.h"
 
 namespace rndr {
 
@@ -97,7 +98,9 @@ namespace rndr {
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
         pso_.set_shader_pixel(ps.Get());
-        pso_.set_render_targets(4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+        pso_.set_render_targets(
+            static_cast<UINT>(util::RenderConstants::DONUT_GBUFFER_FORMATS.size()),
+            util::RenderConstants::DONUT_GBUFFER_FORMATS.data());
         if (use_prepass_depth_)
             pso_.set_depth_equal();
         pso_.build();

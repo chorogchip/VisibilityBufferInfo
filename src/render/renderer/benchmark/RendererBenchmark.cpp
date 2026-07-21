@@ -3,9 +3,10 @@
 #include <cstring>
 #include <limits>
 
+#include "util/DummyTextureGen.h"
+#include "util/RenderConstants.h"
 #include "util/Utils.h"
 #include "util/BenchmarkCsvWriter.h"
-#include "util/DummyTextureGen.h"
 #include "dx_util/ResourceUtils.h"
 #include "engine/ResourceManagerShader.h"
 #include "scene/SceneFingerprint.h"
@@ -20,6 +21,15 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN);
 
         resource_manager_frame_.init(device_.Get());
+        depth_stencil_buffer_.init(
+            dxutl::create_depth_stencil_buffer(
+                device_.Get(),
+                width_,
+                height_,
+                util::RenderConstants::DEPTH_STENCIL_FORMAT,
+                D3D12_RESOURCE_STATE_DEPTH_WRITE
+            ).Get(),
+            D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             buf_constant_[i].init(device_.Get());

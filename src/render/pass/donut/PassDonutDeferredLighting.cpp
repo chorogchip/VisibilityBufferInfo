@@ -6,6 +6,7 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
+#include "util/RenderConstants.h"
 
 namespace rndr {
 
@@ -32,7 +33,8 @@ namespace rndr {
 
         resources_.shader_manager->create_srv_texture_2d_array(
             SRVDescPos::DONUT_SHADOW_MAP_ARRAY,
-            resources_.buf_shadow_map->get(), DXGI_FORMAT_R32_FLOAT);
+            resources_.buf_shadow_map->get(),
+            util::RenderConstants::DONUT_DEPTH_SRV_FORMAT);
         resources_.shader_manager->create_srv_texture_cube_array(
             SRVDescPos::DONUT_DIFFUSE_LIGHT_PROBE,
             resources_.buf_diffuse_light_probe->get());
@@ -66,7 +68,7 @@ namespace rndr {
 
         resources_.shader_manager->create_srv_texture_2d(
             SRVDescPos::DONUT_GBUFFER_DEPTH,
-            resources_.depth->get(), DXGI_FORMAT_R32_FLOAT);
+            resources_.depth->get(), util::RenderConstants::DONUT_DEPTH_SRV_FORMAT);
         for (UINT i = 0; i < _countof(resources_.gbuffers); ++i) {
             resources_.shader_manager->create_srv_texture_2d(
                 SRVDescPos::DONUT_GBUFFER_0,

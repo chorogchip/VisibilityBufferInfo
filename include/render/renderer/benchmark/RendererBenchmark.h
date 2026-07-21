@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
@@ -23,6 +24,7 @@ namespace rndr {
 		eng::ResourceManagerFrame resource_manager_frame_;
 		eng::ResourceManagerSampler resource_manager_sampler_;
 		eng::ResourceManagerShader resource_manager_shader_;
+		eng::GPUResource depth_stencil_buffer_;
 
 		std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
 		std::unique_ptr<scene::SceneDataGPU> scene_gpu_;

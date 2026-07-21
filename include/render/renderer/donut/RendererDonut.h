@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/GPUResource.h"
 #include "render/renderer/RendererBase.h"
 
 #include "engine/ResourceManagerFrame.h"
@@ -22,6 +23,7 @@ namespace rndr {
 		eng::ResourceManagerFrame resource_manager_frame_;
 		eng::ResourceManagerSampler resource_manager_sampler_;
 		eng::ResourceManagerShader resource_manager_shader_;
+		eng::GPUResource depth_stencil_buffer_;
 
 		std::unique_ptr<scene::DonutSceneDataCPU> scene_cpu_;
 		std::unique_ptr<scene::DonutSceneDataGPU> scene_gpu_;

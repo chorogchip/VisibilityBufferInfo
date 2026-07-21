@@ -57,7 +57,6 @@ protected:
     ComPtr<IDXGISwapChain3> swapchain_;
     UINT frame_index_ = 0;
 
-    eng::GPUResource depth_stencil_buffer_;
     eng::GPUResource render_targets_[util::Constants::FRAME_COUNT];
 
     D3D12_VIEWPORT viewport_{};

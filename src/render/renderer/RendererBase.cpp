@@ -9,13 +9,11 @@
 #include <string>
 
 #include "util/Constants.h"
-#include "util/RenderConstants.h"
 #include "util/Utils.h"
 #include "util/TimeUtils.h"
 #include "util/Constants.h"
 #include "util/BenchmarkCsvWriter.h"
 #include "dx_util/DeviceUtils.h"
-#include "dx_util/ResourceUtils.h"
 #include "engine/TextureLoader.h"
 
 #include "util/minmax_remover.h"
@@ -69,16 +67,6 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         swapchain_->GetBuffer(i, IID_PPV_ARGS(back_buffer.GetAddressOf()));
         render_targets_[i].init(back_buffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
     }
-
-    depth_stencil_buffer_.init(
-        dxutl::create_depth_stencil_buffer(
-            device_.Get(),
-            width_,
-            height_,
-            util::RenderConstants::DEPTH_STENCIL_FORMAT,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE
-        ).Get(),
-        D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
     viewport_.TopLeftX = 0.0f;
     viewport_.TopLeftY = 0.0f;

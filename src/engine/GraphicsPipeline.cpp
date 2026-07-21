@@ -1,5 +1,7 @@
 #include "engine/GraphicsPipeline.h"
 
+#include <algorithm>
+
 #include "util/Logger.h"
 
 namespace eng {
@@ -30,7 +32,8 @@ namespace eng {
         depth_equal_ = false;
         fullscreen_ = false;
         render_target_count_ = 1;
-        render_target_format_ = DXGI_FORMAT_R8G8B8A8_UNORM;
+        render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
+        render_target_formats_[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
     void GraphicsPipeline::set_root_signature(ID3D12RootSignature* root_signature) {
@@ -57,8 +60,25 @@ namespace eng {
     }
 
     void GraphicsPipeline::set_render_targets(UINT count, DXGI_FORMAT format) {
+        util::Logger::g_logger.assert_with_log(
+            count <= D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT,
+            "invalid render target format request");
+
         render_target_count_ = count;
-        render_target_format_ = format;
+        render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
+        for (UINT i = 0; i < count; ++i)
+            render_target_formats_[i] = format;
+    }
+
+    void GraphicsPipeline::set_render_targets(UINT count, const DXGI_FORMAT* formats) {
+        util::Logger::g_logger.assert_with_log(
+            formats != nullptr &&
+            count <= D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT,
+            "invalid render target format request");
+
+        render_target_count_ = count;
+        render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
+        std::copy_n(formats, count, render_target_formats_.begin());
     }
 
     void GraphicsPipeline::set_fullscreen() {
@@ -112,7 +132,7 @@ namespace eng {
         desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.NumRenderTargets = depth_only_ ? 0 : render_target_count_;
         for (UINT i = 0; i < desc.NumRenderTargets; ++i)
-            desc.RTVFormats[i] = render_target_format_;
+            desc.RTVFormats[i] = render_target_formats_[i];
         desc.DSVFormat = fullscreen_ ? DXGI_FORMAT_UNKNOWN : DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
 
