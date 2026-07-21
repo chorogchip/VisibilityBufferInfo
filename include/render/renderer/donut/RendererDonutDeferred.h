@@ -26,6 +26,18 @@ namespace rndr {
 		void render_prepare_() override;
 		void render_record_() override;
 
+		static constexpr UINT GBUFFER_COUNT = 4;
+		static constexpr UINT DEFERRED_MAX_LIGHTS = 16;
+		static constexpr UINT DEFERRED_MAX_SHADOWS = 16;
+		static constexpr UINT DEFERRED_MAX_LIGHT_PROBES = 16;
+		static constexpr UINT DEPTH_PREPASS_SLOT = 1;
+
+		enum class TonemapRootParam : UINT {
+			CONSTANT_BUFFER,
+			SOURCE_EXPOSURE_LUT,
+			COLOR_LUT_SAMPLER,
+		};
+
 		struct DonutPlanarViewConstants {
 			DirectX::XMFLOAT4X4 mat_world_to_view{};
 			DirectX::XMFLOAT4X4 mat_view_to_clip{};
@@ -133,12 +145,6 @@ namespace rndr {
 			DirectX::XMFLOAT2 color_lut_texture_size_inv{};
 		};
 
-		static constexpr UINT GBUFFER_COUNT = 4;
-		static constexpr UINT DEFERRED_MAX_LIGHTS = 16;
-		static constexpr UINT DEFERRED_MAX_SHADOWS = 16;
-		static constexpr UINT DEFERRED_MAX_LIGHT_PROBES = 16;
-		static constexpr UINT DEPTH_PREPASS_SLOT = 1;
-
 		static_assert(sizeof(DonutPlanarViewConstants) == 720);
 		static_assert(sizeof(DonutDepthPassConstants) == 64);
 		static_assert(sizeof(DonutGBufferFillConstants) == 1440);
@@ -146,7 +152,7 @@ namespace rndr {
 		static_assert(sizeof(DonutShadowConstants) == 112);
 		static_assert(sizeof(DonutLightProbeConstants) == 128);
 		static_assert(sizeof(DonutDeferredLightingConstants) == 6496);
-		static_assert(sizeof(DonutToneMappingConstants) == 96);
+		static_assert(sizeof(DonutToneMappingConstants) == 80);
 
 		void init_constant_buffers_();
 		void init_gbuffers_();

@@ -339,6 +339,79 @@ namespace scene::donut {
             }
             return 0;
         }
+
+        int32_t shader_material_texture_flag(MaterialTextureSlot slot) {
+            switch (slot) {
+            case MaterialTextureSlot::BASE_COLOR:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_BASE_COLOR_TEXTURE;
+            case MaterialTextureSlot::METAL_ROUGHNESS:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_METAL_ROUGHNESS_TEXTURE;
+            case MaterialTextureSlot::NORMAL:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_NORMAL_TEXTURE;
+            case MaterialTextureSlot::EMISSIVE:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_EMISSIVE_TEXTURE;
+            case MaterialTextureSlot::OCCLUSION:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_OCCLUSION_TEXTURE;
+            case MaterialTextureSlot::COUNT:
+                break;
+            }
+            return 0;
+        }
+
+        DonutSceneDataGPU::ShaderMaterialConstants make_shader_material_constants(
+            const DonutSceneDataGPU::MaterialData& source,
+            uint32_t material_id) {
+
+            DonutSceneDataGPU::ShaderMaterialConstants constants{};
+            constants.base_or_diffuse_color = {
+                source.base_color.x,
+                source.base_color.y,
+                source.base_color.z
+            };
+            constants.specular_color = { 0.04f, 0.04f, 0.04f };
+            constants.material_id = static_cast<int32_t>(material_id);
+            constants.emissive_color = source.emissive_color;
+            constants.domain = DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_OPAQUE;
+            constants.opacity = source.base_color.w;
+            constants.roughness = source.roughness;
+            constants.metalness = source.metalness;
+            constants.normal_texture_scale = source.normal_scale;
+            constants.occlusion_strength = source.occlusion_strength;
+            constants.alpha_cutoff = 0.5f;
+            constants.transmission_factor = 0.0f;
+            constants.normal_texture_transform_scale = { 1.0f, 1.0f };
+
+            if ((source.flags & DonutSceneDataGPU::MATERIAL_FLAG_DOUBLE_SIDED) != 0)
+                constants.flags |= DonutSceneDataGPU::SHADER_MATERIAL_FLAG_DOUBLE_SIDED;
+
+            for (uint32_t slot_index = 0;
+                slot_index < DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT;
+                ++slot_index) {
+                const MaterialTextureSlot slot =
+                    static_cast<MaterialTextureSlot>(slot_index);
+                if ((source.flags & material_texture_flag(slot)) != 0)
+                    constants.flags |= shader_material_texture_flag(slot);
+            }
+
+            constants.base_or_diffuse_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(MaterialTextureSlot::BASE_COLOR)]);
+            constants.metal_rough_or_specular_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(MaterialTextureSlot::METAL_ROUGHNESS)]);
+            constants.emissive_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(MaterialTextureSlot::EMISSIVE)]);
+            constants.normal_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(MaterialTextureSlot::NORMAL)]);
+            constants.occlusion_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(MaterialTextureSlot::OCCLUSION)]);
+            constants.transmission_texture_index = 0;
+            constants.opacity_texture_index = 0;
+            return constants;
+        }
     }
 
     std::unique_ptr<DonutSceneDataGPU> DonutSceneResourceBuilder::build(
@@ -524,7 +597,7 @@ namespace scene::donut {
             sizeof(DonutSceneDataGPU::MaterialData);
 
         destination->material_constant_stride = to_uint32(
-            align_constant_buffer(sizeof(DonutSceneDataGPU::MaterialData)),
+            align_constant_buffer(sizeof(DonutSceneDataGPU::ShaderMaterialConstants)),
             "Donut material constant stride exceeds 32-bit addressing");
         const size_t material_constant_byte_size =
             destination->material_constant_stride *
@@ -533,11 +606,15 @@ namespace scene::donut {
         for (size_t material_index = 0;
             material_index < destination->material_data.size();
             ++material_index) {
+            const DonutSceneDataGPU::ShaderMaterialConstants material_constants =
+                make_shader_material_constants(
+                    destination->material_data[material_index],
+                    static_cast<uint32_t>(material_index));
             std::memcpy(
                 material_constant_data.data() +
                 material_index * destination->material_constant_stride,
-                &destination->material_data[material_index],
-                sizeof(DonutSceneDataGPU::MaterialData));
+                &material_constants,
+                sizeof(DonutSceneDataGPU::ShaderMaterialConstants));
         }
 
         upload_buffer(
