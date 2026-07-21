@@ -87,6 +87,7 @@ namespace rndr {
             D3D12_SHADER_VISIBILITY_VERTEX;
 
         pso_.init(device);
+        pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .constant().reg( 1).cnt(7).spc(1).vis_vtx().add()  // PUSH_CONSTANT
             .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()  // VIEW_CONSTANT

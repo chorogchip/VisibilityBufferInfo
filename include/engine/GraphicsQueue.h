@@ -21,6 +21,7 @@ namespace eng {
 
         [[nodiscard]] UINT64 signal();
         void wait(UINT64 fence_value);
+        void wait(const GraphicsQueue& queue, UINT64 fence_value);
         void wait_idle();
 
         [[nodiscard]] ID3D12CommandQueue* get() const {

@@ -94,6 +94,7 @@ namespace rndr {
             "ps_5_0", "main", arguments);
 
         pso_.init(device);
+        pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .root_cbv().reg(0)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // PASS_CONSTANT

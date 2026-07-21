@@ -24,8 +24,10 @@ namespace eng {
 
     void GraphicsPipeline::init(ID3D12Device* device) {
         device_ = device;
+        pipeline_type_ = PipelineType::Undefined;
         vertex_shader_.Reset();
         pixel_shader_.Reset();
+        compute_shader_.Reset();
         root_signature_.Reset();
         pso_.Reset();
         depth_only_ = false;
@@ -34,6 +36,14 @@ namespace eng {
         render_target_count_ = 1;
         render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
         render_target_formats_[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+
+    void GraphicsPipeline::set_graphics() {
+        pipeline_type_ = PipelineType::Graphics;
+    }
+
+    void GraphicsPipeline::set_compute() {
+        pipeline_type_ = PipelineType::Compute;
     }
 
     void GraphicsPipeline::set_root_signature(ID3D12RootSignature* root_signature) {
@@ -87,7 +97,34 @@ namespace eng {
 
     void GraphicsPipeline::build() {
         util::Logger::g_logger.assert_with_log(
-            root_signature_ != nullptr, "graphics pipeline requires a root signature");
+            device_ != nullptr && root_signature_ != nullptr,
+            "pipeline requires a device and root signature");
+
+        if (pipeline_type_ == PipelineType::Compute) {
+            util::Logger::g_logger.assert_with_log(
+                compute_shader_ != nullptr,
+                "compute pipeline requires a compute shader");
+
+            D3D12_COMPUTE_PIPELINE_STATE_DESC desc{};
+            desc.pRootSignature = root_signature_.Get();
+            desc.CS = {
+                compute_shader_->GetBufferPointer(),
+                compute_shader_->GetBufferSize()
+            };
+
+            const HRESULT result = device_->CreateComputePipelineState(
+                &desc, IID_PPV_ARGS(&pso_));
+            util::Logger::g_logger.assert_with_log(
+                SUCCEEDED(result), "create compute pipeline state");
+            return;
+        }
+
+        util::Logger::g_logger.assert_with_log(
+            pipeline_type_ == PipelineType::Graphics,
+            "pipeline type must be set before build");
+        util::Logger::g_logger.assert_with_log(
+            vertex_shader_ != nullptr,
+            "graphics pipeline requires a vertex shader");
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
         desc.InputLayout = fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} : default_input_layout();

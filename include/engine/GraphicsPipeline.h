@@ -13,6 +13,8 @@ namespace eng {
         enum class EnumShader { VS, PS, CS };
 
         void init(ID3D12Device* device);
+        void set_graphics();
+        void set_compute();
         void set_root_signature(ID3D12RootSignature* root_signature);
         void set_shader_vertex(ID3DBlob* shader);
         void set_shader_pixel(ID3DBlob* shader);
@@ -28,7 +30,14 @@ namespace eng {
         [[nodiscard]] ID3D12RootSignature* get_root_signature() const { return root_signature_.Get(); }
 
     private:
+        enum class PipelineType {
+            Undefined,
+            Graphics,
+            Compute,
+        };
+
         ID3D12Device* device_ = nullptr;
+        PipelineType pipeline_type_ = PipelineType::Undefined;
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_;
         Microsoft::WRL::ComPtr<ID3DBlob> compute_shader_;

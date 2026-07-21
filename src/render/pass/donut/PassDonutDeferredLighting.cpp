@@ -110,6 +110,7 @@ namespace rndr {
         );
 
         pso_.init(device);
+        pso_.set_compute();
         auto root_signature = eng::RootSignatureBuilder{}
             .root_cbv().reg(0).add()          // CONSTANT_BUFFER  (b0)
             .srv_tabl().reg(0).cnt(4).add()   // SM_LIGHT_ENVBRDF (t0 t1 t2 t3)

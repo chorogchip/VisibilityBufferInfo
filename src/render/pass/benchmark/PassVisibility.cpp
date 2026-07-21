@@ -39,6 +39,7 @@ namespace rndr {
             "ps_5_0", "main", arguments);
 
         pso_.init(device);
+        pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
             .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()         // FRAME_CONSTANT
