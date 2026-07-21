@@ -6,7 +6,8 @@
 #include <assimp/scene.h>
 
 #include "util/Logger.h"
-#include "scene/Lights.h"
+#include "scene/Material.h"
+#include "scene/Light.h"
 
 namespace scene {
 
@@ -37,14 +38,14 @@ namespace scene {
             return;
         }
         const auto& name = assimp_scene->mName;
-        const auto flags = assimp_scene->mFlags;
+        const auto flags_out = assimp_scene->mFlags;
         const auto metadata = assimp_scene->mMetaData;
         (void)metadata;
 
         util::Logger::g_logger << "[Assimp]: scene [" << name.C_Str() << "] load succeed\n";
 
         util::Logger::g_logger.assert_with_log(
-            !(flags & AI_SCENE_FLAGS_INCOMPLETE),
+            !(flags_out & AI_SCENE_FLAGS_INCOMPLETE),
             "scene incomplete flag");
 
         const auto root_node = assimp_scene->mRootNode;
@@ -65,7 +66,7 @@ namespace scene {
 
         const auto lights_cnt = assimp_scene->mNumLights;
         const auto lights = assimp_scene->mLights;
-        auto lights = Light::from_assimp(lights, lights_cnt);
+        auto lights_vec = Light::from_assimp(lights, lights_cnt);
 
         const auto cameras_cnt = assimp_scene->mNumCameras;
         const auto cameras = assimp_scene->mCameras;

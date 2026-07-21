@@ -23,7 +23,7 @@ namespace util {
 
     void Logger::assert_with_log(
         bool expression,
-        const std::source_location& loc = std::source_location::current()) {
+        const std::source_location& loc) {
 
         this->assert_with_log(expression, "", loc);
     }

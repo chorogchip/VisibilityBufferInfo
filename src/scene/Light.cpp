@@ -1,15 +1,16 @@
-#include "scene/Lights.h"
+#include "scene/Light.h"
 
 #include <assimp/scene.h>
 
 namespace scene {
 
 	std::vector<Light> Light::from_assimp(
-		const void* lights, size_t counts) {
+		const void* lights, size_t light_count) {
 
 		std::vector<Light> ret;
+		ret.reserve(light_count);
 
-		for (size_t i = 0; i < counts; ++i) {
+		for (size_t i = 0; i < light_count; ++i) {
 			const aiLight& src = *(const aiLight*)lights;
 
 			Light light{};

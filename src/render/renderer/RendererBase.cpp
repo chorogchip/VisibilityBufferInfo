@@ -18,7 +18,7 @@
 #include "dx_util/ResourceUtils.h"
 #include "engine/TextureLoader.h"
 
-#include "util/Macros.h"
+#include "util/minmax_remover.h"
 
 RendererBase::~RendererBase() {
     graphics_queue_.wait_idle();

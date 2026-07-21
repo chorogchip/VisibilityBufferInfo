@@ -14,7 +14,7 @@
 #include "util/Utils.h"
 #include "dx_util/ResourceUtils.h"
 
-#include "util/Macros.h"
+#include "util/minmax_remover.h"
 
 namespace scene {
     std::unique_ptr<SceneDataGPU> SceneResourceBuilder::build(
