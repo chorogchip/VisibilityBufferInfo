@@ -1,89 +1,126 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <DirectXMath.h>
 
-#include "scene/donut/SceneStructures.h"
+#include "math/AABB.h"
 
 namespace scene {
 
-    inline constexpr uint32_t invalid_index = static_cast<uint32_t>(-1);
-    inline constexpr int32_t invalid_descriptor_index = -1;
-
-    enum class MaterialTextureSlot : uint32_t {
-        base_or_diffuse = 0,
-        metal_rough_or_specular = 1,
-        normal = 2,
-        emissive = 3,
-        occlusion = 4,
-        transmission = 5,
-        opacity = 6,
-        count = 7
-    };
-
-    inline constexpr size_t material_texture_slot_count =
-        static_cast<size_t>(MaterialTextureSlot::count);
-
-    inline constexpr int32_t material_domain_opaque = 0;
-    inline constexpr int32_t material_domain_alpha_tested = 1;
-    inline constexpr int32_t material_domain_alpha_blended = 2;
-    inline constexpr int32_t material_domain_transmissive = 3;
-
-    inline constexpr int32_t material_flag_use_specular_gloss = 0x00000001;
-    inline constexpr int32_t material_flag_double_sided = 0x00000002;
-    inline constexpr int32_t material_flag_use_metal_rough_or_specular = 0x00000004;
-    inline constexpr int32_t material_flag_use_base_or_diffuse = 0x00000008;
-    inline constexpr int32_t material_flag_use_emissive = 0x00000010;
-    inline constexpr int32_t material_flag_use_normal = 0x00000020;
-    inline constexpr int32_t material_flag_use_occlusion = 0x00000040;
-    inline constexpr int32_t material_flag_use_transmission = 0x00000080;
-    inline constexpr int32_t material_flag_use_opacity = 0x00000200;
-
     struct DonutSceneDataCPU {
-        using TexturePath = std::optional<std::filesystem::path>;
+        enum class MaterialTextureSlot : uint32_t {
+            BASE_COLOR = 0,
+            METAL_ROUGHNESS = 1,
+            NORMAL = 2,
+            EMISSIVE = 3,
+            OCCLUSION = 4,
+            COUNT = 5
+        };
 
-        struct Geometry {
+        enum class TextureColorSpace : uint32_t {
+            LINEAR,
+            SRGB
+        };
+
+        enum class TextureFallback : uint32_t {
+            WHITE,
+            BLACK,
+            FLAT_NORMAL
+        };
+
+        static constexpr uint32_t INVALID_INDEX = static_cast<uint32_t>(-1);
+        static constexpr size_t MATERIAL_TEXTURE_SLOT_COUNT =
+            static_cast<size_t>(MaterialTextureSlot::COUNT);
+
+        struct Texture {
+            std::string name;
+            std::filesystem::path path;
+            TextureColorSpace color_space = TextureColorSpace::LINEAR;
+            TextureFallback fallback = TextureFallback::WHITE;
+            bool embedded = false;
+        };
+
+        struct Material {
+            std::string name;
+            DirectX::XMFLOAT4 base_color = { 1.0f, 1.0f, 1.0f, 1.0f };
+            DirectX::XMFLOAT3 emissive_color = { 0.0f, 0.0f, 0.0f };
+            float roughness = 1.0f;
+            float metalness = 0.0f;
+            float normal_scale = 1.0f;
+            float occlusion_strength = 1.0f;
+            bool double_sided = false;
+            std::array<uint32_t, MATERIAL_TEXTURE_SLOT_COUNT> texture_ids = [] {
+                std::array<uint32_t, MATERIAL_TEXTURE_SLOT_COUNT> ids{};
+                ids.fill(INVALID_INDEX);
+                return ids;
+            }();
+        };
+
+        struct Submesh {
             std::string name;
             uint32_t vertex_offset = 0;
             uint32_t vertex_count = 0;
             uint32_t index_offset = 0;
             uint32_t index_count = 0;
-            uint32_t material_index = 0;
+            uint32_t material_id = 0;
+            math::AABB local_aabb{};
         };
 
         struct Mesh {
             std::string name;
-            uint32_t first_geometry = 0;
-            uint32_t geometry_count = 0;
+            uint32_t first_submesh = 0;
+            uint32_t submesh_count = 0;
+            math::AABB local_aabb{};
+        };
+
+        struct GeometryInstance {
+            uint32_t instance_id = 0;
+            uint32_t submesh_id = 0;
         };
 
         struct Instance {
-            uint32_t mesh_index = 0;
+            uint32_t node_id = INVALID_INDEX;
+            uint32_t mesh_id = 0;
             uint32_t first_geometry_instance = 0;
-            DirectX::XMFLOAT3X4 transform{};
-            DirectX::XMFLOAT3X4 prev_transform{};
+            uint32_t geometry_instance_count = 0;
+            DirectX::XMFLOAT4X4 world_transform{};
+            DirectX::XMFLOAT4X4 prev_world_transform{};
+            math::AABB world_aabb{};
         };
 
-        struct Draw {
-            uint32_t geometry_index = 0;
-            uint32_t instance_index = 0;
-        };
-
-        struct Material {
+        struct Node {
             std::string name;
-            dnt::MaterialConstants constants{};
-            std::array<TexturePath, material_texture_slot_count> textures{};
+            uint32_t parent_id = INVALID_INDEX;
+            uint32_t instance_id = INVALID_INDEX;
+            std::vector<uint32_t> children;
+            DirectX::XMFLOAT4X4 local_transform{};
+            DirectX::XMFLOAT4X4 world_transform{};
+            math::AABB subtree_world_aabb{};
+        };
+
+        struct VisibleDraw {
+            uint32_t geometry_instance_id = 0;
         };
 
         std::filesystem::path source_path;
         bool loaded = false;
         std::string error_message;
+        uint32_t root_node_id = INVALID_INDEX;
+        math::AABB world_aabb{};
+
+        std::vector<Node> nodes;
+        std::vector<Instance> instances;
+        std::vector<Mesh> meshes;
+        std::vector<Submesh> submeshes;
+        std::vector<GeometryInstance> geometry_instances;
+        std::vector<Material> materials;
+        std::vector<Texture> textures;
 
         std::vector<DirectX::XMFLOAT3> positions;
         std::vector<DirectX::XMFLOAT3> prev_positions;
@@ -92,12 +129,8 @@ namespace scene {
         std::vector<uint32_t> packed_tangents;
         std::vector<uint32_t> indices;
 
-        std::vector<Geometry> geometries;
-        std::vector<Mesh> meshes;
-        std::vector<Instance> instances;
-        std::vector<Draw> draws;
-        std::vector<Material> materials;
-
         bool validate(std::string& error_message) const;
+        void build_all_visible_draws(std::vector<VisibleDraw>& output) const;
+        void sort_visible_draws(std::vector<VisibleDraw>& draws) const;
     };
 }

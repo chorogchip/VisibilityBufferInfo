@@ -1,0 +1,65 @@
+Donut scene contract
+
+목적 (외부 scene, 실제 node hierarchy, 실제 instance 분포, 실제 material 영역, Donut deferred lighting 입력)
+
+Donut 고정 항목 (deferred lighting shader, G-buffer decode 의미, depth reconstruction, view constant 의미)
+
+Donut 비고정 항목 (scene graph, material abstraction, G-buffer fill pass, vertex input path, draw model)
+
+CPU scene (global arrays, immutable after import)
+
+Node (tree, parent id, child ids, optional instance id, local transform, world transform, subtree world AABB)
+
+Instance (AoS, node id, mesh id, first geometry instance, geometry instance count, world transform, previous world transform, world AABB)
+
+Mesh (AoS, first submesh, submesh count, local AABB, CPU grouping)
+
+Submesh (AoS, globally unique id, global vertex offset, vertex count, global index offset, index count, material id, local AABB)
+
+Geometry instance (AoS, globally unique id, instance id, submesh id)
+
+Visible draw (transient CPU list, geometry instance id, sorted by submesh/material/instance)
+
+Vertex data (SoA, position, previous position, texcoord, packed normal, packed tangent, one global buffer)
+
+Index data (uint32, submesh-local index value, global index array, shader adds submesh vertex offset)
+
+Material (opaque only, base color, emissive color, roughness, metalness, normal scale, occlusion strength, texture ids)
+
+Texture slot (base color, metal roughness, normal, emissive, occlusion)
+
+Texture source (external path, embedded marker, color space, fallback semantic)
+
+Texture color space (base color srgb, emissive srgb, metal roughness linear, normal linear, occlusion linear)
+
+Texture fallback (base color white, metal roughness white, normal flat normal, emissive black, occlusion white)
+
+GPU scene (default heap resources, renderer owned lifetime)
+
+GPU vertex buffer (ByteAddressBuffer, SoA stream offsets, 16 byte alignment)
+
+GPU index buffer (ByteAddressBuffer, uint32 elements)
+
+GPU instance buffer (StructuredBuffer, transform data, mesh id, geometry instance range)
+
+GPU submesh buffer (StructuredBuffer, global vertex/index ranges, material id)
+
+GPU geometry instance buffer (StructuredBuffer, instance id, submesh id)
+
+GPU material buffer (StructuredBuffer, opaque material data, texture indices)
+
+GPU material constant buffer (single resource, 256 byte stride, one material per slice)
+
+GPU texture resources (startup load, cache by resolved path and color space, fallback on missing or unsupported)
+
+Draw path (CPU traversal, subtree AABB culling, visible draw list, sorting, DrawInstanced)
+
+Vertex fetch path (no IA vertex buffer, SV_VertexID, index SRV, vertex SRV, submesh offsets, instance transform)
+
+Visibility buffer future contract (R32 geometry instance id, G32 primitive id inside submesh)
+
+Visibility resolve path (geometry instance, instance buffer, submesh buffer, material buffer, texture descriptor)
+
+Multiple model future contract (global id ranges, append/remap possible, current importer single source scene)
+
+현재 제외 (alpha blend, transmission, shadow renderer, IBL pipeline, SSAO, streaming, residency, GPU driven culling, material binning)

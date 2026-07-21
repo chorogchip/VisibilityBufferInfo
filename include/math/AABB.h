@@ -14,6 +14,7 @@ namespace math {
 		bool is_collide(const AABB& other) const noexcept;
 		AABB get_union(const AABB& other) const noexcept;
 		AABB get_transformed(const DirectX::XMFLOAT3X4& matrix) const noexcept;
+		AABB get_transformed(const DirectX::XMFLOAT4X4& matrix) const noexcept;
 	};
 
 }

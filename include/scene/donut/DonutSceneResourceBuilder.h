@@ -17,6 +17,7 @@ namespace scene::donut {
             const DonutSceneDataCPU& source,
             ID3D12Device* device,
             ID3D12GraphicsCommandList* command_list,
-            std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps);
+            std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps,
+            bool load_textures = true);
     };
 }

@@ -106,4 +106,41 @@ namespace math {
 		return result;
 	}
 
+	AABB AABB::get_transformed(
+		const DirectX::XMFLOAT4X4& matrix) const noexcept {
+		if (!is_valid) return {};
+
+		const DirectX::XMMATRIX transform =
+			DirectX::XMLoadFloat4x4(&matrix);
+
+		const std::array<DirectX::XMFLOAT3, 8> corners = {
+			DirectX::XMFLOAT3{ pos_min.x, pos_min.y, pos_min.z },
+			DirectX::XMFLOAT3{ pos_max.x, pos_min.y, pos_min.z },
+			DirectX::XMFLOAT3{ pos_min.x, pos_max.y, pos_min.z },
+			DirectX::XMFLOAT3{ pos_max.x, pos_max.y, pos_min.z },
+			DirectX::XMFLOAT3{ pos_min.x, pos_min.y, pos_max.z },
+			DirectX::XMFLOAT3{ pos_max.x, pos_min.y, pos_max.z },
+			DirectX::XMFLOAT3{ pos_min.x, pos_max.y, pos_max.z },
+			DirectX::XMFLOAT3{ pos_max.x, pos_max.y, pos_max.z }
+		};
+
+		AABB result =
+			create_from_pos(transform_point(corners[0], transform));
+
+		for (std::size_t i = 1; i < corners.size(); ++i) {
+			const DirectX::XMFLOAT3 point =
+				transform_point(corners[i], transform);
+
+			result.pos_min.x = std::min(result.pos_min.x, point.x);
+			result.pos_min.y = std::min(result.pos_min.y, point.y);
+			result.pos_min.z = std::min(result.pos_min.z, point.z);
+
+			result.pos_max.x = std::max(result.pos_max.x, point.x);
+			result.pos_max.y = std::max(result.pos_max.y, point.y);
+			result.pos_max.z = std::max(result.pos_max.z, point.z);
+		}
+
+		return result;
+	}
+
 }
