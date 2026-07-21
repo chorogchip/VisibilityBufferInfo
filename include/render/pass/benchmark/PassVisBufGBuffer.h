@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include <vector>
@@ -27,7 +27,7 @@ namespace rndr {
         const scene::SceneDataCPU* scene = nullptr;
         eng::GPUResource* gbuffers[8]{};
         UINT gbuffer_count = 0;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;
     };
 

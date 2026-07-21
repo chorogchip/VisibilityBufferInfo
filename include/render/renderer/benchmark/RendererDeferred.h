@@ -16,11 +16,8 @@ namespace rndr {
 		~RendererDeferred() override = default;
 
 	private:
-		void record_render_commands_() override;
-		void init_programresult_(util::ProgramResult& result) override;
-		void init_renderer_resources_() override;
-
-		void init_passes_() override;
+		void init2_() override;
+		void render_record_() override;
 
 		bool do_prepass_ = false;
 		PassDepthPre pass_depth_pre_;

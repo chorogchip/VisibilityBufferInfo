@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/SceneDataCPU.h"
@@ -21,7 +21,7 @@ namespace rndr {
         eng::GPUResource* gbuffers[8]{};
         UINT gbuffer_count = 0;
         eng::GPUResource* depth = nullptr;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         ID3D12Resource* material_buffer = nullptr;
         std::vector<ID3D12Resource*> material_textures;

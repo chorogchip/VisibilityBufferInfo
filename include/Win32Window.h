@@ -28,12 +28,14 @@ private:
         WPARAM wParam,
         LPARAM lParam);
 
-    LRESULT handle_message(UINT msg,
+    LRESULT handle_message(
+        UINT msg,
         WPARAM wParam,
         LPARAM lParam);
 
     HWND hwnd_ = nullptr;
     std::array<bool, 256> key_states_{};
+
     bool rotating_camera_ = false;
     int mouse_x_ = 0;
     int mouse_y_ = 0;

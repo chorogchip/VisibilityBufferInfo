@@ -24,8 +24,7 @@ namespace dxutl {
         UploadConstBuf& operator=(UploadConstBuf&&) = delete;
 
         ~UploadConstBuf() {
-            if (resource_ && mapped_)
-                resource_->Unmap(0, nullptr);
+            resource_->Unmap(0, nullptr);
         }
 
         void init(ID3D12Device* device) {
@@ -39,23 +38,20 @@ namespace dxutl {
                 ALIGNED_SIZE,
                 D3D12_HEAP_TYPE_UPLOAD,
                 D3D12_RESOURCE_STATE_GENERIC_READ);
+
             mapped_ = map_upload_buffer(resource_.Get());
         }
 
-        void update(const T& value) {
+        void update() {
             util::Logger::g_logger.assert_with_log(
                 mapped_ != nullptr, "upload constant buffer is not initialized");
-            std::memcpy(mapped_, &value, sizeof(T));
+
+            std::memcpy(mapped_, &this->buffer, sizeof(T));
         }
 
         [[nodiscard]] ID3D12Resource* get() const { return resource_.Get(); }
 
-        [[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS get_gpu_address() const {
-            util::Logger::g_logger.assert_with_log(
-                resource_ != nullptr, "upload constant buffer is not initialized");
-            return resource_->GetGPUVirtualAddress();
-        }
-
+        T buffer;
     private:
         static constexpr UINT64 ALIGNMENT = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
         static constexpr UINT64 ALIGNED_SIZE =

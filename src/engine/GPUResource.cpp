@@ -4,11 +4,10 @@
 
 namespace eng {
 
-    void GPUResource::attach(
+    void GPUResource::init(
         ID3D12Resource* resource,
         D3D12_RESOURCE_STATES initial_state) {
-        util::Logger::g_logger.assert_with_log(
-            resource != nullptr, "GPU resource attach requires a resource");
+
         resource_ = resource;
         state_ = initial_state;
     }

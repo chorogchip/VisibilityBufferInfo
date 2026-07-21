@@ -24,12 +24,7 @@ namespace rndr {
     void PassVisBufGBuffer::init(ID3D12Device* device, const util::ProgramArgument& arguments,
         const PassVisBufGBufferResources& resources) {
         resources_ = resources;
-        util::assure_next<
-            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
+
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
             resources_.frame_manager->create_rtv(
                 static_cast<eng::ResourceManagerFrame::EnumRTV>(
@@ -37,6 +32,7 @@ namespace rndr {
                 resources_.gbuffers[i]->get());
         }
 
+        // TODO remove part of this, cause not needed
         request_visbuf_scene(
             *resources_.shader_manager,
             resources_.vertex_buffer,
@@ -46,6 +42,14 @@ namespace rndr {
             resources_.material_buffer,
             resources_.material_textures,
             resources_.scene);
+        // TODO remove part of this, cause not needed, this too
+        util::assure_next<
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
 
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
         gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

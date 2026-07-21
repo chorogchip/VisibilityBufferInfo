@@ -9,7 +9,9 @@ namespace rndr {
 		virtual ~RendererDonut() = 0;
 
 	protected:
-		void init_shader_resources_() override;
+		void init1_() override;
+		void render_prepare_() override;
+		virtual void init2_() = 0;
 
 	};
 }

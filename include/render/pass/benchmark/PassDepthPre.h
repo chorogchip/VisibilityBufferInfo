@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "engine/GraphicsPipeline.h"
 #include "ProgramArgument.h"
 #include "scene/SceneDataCPU.h"
@@ -17,7 +17,7 @@ namespace rndr {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* depth = nullptr;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};

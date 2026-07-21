@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+#include "util/Constants.h"
+
 namespace util {
 
 #define ProgramArgument_MAC \
@@ -13,7 +15,7 @@ namespace util {
     X(std::string, output_filepath, "temp.csv", output-filepath) \
     X(uint32_t, renderer_variant, 1, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
-    X(bool, to_use_scene, true, to-use-scene) \
+    X(bool, to_use_scene, false, to-use-scene) \
     X(bool, to_load_texture, false, to-load-texture) \
     X(std::string, scene_path, "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf", scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
@@ -70,48 +72,31 @@ namespace util {
     X(std::uint32_t, variable_waste_quad_count, variable-waste-quad-count) \
     X(std::uint32_t, variable_alu_op_count, variable-alu-op-count)
 
-#define ProgramResultPerFrame_MAC
-
 
     struct ProgramArgument {
-        static constexpr uint32_t CAMERA_MODE_FREE = 0;
-        static constexpr uint32_t CAMERA_MODE_RECORD = 1;
-        static constexpr uint32_t CAMERA_MODE_PLAYBACK = 2;
 
 #define X(type, name, defl, arg) \
 	type name = defl;
         ProgramArgument_MAC
 #undef X
+
     public:
         static ProgramArgument from_args(const std::vector<std::string>& args);
-        static std::string camera_mode_to_string(uint32_t mode);
-        void validate() const;
-
         static std::string get_header_string();
         std::string to_string() const;
     };
 
     struct ProgramResult {
-        static constexpr std::size_t PASS_COUNT = 32;
-
-        std::array<std::string, PASS_COUNT> pass_names{};
-        std::array<double, PASS_COUNT> pass_time_avg_ms{};
+        std::array<std::string, util::Constants::MAX_PASS_COUNT> pass_names{};
+        std::array<double, util::Constants::MAX_PASS_COUNT> pass_time_avg_ms{};
 
 #define X(type, name, arg) \
         type name{};
         ProgramResult_MAC
 #undef X
-    public:
-        static std::string get_header_string();
-        std::string to_string() const;
-    };
 
-    struct ProgramResultPerFrame {
-#define X(type, name, arg) \
-    type name;
-        ProgramResultPerFrame_MAC
-#undef X
     public:
+        static ProgramResult from_args(const ProgramArgument& arg);
         static std::string get_header_string();
         std::string to_string() const;
     };

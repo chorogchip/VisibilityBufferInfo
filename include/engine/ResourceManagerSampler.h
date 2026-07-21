@@ -8,15 +8,16 @@ namespace eng {
     class ResourceManagerSampler {
     public:
         enum class EnumDescPos : UINT {
-            BENCH_MATERIAL = 0,
-            DONUT_SHADOW = 1,
-            DONUT_SHADOW_COMPARISON = 2,
-            DONUT_LIGHT_PROBE = 3,
-            DONUT_BRDF = 4,
+            DONUT_SHADOW,
+            DONUT_SHADOW_COMPARISON,
+            DONUT_LIGHT_PROBE,
+            DONUT_BRDF,
+            BENCH_MATERIAL,
             COUNT
         };
 
         void init(ID3D12Device* device);
+        void create_sampler(EnumDescPos position);
         void create_sampler(EnumDescPos position, const D3D12_SAMPLER_DESC& desc);
 
         [[nodiscard]] ID3D12DescriptorHeap* get() const { return heap_.Get(); }

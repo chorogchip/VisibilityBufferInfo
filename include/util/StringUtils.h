@@ -39,14 +39,10 @@ namespace util {
                 return value;
             }
             else {
-                static_assert(always_false_v<T>, "Unsupported argument type");
+                static_assert(!std::is_same_v<T, T>, "Unsupported argument type");
             }
             return T{};
         }
-
-    private:
-        template <typename>
-        inline static constexpr bool always_false_v = false;
     };
 
 }

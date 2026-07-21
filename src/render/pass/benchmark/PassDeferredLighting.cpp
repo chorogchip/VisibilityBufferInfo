@@ -24,10 +24,6 @@ namespace rndr {
 
         resources_ = resources;
 
-        util::assure_next<
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1>();
-
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
             resources_.back_buffers[0]->get());

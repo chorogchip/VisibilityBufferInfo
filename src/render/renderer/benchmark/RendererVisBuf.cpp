@@ -9,14 +9,11 @@
 
 namespace rndr {
 
-    void RendererVisBuf::init_programresult_(util::ProgramResult& result) {
-        result.renderer_name = "VisBuf";
-        result.pass_names[0] = "visibility";
-        result.pass_names[1] = "resolve";
-    }
+    void RendererVisBuf::init2_() {
 
-    void RendererVisBuf::init_renderer_resources_() {
-        RendererBenchmark::init_renderer_resources_();
+        program_result_.renderer_name = "VisBuf";
+        program_result_.pass_names[0] = "visibility";
+        program_result_.pass_names[1] = "resolve";
 
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;
@@ -30,19 +27,8 @@ namespace rndr {
             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             &clear_value);
-        vis_buffer_.attach(vis_buffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    }
+        vis_buffer_.init(vis_buffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-    void RendererVisBuf::record_render_commands_() {
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
-        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
-        pass_resolve_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
-    }
-
-    void RendererVisBuf::init_passes_() {
         PassVisibilityResources visibility{};
         visibility.frame_manager = &resource_manager_frame_;
         visibility.shader_manager = &resource_manager_shader_;
@@ -54,7 +40,7 @@ namespace rndr {
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
-        pass_visibility_.init(device_.Get(), benchmark_program_arguments(), visibility);
+        pass_visibility_.init(device_.Get(), program_argument_, visibility);
 
         PassVisBufResolveResources resolve{};
         resolve.frame_manager = &resource_manager_frame_;
@@ -67,12 +53,21 @@ namespace rndr {
         resolve.mesh_buffer = scene_gpu_->mesh_buffer.Get();
         resolve.instance_buffer = scene_gpu_->object_buffer.Get();
         resolve.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : material_textures())
+        for (const auto& texture : textures_)
             resolve.material_textures.push_back(texture.Get());
         resolve.scene = scene_cpu_.get();
         resolve.constant_buffers[0] = buf_constant_[0].get();
         resolve.constant_buffers[1] = buf_constant_[1].get();
         resolve.sampler_manager = &resource_manager_sampler_;
-        pass_resolve_.init(device_.Get(), benchmark_program_arguments(), resolve);
+        pass_resolve_.init(device_.Get(), program_argument_, resolve);
+    }
+
+    void RendererVisBuf::render_record_() {
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
+        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
+        pass_resolve_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
     }
 }

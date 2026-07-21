@@ -4,20 +4,17 @@
 #include <vector>
 
 #include "util/Logger.h"
+#include "util/Constants.h"
 
 namespace util {
 
-	void FrameCounter::init(
-		int dimension,
-		uint64_t frame_to_start_measure,
-		uint64_t frame_to_end_measure,
-		uint64_t frame_to_terminate) {
-
+	void FrameCounter::init(const util::ProgramArgument& arg) {
+		const int dimension = util::Constants::MAX_PASS_COUNT + 1;
 		frame_times_ = std::vector<std::vector<double>>(dimension, std::vector<double>());
 		frames_ = 0;
-		frame_to_start_measure_ = frame_to_start_measure;
-		frame_to_end_measure_ = frame_to_end_measure;
-		frame_to_terminate_ = frame_to_terminate;
+		frame_to_start_measure_ = arg.warmup_frames;
+		frame_to_end_measure_ = frame_to_start_measure_ + arg.measure_frames;
+		frame_to_terminate_ = frame_to_end_measure_ + 60;
 	}
 
 	void FrameCounter::tick(std::vector<double>& measures) {

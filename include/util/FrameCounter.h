@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <ostream>
 
+#include "ProgramArgument.h"
+
 namespace util {
 
 	class FrameCounter {
@@ -25,7 +27,7 @@ namespace util {
             double time_p90_ms = 0.0;
             double time_p99_ms = 0.0;
 
-            static std::string to_string_header() {
+            static std::string get_header_string() {
                 return std::string(
                     "time_min_ms,time_median_ms,time_max_ms,time_avg_ms,"
                     "time_p01_ms,time_p10_ms,time_p90_ms,time_p99_ms");
@@ -55,16 +57,11 @@ namespace util {
             std::vector<double> time_avg_ms;
         };
 
-		void init(
-            int dimension,
-            uint64_t frame_to_start_measure,
-            uint64_t frame_to_end_measure,
-            uint64_t frame_to_terminate);
-
+        void init(const util::ProgramArgument& arg);
 		void tick(std::vector<double>& measure);
+        bool to_terminate() const;
 		std::vector<CountedData> summarize();
 		std::vector<WindowedData> summarize_windows(uint32_t window_frames) const;
-		bool to_terminate() const;
 
 	private:
 		uint64_t frames_ = 0;

@@ -7,10 +7,13 @@
 #include <vector>
 
 #include "util/Utils.h"
+#include "util/ProgramArgumentValidator.h"
 #include "render/renderer/RendererFactory.h"
+#include "engine/TextureLoader.h"
 
 Application::~Application() {
     renderer_ = nullptr;
+    eng::TextureLoader::close();
 }
 
 void Application::parse_args() {
@@ -23,12 +26,15 @@ void Application::parse_args() {
         args.push_back(Utils::wstring_to_string(argv[i]));
 
     LocalFree(argv);
-    
+
     program_argument_ = util::ProgramArgument::from_args(args);
-    program_argument_.validate();
+    util::ProgramArgumentValidator::validate_program_args(program_argument_);
 }
 
 void Application::run(HINSTANCE h_instance, int n_show_cmd) {
+
+    eng::TextureLoader::init();
+
     this->parse_args();
 
     window_.create(h_instance, n_show_cmd,
@@ -62,11 +68,10 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
 }
 
 void Application::update_camera_input(float delta_seconds) {
-    if (!renderer_ ||
-        program_argument_.camera_mode == util::ProgramArgument::CAMERA_MODE_PLAYBACK) {
-        window_.consume_mouse_delta();
-        return;
-    }
+
+    const auto [mouse_x, mouse_y] = window_.consume_mouse_delta();
+
+    if (!renderer_ || program_argument_.camera_mode == 2) return;
 
     constexpr float MOVE_SPEED = 6.0f;
     constexpr float MOUSE_SENSITIVITY = 0.003f;
@@ -79,7 +84,6 @@ void Application::update_camera_input(float delta_seconds) {
     if (window_.is_key_down(VK_SPACE)) renderer_->camera_.move_pos(0.0f, distance, 0.0f);
     if (window_.is_key_down(VK_SHIFT)) renderer_->camera_.move_pos(0.0f, -distance, 0.0f);
 
-    const auto [mouse_x, mouse_y] = window_.consume_mouse_delta();
     renderer_->camera_.turn_right(static_cast<float>(mouse_x) * MOUSE_SENSITIVITY);
     renderer_->camera_.turn_up(static_cast<float>(mouse_y) * MOUSE_SENSITIVITY);
 }

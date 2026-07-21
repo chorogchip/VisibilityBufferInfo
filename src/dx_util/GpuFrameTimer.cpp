@@ -52,7 +52,7 @@ namespace dxutl {
     void GpuFrameTimer::start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
 
         util::Logger::g_logger.assert_with_log(
-            frame_index < util::FRAME_COUNT && pass < PASS_COUNT,
+            frame_index < util::Constants::FRAME_COUNT && pass < PASS_COUNT,
             "GPU timestamp index is out of range");
 
         const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;
@@ -63,7 +63,7 @@ namespace dxutl {
     void GpuFrameTimer::end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
 
         util::Logger::g_logger.assert_with_log(
-            frame_index < util::FRAME_COUNT && pass < PASS_COUNT,
+            frame_index < util::Constants::FRAME_COUNT && pass < PASS_COUNT,
             "GPU timestamp index is out of range");
 
         const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;

@@ -2,7 +2,7 @@
 
 #include <d3d12.h>
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/SceneDataCPU.h"
@@ -20,9 +20,9 @@ namespace rndr {
     struct PassForwardResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        eng::GPUResource* back_buffers[util::FRAME_COUNT]{};
+        eng::GPUResource* back_buffers[util::Constants::FRAME_COUNT]{};
         eng::GPUResource* depth = nullptr;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
         ID3D12Resource* instance_buffer = nullptr;
         ID3D12Resource* material_buffer = nullptr;
         std::vector<ID3D12Resource*> material_textures;

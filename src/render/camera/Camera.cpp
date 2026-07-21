@@ -6,6 +6,7 @@
 using namespace DirectX;
 
 namespace rndr {
+
 	static constexpr float PITCH_MAX = 85.0f * XM_PI / 180.0f;
 
 	static XMVECTOR rotation_from_yaw_pitch(float yaw, float pitch) {
@@ -23,6 +24,25 @@ namespace rndr {
 		XMStoreFloat3(&direction, forward);
 		yaw = std::atan2(direction.x, direction.z);
 		pitch = std::asin(std::clamp(direction.y, -1.0f, 1.0f));
+	}
+
+
+
+	void Camera::init(const util::ProgramArgument& arg) {
+		this->set_pos(
+			arg.camera_pos_x,
+			arg.camera_pos_y,
+			arg.camera_pos_z);
+
+		this->lookat(
+			arg.camera_lookat_x,
+			arg.camera_lookat_y,
+			arg.camera_lookat_z);
+
+		this->set_fovy_nearz_farz(
+			arg.camera_fov,
+			arg.camera_near_z,
+			arg.camera_far_z);
 	}
 
 	void Camera::move_pos(float dx, float dy, float dz) {

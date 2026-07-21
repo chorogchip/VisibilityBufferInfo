@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/SceneDataCPU.h"
@@ -23,8 +23,8 @@ namespace rndr {
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* depth = nullptr;  // PS
         eng::GPUResource* gbuffers[4]{};  // PS
-        eng::GPUResource* material_constant_buffers[util::FRAME_COUNT]{};  // PS
-        eng::GPUResource* gbuf_constant_buffers[util::FRAME_COUNT]{};  // shared
+        eng::GPUResource* material_constant_buffers[util::Constants::FRAME_COUNT]{};  // PS
+        eng::GPUResource* gbuf_constant_buffers[util::Constants::FRAME_COUNT]{};  // shared
         eng::GPUResource* instance_buffer = nullptr;  // VS
         eng::GPUResource* vertex_buffer = nullptr;  // VS
         const scene::SceneDataCPU* scene = nullptr;

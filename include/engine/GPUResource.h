@@ -13,7 +13,7 @@ namespace eng {
         GPUResource(GPUResource&&) noexcept = default;
         GPUResource& operator=(GPUResource&&) noexcept = default;
 
-        void attach(
+        void init(
             ID3D12Resource* resource,
             D3D12_RESOURCE_STATES initial_state);
 

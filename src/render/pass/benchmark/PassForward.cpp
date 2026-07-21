@@ -32,14 +32,6 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
 
-        util::assure_next<
-            RootParam::FRAME_CONSTANT,
-            RootParam::DRAW_CONSTANT,
-            RootParam::INSTANCE_BUFFER,
-            RootParam::MATERIAL_BUFFER,
-            RootParam::MATERIAL_TEXTURE,
-            RootParam::MATERIAL_SAMPLER>();
-
         resources_.frame_manager->create_rtv
         (eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
             resources_.back_buffers[0]->get());

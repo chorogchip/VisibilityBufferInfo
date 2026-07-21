@@ -1,4 +1,8 @@
 
+
+
+
+
 set desc heap 등은 한 번만 필요하므로 패스에서 미담당, heap 얻는걸 전역 구조로 바꾸기
 별도의 compute queue만들기, async 실행
 Pass*Resources에서 ID3d12Resource*와 GPUResource를 혼재해서 쓰고 있음. GPUResource로 통일하면 좋음.
@@ -11,15 +15,7 @@ PSO에 D3D12_COMPUTE_PIPELINE_STATE_DESC, CreateComputePipelineState 추가
 
 donut 소스 보고 PassDonutDeferredLighting desc값 검증하기
 
-util::assure_next 를 모든 shader pass에 다 넣기.
-
 PassDescriptorRequests.h 다른 곳으로 정리하기.
-
-benchmark renderer와 donut renderer이 서로 다른거 상속받도록 해서 공통 작업 처리하기.
-
-셰이더가 너무 많아졌으므로 폴더 나누기.
-
-back buffer들에 대해 RendererBase의 끝에서 transition 직접 해주기. (기존 각 렌더러가 하던 책임 제외)
 
 Embedded texture 로딩을 현재 지원하는지
 

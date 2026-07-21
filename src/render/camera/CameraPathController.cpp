@@ -15,7 +15,7 @@ namespace rndr {
 	}
 
 	void CameraPathController::before_render(Camera& camera) {
-		if (mode_ == util::ProgramArgument::CAMERA_MODE_RECORD) {
+		if (mode_ == 2) {
 			if (render_frame_ % keyframe_interval_ == 0) {
 				const CameraPose pose = camera.get_pose();
 				if (pose_changed(pose)) {
@@ -40,7 +40,7 @@ namespace rndr {
 	}
 
 	void CameraPathController::close(const Camera& camera) {
-		if (mode_ != util::ProgramArgument::CAMERA_MODE_RECORD) return;
+		if (mode_ != 2) return;
 		if (path_.empty() || path_.end_frame() < render_frame_)
 			path_.add_keyframe(render_frame_, camera.get_pose());
 		path_.save_csv(filepath_);

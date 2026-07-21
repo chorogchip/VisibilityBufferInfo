@@ -2,6 +2,8 @@
 
 #include <DirectXMath.h>
 
+#include "ProgramArgument.h"
+
 namespace rndr {
 	struct CameraPose {
 		DirectX::XMFLOAT3 position{};
@@ -12,6 +14,7 @@ namespace rndr {
 	public:
 		Camera() = default;
 
+		void init(const util::ProgramArgument& arg);
 		void move_pos(float dx, float dy, float dz);
 		void set_pos(float x, float y, float z);
 		void lookat(float x, float y, float z);

@@ -8,7 +8,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 
-#include "Constants.h"
+#include "util/Constants.h"
 
 namespace dxutl {
 
@@ -16,7 +16,7 @@ namespace dxutl {
 
     public:
         static constexpr UINT PASS_COUNT = 32;
-        static constexpr UINT BUF_COUNT = util::FRAME_COUNT * PASS_COUNT * 2;
+        static constexpr UINT BUF_COUNT = util::Constants::FRAME_COUNT * util::Constants::MAX_PASS_COUNT * 2;
 
     public:
         void init(
@@ -32,7 +32,7 @@ namespace dxutl {
         Microsoft::WRL::ComPtr<ID3D12Resource> readback_buffer_;
         UINT64* readback_buffer_mapped_ = nullptr;
         double timestamp_frequency_rcp_ = 0;
-        std::array<std::array<bool, PASS_COUNT>, util::FRAME_COUNT> resolved_{};
+        std::array<std::array<bool, PASS_COUNT>, util::Constants::FRAME_COUNT> resolved_{};
     };
 
 }

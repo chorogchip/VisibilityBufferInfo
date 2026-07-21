@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include <vector>
@@ -17,7 +17,7 @@ namespace rndr {
     struct PassVisBufResolveResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
-        eng::GPUResource* back_buffers[util::FRAME_COUNT]{};
+        eng::GPUResource* back_buffers[util::Constants::FRAME_COUNT]{};
         eng::GPUResource* visibility = nullptr;
         ID3D12Resource* vertex_buffer = nullptr;
         ID3D12Resource* index_buffer = nullptr;
@@ -26,7 +26,7 @@ namespace rndr {
         ID3D12Resource* material_buffer = nullptr;
         std::vector<ID3D12Resource*> material_textures;
         const scene::SceneDataCPU* scene = nullptr;
-        ID3D12Resource* constant_buffers[util::FRAME_COUNT]{};
+        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;
     };
 

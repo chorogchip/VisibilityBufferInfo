@@ -3,84 +3,92 @@
 #include <cstring>
 #include <limits>
 
+#include "util/Utils.h"
+#include "util/BenchmarkCsvWriter.h"
+#include "util/DummyTextureGen.h"
 #include "dx_util/ResourceUtils.h"
 #include "engine/ResourceManagerShader.h"
 #include "scene/SceneFingerprint.h"
 #include "scene/SceneLoader.h"
 #include "scene/SceneResourceBuilder.h"
-#include "util/BenchmarkCsvWriter.h"
-#include "util/DummyTextureGen.h"
-#include "util/Utils.h"
 
 namespace rndr {
 
-    void RendererBenchmark::init_scene_() {
-        load_scene_();
-        create_scene_resources_();
+    void RendererBenchmark::init1_() {
 
-        benchmark_program_arguments_ = *program_arguments_;
-        benchmark_program_arguments_.texture_count = material_texture_count_();
-    }
+        if (program_argument_.to_load_texture)
+            program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
 
-    void RendererBenchmark::init_shader_resources_() {
-        const UINT texture_count = material_texture_count_();
         const UINT texture_begin = static_cast<UINT>(
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN);
 
-        util::Logger::g_logger.assert_with_log(
-            texture_count > 0,
-            "benchmark material texture count must be greater than zero");
-        util::Logger::g_logger.assert_with_log(
-            texture_begin <= (std::numeric_limits<UINT>::max)() - texture_count,
-            "benchmark shader descriptor count overflow");
+        resource_manager_frame_.init(device_.Get());
+        resource_manager_shader_.init(device_.Get(),
+            texture_begin + program_argument_.texture_count);
+        resource_manager_sampler_.init(device_.Get());
 
-        resource_manager_shader_.init(device_.Get(), texture_begin + texture_count);
-    }
+        for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
+            buf_constant_[i].init(device_.Get());
 
-    void RendererBenchmark::init_renderer_resources_() {
-        create_benchmark_resources_();
-        create_sampler_descriptor_();
-    }
+        scene_cpu_ = scene::SceneLoader::load(program_argument_);
 
-    const std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
-        RendererBenchmark::material_textures() const {
-        if (program_arguments_->to_load_texture)
-            return scene_gpu_->textures;
-        return dummy_textures_;
-    }
-
-    void RendererBenchmark::load_scene_() {
-        scene_cpu_ = scene::SceneLoader::load(*program_arguments_);
         scene::SceneFingerprint::write_csv(
-            util::get_scene_fingerprint_output_path(program_arguments_->output_filepath),
+            util::get_scene_fingerprint_output_path(program_argument_.output_filepath),
             *scene_cpu_,
-            *program_arguments_);
-    }
+            program_argument_);
 
-    void RendererBenchmark::create_scene_resources_() {
-        std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
-        Utils::throw_if_failed(command_list_->Reset(
-            command_allocator_[frame_index_].Get(), nullptr));
+        {
+            std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
 
-        scene_gpu_ = scene::SceneResourceBuilder::build(
-            *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps,
-            program_arguments_->to_load_texture);
+            Utils::throw_if_failed(command_list_->Reset(
+                command_allocator_[frame_index_].Get(), nullptr));
 
-        Utils::throw_if_failed(command_list_->Close(),
-            "close list on resource creation");
+            scene_gpu_ = scene::SceneResourceBuilder::build(
+                *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps,
+                program_argument_.to_load_texture);
 
-        graphics_queue_.execute(command_list_.Get());
-        graphics_queue_.wait_idle();
-    }
+            Utils::throw_if_failed(command_list_->Close(),
+                "close list on resource creation");
 
-    void RendererBenchmark::create_benchmark_resources_() {
-        if (program_arguments_->to_load_texture) {
-            dummy_textures_.clear();
-            return;
+            graphics_queue_.execute(command_list_.Get());
+            graphics_queue_.wait_idle();
         }
 
-        const UINT texture_count = program_arguments_->texture_count;
-        const UINT texture_size = program_arguments_->texture_size;
+        this->create_dummy_textures();
+
+        resource_manager_sampler_.create_sampler(
+            eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL);
+
+        this->init2_();
+    }
+
+    void RendererBenchmark::render_prepare_() {
+
+        auto& cam_buf = buf_constant_[frame_index_];
+
+        DirectX::XMStoreFloat4x4(
+            &cam_buf.buffer.mat_view_,
+            DirectX::XMMatrixTranspose(camera_.get_mat_view()));
+
+        DirectX::XMStoreFloat4x4(
+            &cam_buf.buffer.mat_proj_,
+            DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
+
+        cam_buf.buffer.viewport_size_ = DirectX::XMFLOAT2(
+            static_cast<float>(width_), static_cast<float>(height_));
+
+        cam_buf.update();
+
+    }
+
+    void RendererBenchmark::create_dummy_textures() {
+
+        textures_.clear();
+
+        if (program_argument_.to_load_texture) return;
+
+        const UINT texture_count = program_argument_.texture_count;
+        const UINT texture_size = program_argument_.texture_size;
 
         util::Logger::g_logger.assert_with_log(
             texture_count > 0,
@@ -89,8 +97,8 @@ namespace rndr {
             texture_size > 0,
             "texture size must be greater than zero");
 
-        dummy_textures_.clear();
-        dummy_textures_.resize(texture_count);
+        textures_.clear();
+        textures_.resize(texture_count);
 
         D3D12_RESOURCE_DESC texture_desc{};
         texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -121,7 +129,7 @@ namespace rndr {
             const auto texture_data = util::create_dummy_texture_data(
                 texture_size, texture_size, texture_index);
 
-            dummy_textures_[texture_index] = dxutl::create_committed_resource(
+            textures_[texture_index] = dxutl::create_committed_resource(
                 device_.Get(), texture_desc, D3D12_HEAP_TYPE_DEFAULT,
                 D3D12_RESOURCE_STATE_COPY_DEST);
             upload_buffers[texture_index] = dxutl::create_buffer(
@@ -143,7 +151,7 @@ namespace rndr {
             upload_buffers[texture_index]->Unmap(0, nullptr);
 
             D3D12_TEXTURE_COPY_LOCATION destination{};
-            destination.pResource = dummy_textures_[texture_index].Get();
+            destination.pResource = textures_[texture_index].Get();
             destination.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 
             D3D12_TEXTURE_COPY_LOCATION source{};
@@ -154,7 +162,7 @@ namespace rndr {
             command_list_->CopyTextureRegion(
                 &destination, 0, 0, 0, &source, nullptr);
             dxutl::transition_resource(
-                command_list_.Get(), dummy_textures_[texture_index].Get(),
+                command_list_.Get(), textures_[texture_index].Get(),
                 D3D12_RESOURCE_STATE_COPY_DEST,
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
@@ -163,35 +171,5 @@ namespace rndr {
             "close list on dummy texture creation");
         graphics_queue_.execute(command_list_.Get());
         graphics_queue_.wait_idle();
-    }
-
-    void RendererBenchmark::create_sampler_descriptor_() {
-        D3D12_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-        resource_manager_sampler_.create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL,
-            sampler_desc);
-    }
-
-    UINT RendererBenchmark::material_texture_count_() const {
-        if (!program_arguments_->to_load_texture)
-            return program_arguments_->texture_count;
-
-        util::Logger::g_logger.assert_with_log(
-            scene_gpu_ != nullptr,
-            "scene GPU resources must exist before resolving material textures");
-        util::Logger::g_logger.assert_with_log(
-            !scene_gpu_->textures.empty(),
-            "to_load_texture requested, but the scene has no loadable textures");
-        util::Logger::g_logger.assert_with_log(
-            scene_gpu_->textures.size() <= (std::numeric_limits<UINT>::max)(),
-            "scene texture count exceeds UINT");
-        return static_cast<UINT>(scene_gpu_->textures.size());
     }
 }

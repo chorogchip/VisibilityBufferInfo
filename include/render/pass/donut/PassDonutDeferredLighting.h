@@ -2,7 +2,7 @@
 
 #include <d3d12.h>
 
-#include "Constants.h"
+#include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 
@@ -18,7 +18,7 @@ namespace rndr {
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::ResourceManagerSampler* sampler_manager = nullptr;
 
-        eng::GPUResource* constant_buffers[util::FRAME_COUNT]{};
+        eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
 
         eng::GPUResource* buf_shadow_map = nullptr;
         eng::GPUResource* buf_diffuse_light_probe = nullptr;

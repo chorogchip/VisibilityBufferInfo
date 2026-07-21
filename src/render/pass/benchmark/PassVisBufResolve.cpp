@@ -27,16 +27,7 @@ namespace rndr {
         const PassVisBufResolveResources& resources) {
 
         resources_ = resources;
-
-        util::assure_next<
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
-            eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1>();
-        util::assure_next<
-            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
+        
 
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_0,
@@ -54,6 +45,14 @@ namespace rndr {
             resources_.material_buffer,
             resources_.material_textures,
             resources_.scene);
+
+        util::assure_next<
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_VS.hlsl",

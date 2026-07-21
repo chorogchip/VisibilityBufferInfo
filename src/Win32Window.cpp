@@ -38,8 +38,10 @@ void Win32Window::create(
 
     util::Logger::g_logger.assert_with_log(hwnd_ != nullptr, "CreateWindowEx failed");
 
-    ShowWindow(hwnd_, n_show_cmd);
-    UpdateWindow(hwnd_);
+    if (hwnd_ != 0) {
+        ShowWindow(hwnd_, n_show_cmd);
+        UpdateWindow(hwnd_);
+    }
 }
 
 bool Win32Window::process_messages() {
@@ -67,8 +69,8 @@ std::pair<int, int> Win32Window::consume_mouse_delta() {
     return delta;
 }
 
-LRESULT CALLBACK Win32Window::WndProc
-(HWND hwnd,
+LRESULT CALLBACK Win32Window::WndProc(
+    HWND hwnd,
     UINT msg,
     WPARAM wParam,
     LPARAM lParam) {
