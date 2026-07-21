@@ -1,12 +1,11 @@
 #include "render/pass/donut/PassDonutDeferredLighting.h"
 
-#include "util/Assertion.h"
-#include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-#include "engine/ResourceManagerShader.h"
 #include "engine/ResourceManagerSampler.h"
+#include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
 
 namespace rndr {
 
@@ -28,20 +27,19 @@ namespace rndr {
 
         resources_ = resources;
 
-        // TODO adjust exact desc info
-
         using SRVDescPos = eng::ResourceManagerShader::EnumDescPos;
+        using SamplerDescPos = eng::ResourceManagerSampler::EnumDescPos;
 
-        resources_.shader_manager->create_srv(
+        resources_.shader_manager->create_srv_texture_2d_array(
             SRVDescPos::DONUT_SHADOW_MAP_ARRAY,
-            resources_.buf_shadow_map->get());
-        resources_.shader_manager->create_srv(
+            resources_.buf_shadow_map->get(), DXGI_FORMAT_R32_FLOAT);
+        resources_.shader_manager->create_srv_texture_cube_array(
             SRVDescPos::DONUT_DIFFUSE_LIGHT_PROBE,
             resources_.buf_diffuse_light_probe->get());
-        resources_.shader_manager->create_srv(
+        resources_.shader_manager->create_srv_texture_cube_array(
             SRVDescPos::DONUT_SPECULAR_LIGHT_PROBE,
             resources_.buf_specular_light_probe->get());
-        resources_.shader_manager->create_srv(
+        resources_.shader_manager->create_srv_texture_2d(
             SRVDescPos::DONUT_ENVIRONMENT_BRDF,
             resources_.buf_env_brdf->get());
 
@@ -51,44 +49,29 @@ namespace rndr {
             SRVDescPos::DONUT_SPECULAR_LIGHT_PROBE,
             SRVDescPos::DONUT_ENVIRONMENT_BRDF>();
 
-        D3D12_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-
-        resources_.sampler_manager->create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW,
-            sampler_desc);
-        resources_.sampler_manager->create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW_COMPARISON,
-            sampler_desc);
-        resources_.sampler_manager->create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_LIGHT_PROBE,
-            sampler_desc);
-        resources_.sampler_manager->create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_BRDF,
-            sampler_desc);
+        resources_.sampler_manager->create_sampler_linear_border_white(
+            SamplerDescPos::DONUT_SHADOW);
+        resources_.sampler_manager->create_sampler_comparison_linear_border_white(
+            SamplerDescPos::DONUT_SHADOW_COMPARISON);
+        resources_.sampler_manager->create_sampler_linear_wrap(
+            SamplerDescPos::DONUT_LIGHT_PROBE);
+        resources_.sampler_manager->create_sampler_linear_clamp(
+            SamplerDescPos::DONUT_BRDF);
 
         util::assure_next<
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW,
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW_COMPARISON,
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_LIGHT_PROBE,
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_BRDF>();
+            SamplerDescPos::DONUT_SHADOW,
+            SamplerDescPos::DONUT_SHADOW_COMPARISON,
+            SamplerDescPos::DONUT_LIGHT_PROBE,
+            SamplerDescPos::DONUT_BRDF>();
 
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_GBUFFER_DEPTH, resources_.depth->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_GBUFFER_0, resources_.gbuffers[0]->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_GBUFFER_1, resources_.gbuffers[1]->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_GBUFFER_2, resources_.gbuffers[2]->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_GBUFFER_3, resources_.gbuffers[3]->get());
+        resources_.shader_manager->create_srv_texture_2d(
+            SRVDescPos::DONUT_GBUFFER_DEPTH,
+            resources_.depth->get(), DXGI_FORMAT_R32_FLOAT);
+        for (UINT i = 0; i < _countof(resources_.gbuffers); ++i) {
+            resources_.shader_manager->create_srv_texture_2d(
+                SRVDescPos::DONUT_GBUFFER_0,
+                resources_.gbuffers[i]->get(), DXGI_FORMAT_UNKNOWN, i);
+        }
 
         util::assure_next<
             SRVDescPos::DONUT_GBUFFER_DEPTH,
@@ -97,14 +80,17 @@ namespace rndr {
             SRVDescPos::DONUT_GBUFFER_2,
             SRVDescPos::DONUT_GBUFFER_3>();
 
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_INDIRECT_DIFFUSE, resources_.buf_ibl_diffuse->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_INDIRECT_SPECULAR, resources_.buf_ibl_specular->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_SHADOW_CHANNELS, resources_.buf_shadow->get());
-        resources_.shader_manager->create_srv(
-            SRVDescPos::DONUT_AMBIENT_OCCLUSION, resources_.buf_ao->get());
+        const eng::GPUResource* auxiliary_resources[] = {
+            resources_.buf_ibl_diffuse,
+            resources_.buf_ibl_specular,
+            resources_.buf_shadow,
+            resources_.buf_ao,
+        };
+        for (UINT i = 0; i < _countof(auxiliary_resources); ++i) {
+            resources_.shader_manager->create_srv_texture_2d(
+                SRVDescPos::DONUT_INDIRECT_DIFFUSE,
+                auxiliary_resources[i]->get(), DXGI_FORMAT_UNKNOWN, i);
+        }
 
         util::assure_next<
             SRVDescPos::DONUT_INDIRECT_DIFFUSE,
@@ -112,11 +98,12 @@ namespace rndr {
             SRVDescPos::DONUT_SHADOW_CHANNELS,
             SRVDescPos::DONUT_AMBIENT_OCCLUSION>();
 
-        resources_.shader_manager->create_uav(
-            SRVDescPos::DONUT_HDR_COLOR_UAV, resources_.uav_output->get());
+        resources_.shader_manager->create_uav_texture_2d(
+            SRVDescPos::DONUT_HDR_COLOR_UAV,
+            resources_.uav_output->get(), DXGI_FORMAT_R16G16B16A16_FLOAT);
 
         auto cs = dxutl::compile_shader(
-            L"assets/shaders/donut/donut_deferred_lighting_CS_copy.hlsl",
+            L"assets/shaders/donut/donut_deferred_lighting_CS.hlsl",
             "cs_5_1", "main", arguments
         );
 

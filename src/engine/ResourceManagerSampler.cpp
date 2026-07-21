@@ -4,6 +4,31 @@
 
 namespace eng {
 
+    static D3D12_SAMPLER_DESC make_linear_sampler_desc(
+        D3D12_TEXTURE_ADDRESS_MODE address_mode) {
+
+        D3D12_SAMPLER_DESC sampler_desc{};
+        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+        sampler_desc.AddressU = address_mode;
+        sampler_desc.AddressV = address_mode;
+        sampler_desc.AddressW = address_mode;
+        sampler_desc.MaxAnisotropy = 1;
+        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+        sampler_desc.MinLOD = 0.f;
+        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
+        return sampler_desc;
+    }
+
+    static D3D12_SAMPLER_DESC make_linear_border_white_sampler_desc() {
+        D3D12_SAMPLER_DESC sampler_desc = make_linear_sampler_desc(
+            D3D12_TEXTURE_ADDRESS_MODE_BORDER);
+        sampler_desc.BorderColor[0] = 1.f;
+        sampler_desc.BorderColor[1] = 1.f;
+        sampler_desc.BorderColor[2] = 1.f;
+        sampler_desc.BorderColor[3] = 1.f;
+        return sampler_desc;
+    }
+
     void ResourceManagerSampler::init(ID3D12Device* device) {
         device_ = device;
         heap_.Reset();
@@ -27,16 +52,7 @@ namespace eng {
     void ResourceManagerSampler::create_sampler(
         EnumDescPos position) {
 
-        D3D12_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler_desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
-
-        this->create_sampler(position, sampler_desc);
+        this->create_sampler_linear_wrap(position);
     }
 
     void ResourceManagerSampler::create_sampler(
@@ -48,6 +64,35 @@ namespace eng {
             index < DESCRIPTOR_COUNT, "invalid sampler descriptor request");
 
         device_->CreateSampler(&desc, get_cpu_adr(position));
+    }
+
+    void ResourceManagerSampler::create_sampler_linear_wrap(
+        EnumDescPos position) {
+
+        this->create_sampler(
+            position, make_linear_sampler_desc(D3D12_TEXTURE_ADDRESS_MODE_WRAP));
+    }
+
+    void ResourceManagerSampler::create_sampler_linear_clamp(
+        EnumDescPos position) {
+
+        this->create_sampler(
+            position, make_linear_sampler_desc(D3D12_TEXTURE_ADDRESS_MODE_CLAMP));
+    }
+
+    void ResourceManagerSampler::create_sampler_linear_border_white(
+        EnumDescPos position) {
+
+        this->create_sampler(position, make_linear_border_white_sampler_desc());
+    }
+
+    void ResourceManagerSampler::create_sampler_comparison_linear_border_white(
+        EnumDescPos position) {
+
+        D3D12_SAMPLER_DESC sampler_desc = make_linear_border_white_sampler_desc();
+        sampler_desc.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+        sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS;
+        this->create_sampler(position, sampler_desc);
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerSampler::get_cpu_adr(

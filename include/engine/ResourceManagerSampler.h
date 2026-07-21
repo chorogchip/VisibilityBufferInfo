@@ -19,6 +19,10 @@ namespace eng {
         void init(ID3D12Device* device);
         void create_sampler(EnumDescPos position);
         void create_sampler(EnumDescPos position, const D3D12_SAMPLER_DESC& desc);
+        void create_sampler_linear_wrap(EnumDescPos position);
+        void create_sampler_linear_clamp(EnumDescPos position);
+        void create_sampler_linear_border_white(EnumDescPos position);
+        void create_sampler_comparison_linear_border_white(EnumDescPos position);
 
         [[nodiscard]] ID3D12DescriptorHeap* get() const { return heap_.Get(); }
         [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_cpu_adr(EnumDescPos position) const;
