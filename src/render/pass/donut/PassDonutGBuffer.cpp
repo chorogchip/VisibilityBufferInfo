@@ -1,31 +1,81 @@
-﻿#include "render/pass/donut/PassDonutGBuffer.h"
+#include "render/pass/donut/PassDonutGBuffer.h"
 
-#include "util/Assertion.h"
-#include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-// Intentionally disabled: another agent is removing PassDescriptorRequests.*.
-// #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
+#include "util/Assertion.h"
+#include "util/Logger.h"
 #include "util/RenderConstants.h"
 
 namespace rndr {
 
     namespace {
 
-        enum class RootParam : UINT {
-            PUSH_CONSTANT,      // push constant, 7 DWORD (VS, b1, space1)
-            VIEW_CONSTANT,      // gbuffer view constant buf (VS +PS, b2, space2)
-            GEOMETRY_DATA,      // instances(StrBuf), vertices(BAdrBuf)
-                                // (VS, t10~t11, space1)
-            MATERIAL_CONSTANT,  // material const buf (PS, b0, space0)
-            MATERIAL_TEXTURES,  // base, rough, norm, emisv, occlus, transmit, opac
-                                // (PS, t0~t6, space0)
-            MATERIAL_SAMPLER,   // (PS, s0, space2)
-        };
+        D3D12_SHADER_RESOURCE_VIEW_DESC make_structured_srv_desc(
+            UINT element_count,
+            UINT element_stride) {
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
+            desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            desc.Buffer.FirstElement = 0;
+            desc.Buffer.NumElements = element_count;
+            desc.Buffer.StructureByteStride = element_stride;
+            desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+            return desc;
+        }
+
+        void validate_resources(const PassDonutGBufferResources& resources) {
+            util::Logger::g_logger.assert_with_log(
+                resources.frame_manager != nullptr &&
+                resources.sampler_manager != nullptr &&
+                resources.shader_manager != nullptr &&
+                resources.depth != nullptr &&
+                resources.scene != nullptr,
+                "Donut G-buffer pass requires valid resources");
+            util::Logger::g_logger.assert_with_log(
+                resources.scene->vertex_buffer != nullptr &&
+                resources.scene->index_buffer != nullptr &&
+                resources.scene->instance_buffer != nullptr &&
+                resources.scene->submesh_buffer != nullptr &&
+                resources.scene->material_buffer != nullptr &&
+                resources.scene->material_constant_buffer != nullptr,
+                "Donut G-buffer pass requires scene buffers");
+            util::Logger::g_logger.assert_with_log(
+                !resources.scene->draws.empty() &&
+                !resources.scene->textures.empty() &&
+                !resources.scene->material_data.empty(),
+                "Donut G-buffer pass requires draw, texture, and material data");
+
+            for (eng::GPUResource* gbuffer : resources.gbuffers) {
+                util::Logger::g_logger.assert_with_log(
+                    gbuffer != nullptr,
+                    "Donut G-buffer pass requires four render targets");
+            }
+            for (UINT frame_index = 0;
+                frame_index < util::Constants::FRAME_COUNT;
+                ++frame_index) {
+                util::Logger::g_logger.assert_with_log(
+                    resources.constant_buffers[frame_index] != nullptr,
+                    "Donut G-buffer pass requires frame constant buffers");
+            }
+        }
+
+        uint32_t texture_index_for_descriptor(
+            const scene::DonutSceneDataGPU& gpu_scene,
+            const scene::DonutSceneDataGPU::MaterialData& material,
+            UINT slot_index) {
+
+            if (slot_index <
+                static_cast<UINT>(scene::DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT)) {
+                return material.texture_indices[slot_index];
+            }
+            return gpu_scene.fallback_texture_indices[0];
+        }
     }
 
     void PassDonutGBuffer::init(
@@ -37,18 +87,65 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
         use_motion_vectors_ = false;
+        validate_resources(resources_);
 
-        // TODO modify desc (structuredbuf, byteaddressbuf)
+        const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
+            make_structured_srv_desc(
+                static_cast<UINT>(resources_.scene->instance_data.size()),
+                sizeof(scene::DonutSceneDataGPU::InstanceData));
+        const D3D12_SHADER_RESOURCE_VIEW_DESC submesh_srv =
+            make_structured_srv_desc(
+                static_cast<UINT>(resources_.scene->submesh_data.size()),
+                sizeof(scene::DonutSceneDataGPU::SubmeshData));
+        const D3D12_SHADER_RESOURCE_VIEW_DESC material_srv =
+            make_structured_srv_desc(
+                static_cast<UINT>(resources_.scene->material_data.size()),
+                sizeof(scene::DonutSceneDataGPU::MaterialData));
+
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
-            resources_.instance_buffer->get());
+            resources_.scene->instance_buffer.Get(),
+            &instance_srv);
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER,
-            resources_.vertex_buffer->get());
+            resources_.scene->vertex_buffer.Get());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_SUBMESH_BUFFER,
+            resources_.scene->submesh_buffer.Get(),
+            &submesh_srv);
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_BUFFER,
+            resources_.scene->material_buffer.Get(),
+            &material_srv);
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
             eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER>();
+
+        for (UINT material_id = 0;
+            material_id < resources_.scene->material_data.size();
+            ++material_id) {
+            const scene::DonutSceneDataGPU::MaterialData& material =
+                resources_.scene->material_data[material_id];
+            for (UINT slot_index = 0;
+                slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+                ++slot_index) {
+                const uint32_t texture_index = texture_index_for_descriptor(
+                    *resources_.scene, material, slot_index);
+                util::Logger::g_logger.assert_with_log(
+                    texture_index < resources_.scene->textures.size(),
+                    "Donut material texture index is invalid");
+
+                resources_.shader_manager->create_srv_texture_2d(
+                    eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
+                    resources_.scene->textures[texture_index].Get(),
+                    DXGI_FORMAT_UNKNOWN,
+                    material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
+            }
+        }
+
+        resources_.sampler_manager->create_sampler_linear_wrap(
+            eng::ResourceManagerSampler::EnumDescPos::DONUT_MATERIAL);
 
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0,
@@ -89,16 +186,17 @@ namespace rndr {
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
-            .constant().reg( 1).cnt(7).spc(1).vis_vtx().add()  // PUSH_CONSTANT
-            .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()  // VIEW_CONSTANT
-            .srv_tabl().reg(10).cnt(2).spc(1).vis_vtx().add()  // GEOMETRY_DATA
-            .root_cbv().reg( 0)       .spc(0).vis_pxl().add()  // MATERIAL_CONSTANT
-            .srv_tabl().reg( 0).cnt(7).spc(0).vis_pxl().add()  // MATERIAL_TEXTURES
-            .spl_tabl().reg( 0).cnt(1).spc(2).vis_pxl().add()  // MATERIAL_SAMPLER
+            .constant().reg( 1).cnt(PUSH_CONSTANT_DWORD_COUNT).spc(1).vis_vtx().add()
+            .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()
+            .srv_tabl().reg(10).cnt(2).spc(1).vis_vtx().add()
+            .root_cbv().reg( 0)       .spc(0).vis_pxl().add()
+            .srv_tabl().reg( 0).cnt(MATERIAL_TEXTURE_DESCRIPTOR_COUNT).spc(0).vis_pxl().add()
+            .spl_tabl().reg( 0).cnt(1).spc(2).vis_pxl().add()
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
         pso_.set_shader_pixel(ps.Get());
+        pso_.set_manual_vertex_fetch();
         pso_.set_render_targets(
             static_cast<UINT>(util::RenderConstants::DONUT_GBUFFER_FORMATS.size()),
             util::RenderConstants::DONUT_GBUFFER_FORMATS.data());
@@ -125,6 +223,9 @@ namespace rndr {
         if (use_prepass_depth_)
             resources_.depth->transition(
                 command_list, D3D12_RESOURCE_STATE_DEPTH_READ);
+        else
+            resources_.depth->transition(
+                command_list, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
@@ -135,32 +236,18 @@ namespace rndr {
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);
 
-        command_list->SetGraphicsRoot32BitConstants(
-            static_cast<UINT>(RootParam::PUSH_CONSTANT),
-            7, &push_constants_, 0);
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::VIEW_CONSTANT),
-            resources_.material_constant_buffers[frame_index]->get()->
-            GetGPUVirtualAddress()); // TODO aligned offset
+            resources_.constant_buffers[frame_index]->get()->
+            GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::GEOMETRY_DATA),
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER));
-        command_list->SetGraphicsRootConstantBufferView(
-            static_cast<UINT>(RootParam::MATERIAL_CONSTANT),
-            resources_.gbuf_constant_buffers[frame_index]->get()->
-            GetGPUVirtualAddress()); // TODO aligned offset
-        command_list->SetGraphicsRootDescriptorTable(
-            static_cast<UINT>(RootParam::MATERIAL_TEXTURES),
-            resources_.shader_manager->get_gpu_adr(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_0));  // TODO wrong
-        // make pos of PBR texture in srv heap and use this instead gbuffer
-
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
             resources_.sampler_manager->get_gpu_adr(
-                eng::ResourceManagerSampler::EnumDescPos::DONUT_SHADOW));  // TODO wrong
-        // add material sampler
+                eng::ResourceManagerSampler::EnumDescPos::DONUT_MATERIAL));
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[4]{};
         rtvs[0] = resources_.frame_manager->get_rtv(
@@ -172,7 +259,7 @@ namespace rndr {
         rtvs[3] = resources_.frame_manager->get_rtv(
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3);
 
-        constexpr float clear[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+        constexpr float clear[] = { 0.0f, 0.0f, 0.0f, 0.0f };
         command_list->ClearRenderTargetView(rtvs[0], clear, 0, nullptr);
         command_list->ClearRenderTargetView(rtvs[1], clear, 0, nullptr);
         command_list->ClearRenderTargetView(rtvs[2], clear, 0, nullptr);
@@ -190,13 +277,38 @@ namespace rndr {
                 dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        command_list->IASetIndexBuffer(&resources_.scene->index_buffer_view);
 
-        // TODO modify batch when data is correctly set
-        //  command_list->DrawInstanced(3, 1, 0, 0);
-        for (const auto& batch : resources_.scene->batches) {
-            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
-            command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,
-                mesh.index_start, mesh.vertex_start, 0);
+        for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
+            const PushConstants push_constants{
+                draw.instance_id,
+                0,
+                resources_.scene->vertex_layout.position_offset,
+                resources_.scene->vertex_layout.prev_position_offset,
+                resources_.scene->vertex_layout.texcoord_offset,
+                resources_.scene->vertex_layout.normal_offset,
+                resources_.scene->vertex_layout.tangent_offset
+            };
+            command_list->SetGraphicsRoot32BitConstants(
+                static_cast<UINT>(RootParam::PUSH_CONSTANT),
+                PUSH_CONSTANT_DWORD_COUNT, &push_constants, 0);
+
+            const D3D12_GPU_VIRTUAL_ADDRESS material_address =
+                resources_.scene->material_constant_buffer->GetGPUVirtualAddress() +
+                static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(draw.material_id) *
+                resources_.scene->material_constant_stride;
+            command_list->SetGraphicsRootConstantBufferView(
+                static_cast<UINT>(RootParam::MATERIAL_CONSTANT),
+                material_address);
+
+            command_list->SetGraphicsRootDescriptorTable(
+                static_cast<UINT>(RootParam::MATERIAL_TEXTURES),
+                resources_.shader_manager->get_gpu_adr(
+                    eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
+                    draw.material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT));
+
+            command_list->DrawIndexedInstanced(
+                draw.index_count, 1, draw.index_offset, 0, 0);
         }
     }
 }

@@ -31,6 +31,9 @@ namespace eng {
             DONUT_EXPOSURE = 23,
             DONUT_COLOR_LUT = 24,
             DONUT_HDR_COLOR_UAV = 25,
+            DONUT_SUBMESH_BUFFER = 26,
+            DONUT_MATERIAL_BUFFER = 27,
+            DONUT_MATERIAL_TEXTURE_BEGIN = 64,
 
             BENCH_VISIBILITY_BUFFER = 32,
             BENCH_VERTEX_BUFFER = 33,

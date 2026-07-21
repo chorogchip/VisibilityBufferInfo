@@ -12,6 +12,7 @@ namespace eng {
             DONUT_SHADOW_COMPARISON,
             DONUT_LIGHT_PROBE,
             DONUT_BRDF,
+            DONUT_MATERIAL,
             BENCH_MATERIAL,
             COUNT
         };

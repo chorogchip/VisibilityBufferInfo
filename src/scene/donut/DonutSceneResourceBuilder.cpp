@@ -501,7 +501,15 @@ namespace scene::donut {
             });
         }
 
-        const size_t index_byte_size = source.indices.size() * sizeof(uint32_t);
+        std::vector<uint32_t> gpu_indices = source.indices;
+        for (const DonutSceneDataCPU::Submesh& submesh : source.submeshes) {
+            const uint32_t index_end = submesh.index_offset + submesh.index_count;
+            for (uint32_t index = submesh.index_offset; index < index_end; ++index) {
+                gpu_indices[index] += submesh.vertex_offset;
+            }
+        }
+
+        const size_t index_byte_size = gpu_indices.size() * sizeof(uint32_t);
         const size_t instance_byte_size =
             destination->instance_data.size() *
             sizeof(DonutSceneDataGPU::InstanceData);
@@ -537,8 +545,8 @@ namespace scene::donut {
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination->vertex_buffer, used_upload_heaps);
         upload_buffer(
-            device, command_list, source.indices.data(), index_byte_size,
-            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            device, command_list, gpu_indices.data(), index_byte_size,
+            D3D12_RESOURCE_STATE_INDEX_BUFFER,
             destination->index_buffer, used_upload_heaps);
         upload_buffer(
             device, command_list,
@@ -565,6 +573,12 @@ namespace scene::donut {
             material_constant_data.data(), material_constant_data.size(),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             destination->material_constant_buffer, used_upload_heaps);
+
+        destination->index_buffer_view.BufferLocation =
+            destination->index_buffer->GetGPUVirtualAddress();
+        destination->index_buffer_view.SizeInBytes =
+            to_uint(index_byte_size, "Donut index buffer exceeds D3D12 index view size");
+        destination->index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
 
         return destination;
     }

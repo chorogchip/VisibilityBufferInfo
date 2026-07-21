@@ -1,8 +1,10 @@
 #include "render/renderer/donut/RendererDonut.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "dx_util/ResourceUtils.h"
+#include "render/pass/donut/PassDonutGBuffer.h"
 #include "scene/donut/DonutSceneAssimpImporter.h"
 #include "scene/donut/DonutSceneResourceBuilder.h"
 #include "util/Logger.h"
@@ -33,9 +35,6 @@ namespace rndr {
                 &clear_value).Get(),
             D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-        resource_manager_shader_.init(
-            device_.Get(),
-            static_cast<UINT>(eng::ResourceManagerShader::EnumDescPos::COUNT));
         resource_manager_frame_.init(device_.Get());
         resource_manager_sampler_.init(device_.Get());
 
@@ -82,6 +81,16 @@ namespace rndr {
             "close command list on Donut scene resource creation");
         graphics_queue_.execute(command_list_.Get());
         graphics_queue_.wait_idle();
+
+        const UINT donut_texture_begin = static_cast<UINT>(
+            eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN);
+        const UINT donut_texture_count =
+            static_cast<UINT>(scene_gpu_->material_data.size()) *
+            PassDonutGBuffer::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+        const UINT shader_descriptor_count = (std::max)(
+            static_cast<UINT>(eng::ResourceManagerShader::EnumDescPos::COUNT),
+            donut_texture_begin + donut_texture_count);
+        resource_manager_shader_.init(device_.Get(), shader_descriptor_count);
 
         this->init2_();
     }

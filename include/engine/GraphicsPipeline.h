@@ -19,6 +19,7 @@ namespace eng {
         void set_shader_vertex(ID3DBlob* shader);
         void set_shader_pixel(ID3DBlob* shader);
         void set_shader_compute(ID3DBlob* shader);
+        void set_manual_vertex_fetch();
         void set_depth_only();
         void set_depth_equal();
         void set_render_targets(UINT count, DXGI_FORMAT format);
@@ -46,6 +47,7 @@ namespace eng {
         bool depth_only_ = false;
         bool depth_equal_ = false;
         bool fullscreen_ = false;
+        bool manual_vertex_fetch_ = false;
         UINT render_target_count_ = 1;
         std::array<DXGI_FORMAT, D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT> render_target_formats_{};
     };

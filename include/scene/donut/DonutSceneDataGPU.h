@@ -90,6 +90,7 @@ namespace scene {
         Microsoft::WRL::ComPtr<ID3D12Resource> material_constant_buffer;
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures;
 
+        D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
         VertexLayout vertex_layout{};
         uint32_t material_constant_stride = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
         std::array<uint32_t, 3> fallback_texture_indices{};

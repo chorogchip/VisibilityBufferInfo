@@ -1,13 +1,9 @@
-compute queue async 실행 연결
+compute queue async 실제 execute/sync 연결
 
-set desc heap 등은 한 번만 필요하므로 패스에서 미담당, heap 얻는걸 전역 구조로 바꾸기
+desc heap binding pass 밖으로 이동 검토
 
-VisBuf visibility pass의 instance buffer root descriptor 사용 개선
+total GPU time을 pass 합산 대신 timestamp slot 0에서 별도 측정
 
 Embedded texture 로딩 지원
 
-total GPU time잴때 pass별 합산 대신 전체를 한 번 더 세는 방안
-
 빌드 시 scene 날려버리는 문제
-
-씬 데이터 캐싱하는 기능 있으면 좋을듯..

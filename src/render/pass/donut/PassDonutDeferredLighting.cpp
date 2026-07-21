@@ -10,17 +10,6 @@
 
 namespace rndr {
 
-    namespace {
-        enum class RootParam : UINT {
-            CONSTANT_BUFFER,
-            SM_LIGHT_ENVBRDF,
-            SAMPLER,
-            DEPTH_GBUFFER,
-            IBL_SHADOW_AO,
-            OUTPUT,
-        };
-    }
-
     void PassDonutDeferredLighting::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,

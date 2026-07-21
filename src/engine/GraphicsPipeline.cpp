@@ -33,6 +33,7 @@ namespace eng {
         depth_only_ = false;
         depth_equal_ = false;
         fullscreen_ = false;
+        manual_vertex_fetch_ = false;
         render_target_count_ = 1;
         render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
         render_target_formats_[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -59,6 +60,10 @@ namespace eng {
     }
     void GraphicsPipeline::set_shader_compute(ID3DBlob* shader) {
         compute_shader_ = shader;
+    }
+
+    void GraphicsPipeline::set_manual_vertex_fetch() {
+        manual_vertex_fetch_ = true;
     }
 
     void GraphicsPipeline::set_depth_only() {
@@ -127,7 +132,9 @@ namespace eng {
             "graphics pipeline requires a vertex shader");
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-        desc.InputLayout = fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} : default_input_layout();
+        desc.InputLayout = fullscreen_ || manual_vertex_fetch_
+            ? D3D12_INPUT_LAYOUT_DESC{}
+            : default_input_layout();
         desc.pRootSignature = root_signature_.Get();
         desc.VS = { vertex_shader_->GetBufferPointer(), vertex_shader_->GetBufferSize() };
         if (pixel_shader_)

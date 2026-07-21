@@ -49,6 +49,15 @@ namespace rndr {
             UINT height);
 
     private:
+        enum class RootParam : UINT {
+            CONSTANT_BUFFER,
+            SM_LIGHT_ENVBRDF,
+            SAMPLER,
+            DEPTH_GBUFFER,
+            IBL_SHADOW_AO,
+            OUTPUT,
+        };
+
         PassDonutDeferredLightingResources resources_{};
         eng::GraphicsPipeline pso_;
     };
