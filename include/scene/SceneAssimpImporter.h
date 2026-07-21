@@ -9,6 +9,5 @@ namespace scene {
 	class SceneAssimpImporter {
 	public:
 		static std::unique_ptr<SceneDataCPU> load(const std::filesystem::path& path);
-		static void load_aiScene(const std::filesystem::path& path);
 	};
 }
