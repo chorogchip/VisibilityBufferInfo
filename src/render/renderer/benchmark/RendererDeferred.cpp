@@ -40,12 +40,16 @@ namespace rndr {
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
             gbuffer.gbuffers[i] = &gbuffers_[i];
         gbuffer.depth = &depth_stencil_buffer_;
-        gbuffer.constant_buffers[0] = buf_constant_[0].get();
-        gbuffer.constant_buffers[1] = buf_constant_[1].get();
-        gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
-        gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : textures_)
-            gbuffer.material_textures.push_back(texture.Get());
+        gbuffer.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        gbuffer.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
+        gbuffer.instance_buffer_address =
+            scene_object_buffer_.get()->GetGPUVirtualAddress();
+        gbuffer.material_buffer_address =
+            scene_material_buffer_.get()->GetGPUVirtualAddress();
+        for (auto& texture : textures_)
+            gbuffer.material_textures.push_back(&texture);
         gbuffer.sampler_manager = &resource_manager_sampler_;
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
@@ -56,9 +60,12 @@ namespace rndr {
             depth.frame_manager = &resource_manager_frame_;
             depth.shader_manager = &resource_manager_shader_;
             depth.depth = &depth_stencil_buffer_;
-            depth.constant_buffers[0] = buf_constant_[0].get();
-            depth.constant_buffers[1] = buf_constant_[1].get();
-            depth.instance_buffer = scene_gpu_->object_buffer.Get();
+            depth.constant_buffer_addresses[0] =
+                buf_constant_[0].get()->GetGPUVirtualAddress();
+            depth.constant_buffer_addresses[1] =
+                buf_constant_[1].get()->GetGPUVirtualAddress();
+            depth.instance_buffer_address =
+                scene_object_buffer_.get()->GetGPUVirtualAddress();
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth.index_buffer_view = scene_gpu_->index_buffer_view;
             depth.scene = scene_cpu_.get();

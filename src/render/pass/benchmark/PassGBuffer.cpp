@@ -42,7 +42,7 @@ namespace rndr {
         for (UINT i = 0; i < resources_.material_textures.size(); ++i)
             resources_.shader_manager->create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                resources_.material_textures[i], nullptr, i);
+                resources_.material_textures[i]->get(), nullptr, i);
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
         gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         gbuffer_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -103,13 +103,13 @@ namespace rndr {
 
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::FRAME_CONSTANT),
-            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            resources_.constant_buffer_addresses[frame_index]);
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.instance_buffer->GetGPUVirtualAddress());
+            resources_.instance_buffer_address);
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::MATERIAL_BUFFER),
-            resources_.material_buffer->GetGPUVirtualAddress());
+            resources_.material_buffer_address);
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
             resources_.shader_manager->get_gpu_adr(

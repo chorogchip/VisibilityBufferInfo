@@ -18,16 +18,16 @@ namespace rndr {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* visibility = nullptr;
-        ID3D12Resource* vertex_buffer = nullptr;
-        ID3D12Resource* index_buffer = nullptr;
-        ID3D12Resource* mesh_buffer = nullptr;
-        ID3D12Resource* instance_buffer = nullptr;
-        ID3D12Resource* material_buffer = nullptr;
-        std::vector<ID3D12Resource*> material_textures;
+        eng::GPUResource* vertex_buffer = nullptr;
+        eng::GPUResource* index_buffer = nullptr;
+        eng::GPUResource* mesh_buffer = nullptr;
+        eng::GPUResource* instance_buffer = nullptr;
+        eng::GPUResource* material_buffer = nullptr;
+        std::vector<eng::GPUResource*> material_textures;
         const scene::SceneDataCPU* scene = nullptr;
         eng::GPUResource* gbuffers[8]{};
         UINT gbuffer_count = 0;
-        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
+        D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_addresses[util::Constants::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;
     };
 

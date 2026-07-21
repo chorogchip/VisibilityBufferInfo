@@ -61,9 +61,12 @@ namespace rndr {
         visibility.frame_manager = &resource_manager_frame_;
         visibility.visibility = &vis_buffer_;
         visibility.depth = &depth_stencil_buffer_;
-        visibility.constant_buffers[0] = buf_constant_[0].get();
-        visibility.constant_buffers[1] = buf_constant_[1].get();
-        visibility.instance_buffer = scene_gpu_->object_buffer.Get();
+        visibility.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        visibility.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
+        visibility.instance_buffer_address =
+            scene_object_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
@@ -73,19 +76,21 @@ namespace rndr {
         gbuffer.frame_manager = &resource_manager_frame_;
         gbuffer.shader_manager = &resource_manager_shader_;
         gbuffer.visibility = &vis_buffer_;
-        gbuffer.vertex_buffer = scene_gpu_->vertex_buffer.Get();
-        gbuffer.index_buffer = scene_gpu_->index_buffer.Get();
-        gbuffer.mesh_buffer = scene_gpu_->mesh_buffer.Get();
-        gbuffer.instance_buffer = scene_gpu_->object_buffer.Get();
-        gbuffer.material_buffer = scene_gpu_->material_buffer.Get();
+        gbuffer.vertex_buffer = &scene_vertex_buffer_;
+        gbuffer.index_buffer = &scene_index_buffer_;
+        gbuffer.mesh_buffer = &scene_mesh_buffer_;
+        gbuffer.instance_buffer = &scene_object_buffer_;
+        gbuffer.material_buffer = &scene_material_buffer_;
         gbuffer.scene = scene_cpu_.get();
-        for (const auto& texture : textures_)
-            gbuffer.material_textures.push_back(texture.Get());
+        for (auto& texture : textures_)
+            gbuffer.material_textures.push_back(&texture);
         gbuffer.gbuffer_count = program_argument_.gbuffer_cnt;
         for (UINT i = 0; i < gbuffer.gbuffer_count; ++i)
             gbuffer.gbuffers[i] = &gbuffers_[i];
-        gbuffer.constant_buffers[0] = buf_constant_[0].get();
-        gbuffer.constant_buffers[1] = buf_constant_[1].get();
+        gbuffer.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        gbuffer.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
         gbuffer.sampler_manager = &resource_manager_sampler_;
         pass_gbuffer_.init(device_.Get(), program_argument_, gbuffer);
 

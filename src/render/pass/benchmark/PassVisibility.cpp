@@ -67,10 +67,10 @@ namespace rndr {
         command_list->RSSetScissorRects(1, &scissor_rect);
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::FRAME_CONSTANT),
-            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            resources_.constant_buffer_addresses[frame_index]);
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.instance_buffer->GetGPUVirtualAddress());
+            resources_.instance_buffer_address);
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
         command_list->IASetIndexBuffer(&resources_.index_buffer_view);

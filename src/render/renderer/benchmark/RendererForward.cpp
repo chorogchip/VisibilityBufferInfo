@@ -22,9 +22,12 @@ namespace rndr {
             depth_resources.frame_manager = &resource_manager_frame_;
             depth_resources.shader_manager = &resource_manager_shader_;
             depth_resources.depth = &depth_stencil_buffer_;
-            depth_resources.constant_buffers[0] = buf_constant_[0].get();
-            depth_resources.constant_buffers[1] = buf_constant_[1].get();
-            depth_resources.instance_buffer = scene_gpu_->object_buffer.Get();
+            depth_resources.constant_buffer_addresses[0] =
+                buf_constant_[0].get()->GetGPUVirtualAddress();
+            depth_resources.constant_buffer_addresses[1] =
+                buf_constant_[1].get()->GetGPUVirtualAddress();
+            depth_resources.instance_buffer_address =
+                scene_object_buffer_.get()->GetGPUVirtualAddress();
             depth_resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth_resources.index_buffer_view = scene_gpu_->index_buffer_view;
             depth_resources.scene = scene_cpu_.get();
@@ -37,12 +40,16 @@ namespace rndr {
         resources.back_buffers[0] = &render_targets_[0];
         resources.back_buffers[1] = &render_targets_[1];
         resources.depth = &depth_stencil_buffer_;
-        resources.constant_buffers[0] = buf_constant_[0].get();
-        resources.constant_buffers[1] = buf_constant_[1].get();
-        resources.instance_buffer = scene_gpu_->object_buffer.Get();
-        resources.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : textures_)
-            resources.material_textures.push_back(texture.Get());
+        resources.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        resources.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
+        resources.instance_buffer_address =
+            scene_object_buffer_.get()->GetGPUVirtualAddress();
+        resources.material_buffer_address =
+            scene_material_buffer_.get()->GetGPUVirtualAddress();
+        for (auto& texture : textures_)
+            resources.material_textures.push_back(&texture);
         resources.sampler_manager = &resource_manager_sampler_;
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;

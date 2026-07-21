@@ -28,7 +28,12 @@ namespace rndr {
 
 		std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
 		std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures_;
+		eng::GPUResource scene_vertex_buffer_;
+		eng::GPUResource scene_index_buffer_;
+		eng::GPUResource scene_object_buffer_;
+		eng::GPUResource scene_material_buffer_;
+		eng::GPUResource scene_mesh_buffer_;
+		std::vector<eng::GPUResource> textures_;
 
 		struct ConstBufMatrices {
 			DirectX::XMFLOAT4X4 mat_view_;
@@ -38,6 +43,7 @@ namespace rndr {
 		dxutl::UploadConstBuf<ConstBufMatrices> buf_constant_[util::Constants::FRAME_COUNT];
 
 	private:
+		void wrap_scene_resources();
 		void create_dummy_textures();
 	};
 }

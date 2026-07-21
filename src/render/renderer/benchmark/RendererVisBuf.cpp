@@ -32,9 +32,12 @@ namespace rndr {
         visibility.frame_manager = &resource_manager_frame_;
         visibility.visibility = &vis_buffer_;
         visibility.depth = &depth_stencil_buffer_;
-        visibility.constant_buffers[0] = buf_constant_[0].get();
-        visibility.constant_buffers[1] = buf_constant_[1].get();
-        visibility.instance_buffer = scene_gpu_->object_buffer.Get();
+        visibility.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        visibility.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
+        visibility.instance_buffer_address =
+            scene_object_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
@@ -46,16 +49,18 @@ namespace rndr {
         resolve.back_buffers[0] = &render_targets_[0];
         resolve.back_buffers[1] = &render_targets_[1];
         resolve.visibility = &vis_buffer_;
-        resolve.vertex_buffer = scene_gpu_->vertex_buffer.Get();
-        resolve.index_buffer = scene_gpu_->index_buffer.Get();
-        resolve.mesh_buffer = scene_gpu_->mesh_buffer.Get();
-        resolve.instance_buffer = scene_gpu_->object_buffer.Get();
-        resolve.material_buffer = scene_gpu_->material_buffer.Get();
-        for (const auto& texture : textures_)
-            resolve.material_textures.push_back(texture.Get());
+        resolve.vertex_buffer = &scene_vertex_buffer_;
+        resolve.index_buffer = &scene_index_buffer_;
+        resolve.mesh_buffer = &scene_mesh_buffer_;
+        resolve.instance_buffer = &scene_object_buffer_;
+        resolve.material_buffer = &scene_material_buffer_;
+        for (auto& texture : textures_)
+            resolve.material_textures.push_back(&texture);
         resolve.scene = scene_cpu_.get();
-        resolve.constant_buffers[0] = buf_constant_[0].get();
-        resolve.constant_buffers[1] = buf_constant_[1].get();
+        resolve.constant_buffer_addresses[0] =
+            buf_constant_[0].get()->GetGPUVirtualAddress();
+        resolve.constant_buffer_addresses[1] =
+            buf_constant_[1].get()->GetGPUVirtualAddress();
         resolve.sampler_manager = &resource_manager_sampler_;
         pass_resolve_.init(device_.Get(), program_argument_, resolve);
     }

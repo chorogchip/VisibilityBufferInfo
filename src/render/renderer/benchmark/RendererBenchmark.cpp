@@ -58,6 +58,8 @@ namespace rndr {
             graphics_queue_.wait_idle();
         }
 
+        this->wrap_scene_resources();
+
         if (program_argument_.to_load_texture)
             program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
 
@@ -92,12 +94,39 @@ namespace rndr {
 
     }
 
+    void RendererBenchmark::wrap_scene_resources() {
+        util::Logger::g_logger.assert_with_log(
+            scene_gpu_ != nullptr, "benchmark scene GPU data must be initialized");
+
+        scene_vertex_buffer_.init(
+            scene_gpu_->vertex_buffer.Get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        scene_index_buffer_.init(
+            scene_gpu_->index_buffer.Get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        scene_object_buffer_.init(
+            scene_gpu_->object_buffer.Get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene_material_buffer_.init(
+            scene_gpu_->material_buffer.Get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        scene_mesh_buffer_.init(
+            scene_gpu_->mesh_buffer.Get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+
     void RendererBenchmark::create_dummy_textures() {
 
         textures_.clear();
 
         if (program_argument_.to_load_texture) {
-            textures_ = scene_gpu_.get()->textures;
+            textures_.reserve(scene_gpu_->textures.size());
+            for (const auto& texture : scene_gpu_->textures) {
+                textures_.emplace_back();
+                textures_.back().init(
+                    texture.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            }
             return;
         }
 
@@ -143,9 +172,11 @@ namespace rndr {
             const auto texture_data = util::create_dummy_texture_data(
                 texture_size, texture_size, texture_index);
 
-            textures_[texture_index] = dxutl::create_committed_resource(
+            auto texture = dxutl::create_committed_resource(
                 device_.Get(), texture_desc, D3D12_HEAP_TYPE_DEFAULT,
                 D3D12_RESOURCE_STATE_COPY_DEST);
+            textures_[texture_index].init(
+                texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
             upload_buffers[texture_index] = dxutl::create_buffer(
                 device_.Get(), upload_size, D3D12_HEAP_TYPE_UPLOAD,
                 D3D12_RESOURCE_STATE_GENERIC_READ);
@@ -165,7 +196,7 @@ namespace rndr {
             upload_buffers[texture_index]->Unmap(0, nullptr);
 
             D3D12_TEXTURE_COPY_LOCATION destination{};
-            destination.pResource = textures_[texture_index].Get();
+            destination.pResource = textures_[texture_index].get();
             destination.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 
             D3D12_TEXTURE_COPY_LOCATION source{};
@@ -175,9 +206,8 @@ namespace rndr {
 
             command_list_->CopyTextureRegion(
                 &destination, 0, 0, 0, &source, nullptr);
-            dxutl::transition_resource(
-                command_list_.Get(), textures_[texture_index].Get(),
-                D3D12_RESOURCE_STATE_COPY_DEST,
+            textures_[texture_index].transition(
+                command_list_.Get(),
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 

@@ -47,32 +47,32 @@ namespace rndr {
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->vertices.size());
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
-            resources_.vertex_buffer, &scene_desc);
+            resources_.vertex_buffer->get(), &scene_desc);
         scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->indices[0]);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->indices.size());
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
-            resources_.index_buffer, &scene_desc);
+            resources_.index_buffer->get(), &scene_desc);
         scene_desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->meshes.size());
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
-            resources_.mesh_buffer, &scene_desc);
+            resources_.mesh_buffer->get(), &scene_desc);
         scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->objects[0]);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->objects.size());
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
-            resources_.instance_buffer, &scene_desc);
+            resources_.instance_buffer->get(), &scene_desc);
         scene_desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->materials.size());
         resources_.shader_manager->create_srv(
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
-            resources_.material_buffer, &scene_desc);
+            resources_.material_buffer->get(), &scene_desc);
 
         for (UINT i = 0; i < resources_.material_textures.size(); ++i)
             resources_.shader_manager->create_srv(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                resources_.material_textures[i], nullptr, i);
+                resources_.material_textures[i]->get(), nullptr, i);
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
@@ -138,7 +138,7 @@ namespace rndr {
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::PASS_CONSTANT),
-            resources_.constant_buffers[frame_index]->GetGPUVirtualAddress());
+            resources_.constant_buffer_addresses[frame_index]);
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::SCENE_INPUT),
             resources_.shader_manager->get_gpu_adr(

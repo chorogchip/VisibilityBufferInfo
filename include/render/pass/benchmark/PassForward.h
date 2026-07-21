@@ -22,10 +22,10 @@ namespace rndr {
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* back_buffers[util::Constants::FRAME_COUNT]{};
         eng::GPUResource* depth = nullptr;
-        ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};
-        ID3D12Resource* instance_buffer = nullptr;
-        ID3D12Resource* material_buffer = nullptr;
-        std::vector<ID3D12Resource*> material_textures;
+        D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_addresses[util::Constants::FRAME_COUNT]{};
+        D3D12_GPU_VIRTUAL_ADDRESS instance_buffer_address = 0;
+        D3D12_GPU_VIRTUAL_ADDRESS material_buffer_address = 0;
+        std::vector<eng::GPUResource*> material_textures;
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
