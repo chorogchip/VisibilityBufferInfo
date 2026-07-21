@@ -45,6 +45,7 @@ namespace scene::donut {
             std::vector<std::byte>& destination,
             const std::vector<T>& source,
             uint32_t& offset) {
+
             const size_t stream_offset = align_16(destination.size());
             util::Logger::g_logger.assert_with_log(
                 source.size() <= (std::numeric_limits<size_t>::max)() / sizeof(T),
@@ -66,6 +67,7 @@ namespace scene::donut {
             D3D12_RESOURCE_STATES final_state,
             Microsoft::WRL::ComPtr<ID3D12Resource>& destination,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+
             util::Logger::g_logger.assert_with_log(
                 byte_size > 0, "Donut GPU buffer must not be empty");
 
@@ -115,6 +117,7 @@ namespace scene::donut {
             ID3D12GraphicsCommandList* command_list,
             DonutSceneDataGPU& destination,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+
             const std::array<uint8_t, 4> pixel = {255, 255, 255, 255};
 
             D3D12_RESOURCE_DESC texture_desc{};
@@ -172,6 +175,7 @@ namespace scene::donut {
             DonutSceneDataGPU& destination,
             std::unordered_map<std::string, uint32_t>& cache,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+
             if (!source_path || source_path->empty() || source_path->native()[0] == L'*') {
                 return std::nullopt;
             }
@@ -297,6 +301,7 @@ namespace scene::donut {
         ID3D12Device* device,
         ID3D12GraphicsCommandList* command_list,
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& used_upload_heaps) {
+
         util::Logger::g_logger.assert_with_log(
             device != nullptr && command_list != nullptr,
             "Donut scene resource builder requires a device and command list");

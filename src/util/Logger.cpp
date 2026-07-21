@@ -23,6 +23,13 @@ namespace util {
 
     void Logger::assert_with_log(
         bool expression,
+        const std::source_location& loc = std::source_location::current()) {
+
+        this->assert_with_log(expression, "", loc);
+    }
+
+    void Logger::assert_with_log(
+        bool expression,
         const char* log_info,
         const std::source_location& loc) {
 

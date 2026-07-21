@@ -9,7 +9,6 @@ namespace rndr {
         : do_prepass_(do_prepass) {}
 
     void RendererDeferred::init2_() {
-
         program_result_.renderer_name = do_prepass_ ? "DeferredPrepass" : "Deferred";
         if (do_prepass_)
             program_result_.pass_names[0] = "depth_prepass";
@@ -90,6 +89,5 @@ namespace rndr {
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
         pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
-
     }
 }

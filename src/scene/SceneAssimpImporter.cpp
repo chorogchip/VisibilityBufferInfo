@@ -11,6 +11,8 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include "util/Logger.h"
+
 namespace scene {
 
     static DirectX::XMFLOAT4 fallback_color(uint32_t material_index) {
@@ -74,14 +76,18 @@ namespace scene {
             aiProcess_SortByPType;
 
         const aiScene* assimp_scene = importer.ReadFile(path.string(), flags);
+
         if (assimp_scene == nullptr || assimp_scene->mNumMeshes == 0) {
-            res->error_message = importer.GetErrorString();
-            if (res->error_message.empty()) {
-                res->error_message = "Assimp returned no meshes.";
-            }
+
+            util::Logger::g_logger <<
+                "Error in Assimp Scene import: \n\t" <<
+                importer.GetErrorString();
+
+            util::Logger::g_logger.assert_with_log(false);
             return res;
         }
-        std::cout << "Read " << path.string() << "... \bparsing [" <<
+        util::Logger::g_logger <<
+            "[Assimp Importer]: Read " << path.string() << "... \bparsing [" <<
             assimp_scene->mNumMaterials << "] materals | [" <<
             assimp_scene->mMeshes << "] meshes" << std::endl;
 
@@ -188,5 +194,4 @@ namespace scene {
 
         return res;
     }
-
 }

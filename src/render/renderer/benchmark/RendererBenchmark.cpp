@@ -16,9 +16,6 @@ namespace rndr {
 
     void RendererBenchmark::init1_() {
 
-        if (program_argument_.to_load_texture)
-            program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
-
         const UINT texture_begin = static_cast<UINT>(
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN);
 
@@ -54,6 +51,9 @@ namespace rndr {
             graphics_queue_.wait_idle();
         }
 
+        if (program_argument_.to_load_texture)
+            program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
+
         this->create_dummy_textures();
 
         resource_manager_sampler_.create_sampler(
@@ -85,7 +85,10 @@ namespace rndr {
 
         textures_.clear();
 
-        if (program_argument_.to_load_texture) return;
+        if (program_argument_.to_load_texture) {
+            textures_ = scene_gpu_.get()->textures;
+            return;
+        }
 
         const UINT texture_count = program_argument_.texture_count;
         const UINT texture_size = program_argument_.texture_size;

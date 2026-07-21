@@ -9,7 +9,7 @@
 
 #include "scene/donut/DonutSceneDataCPU.h"
 
-namespace scene::donut {
+namespace scene {
 
     struct DonutSceneDataGPU {
         struct VertexLayout {

@@ -2,7 +2,7 @@
 
 #include <limits>
 
-namespace scene::donut {
+namespace scene {
 
     bool DonutSceneDataCPU::validate(std::string& output_error_message) const {
         const size_t vertex_count = positions.size();

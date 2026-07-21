@@ -11,7 +11,6 @@
 namespace rndr {
 
     void RendererVisBufGBuffer::init2_() {
-
         program_result_.renderer_name = "VisBuf";
         program_result_.pass_names[0] = "visibility";
         program_result_.pass_names[1] = "gbuffer";
@@ -42,7 +41,6 @@ namespace rndr {
         vis_buffer_.init(vis_buffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         for (uint32_t i = 0; i < program_argument_.gbuffer_cnt; ++i) {
-
             D3D12_CLEAR_VALUE gbuffer_clear_value{};
             gbuffer_clear_value.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
             gbuffer_clear_value.Color[0] = util::RenderConstants::CLEAR_COLOR[0];
@@ -58,7 +56,6 @@ namespace rndr {
             gbuffers_.emplace_back();
             gbuffers_.back().init(gbuffer.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
-
 
         PassVisibilityResources visibility{};
         visibility.frame_manager = &resource_manager_frame_;

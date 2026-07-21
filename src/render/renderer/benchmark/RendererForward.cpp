@@ -47,18 +47,15 @@ namespace rndr {
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;
         resources.scene = scene_cpu_.get();
-
         pass_forward_.init(device_.Get(), program_argument_, resources, do_prepass_);
     }
 
     void RendererForward::render_record_() {
-
         if (do_prepass_) {
             frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
             frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
         }
-
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
         pass_forward_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);

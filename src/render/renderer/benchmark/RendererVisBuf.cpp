@@ -10,7 +10,6 @@
 namespace rndr {
 
     void RendererVisBuf::init2_() {
-
         program_result_.renderer_name = "VisBuf";
         program_result_.pass_names[0] = "visibility";
         program_result_.pass_names[1] = "resolve";

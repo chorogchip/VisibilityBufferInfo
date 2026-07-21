@@ -2,6 +2,7 @@
 
 #include <source_location>
 #include <sstream>
+#include <iostream>
 #include <mutex>
 
 namespace util {
@@ -17,6 +18,10 @@ namespace util {
 		Logger& operator=(const Logger&) = delete;
 
 		void add_logging_info(const char* log_info);
+
+		void assert_with_log(
+			bool expression,
+			const std::source_location& loc = std::source_location::current());
 
 		void assert_with_log(
 			bool expression,
@@ -41,6 +46,12 @@ namespace util {
 		Logger& operator<<(const T& data) {
 			std::lock_guard<std::mutex> lock(mutex_);
 			logging_stream_ << data;
+			return *this;
+		}
+
+		Logger& operator<<(std::ostream& (*manip)(std::ostream&)) {
+			std::lock_guard<std::mutex> lock(mutex_);
+			manip(logging_stream_);
 			return *this;
 		}
 

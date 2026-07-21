@@ -17,7 +17,6 @@
 #include "dx_util/UploadConstBuf.h"
 #include "engine/GraphicsQueue.h"
 #include "engine/GPUResource.h"
-
 #include "render/camera/Camera.h"
 #include "render/camera/CameraPathController.h"
 

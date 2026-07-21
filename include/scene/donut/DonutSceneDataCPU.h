@@ -11,7 +11,7 @@
 
 #include "scene/donut/SceneStructures.h"
 
-namespace scene::donut {
+namespace scene {
 
     inline constexpr uint32_t invalid_index = static_cast<uint32_t>(-1);
     inline constexpr int32_t invalid_descriptor_index = -1;
