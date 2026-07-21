@@ -15,7 +15,6 @@
 #include "util/BenchmarkCsvWriter.h"
 #include "dx_util/DeviceUtils.h"
 #include "engine/TextureLoader.h"
-#include "render/camera/CameraPath.h"
 
 #include "util/minmax_remover.h"
 
@@ -82,12 +81,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     scissor_rect_.bottom = static_cast<LONG>(height_);
 
     camera_.init(arg);
-    if (arg.to_set_start_frame) {
-        rndr::CameraPath start_path;
-        start_path.load_csv(arg.camera_filepath);
-        camera_.set_pose(start_path.sample(arg.key_frame));
-    }
-    camera_path_controller_.init(arg);
+    camera_path_controller_.init(arg, camera_);
     frame_counter_.init(arg);
     frame_time_.init(device_.Get(), graphics_queue_.get());
 
@@ -96,7 +90,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
 void RendererBase::close() {
     graphics_queue_.wait_idle();
-    camera_path_controller_.close(camera_);
+    camera_path_controller_.close();
 
     const std::string& path = program_argument_.output_filepath;
     if (path == "") return;
@@ -154,7 +148,7 @@ void RendererBase::close() {
 
 void RendererBase::render() {
 
-    camera_path_controller_.before_render(camera_);
+    camera_path_controller_.before_render();
 
     this->render_prepare_();
 

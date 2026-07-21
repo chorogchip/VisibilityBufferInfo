@@ -11,10 +11,10 @@
 namespace rndr {
 	class CameraPathController {
 	public:
-		void init(const util::ProgramArgument& argument);
-		void before_render(Camera& camera);
+		void init(const util::ProgramArgument& argument, Camera& camera);
+		void before_render();
 		void after_render();
-		void close(const Camera& camera);
+		void close();
 
 		uint64_t measurement_frames() const;
 		bool is_playback() const { return mode_ == 2; }
@@ -28,6 +28,7 @@ namespace rndr {
 		uint64_t default_measurement_frames_ = 0;
 		uint64_t keyframe_interval_ = 10;
 		uint64_t render_frame_ = 0;
+		Camera* camera_ = nullptr;
 		CameraPath path_{};
 		std::optional<CameraPose> last_recorded_pose_{};
 	};

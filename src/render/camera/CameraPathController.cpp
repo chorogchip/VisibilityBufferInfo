@@ -4,20 +4,29 @@
 #include <algorithm>
 #include <cmath>
 
+#include "util/Logger.h"
+
 namespace rndr {
-	void CameraPathController::init(const util::ProgramArgument& argument) {
+	void CameraPathController::init(const util::ProgramArgument& argument, Camera& camera) {
+		camera_ = &camera;
 		mode_ = argument.camera_mode;
 		filepath_ = argument.camera_filepath;
 		warmup_frames_ = argument.warmup_frames;
 		default_measurement_frames_ = argument.measure_frames;
 		keyframe_interval_ = argument.camera_keyframe_interval;
-		if (is_playback()) path_.load_csv(filepath_);
+		if (is_playback() || argument.to_set_start_frame)
+			path_.load_csv(filepath_);
+		if (argument.to_set_start_frame)
+			camera_->set_pose(path_.sample(argument.key_frame));
 	}
 
-	void CameraPathController::before_render(Camera& camera) {
+	void CameraPathController::before_render() {
+		util::Logger::g_logger.assert_with_log(
+			camera_ != nullptr, "camera path controller requires a camera");
+
 		if (mode_ == 1) {
 			if (render_frame_ % keyframe_interval_ == 0) {
-				const CameraPose pose = camera.get_pose();
+				const CameraPose pose = camera_->get_pose();
 				if (pose_changed(pose)) {
 					path_.add_keyframe(render_frame_, pose);
 					last_recorded_pose_ = pose;
@@ -32,17 +41,20 @@ namespace rndr {
 		if (render_frame_ >= warmup_frames_)
 			playback_frame = render_frame_ - warmup_frames_;
 		playback_frame = std::min(playback_frame, path_.end_frame());
-		camera.set_pose(path_.sample(playback_frame));
+		camera_->set_pose(path_.sample(playback_frame));
 	}
 
 	void CameraPathController::after_render() {
 		++render_frame_;
 	}
 
-	void CameraPathController::close(const Camera& camera) {
+	void CameraPathController::close() {
+		util::Logger::g_logger.assert_with_log(
+			camera_ != nullptr, "camera path controller requires a camera");
+
 		if (mode_ != 1) return;
 		if (path_.empty() || path_.end_frame() < render_frame_)
-			path_.add_keyframe(render_frame_, camera.get_pose());
+			path_.add_keyframe(render_frame_, camera_->get_pose());
 		path_.save_csv(filepath_);
 	}
 
