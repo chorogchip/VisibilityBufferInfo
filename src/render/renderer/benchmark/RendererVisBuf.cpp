@@ -11,8 +11,8 @@ namespace rndr {
 
     void RendererVisBuf::init2_() {
         program_result_.renderer_name = "VisBuf";
-        program_result_.pass_names[0] = "visibility";
-        program_result_.pass_names[1] = "resolve";
+        program_result_.pass_names[1] = "visibility";
+        program_result_.pass_names[2] = "resolve";
 
         D3D12_CLEAR_VALUE clear_value{};
         clear_value.Format = DXGI_FORMAT_R32G32_UINT;
@@ -66,11 +66,11 @@ namespace rndr {
     }
 
     void RendererVisBuf::render_record_() {
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
-        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
-        pass_resolve_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
+        pass_resolve_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
     }
 }

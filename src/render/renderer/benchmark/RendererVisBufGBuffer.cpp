@@ -12,9 +12,9 @@ namespace rndr {
 
     void RendererVisBufGBuffer::init2_() {
         program_result_.renderer_name = "VisBuf";
-        program_result_.pass_names[0] = "visibility";
-        program_result_.pass_names[1] = "gbuffer";
-        program_result_.pass_names[2] = "lighting";
+        program_result_.pass_names[1] = "visibility";
+        program_result_.pass_names[2] = "gbuffer";
+        program_result_.pass_names[3] = "lighting";
 
 
         util::Logger::g_logger.assert_with_log(
@@ -106,14 +106,14 @@ namespace rndr {
     }
 
     void RendererVisBufGBuffer::render_record_() {
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
-        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
-        pass_gbuffer_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        pass_visibility_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
-        pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        pass_gbuffer_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 3);
+        pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 3);
     }
 }

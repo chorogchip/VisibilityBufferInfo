@@ -89,8 +89,8 @@ namespace util {
     };
 
     struct ProgramResult {
-        std::array<std::string, util::Constants::MAX_PASS_COUNT> pass_names{};
-        std::array<double, util::Constants::MAX_PASS_COUNT> pass_time_avg_ms{};
+        std::array<std::string, util::Constants::TIMER_SLOT_COUNT> pass_names{};
+        std::array<double, util::Constants::TIMER_SLOT_COUNT> pass_time_avg_ms{};
 
 #define X(type, name, arg) \
         type name{};

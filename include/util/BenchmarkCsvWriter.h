@@ -17,6 +17,6 @@ namespace util {
 
     void write_windowed_benchmark_csv(
         const std::filesystem::path& path,
-        const std::array<std::string, util::Constants::MAX_PASS_COUNT>& pass_names,
+        const std::array<std::string, util::Constants::TIMER_SLOT_COUNT>& pass_names,
         const std::vector<FrameCounter::WindowedData>& windows);
 }

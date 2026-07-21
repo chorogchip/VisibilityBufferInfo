@@ -14,8 +14,8 @@ namespace rndr {
     void RendererForward::init2_() {
         program_result_.renderer_name = do_prepass_ ? "ForwardPrepass" : "Forward";
         if (do_prepass_)
-            program_result_.pass_names[0] = "depth_prepass";
-        program_result_.pass_names[1] = "forward";
+            program_result_.pass_names[1] = "depth_prepass";
+        program_result_.pass_names[do_prepass_ ? 2 : 1] = "forward";
 
         if (do_prepass_) {
             PassDepthPreResources depth_resources{};
@@ -58,13 +58,14 @@ namespace rndr {
     }
 
     void RendererForward::render_record_() {
+        const UINT forward_slot = do_prepass_ ? 2 : 1;
         if (do_prepass_) {
-            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
+            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-            frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
+            frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         }
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, forward_slot);
         pass_forward_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, forward_slot);
     }
 }

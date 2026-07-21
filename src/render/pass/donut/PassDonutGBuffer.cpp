@@ -186,6 +186,7 @@ namespace rndr {
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
+            .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
             .constant().reg( 1).cnt(PUSH_CONSTANT_DWORD_COUNT).spc(1).vis_vtx().add()
             .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()
             .srv_tabl().reg(10).cnt(2).spc(1).vis_vtx().add()

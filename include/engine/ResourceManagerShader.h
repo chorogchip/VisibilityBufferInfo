@@ -33,6 +33,9 @@ namespace eng {
             DONUT_HDR_COLOR_UAV = 25,
             DONUT_SUBMESH_BUFFER = 26,
             DONUT_MATERIAL_BUFFER = 27,
+            DONUT_TONEMAP_SOURCE = 28,
+            DONUT_TONEMAP_EXPOSURE = 29,
+            DONUT_TONEMAP_COLOR_LUT = 30,
             DONUT_MATERIAL_TEXTURE_BEGIN = 64,
 
             BENCH_VISIBILITY_BUFFER = 32,
@@ -50,7 +53,7 @@ namespace eng {
             BENCH_GBUFFER_6 = 44,
             BENCH_GBUFFER_7 = 45,
             BENCH_MATERIAL_TEXTURE_BEGIN = 46,
-            COUNT = BENCH_MATERIAL_TEXTURE_BEGIN
+            COUNT = DONUT_MATERIAL_TEXTURE_BEGIN
         };
 
         void init(ID3D12Device* device, UINT descriptor_count);

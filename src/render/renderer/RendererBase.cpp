@@ -4,7 +4,7 @@
 #include <ctime>
 #include <algorithm>
 #include <iomanip>
-#include <numeric>
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -26,6 +26,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
     program_argument_ = arg;
     program_result_ = util::ProgramResult::from_args(arg);
+    program_result_.pass_names[dxutl::GpuFrameTimer::TOTAL_SLOT] = "total";
 
     hwnd_ = hwnd;
     width_ = arg.window_width;
@@ -105,15 +106,15 @@ void RendererBase::close() {
 
     auto results = frame_counter_.summarize();
 
-    static_assert(util::Constants::MAX_PASS_COUNT== dxutl::GpuFrameTimer::PASS_COUNT);
+    static_assert(util::Constants::TIMER_SLOT_COUNT == dxutl::GpuFrameTimer::SLOT_COUNT);
     util::Logger::g_logger.assert_with_log(
-        results.size() == util::Constants::MAX_PASS_COUNT + 1,
+        results.size() == util::Constants::TIMER_SLOT_COUNT,
         "unexpected benchmark result count");
 
-    for (size_t i = 0; i < util::Constants::MAX_PASS_COUNT; ++i)
+    for (size_t i = 0; i < util::Constants::TIMER_SLOT_COUNT; ++i)
         program_result_.pass_time_avg_ms[i] = results[i].time_avg_ms;
 
-    const auto& total = results[util::Constants::MAX_PASS_COUNT];
+    const auto& total = results[dxutl::GpuFrameTimer::TOTAL_SLOT];
     program_result_.total_time_min_ms = total.time_min_ms;
     program_result_.total_time_median_ms = total.time_median_ms;
     program_result_.total_time_max_ms = total.time_max_ms;
@@ -160,11 +161,17 @@ void RendererBase::render() {
         command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
         "command list reset on render start");
 
+    frame_time_.start_timestamp(
+        command_list_.Get(), frame_index_, dxutl::GpuFrameTimer::TOTAL_SLOT);
+
     this->render_record_();
 
     render_targets_[frame_index_].transition(
         command_list_.Get(),
         D3D12_RESOURCE_STATE_PRESENT);
+
+    frame_time_.end_timestamp(
+        command_list_.Get(), frame_index_, dxutl::GpuFrameTimer::TOTAL_SLOT);
 
     Utils::throw_if_failed(command_list_->Close(),
         "command list close on frame end");
@@ -183,9 +190,8 @@ void RendererBase::render() {
     frame_index_ = swapchain_->GetCurrentBackBufferIndex();
     graphics_queue_.wait(fence_values_[frame_index_]);
 
-    std::vector<double> passes = frame_time_.read_timestamp(frame_index_);
-    passes.push_back(std::accumulate(passes.begin(), passes.end(), 0.0));
-    frame_counter_.tick(passes);
+    std::vector<double> measures = frame_time_.read_timestamp(frame_index_);
+    frame_counter_.tick(measures);
 
     camera_path_controller_.after_render();
 }

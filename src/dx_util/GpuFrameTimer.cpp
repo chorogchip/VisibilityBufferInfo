@@ -32,46 +32,46 @@ namespace dxutl {
 
     std::vector<double> GpuFrameTimer::read_timestamp(UINT frame_index) {
 
-        std::vector<double> ret(PASS_COUNT, 0.0);
-        const UINT timestamp_base = frame_index * PASS_COUNT * 2;
+        std::vector<double> ret(SLOT_COUNT, 0.0);
+        const UINT timestamp_base = frame_index * SLOT_COUNT * 2;
 
-        for (UINT pass = 0; pass < PASS_COUNT; ++pass) {
-            if (!resolved_[frame_index][pass]) continue;
+        for (UINT slot = 0; slot < SLOT_COUNT; ++slot) {
+            if (!resolved_[frame_index][slot]) continue;
 
-            const UINT timestamp_index = timestamp_base + pass * 2;
+            const UINT timestamp_index = timestamp_base + slot * 2;
             const UINT64 start = readback_buffer_mapped_[timestamp_index + 0];
             const UINT64 end = readback_buffer_mapped_[timestamp_index + 1];
 
             if (end > start && timestamp_frequency_rcp_ != 0.0f)
-                ret[pass] = static_cast<double>(end - start) * 1000.0 * timestamp_frequency_rcp_;
+                ret[slot] = static_cast<double>(end - start) * 1000.0 * timestamp_frequency_rcp_;
         }
 
         return ret;
     }
 
-    void GpuFrameTimer::start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
+    void GpuFrameTimer::start_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT slot) {
 
         util::Logger::g_logger.assert_with_log(
-            frame_index < util::Constants::FRAME_COUNT && pass < PASS_COUNT,
+            frame_index < util::Constants::FRAME_COUNT && slot < SLOT_COUNT,
             "GPU timestamp index is out of range");
 
-        const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;
+        const UINT timestamp_index = frame_index * SLOT_COUNT * 2 + slot * 2;
 
         p_list->EndQuery(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_index);
     }
 
-    void GpuFrameTimer::end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT pass) {
+    void GpuFrameTimer::end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT slot) {
 
         util::Logger::g_logger.assert_with_log(
-            frame_index < util::Constants::FRAME_COUNT && pass < PASS_COUNT,
+            frame_index < util::Constants::FRAME_COUNT && slot < SLOT_COUNT,
             "GPU timestamp index is out of range");
 
-        const UINT timestamp_index = frame_index * PASS_COUNT * 2 + pass * 2;
+        const UINT timestamp_index = frame_index * SLOT_COUNT * 2 + slot * 2;
 
         p_list->EndQuery(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP, timestamp_index + 1);
         p_list->ResolveQueryData(query_heap_.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
             timestamp_index, 2,
             readback_buffer_.Get(), sizeof(UINT64) * timestamp_index);
-        resolved_[frame_index][pass] = true;
+        resolved_[frame_index][slot] = true;
     }
 }

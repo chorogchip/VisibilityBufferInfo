@@ -10,10 +10,12 @@ namespace rndr {
 
     void RendererDeferred::init2_() {
         program_result_.renderer_name = do_prepass_ ? "DeferredPrepass" : "Deferred";
+        const UINT geometry_slot = do_prepass_ ? 2 : 1;
+        const UINT lighting_slot = geometry_slot + 1;
         if (do_prepass_)
-            program_result_.pass_names[0] = "depth_prepass";
-        program_result_.pass_names[1] = "geometry";
-        program_result_.pass_names[2] = "lighting";
+            program_result_.pass_names[1] = "depth_prepass";
+        program_result_.pass_names[geometry_slot] = "geometry";
+        program_result_.pass_names[lighting_slot] = "lighting";
 
         util::Logger::g_logger.assert_with_log(
             program_argument_.gbuffer_cnt > 0 && program_argument_.gbuffer_cnt <= 8,
@@ -85,16 +87,18 @@ namespace rndr {
     }
 
     void RendererDeferred::render_record_() {
+        const UINT geometry_slot = do_prepass_ ? 2 : 1;
+        const UINT lighting_slot = geometry_slot + 1;
         if (do_prepass_) {
-            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 0);
+            frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
             pass_depth_pre_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-            frame_time_.end_timestamp(command_list_.Get(), frame_index_, 0);
+            frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
         }
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, geometry_slot);
         pass_gbuffer_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
-        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, geometry_slot);
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, lighting_slot);
         pass_lighting_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, lighting_slot);
     }
 }

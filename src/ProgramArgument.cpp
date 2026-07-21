@@ -70,7 +70,7 @@ namespace util {
     std::string ProgramResult::get_header_string() {
         std::ostringstream stream;
 
-        for (size_t i = 0; i < util::Constants::MAX_PASS_COUNT; ++i) {
+        for (size_t i = 0; i < util::Constants::TIMER_SLOT_COUNT; ++i) {
             stream << "pass_name_" << i << ',';
             stream << "pass_" << i << "_time_avg_ms,";
         }
@@ -88,7 +88,7 @@ namespace util {
         std::ostringstream stream;
         stream << std::fixed << std::setprecision(5);
 
-        for (size_t i = 0; i < util::Constants::MAX_PASS_COUNT; ++i) {
+        for (size_t i = 0; i < util::Constants::TIMER_SLOT_COUNT; ++i) {
             stream << pass_names[i] << ',';
             stream << pass_time_avg_ms[i] << ',';
         }
