@@ -3,7 +3,7 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-#include "render/pass/PassDescriptorRequests.h"
+#include "engine/MaterialGPU.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
@@ -36,15 +36,47 @@ namespace rndr {
             eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1,
             resources_.back_buffers[1]->get());
 
-        request_visbuf_scene(
-            *resources_.shader_manager,
-            resources_.vertex_buffer,
-            resources_.index_buffer,
-            resources_.mesh_buffer,
-            resources_.instance_buffer,
-            resources_.material_buffer,
-            resources_.material_textures,
-            resources_.scene);
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
+            resources_.visibility->get());
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC scene_desc{};
+        scene_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        scene_desc.Format = DXGI_FORMAT_UNKNOWN;
+        scene_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        scene_desc.Buffer.FirstElement = 0;
+        scene_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+        scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->vertices[0]);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->vertices.size());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
+            resources_.vertex_buffer, &scene_desc);
+        scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->indices[0]);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->indices.size());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
+            resources_.index_buffer, &scene_desc);
+        scene_desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
+        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->meshes.size());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
+            resources_.mesh_buffer, &scene_desc);
+        scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->objects[0]);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->objects.size());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            resources_.instance_buffer, &scene_desc);
+        scene_desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->materials.size());
+        resources_.shader_manager->create_srv(
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
+            resources_.material_buffer, &scene_desc);
+
+        for (UINT i = 0; i < resources_.material_textures.size(); ++i)
+            resources_.shader_manager->create_srv(
+                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
+                resources_.material_textures[i], nullptr, i);
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,

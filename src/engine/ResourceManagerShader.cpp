@@ -1,6 +1,7 @@
 #include "engine/ResourceManagerShader.h"
 
 #include <cstdint>
+#include <cstring>
 
 #include "util/Logger.h"
 
@@ -40,9 +41,15 @@ namespace eng {
         return uav_desc;
     }
 
+    template<typename T>
+    bool same_desc(const T& lhs, const T& rhs) {
+        return std::memcmp(&lhs, &rhs, sizeof(T)) == 0;
+    }
+
     void ResourceManagerShader::init(ID3D12Device* device, UINT descriptor_count) {
         device_ = device;
         descriptor_count_ = descriptor_count;
+        descriptor_records_.assign(descriptor_count_, {});
         heap_.Reset();
 
         util::Logger::g_logger.assert_with_log(
@@ -77,7 +84,22 @@ namespace eng {
             inferred = infer_srv_desc(resource);
             desc = &inferred;
         }
+
+        DescriptorRecord& record = descriptor_records_[index];
+        if (record.initialized) {
+            util::Logger::g_logger.assert_with_log(
+                record.kind == DescriptorKind::SRV &&
+                record.resource == resource &&
+                same_desc(record.srv_desc, *desc),
+                "conflicting shader SRV descriptor request");
+            return;
+        }
+
         device_->CreateShaderResourceView(resource, desc, get_cpu_adr(position, offset));
+        record.initialized = true;
+        record.kind = DescriptorKind::SRV;
+        record.resource = resource;
+        record.srv_desc = *desc;
     }
 
     void ResourceManagerShader::create_uav(
@@ -99,8 +121,23 @@ namespace eng {
             inferred = infer_uav_desc(resource);
             desc = &inferred;
         }
+
+        DescriptorRecord& record = descriptor_records_[index];
+        if (record.initialized) {
+            util::Logger::g_logger.assert_with_log(
+                record.kind == DescriptorKind::UAV &&
+                record.resource == resource &&
+                same_desc(record.uav_desc, *desc),
+                "conflicting shader UAV descriptor request");
+            return;
+        }
+
         device_->CreateUnorderedAccessView(
             resource, nullptr, desc, get_cpu_adr(position, offset));
+        record.initialized = true;
+        record.kind = DescriptorKind::UAV;
+        record.resource = resource;
+        record.uav_desc = *desc;
     }
 
 }

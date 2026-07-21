@@ -3,6 +3,8 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include <vector>
+
 namespace eng {
 
     class ResourceManagerShader {
@@ -77,10 +79,24 @@ namespace eng {
         }
 
     private:
+        enum class DescriptorKind {
+            SRV,
+            UAV,
+        };
+
+        struct DescriptorRecord {
+            bool initialized = false;
+            DescriptorKind kind = DescriptorKind::SRV;
+            ID3D12Resource* resource = nullptr;
+            D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc{};
+        };
+
         ID3D12Device* device_ = nullptr;
         UINT descriptor_size_ = 0;
         UINT descriptor_count_ = 0;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_;
+        std::vector<DescriptorRecord> descriptor_records_;
     };
 
 }

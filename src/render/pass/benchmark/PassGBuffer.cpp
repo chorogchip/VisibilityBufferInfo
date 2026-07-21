@@ -3,7 +3,6 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-#include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
@@ -48,7 +47,10 @@ namespace rndr {
             use_prepass_depth_ ?
             eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY : 
             eng::ResourceManagerFrame::EnumDSV::DEPTH, resources_.depth->get());
-        request_material_textures(*resources_.shader_manager, resources_.material_textures);
+        for (UINT i = 0; i < resources_.material_textures.size(); ++i)
+            resources_.shader_manager->create_srv(
+                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
+                resources_.material_textures[i], nullptr, i);
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
         gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         gbuffer_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;

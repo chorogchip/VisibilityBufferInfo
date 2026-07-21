@@ -8,14 +8,12 @@
 namespace eng {
     class GPUResource;
     class ResourceManagerFrame;
-    class ResourceManagerShader;
 }
 
 namespace rndr {
 
     struct PassVisibilityResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
-        eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* visibility = nullptr;
         eng::GPUResource* depth = nullptr;
         ID3D12Resource* constant_buffers[util::Constants::FRAME_COUNT]{};

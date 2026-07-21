@@ -1,5 +1,7 @@
 #include "engine/ResourceManagerFrame.h"
 
+#include <cstring>
+
 #include "util/Logger.h"
 
 namespace eng {
@@ -26,12 +28,20 @@ namespace eng {
         UINT index(ResourceManagerFrame::EnumDSV position) {
             return static_cast<UINT>(position);
         }
+
+        bool same_resource_desc(
+            const D3D12_RESOURCE_DESC& lhs,
+            const D3D12_RESOURCE_DESC& rhs) {
+            return std::memcmp(&lhs, &rhs, sizeof(lhs)) == 0;
+        }
     }
 
     void ResourceManagerFrame::init(ID3D12Device* device) {
         device_ = device;
         rtv_heap_.Reset();
         dsv_heap_.Reset();
+        rtv_records_ = {};
+        dsv_records_ = {};
 
         util::Logger::g_logger.assert_with_log(
             device_ != nullptr, "frame descriptor manager requires a device");
@@ -49,7 +59,21 @@ namespace eng {
         util::Logger::g_logger.assert_with_log(
             texture != nullptr && descriptor_index < RTV_COUNT,
             "invalid RTV descriptor request");
+
+        const D3D12_RESOURCE_DESC resource_desc = texture->GetDesc();
+        RtvRecord& record = rtv_records_[descriptor_index];
+        if (record.initialized) {
+            util::Logger::g_logger.assert_with_log(
+                record.resource == texture &&
+                same_resource_desc(record.resource_desc, resource_desc),
+                "conflicting RTV descriptor request");
+            return;
+        }
+
         device_->CreateRenderTargetView(texture, nullptr, get_rtv(position));
+        record.initialized = true;
+        record.resource = texture;
+        record.resource_desc = resource_desc;
     }
 
     void ResourceManagerFrame::create_dsv(EnumDSV position, ID3D12Resource* texture) {
@@ -64,7 +88,22 @@ namespace eng {
         if (position == EnumDSV::DEPTH_READ_ONLY)
             desc.Flags = D3D12_DSV_FLAG_READ_ONLY_DEPTH;
 
+        const D3D12_RESOURCE_DESC resource_desc = texture->GetDesc();
+        DsvRecord& record = dsv_records_[descriptor_index];
+        if (record.initialized) {
+            util::Logger::g_logger.assert_with_log(
+                record.resource == texture &&
+                same_resource_desc(record.resource_desc, resource_desc) &&
+                std::memcmp(&record.view_desc, &desc, sizeof(desc)) == 0,
+                "conflicting DSV descriptor request");
+            return;
+        }
+
         device_->CreateDepthStencilView(texture, &desc, get_dsv(position));
+        record.initialized = true;
+        record.resource = texture;
+        record.resource_desc = resource_desc;
+        record.view_desc = desc;
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE ResourceManagerFrame::get_rtv(EnumRTV position, UINT offset) const {

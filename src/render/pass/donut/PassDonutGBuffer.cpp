@@ -4,7 +4,8 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-#include "render/pass/PassDescriptorRequests.h"
+// Intentionally disabled: another agent is removing PassDescriptorRequests.*.
+// #include "render/pass/PassDescriptorRequests.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"

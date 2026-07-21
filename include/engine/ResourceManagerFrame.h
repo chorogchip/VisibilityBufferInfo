@@ -3,6 +3,8 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include <array>
+
 #include "util/Constants.h"
 
 namespace eng {
@@ -45,6 +47,19 @@ namespace eng {
         [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_dsv(EnumDSV position, UINT offset = 0) const;
 
     private:
+        struct RtvRecord {
+            bool initialized = false;
+            ID3D12Resource* resource = nullptr;
+            D3D12_RESOURCE_DESC resource_desc{};
+        };
+
+        struct DsvRecord {
+            bool initialized = false;
+            ID3D12Resource* resource = nullptr;
+            D3D12_RESOURCE_DESC resource_desc{};
+            D3D12_DEPTH_STENCIL_VIEW_DESC view_desc{};
+        };
+
         static constexpr UINT RTV_COUNT = static_cast<UINT>(EnumRTV::COUNT);
         static constexpr UINT DSV_COUNT = static_cast<UINT>(EnumDSV::COUNT);
         ID3D12Device* device_ = nullptr;
@@ -52,6 +67,8 @@ namespace eng {
         UINT dsv_size_ = 0;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtv_heap_;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsv_heap_;
+        std::array<RtvRecord, RTV_COUNT> rtv_records_{};
+        std::array<DsvRecord, DSV_COUNT> dsv_records_{};
     };
 
 }

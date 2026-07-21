@@ -30,7 +30,6 @@ namespace rndr {
 
         PassVisibilityResources visibility{};
         visibility.frame_manager = &resource_manager_frame_;
-        visibility.shader_manager = &resource_manager_shader_;
         visibility.visibility = &vis_buffer_;
         visibility.depth = &depth_stencil_buffer_;
         visibility.constant_buffers[0] = buf_constant_[0].get();

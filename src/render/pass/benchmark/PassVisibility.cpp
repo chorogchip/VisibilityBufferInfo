@@ -4,7 +4,6 @@
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
-#include "engine/ResourceManagerShader.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
 
@@ -31,9 +30,6 @@ namespace rndr {
         resources_.frame_manager->create_dsv(
             eng::ResourceManagerFrame::EnumDSV::DEPTH,
             resources_.depth->get());
-        resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
-            resources_.visibility->get());
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_visibility_VS.hlsl",
