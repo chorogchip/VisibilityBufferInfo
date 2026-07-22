@@ -126,7 +126,7 @@ namespace rndr {
 		return result;
 	}
 
-	uint64_t CameraPath::end_frame() const {
+	uint64_t CameraPath::get_end_frame() const {
 		return keyframes_.empty() ? 0 : keyframes_.back().frame;
 	}
 }

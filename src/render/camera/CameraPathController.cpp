@@ -40,7 +40,7 @@ namespace rndr {
 		uint64_t playback_frame = 0;
 		if (render_frame_ >= warmup_frames_)
 			playback_frame = render_frame_ - warmup_frames_;
-		playback_frame = std::min(playback_frame, path_.end_frame());
+		playback_frame = std::min(playback_frame, path_.get_end_frame());
 		camera_->set_pose(path_.sample(playback_frame));
 	}
 
@@ -53,13 +53,13 @@ namespace rndr {
 			camera_ != nullptr, "camera path controller requires a camera");
 
 		if (mode_ != 1) return;
-		if (path_.empty() || path_.end_frame() < render_frame_)
+		if (path_.empty() || path_.get_end_frame() < render_frame_)
 			path_.add_keyframe(render_frame_, camera_->get_pose());
 		path_.save_csv(filepath_);
 	}
 
 	uint64_t CameraPathController::measurement_frames() const {
-		return is_playback() ? path_.end_frame() + 1 : default_measurement_frames_;
+		return is_playback() ? path_.get_end_frame() + 1 : default_measurement_frames_;
 	}
 
 	bool CameraPathController::pose_changed(const CameraPose& pose) const {

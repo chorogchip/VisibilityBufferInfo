@@ -20,7 +20,7 @@ namespace rndr {
 		void add_keyframe(uint64_t frame, const CameraPose& pose);
 
 		CameraPose sample(uint64_t frame) const;
-		uint64_t end_frame() const;
+		uint64_t get_end_frame() const;
 		bool empty() const { return keyframes_.empty(); }
 
 	private:
