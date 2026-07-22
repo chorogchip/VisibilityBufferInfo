@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "engine/ResourceViewBuilder.h"
+
 namespace eng {
 
     class ResourceManagerShader {
@@ -56,43 +58,32 @@ namespace eng {
             BENCH_MATERIAL_TEXTURE_BEGIN = 46,
             COUNT = DONUT_MATERIAL_TEXTURE_BEGIN
         };
+        using EnumResourceType = ResourceViewBuilder::EnumResourceType;
 
         void init(ID3D12Device* device, UINT descriptor_count);
 
         void create_srv(
             EnumDescPos position,
             ID3D12Resource* resource,
-            const D3D12_SHADER_RESOURCE_VIEW_DESC* desc = nullptr,
+            EnumResourceType type = EnumResourceType::BUFFER,
             UINT offset = 0);
 
-        void create_srv_texture_2d(
+        void create_srv(
             EnumDescPos position,
             ID3D12Resource* resource,
-            DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
-            UINT offset = 0);
-
-        void create_srv_texture_2d_array(
-            EnumDescPos position,
-            ID3D12Resource* resource,
-            DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
-            UINT offset = 0);
-
-        void create_srv_texture_cube_array(
-            EnumDescPos position,
-            ID3D12Resource* resource,
-            DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
+            const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
             UINT offset = 0);
 
         void create_uav(
             EnumDescPos position,
             ID3D12Resource* resource,
-            const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc = nullptr,
+            EnumResourceType type = EnumResourceType::BUFFER,
             UINT offset = 0);
 
-        void create_uav_texture_2d(
+        void create_uav(
             EnumDescPos position,
             ID3D12Resource* resource,
-            DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
+            const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
             UINT offset = 0);
 
         [[nodiscard]] ID3D12DescriptorHeap* get() const { return heap_.Get(); }
