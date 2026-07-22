@@ -17,6 +17,7 @@ namespace util {
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
     X(bool, to_load_texture, true, to-load-texture) \
+    X(bool, use_vfc, false, use-vfc) \
     X(std::string, scene_path, "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf", scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
     X(uint32_t, measure_frames, 2400, measure-frames) \

@@ -106,6 +106,7 @@ namespace scene {
 				return a.object_id < b.object_id;
 			});
 
+		ret->build_mesh_aabbs_from_vertices();
 		ret->build_batches_from_objects();
 
 		ret->loaded = true;
@@ -209,9 +210,8 @@ namespace scene {
 			obj.flags = 0;
 			
 			float pos_z_add = 0.0f;
-			if (i != 0 && info.to_remain_only_in_camera) {
+			if (i != 0 && info.to_remain_only_in_camera)
 				pos_z_add = -1000.0f;
-			}
 
 			DirectX::XMMATRIX transform =
 				DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) *
@@ -219,12 +219,6 @@ namespace scene {
 					pos_z_add + static_cast<float>(ind) / static_cast<float>(info.object_count));
 			DirectX::XMStoreFloat4x4(&obj.transform, DirectX::XMMatrixTranspose(transform));
 			ret->objects.push_back(obj);
-		}
-
-		if (info.to_remain_only_in_camera) {
-			for (uint32_t i = 1; i < info.object_count; ++i) {
-
-			}
 		}
 
 		const uint32_t mesh_stride = std::max(1U, info.object_count / info.mesh_count);
@@ -245,6 +239,7 @@ namespace scene {
 			}
 		}
 
+		ret->build_mesh_aabbs_from_vertices();
 		ret->build_batches_from_objects();
 
 		ret->loaded = true;

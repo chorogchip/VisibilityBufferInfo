@@ -55,10 +55,15 @@ namespace util {
         struct WindowedData {
             uint64_t frame = 0;
             std::vector<double> time_avg_ms;
+            bool has_index_count = false;
+            double index_count = 0.0;
         };
 
         void init(const util::ProgramArgument& arg);
-		void tick(std::vector<double>& measure);
+		void tick(
+			std::vector<double>& measure,
+			bool to_record_index_count = false,
+			double index_count = 0.0);
         bool to_terminate() const;
 		std::vector<CountedData> summarize();
 		std::vector<WindowedData> summarize_windows(uint32_t window_frames) const;
@@ -69,5 +74,6 @@ namespace util {
 		uint64_t frame_to_end_measure_ = 0;
 		uint64_t frame_to_terminate_ = 0;
 		std::vector<std::vector<double>> frame_times_;
+		std::vector<double> frame_index_counts_;
 	};
 }

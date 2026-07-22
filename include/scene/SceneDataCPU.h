@@ -4,9 +4,11 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <DirectXCollision.h>
 #include <DirectXMath.h>
 
 #include "engine/MaterialCPU.h"
+#include "math/AABB.h"
 
 namespace scene {
 
@@ -27,6 +29,7 @@ namespace scene {
             uint32_t vertex_count = 0;
             uint32_t index_start = 0;
             uint32_t index_count = 0;
+            math::AABB local_aabb{};
         };
 
         struct Object {
@@ -55,10 +58,15 @@ namespace scene {
         std::vector<Mesh> meshes;
         std::vector<Object> objects;
         std::vector<ObjectBatch> batches;
+        std::vector<ObjectBatch> all_batches;
         DirectX::XMFLOAT3 bounds_min{};
         DirectX::XMFLOAT3 bounds_max{};
 
         void build_random_material(size_t material_count);
+        void build_mesh_aabbs_from_vertices();
         void build_batches_from_objects();
+        void build_batches_from_frustum(const DirectX::BoundingFrustum& frustum);
+        uint64_t count_batch_indices() const;
+        void reset_batches();
     };
 }

@@ -1,9 +1,11 @@
 #include "render/renderer/benchmark/RendererBenchmark.h"
 
 #include <cstring>
-#include <limits>
+
+#include <DirectXCollision.h>
 
 #include "util/DummyTextureGen.h"
+#include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
 #include "util/BenchmarkCsvWriter.h"
@@ -35,6 +37,8 @@ namespace rndr {
             buf_constant_[i].init(device_.Get());
 
         scene_cpu_ = scene::SceneLoader::load(program_argument_);
+        to_profile_index_count_ = true;
+        profile_index_count_ = static_cast<double>(scene_cpu_->count_batch_indices());
 
         scene::SceneFingerprint::write_csv(
             util::get_scene_fingerprint_output_path(program_argument_.output_filepath),
@@ -80,19 +84,35 @@ namespace rndr {
 
         auto& cam_buf = buf_constant_[frame_index_];
 
+        const DirectX::XMMATRIX mat_view = camera_.get_mat_view();
+        const DirectX::XMMATRIX mat_proj = camera_.get_mat_proj(width_, height_);
+
         DirectX::XMStoreFloat4x4(
             &cam_buf.buffer.mat_view_,
-            DirectX::XMMatrixTranspose(camera_.get_mat_view()));
+            DirectX::XMMatrixTranspose(mat_view));
 
         DirectX::XMStoreFloat4x4(
             &cam_buf.buffer.mat_proj_,
-            DirectX::XMMatrixTranspose(camera_.get_mat_proj(width_, height_)));
+            DirectX::XMMatrixTranspose(mat_proj));
 
         cam_buf.buffer.viewport_size_ = DirectX::XMFLOAT2(
             static_cast<float>(width_), static_cast<float>(height_));
 
         cam_buf.update();
 
+        if (program_argument_.use_vfc) {
+            DirectX::BoundingFrustum view_frustum;
+            DirectX::BoundingFrustum::CreateFromMatrix(view_frustum, mat_proj);
+
+            DirectX::BoundingFrustum world_frustum{};
+            view_frustum.Transform(
+                world_frustum,
+                DirectX::XMMatrixInverse(nullptr, mat_view));
+
+            scene_cpu_->build_batches_from_frustum(world_frustum);
+        }
+
+        profile_index_count_ = static_cast<double>(scene_cpu_->count_batch_indices());
     }
 
     void RendererBenchmark::wrap_scene_resources() {

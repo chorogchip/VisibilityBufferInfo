@@ -143,4 +143,19 @@ namespace math {
 		return result;
 	}
 
+	DirectX::BoundingBox AABB::to_bounding_box() const noexcept {
+		DirectX::XMFLOAT3 center{};
+		DirectX::XMFLOAT3 extents{};
+
+		center.x = (pos_min.x + pos_max.x) * 0.5f;
+		center.y = (pos_min.y + pos_max.y) * 0.5f;
+		center.z = (pos_min.z + pos_max.z) * 0.5f;
+
+		extents.x = (pos_max.x - pos_min.x) * 0.5f;
+		extents.y = (pos_max.y - pos_min.y) * 0.5f;
+		extents.z = (pos_max.z - pos_min.z) * 0.5f;
+
+		return DirectX::BoundingBox(center, extents);
+	}
+
 }

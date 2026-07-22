@@ -26,8 +26,6 @@ namespace rndr {
 		pitch = std::asin(std::clamp(direction.y, -1.0f, 1.0f));
 	}
 
-
-
 	void Camera::init(const util::ProgramArgument& arg) {
 		this->set_pos(
 			arg.camera_pos_x,

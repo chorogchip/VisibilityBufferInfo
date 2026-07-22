@@ -99,7 +99,10 @@ void RendererBase::close() {
     if (camera_path_controller_.is_playback()) {
         const auto windows = frame_counter_.summarize_windows(
             program_argument_.profile_window_frames);
-        util::write_windowed_benchmark_csv(path, program_result_.pass_names, windows);
+        util::write_windowed_benchmark_csv(
+            path,
+            program_result_.pass_names,
+            windows);
         return;
     }
 
@@ -190,7 +193,10 @@ void RendererBase::render() {
     graphics_queue_.wait(fence_values_[frame_index_]);
 
     std::vector<double> measures = frame_time_.read_timestamp(frame_index_);
-    frame_counter_.tick(measures);
+    frame_counter_.tick(
+        measures,
+        to_profile_index_count_,
+        profile_index_count_);
 
     camera_path_controller_.after_render();
 }

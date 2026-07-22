@@ -185,6 +185,7 @@ namespace scene {
         }
 
 
+        res->build_mesh_aabbs_from_vertices();
         res->build_batches_from_objects();
 
         res->loaded = true;

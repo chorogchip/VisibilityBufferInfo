@@ -41,6 +41,8 @@ protected:
 
     util::ProgramArgument program_argument_{};
     util::ProgramResult program_result_{};
+    bool to_profile_index_count_ = false;
+    double profile_index_count_ = 0.0;
 
     HWND hwnd_ = nullptr;
     uint32_t width_ = 0;

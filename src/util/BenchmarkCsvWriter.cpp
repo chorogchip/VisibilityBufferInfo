@@ -51,9 +51,13 @@ namespace util {
             return;
         }
 
+        const bool has_index_count =
+            !windows.empty() && windows.front().has_index_count;
+
         output << "frame";
         for (const auto& name : pass_names)
             if (!name.empty()) output << ',' << name;
+        if (has_index_count) output << ",index_count";
         output << '\n' << std::fixed << std::setprecision(5);
 
         for (const auto& window : windows) {
@@ -62,6 +66,7 @@ namespace util {
                 if (!pass_names[pass].empty())
                     output << ',' << window.time_avg_ms[pass];
             }
+            if (has_index_count) output << ',' << window.index_count;
             output << '\n';
         }
 

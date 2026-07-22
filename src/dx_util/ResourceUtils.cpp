@@ -135,8 +135,6 @@ namespace dxutl {
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
-
-
     Microsoft::WRL::ComPtr<ID3D12Resource> create_depth_stencil_buffer(
         ID3D12Device* device,
         UINT64 width,

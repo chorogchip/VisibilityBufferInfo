@@ -15,13 +15,20 @@ namespace util {
 		frame_to_start_measure_ = arg.warmup_frames;
 		frame_to_end_measure_ = frame_to_start_measure_ + arg.measure_frames;
 		frame_to_terminate_ = frame_to_end_measure_ + 60;
+		frame_index_counts_.clear();
 	}
 
-	void FrameCounter::tick(std::vector<double>& measures) {
+	void FrameCounter::tick(
+		std::vector<double>& measures,
+		bool to_record_index_count,
+		double index_count) {
 		if (frame_to_start_measure_ <= frames_ && frames_ < frame_to_end_measure_) {
 			for (int i = 0; i < static_cast<int>(measures.size()); ++i) {
 				frame_times_[i].push_back(measures[i]);
 			}
+
+			if (to_record_index_count)
+				frame_index_counts_.push_back(index_count);
 		}
 		frames_++;
 	}
@@ -72,6 +79,15 @@ namespace util {
 					sum += frame_times_[pass][frame];
 				result.time_avg_ms[pass] = sum / static_cast<double>(end - begin);
 			}
+
+			if (frame_index_counts_.size() == sample_count) {
+				double sum = 0.0;
+				for (size_t frame = begin; frame < end; ++frame)
+					sum += frame_index_counts_[frame];
+				result.has_index_count = true;
+				result.index_count = sum / static_cast<double>(end - begin);
+			}
+
 			results.push_back(std::move(result));
 		}
 		return results;
