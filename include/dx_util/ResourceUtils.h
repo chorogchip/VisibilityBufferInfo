@@ -40,6 +40,18 @@ namespace dxutl {
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_CLEAR_VALUE* clear_value = nullptr);
 
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format);
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_array_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format);
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_cubemap_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format);
+
     Microsoft::WRL::ComPtr<ID3D12Resource> create_depth_stencil_buffer(
         ID3D12Device* device,
         UINT64 width,

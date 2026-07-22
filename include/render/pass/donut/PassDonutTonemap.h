@@ -6,18 +6,25 @@
 #include "ProgramArgument.h"
 #include "util/Constants.h"
 #include "dx_util/UploadConstBuf.h"
+#include "engine/GPUResource.h"
 #include "engine/GraphicsPipeline.h"
 
 namespace eng {
     class GPUResource;
     class ResourceManagerFrame;
     class ResourceManagerShader;
+    class ResourceManagerSampler;
 }
 
 namespace rndr {
 
     struct PassDonutTonemapResources {
-
+        eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerShader* shader_manager = nullptr;
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
+        eng::GPUResource* back_buffers[util::Constants::FRAME_COUNT]{};
+        eng::GPUResource* hdr_color_buffer = nullptr;
+        eng::GPUResource* exposure_buffer = nullptr;
     };
 
     class PassDonutTonemap {
@@ -33,7 +40,6 @@ namespace rndr {
             UINT frame_index,
             const D3D12_VIEWPORT& viewport,
             const D3D12_RECT& scissor_rect);
-
 
         struct DonutToneMappingConstants {
             std::uint32_t view_origin[2]{};
@@ -61,5 +67,8 @@ namespace rndr {
 
         std::array<dxutl::UploadConstBuf<DonutToneMappingConstants>,
             util::Constants::FRAME_COUNT> tonemap_constants_;
+        std::array<eng::GPUResource, util::Constants::FRAME_COUNT>
+            tonemap_constant_resources_;
+        eng::GPUResource fallback_color_lut_;
     };
 }

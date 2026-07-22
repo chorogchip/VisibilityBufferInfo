@@ -89,7 +89,7 @@ namespace dxutl {
         UINT16 array_size,
         DXGI_FORMAT format,
         D3D12_RESOURCE_STATES initial_state,
-        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        D3D12_RESOURCE_FLAGS flags,
         const D3D12_CLEAR_VALUE* clear_value) {
 
         D3D12_RESOURCE_DESC desc{};
@@ -106,6 +106,36 @@ namespace dxutl {
         return dxutl::create_committed_resource(
             device, desc, D3D12_HEAP_TYPE_DEFAULT, initial_state, clear_value);
     }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format) {
+
+        return dxutl::create_texture2d(
+            device, 1, 1, format,
+            D3D12_HEAP_TYPE_DEFAULT,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_array_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format) {
+
+        return dxutl::create_texture2d_array(
+            device, 1, 1, 1, format,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_cubemap_fallback(
+        ID3D12Device* device,
+        DXGI_FORMAT format) {
+
+        return dxutl::create_texture2d_array(
+            device, 1, 1, 6, format,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+
+
 
     Microsoft::WRL::ComPtr<ID3D12Resource> create_depth_stencil_buffer(
         ID3D12Device* device,
