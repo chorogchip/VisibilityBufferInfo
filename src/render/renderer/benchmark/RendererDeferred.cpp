@@ -46,6 +46,7 @@ namespace rndr {
             buf_constant_[0].get()->GetGPUVirtualAddress();
         gbuffer.constant_buffer_addresses[1] =
             buf_constant_[1].get()->GetGPUVirtualAddress();
+        static_assert(util::Constants::FRAME_COUNT == 2);
         gbuffer.instance_buffer_address =
             scene_object_buffer_.get()->GetGPUVirtualAddress();
         gbuffer.material_buffer_address =
@@ -66,6 +67,7 @@ namespace rndr {
                 buf_constant_[0].get()->GetGPUVirtualAddress();
             depth.constant_buffer_addresses[1] =
                 buf_constant_[1].get()->GetGPUVirtualAddress();
+            static_assert(util::Constants::FRAME_COUNT == 2);
             depth.instance_buffer_address =
                 scene_object_buffer_.get()->GetGPUVirtualAddress();
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
@@ -80,6 +82,7 @@ namespace rndr {
         lighting.shader_manager = &resource_manager_shader_;
         lighting.back_buffers[0] = &render_targets_[0];
         lighting.back_buffers[1] = &render_targets_[1];
+        static_assert(util::Constants::FRAME_COUNT == 2);
         lighting.gbuffer_count = program_argument_.gbuffer_cnt;
         for (UINT i = 0; i < lighting.gbuffer_count; ++i)
             lighting.gbuffers[i] = &gbuffers_[i];

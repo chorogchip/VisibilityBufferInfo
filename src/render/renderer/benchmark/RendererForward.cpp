@@ -26,6 +26,7 @@ namespace rndr {
                 buf_constant_[0].get()->GetGPUVirtualAddress();
             depth_resources.constant_buffer_addresses[1] =
                 buf_constant_[1].get()->GetGPUVirtualAddress();
+            static_assert(util::Constants::FRAME_COUNT == 2);
             depth_resources.instance_buffer_address =
                 scene_object_buffer_.get()->GetGPUVirtualAddress();
             depth_resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
@@ -39,11 +40,13 @@ namespace rndr {
         resources.shader_manager = &resource_manager_shader_;
         resources.back_buffers[0] = &render_targets_[0];
         resources.back_buffers[1] = &render_targets_[1];
+        static_assert(util::Constants::FRAME_COUNT == 2);
         resources.depth = &depth_stencil_buffer_;
         resources.constant_buffer_addresses[0] =
             buf_constant_[0].get()->GetGPUVirtualAddress();
         resources.constant_buffer_addresses[1] =
             buf_constant_[1].get()->GetGPUVirtualAddress();
+        static_assert(util::Constants::FRAME_COUNT == 2);
         resources.instance_buffer_address =
             scene_object_buffer_.get()->GetGPUVirtualAddress();
         resources.material_buffer_address =

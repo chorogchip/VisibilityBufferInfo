@@ -36,6 +36,7 @@ namespace rndr {
             buf_constant_[0].get()->GetGPUVirtualAddress();
         visibility.constant_buffer_addresses[1] =
             buf_constant_[1].get()->GetGPUVirtualAddress();
+        static_assert(util::Constants::FRAME_COUNT == 2);
         visibility.instance_buffer_address =
             scene_object_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
@@ -48,6 +49,7 @@ namespace rndr {
         resolve.shader_manager = &resource_manager_shader_;
         resolve.back_buffers[0] = &render_targets_[0];
         resolve.back_buffers[1] = &render_targets_[1];
+        static_assert(util::Constants::FRAME_COUNT == 2);
         resolve.visibility = &vis_buffer_;
         resolve.vertex_buffer = &scene_vertex_buffer_;
         resolve.index_buffer = &scene_index_buffer_;
@@ -61,6 +63,7 @@ namespace rndr {
             buf_constant_[0].get()->GetGPUVirtualAddress();
         resolve.constant_buffer_addresses[1] =
             buf_constant_[1].get()->GetGPUVirtualAddress();
+        static_assert(util::Constants::FRAME_COUNT == 2);
         resolve.sampler_manager = &resource_manager_sampler_;
         pass_resolve_.init(device_.Get(), program_argument_, resolve);
     }
