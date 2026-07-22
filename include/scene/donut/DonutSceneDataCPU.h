@@ -14,35 +14,21 @@
 namespace scene {
 
     struct DonutSceneDataCPU {
-        enum class MaterialTextureSlot : uint32_t {
-            BASE_COLOR = 0,
-            METAL_ROUGHNESS = 1,
-            NORMAL = 2,
-            EMISSIVE = 3,
-            OCCLUSION = 4,
-            COUNT = 5
-        };
-
-        enum class TextureColorSpace : uint32_t {
-            LINEAR,
-            SRGB
-        };
-
-        enum class TextureFallback : uint32_t {
-            WHITE,
-            BLACK,
-            FLAT_NORMAL
-        };
 
         static constexpr uint32_t INVALID_INDEX = static_cast<uint32_t>(-1);
+
+        enum class EnumMaterialTextureSlot : uint32_t {
+            BASE_COLOR, METAL_ROUGHNESS, NORMAL, EMISSIVE, OCCLUSION, COUNT };
+        enum class EnumTextureColorSpace : uint32_t { LINEAR, SRGB };
+        enum class EnumTextureFallback : uint32_t { WHITE, BLACK, FLAT_NORMAL };
         static constexpr size_t MATERIAL_TEXTURE_SLOT_COUNT =
-            static_cast<size_t>(MaterialTextureSlot::COUNT);
+            static_cast<size_t>(EnumMaterialTextureSlot::COUNT);
 
         struct Texture {
             std::string name;
             std::filesystem::path path;
-            TextureColorSpace color_space = TextureColorSpace::LINEAR;
-            TextureFallback fallback = TextureFallback::WHITE;
+            EnumTextureColorSpace color_space = EnumTextureColorSpace::LINEAR;
+            EnumTextureFallback fallback = EnumTextureFallback::WHITE;
             bool embedded = false;
         };
 

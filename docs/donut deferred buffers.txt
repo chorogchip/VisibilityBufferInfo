@@ -1,0 +1,78 @@
+
+
+
+
+
+
+
+Scene Graph : Node
+
+Global Node buffer
+- CPU AoS 
+- id: global
+- parent id, vector<child id>, instance id, local transform, world transform, subtree world AABB)
+
+Global Instance Buffer
+- AoS StructuredBuffer
+- id: global
+- node id, mesh id, first geometry instance, geometry instance count, world transform, world AABB
+
+Per Model Mesh Buffer
+- CPU AoS
+- id: local per buffer
+- submesh offset, submesh count
+
+Per Model SubMesh Buffer
+- AoS StructuredBuffer
+- id: local per buffer (not per mesh)
+- vertex offset, vertex count, index offset, index count, material id
+
+Global Material Buffer
+- AoS StructuredBuffer
+- id: global
+
+Global Instance Buffer
+- uint32_t linear
+- id: global
+
+Global Vertex Buffer
+- SoA float ByteOffsetBuffer
+- id: global
+- pos, uv, normal, tangent
+
+
+
+모델 하나를 로딩
+scene : tree of node
+node: optional global instnace id, aabb
+전역 instnace buffer - structuredbuffer, 전역 mesh id를 가짐, 기타 transform 등
+전역 mesh buffer - CPU AoS, vector<전역 submesh id> 를 가짐
+전역 submesh buffer - structuredbuffer, 전역 index offset/count + 전역 material id를 가짐
+전역 index buffer - buffer<R32 uint>, 전역vertex id를 가짐
+전역 vertex buffer - byteaddressbuffer SoA, pos/texcoord/normal/tangent
+전역 material buffer - SoA structuredbuffer, 각종정보와 texture id를 가짐
+texture : bindless linear srv
+
+두 개의 경로
+공통: node탐색후 VFC하면서 instance수집, 해당 instance의 submesh들을 얻어 (submesh, instance)를 정렬하고 그거를 drawitem 버퍼로 만듬(근데 이걸 어케 GPU로 보내지? 암튼), 이걸 submesh의 material bind로 슬롯에 직접 texture bind하고 constant로 index buffer offset같은거 지정, drawinstanced, 잘 그림
+
+visibility : 비슷하게 감, 거기서 drawitem id / triangle id 를 저장, 복원해 drawitem으로 해당 버퍼에서 submesh->material, index offset + triangle id-> -> vertex id ->vertex attribute얻고 bindless texture에서 샘플링
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

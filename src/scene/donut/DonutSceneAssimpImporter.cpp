@@ -19,9 +19,9 @@ namespace scene::donut {
 
     namespace {
 
-        using MaterialTextureSlot = DonutSceneDataCPU::MaterialTextureSlot;
-        using TextureColorSpace = DonutSceneDataCPU::TextureColorSpace;
-        using TextureFallback = DonutSceneDataCPU::TextureFallback;
+        using MaterialTextureSlot = DonutSceneDataCPU::EnumMaterialTextureSlot;
+        using TextureColorSpace = DonutSceneDataCPU::EnumTextureColorSpace;
+        using TextureFallback = DonutSceneDataCPU::EnumTextureFallback;
 
         DirectX::XMFLOAT4 fallback_color(uint32_t material_index) {
             static constexpr std::array<DirectX::XMFLOAT4, 8> COLORS = {
@@ -149,26 +149,26 @@ namespace scene::donut {
         }
 
         TextureColorSpace color_space_for_slot(MaterialTextureSlot slot) {
-            return slot == MaterialTextureSlot::BASE_COLOR ||
-                slot == MaterialTextureSlot::EMISSIVE
-                ? TextureColorSpace::SRGB
-                : TextureColorSpace::LINEAR;
+            return slot == DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR ||
+                slot == DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE
+                ? DonutSceneDataCPU::EnumTextureColorSpace::SRGB
+                : DonutSceneDataCPU::EnumTextureColorSpace::LINEAR;
         }
 
         TextureFallback fallback_for_slot(MaterialTextureSlot slot) {
             switch (slot) {
-            case MaterialTextureSlot::BASE_COLOR:
-            case MaterialTextureSlot::METAL_ROUGHNESS:
-            case MaterialTextureSlot::OCCLUSION:
-                return TextureFallback::WHITE;
-            case MaterialTextureSlot::NORMAL:
-                return TextureFallback::FLAT_NORMAL;
-            case MaterialTextureSlot::EMISSIVE:
-                return TextureFallback::BLACK;
-            case MaterialTextureSlot::COUNT:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
+                return DonutSceneDataCPU::EnumTextureFallback::WHITE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
+                return DonutSceneDataCPU::EnumTextureFallback::FLAT_NORMAL;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE:
+                return DonutSceneDataCPU::EnumTextureFallback::BLACK;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
-            return TextureFallback::WHITE;
+            return DonutSceneDataCPU::EnumTextureFallback::WHITE;
         }
 
         uint32_t register_texture(
@@ -178,7 +178,7 @@ namespace scene::donut {
             MaterialTextureSlot slot) {
             const TextureColorSpace color_space = color_space_for_slot(slot);
             const std::string cache_key = path.generic_string() +
-                (color_space == TextureColorSpace::SRGB ? "|srgb" : "|linear");
+                (color_space == DonutSceneDataCPU::EnumTextureColorSpace::SRGB ? "|srgb" : "|linear");
             const auto cached = texture_cache.find(cache_key);
             if (cached != texture_cache.end()) return cached->second;
 
@@ -276,20 +276,20 @@ namespace scene::donut {
 
             set_material_texture(
                 scene, texture_cache, material,
-                MaterialTextureSlot::BASE_COLOR, base_color_path);
+                DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR, base_color_path);
             set_material_texture(
                 scene, texture_cache, material,
-                MaterialTextureSlot::METAL_ROUGHNESS, metal_roughness_path);
+                DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS, metal_roughness_path);
             set_material_texture(
                 scene, texture_cache, material,
-                MaterialTextureSlot::NORMAL, normal_path);
+                DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL, normal_path);
             set_material_texture(
                 scene, texture_cache, material,
-                MaterialTextureSlot::EMISSIVE,
+                DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE,
                 read_first_texture_path(source, aiTextureType_EMISSIVE));
             set_material_texture(
                 scene, texture_cache, material,
-                MaterialTextureSlot::OCCLUSION, occlusion_path);
+                DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION, occlusion_path);
 
             return material;
         }

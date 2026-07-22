@@ -22,9 +22,9 @@ namespace scene::donut {
 
     namespace {
 
-        using MaterialTextureSlot = DonutSceneDataCPU::MaterialTextureSlot;
-        using TextureColorSpace = DonutSceneDataCPU::TextureColorSpace;
-        using TextureFallback = DonutSceneDataCPU::TextureFallback;
+        using MaterialTextureSlot = DonutSceneDataCPU::EnumMaterialTextureSlot;
+        using TextureColorSpace = DonutSceneDataCPU::EnumTextureColorSpace;
+        using TextureFallback = DonutSceneDataCPU::EnumTextureFallback;
 
         size_t align_16(size_t value) {
             return (value + 15u) & ~size_t(15u);
@@ -165,11 +165,11 @@ namespace scene::donut {
             const DonutSceneDataGPU& destination,
             TextureFallback fallback) {
             switch (fallback) {
-            case TextureFallback::WHITE:
+            case DonutSceneDataCPU::EnumTextureFallback::WHITE:
                 return destination.fallback_texture_indices[0];
-            case TextureFallback::BLACK:
+            case DonutSceneDataCPU::EnumTextureFallback::BLACK:
                 return destination.fallback_texture_indices[1];
-            case TextureFallback::FLAT_NORMAL:
+            case DonutSceneDataCPU::EnumTextureFallback::FLAT_NORMAL:
                 return destination.fallback_texture_indices[2];
             }
 
@@ -177,23 +177,23 @@ namespace scene::donut {
         }
 
         bool texture_is_srgb(TextureColorSpace color_space) {
-            return color_space == TextureColorSpace::SRGB;
+            return color_space == DonutSceneDataCPU::EnumTextureColorSpace::SRGB;
         }
 
         TextureFallback fallback_for_slot(MaterialTextureSlot slot) {
             switch (slot) {
-            case MaterialTextureSlot::BASE_COLOR:
-            case MaterialTextureSlot::METAL_ROUGHNESS:
-            case MaterialTextureSlot::OCCLUSION:
-                return TextureFallback::WHITE;
-            case MaterialTextureSlot::NORMAL:
-                return TextureFallback::FLAT_NORMAL;
-            case MaterialTextureSlot::EMISSIVE:
-                return TextureFallback::BLACK;
-            case MaterialTextureSlot::COUNT:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
+                return DonutSceneDataCPU::EnumTextureFallback::WHITE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
+                return DonutSceneDataCPU::EnumTextureFallback::FLAT_NORMAL;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE:
+                return DonutSceneDataCPU::EnumTextureFallback::BLACK;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
-            return TextureFallback::WHITE;
+            return DonutSceneDataCPU::EnumTextureFallback::WHITE;
         }
 
         std::optional<uint32_t> load_texture(
@@ -324,17 +324,17 @@ namespace scene::donut {
 
         uint32_t material_texture_flag(MaterialTextureSlot slot) {
             switch (slot) {
-            case MaterialTextureSlot::BASE_COLOR:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
                 return DonutSceneDataGPU::MATERIAL_FLAG_BASE_COLOR_TEXTURE;
-            case MaterialTextureSlot::METAL_ROUGHNESS:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
                 return DonutSceneDataGPU::MATERIAL_FLAG_METAL_ROUGHNESS_TEXTURE;
-            case MaterialTextureSlot::NORMAL:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
                 return DonutSceneDataGPU::MATERIAL_FLAG_NORMAL_TEXTURE;
-            case MaterialTextureSlot::EMISSIVE:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE:
                 return DonutSceneDataGPU::MATERIAL_FLAG_EMISSIVE_TEXTURE;
-            case MaterialTextureSlot::OCCLUSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
                 return DonutSceneDataGPU::MATERIAL_FLAG_OCCLUSION_TEXTURE;
-            case MaterialTextureSlot::COUNT:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
             return 0;
@@ -342,17 +342,17 @@ namespace scene::donut {
 
         int32_t shader_material_texture_flag(MaterialTextureSlot slot) {
             switch (slot) {
-            case MaterialTextureSlot::BASE_COLOR:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_BASE_COLOR_TEXTURE;
-            case MaterialTextureSlot::METAL_ROUGHNESS:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_METAL_ROUGHNESS_TEXTURE;
-            case MaterialTextureSlot::NORMAL:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_NORMAL_TEXTURE;
-            case MaterialTextureSlot::EMISSIVE:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_EMISSIVE_TEXTURE;
-            case MaterialTextureSlot::OCCLUSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_OCCLUSION_TEXTURE;
-            case MaterialTextureSlot::COUNT:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
             return 0;
@@ -395,19 +395,19 @@ namespace scene::donut {
 
             constants.base_or_diffuse_texture_index =
                 static_cast<int32_t>(source.texture_indices[
-                    static_cast<size_t>(MaterialTextureSlot::BASE_COLOR)]);
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR)]);
             constants.metal_rough_or_specular_texture_index =
                 static_cast<int32_t>(source.texture_indices[
-                    static_cast<size_t>(MaterialTextureSlot::METAL_ROUGHNESS)]);
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS)]);
             constants.emissive_texture_index =
                 static_cast<int32_t>(source.texture_indices[
-                    static_cast<size_t>(MaterialTextureSlot::EMISSIVE)]);
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::EMISSIVE)]);
             constants.normal_texture_index =
                 static_cast<int32_t>(source.texture_indices[
-                    static_cast<size_t>(MaterialTextureSlot::NORMAL)]);
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL)]);
             constants.occlusion_texture_index =
                 static_cast<int32_t>(source.texture_indices[
-                    static_cast<size_t>(MaterialTextureSlot::OCCLUSION)]);
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION)]);
             constants.transmission_texture_index = 0;
             constants.opacity_texture_index = 0;
             return constants;

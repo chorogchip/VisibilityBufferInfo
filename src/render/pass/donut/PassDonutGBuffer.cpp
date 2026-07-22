@@ -79,6 +79,31 @@ namespace rndr {
         }
     }
 
+    enum class RootParam : UINT {
+        PUSH_CONSTANT,
+        VIEW_CONSTANT,
+        GEOMETRY_DATA,
+        MATERIAL_CONSTANT,
+        MATERIAL_TEXTURES,
+        MATERIAL_SAMPLER,
+    };
+
+    struct PushConstants {
+        uint32_t start_instance_location = 0;
+        uint32_t start_vertex_location = 0;
+        uint32_t position_offset = 0;
+        uint32_t prev_position_offset = 0;
+        uint32_t texcoord_offset = 0;
+        uint32_t normal_offset = 0;
+        uint32_t tangent_offset = 0;
+    };
+
+    static constexpr UINT PUSH_CONSTANT_DWORD_COUNT =
+        sizeof(PushConstants) / sizeof(uint32_t);
+    static constexpr UINT MATERIAL_TEXTURE_SOURCE_SLOT_COUNT =
+        static_cast<UINT>(scene::DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT);
+
+
     void PassDonutGBuffer::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,

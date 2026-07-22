@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "util/Utils.h"
 #include "util/Logger.h"
 
 namespace eng {
@@ -18,6 +19,13 @@ namespace eng {
                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 40,
                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
+        return { elements, _countof(elements) };
+    }
+
+    static D3D12_INPUT_LAYOUT_DESC donut_input_layout() {
+        static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
+            { "INDEX", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
         return { elements, _countof(elements) };
     }
@@ -132,9 +140,10 @@ namespace eng {
             "graphics pipeline requires a vertex shader");
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-        desc.InputLayout = fullscreen_ || manual_vertex_fetch_
-            ? D3D12_INPUT_LAYOUT_DESC{}
-            : default_input_layout();
+        desc.InputLayout =
+            fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} :
+            manual_vertex_fetch_ ? donut_input_layout() :
+            default_input_layout();
         desc.pRootSignature = root_signature_.Get();
         desc.VS = { vertex_shader_->GetBufferPointer(), vertex_shader_->GetBufferSize() };
         if (pixel_shader_)
@@ -180,8 +189,9 @@ namespace eng {
         desc.DSVFormat = fullscreen_ ? DXGI_FORMAT_UNKNOWN : DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
 
-        const HRESULT result = device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_));
-        util::Logger::g_logger.assert_with_log(SUCCEEDED(result), "create graphics pipeline state");
+        util::Utils::throw_if_failed(
+            device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_)),
+            "create graphics pipeline state");
     }
 
 }
