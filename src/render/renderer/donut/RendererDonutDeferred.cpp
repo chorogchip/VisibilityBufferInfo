@@ -65,7 +65,7 @@ namespace rndr {
 
 		fallback_shadow_map_.init(dxutl::create_texture2d_array_fallback(
 			device_.Get(), DXGI_FORMAT_R32_FLOAT).Get(), ST);
-		fallback_diffuse_light_probe_.init(dxutl::create_texture2d_array_fallback(
+		fallback_diffuse_light_probe_.init(dxutl::create_texture2d_cubemap_fallback(
 			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);
 		fallback_specular_light_probe_.init(dxutl::create_texture2d_cubemap_fallback(
 			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);

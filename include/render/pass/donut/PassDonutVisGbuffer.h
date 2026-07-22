@@ -14,7 +14,7 @@ namespace eng {
 
 namespace rndr {
 
-    struct PassDonutGBufferResources {
+    struct PassDonutVisGBufferResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
@@ -24,7 +24,7 @@ namespace rndr {
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
     };
 
-    class PassDonutGBuffer {
+    class PassDonutVisGBuffer {
 
     public:
         static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT = 7u;
@@ -32,7 +32,7 @@ namespace rndr {
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,
-            const PassDonutGBufferResources& resources);
+            const PassDonutVisGBufferResources& resources);
 
         void render(
             ID3D12GraphicsCommandList* command_list,
@@ -42,7 +42,7 @@ namespace rndr {
 
     private:
 
-        PassDonutGBufferResources resources_{};
+        PassDonutVisGBufferResources resources_{};
         eng::GraphicsPipeline pso_;
         bool use_motion_vectors_ = false;
     };

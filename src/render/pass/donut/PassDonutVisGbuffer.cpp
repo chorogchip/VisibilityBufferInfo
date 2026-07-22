@@ -9,15 +9,15 @@ namespace rndr {
         };
     }
 
-    void PassDonutGBuffer::init(
+    void PassDonutVisGBuffer::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,
-        const PassDonutGBufferResources& resources) {
+        const PassDonutVisGBufferResources& resources) {
 
 
     }
 
-    void PassDonutGBuffer::render(
+    void PassDonutVisGBuffer::render(
         ID3D12GraphicsCommandList* command_list,
         UINT frame_index,
         const D3D12_VIEWPORT& viewport,

@@ -49,7 +49,7 @@ namespace rndr {
 			resources_.hdr_color_buffer->get(),
 			eng::ResourceViewBuilder::build_srv(
 				resources_.hdr_color_buffer->get(),
-				eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
+				eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
 				DXGI_FORMAT_R16G16B16A16_FLOAT),
 			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_SOURCE);
 
@@ -70,7 +70,7 @@ namespace rndr {
 			fallback_color_lut_.get(),
 			eng::ResourceViewBuilder::build_srv(
 				fallback_color_lut_.get(),
-				eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+				eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
 			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_COLOR_LUT);
 
 		resources_.sampler_manager->create_sampler(

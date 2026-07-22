@@ -25,6 +25,17 @@ namespace {
             message);
     }
 
+    void assure_single_texture_2d_resource(
+        const D3D12_RESOURCE_DESC& resource_desc,
+        const char* message) {
+
+        assure_texture_2d_resource(resource_desc, message);
+
+        util::Logger::g_logger.assert_with_log(
+            resource_desc.DepthOrArraySize == 1,
+            message);
+    }
+
     void assure_raw_buffer_resource(
         const D3D12_RESOURCE_DESC& resource_desc,
         DXGI_FORMAT requested_format,
@@ -80,6 +91,20 @@ namespace eng {
             desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
             break;
 
+        case EnumResourceType::TEXTURE_2D:
+            assure_single_texture_2d_resource(
+                resource_desc,
+                "bad texture2d srv");
+
+            desc.Format = resolve_view_format(resource_desc, format);
+            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+            desc.Texture2D.MostDetailedMip = 0;
+            desc.Texture2D.MipLevels = resource_desc.MipLevels;
+            desc.Texture2D.PlaneSlice = 0;
+            desc.Texture2D.ResourceMinLODClamp = 0.0f;
+            break;
+
         case EnumResourceType::ARRAY_2D:
             assure_texture_2d_resource(
                 resource_desc,
@@ -98,6 +123,7 @@ namespace eng {
             break;
 
         case EnumResourceType::CUBEMAP:
+        case EnumResourceType::CUBEMAP_ARRAY:
             assure_texture_2d_resource(
                 resource_desc,
                 "cubemap SRV requires a non-MS Texture2D resource");
@@ -109,7 +135,8 @@ namespace eng {
 
             desc.Format = resolve_view_format(resource_desc, format);
 
-            if (resource_desc.DepthOrArraySize == 6) {
+            if (type == EnumResourceType::CUBEMAP &&
+                resource_desc.DepthOrArraySize == 6) {
                 desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
                 desc.TextureCube.MostDetailedMip = 0;
@@ -174,6 +201,18 @@ namespace eng {
             desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
             break;
 
+        case EnumResourceType::TEXTURE_2D:
+            assure_single_texture_2d_resource(
+                resource_desc,
+                "bad texture2d uav");
+
+            desc.Format = resolve_view_format(resource_desc, format);
+            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+            desc.Texture2D.MipSlice = 0;
+            desc.Texture2D.PlaneSlice = 0;
+            break;
+
         case EnumResourceType::ARRAY_2D:
             assure_texture_2d_resource(
                 resource_desc,
@@ -190,6 +229,7 @@ namespace eng {
             break;
 
         case EnumResourceType::CUBEMAP:
+        case EnumResourceType::CUBEMAP_ARRAY:
             assure_texture_2d_resource(
                 resource_desc,
                 "cubemap UAV requires a non-MS Texture2D resource");
@@ -199,14 +239,6 @@ namespace eng {
                 resource_desc.DepthOrArraySize % 6 == 0,
                 "cubemap UAV requires a multiple of six array slices");
 
-            /*
-             * D3D12에는 TextureCube UAV 차원이 없다.
-             * 큐브맵의 각 face를 Texture2DArray slice로 접근해야 한다.
-             *
-             * HLSL 측에서도 다음과 같이 선언해야 한다.
-             *
-             * RWTexture2DArray<float4> cubemapUav;
-             */
             desc.Format = resolve_view_format(resource_desc, format);
             desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 

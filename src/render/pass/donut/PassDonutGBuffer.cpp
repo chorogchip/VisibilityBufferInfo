@@ -119,7 +119,7 @@ namespace rndr {
                 resources_.shader_manager->create_srv(
                     resources_.scene->textures[texture_index].Get(),
                     eng::ResourceViewBuilder::build_srv(resources_.scene->textures[texture_index].Get(),
-                        eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                        eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                     eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
                     material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
             }

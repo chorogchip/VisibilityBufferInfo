@@ -44,19 +44,19 @@ namespace rndr {
             resources_.buf_diffuse_light_probe->get(),
             eng::ResourceViewBuilder::build_srv(
                 resources_.buf_diffuse_light_probe->get(),
-                eng::ResourceViewBuilder::EnumResourceType::CUBEMAP),
+                eng::ResourceViewBuilder::EnumResourceType::CUBEMAP_ARRAY),
             SRVDescPos::DONUT_DIFFUSE_LIGHT_PROBE);
         resources_.shader_manager->create_srv(
             resources_.buf_specular_light_probe->get(),
             eng::ResourceViewBuilder::build_srv(
                 resources_.buf_specular_light_probe->get(),
-                eng::ResourceViewBuilder::EnumResourceType::CUBEMAP),
+                eng::ResourceViewBuilder::EnumResourceType::CUBEMAP_ARRAY),
             SRVDescPos::DONUT_SPECULAR_LIGHT_PROBE);
         resources_.shader_manager->create_srv(
             resources_.buf_env_brdf->get(),
             eng::ResourceViewBuilder::build_srv(
                 resources_.buf_env_brdf->get(),
-                eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
             SRVDescPos::DONUT_ENVIRONMENT_BRDF);
 
         util::assure_next<
@@ -88,7 +88,7 @@ namespace rndr {
             resources_.depth->get(),
             eng::ResourceViewBuilder::build_srv(
                 resources_.depth->get(),
-                eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
+                eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
                 util::RenderConstants::DONUT_DEPTH_SRV_FORMAT),
             SRVDescPos::DONUT_GBUFFER_DEPTH);
 
@@ -98,7 +98,7 @@ namespace rndr {
                 resource,
                 eng::ResourceViewBuilder::build_srv(
                     resource,
-                    eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                 SRVDescPos::DONUT_GBUFFER_0,
                 i);
         }
@@ -122,7 +122,7 @@ namespace rndr {
                 auxiliary_resources[i]->get(),
                     eng::ResourceViewBuilder::build_srv(
                         auxiliary_resources[i]->get(),
-                        eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                        eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                     SRVDescPos::DONUT_INDIRECT_DIFFUSE, i);
         }
 
@@ -136,7 +136,7 @@ namespace rndr {
             resources_.uav_output->get(),
             eng::ResourceViewBuilder::build_uav(
                 resources_.uav_output->get(),
-                eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
+                eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
                 DXGI_FORMAT_R16G16B16A16_FLOAT),
             SRVDescPos::DONUT_HDR_COLOR_UAV);
 

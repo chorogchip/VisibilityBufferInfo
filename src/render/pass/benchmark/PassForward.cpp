@@ -52,7 +52,7 @@ namespace rndr {
             resources_.shader_manager->create_srv(
                 resource, eng::ResourceViewBuilder::build_srv(
                     resource,
-                    eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN, i);
         }
 

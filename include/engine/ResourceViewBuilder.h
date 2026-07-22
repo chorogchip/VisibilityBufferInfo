@@ -8,8 +8,10 @@ namespace eng {
 	public:
 		enum class EnumResourceType {
 			BUFFER,
+			TEXTURE_2D,
 			ARRAY_2D,
 			CUBEMAP,
+			CUBEMAP_ARRAY,
 		};
 
 		static D3D12_SHADER_RESOURCE_VIEW_DESC build_srv(

@@ -45,18 +45,16 @@ namespace rndr {
             resources_.shader_manager->create_srv(
                 resource, eng::ResourceViewBuilder::build_srv(
                     resource,
-                    eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN, i);
         }
-        D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
-        gbuffer_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        gbuffer_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        gbuffer_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        gbuffer_desc.Texture2D.MipLevels = 1;
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
             ID3D12Resource* resource = resources_.gbuffers[i]->get();
             resources_.shader_manager->create_srv(
-                resource, eng::ResourceViewBuilder::build_srv(resource),
+                resource, eng::ResourceViewBuilder::build_srv(
+                    resource,
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
+                    DXGI_FORMAT_R32G32B32A32_FLOAT),
                 eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0, i);
         }
 
