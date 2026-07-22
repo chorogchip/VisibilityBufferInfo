@@ -6,6 +6,7 @@
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
 
@@ -46,10 +47,12 @@ namespace rndr {
         if (use_prepass_depth_)
             resources_.frame_manager->create_dsv(eng::ResourceManagerFrame::EnumDSV::DEPTH_READ_ONLY, resources_.depth->get());
 
-        for (UINT i = 0; i < resources_.material_textures.size(); ++i)
+        for (UINT i = 0; i < resources_.material_textures.size(); ++i) {
+            ID3D12Resource* resource = resources_.material_textures[i]->get();
             resources_.shader_manager->create_srv(
-                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                resources_.material_textures[i]->get(), nullptr, i);
+                resource, eng::ResourceViewBuilder::build_srv(resource),
+                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN, i);
+        }
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/forward_VS.hlsl",

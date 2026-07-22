@@ -4,6 +4,7 @@
 #include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
 #include "util/Logger.h"
@@ -70,12 +71,13 @@ namespace rndr {
                 sizeof(scene::DonutSceneDataGPU::InstanceData));
 
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
             resources_.scene->instance_buffer.Get(),
-            &instance_srv);
+            instance_srv,
+            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER,
-            resources_.scene->vertex_buffer.Get());
+            resources_.scene->vertex_buffer.Get(),
+            eng::ResourceViewBuilder::build_srv(resources_.scene->vertex_buffer.Get()),
+            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER);
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,

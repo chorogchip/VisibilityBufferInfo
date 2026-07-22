@@ -35,13 +35,13 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
     graphics_queue_.init(device_.Get());
 
     for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i) {
-        Utils::throw_if_failed(device_->CreateCommandAllocator(
+        util::Utils::throw_if_failed(device_->CreateCommandAllocator(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             IID_PPV_ARGS(command_allocator_[i].ReleaseAndGetAddressOf())),
             "create command allocator");
     }
 
-    Utils::throw_if_failed(device_->CreateCommandList(
+    util::Utils::throw_if_failed(device_->CreateCommandList(
         0,
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         command_allocator_[0].Get(),
@@ -49,7 +49,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         IID_PPV_ARGS(command_list_.ReleaseAndGetAddressOf())),
         "create command list");
 
-    Utils::throw_if_failed(command_list_->Close(), "command list close");
+    util::Utils::throw_if_failed(command_list_->Close(), "command list close");
 
     swapchain_ = dxutl::create_swapchain(
         factory_.Get(),
@@ -152,11 +152,11 @@ void RendererBase::render() {
 
     this->render_prepare_();
 
-    Utils::throw_if_failed(
+    util::Utils::throw_if_failed(
         command_allocator_[frame_index_]->Reset(),
         "reset command allocator");
 
-    Utils::throw_if_failed(
+    util::Utils::throw_if_failed(
         command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
         "command list reset on render start");
 
@@ -172,16 +172,16 @@ void RendererBase::render() {
     frame_time_.end_timestamp(
         command_list_.Get(), frame_index_, dxutl::GpuFrameTimer::TOTAL_SLOT);
 
-    Utils::throw_if_failed(command_list_->Close(),
+    util::Utils::throw_if_failed(command_list_->Close(),
         "command list close on frame end");
 
     graphics_queue_.execute(command_list_.Get());
 
     if (program_argument_.vsync) {
-        Utils::throw_if_failed(swapchain_->Present(1, 0),
+        util::Utils::throw_if_failed(swapchain_->Present(1, 0),
             "swapchain present");
     } else {
-        Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING),
+        util::Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING),
             "swapchain present");
     }
 

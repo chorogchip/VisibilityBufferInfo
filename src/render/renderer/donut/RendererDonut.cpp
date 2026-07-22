@@ -40,13 +40,13 @@ namespace rndr {
 
         compute_queue_.init(device_.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i) {
-            Utils::throw_if_failed(device_->CreateCommandAllocator(
+            util::Utils::throw_if_failed(device_->CreateCommandAllocator(
                 D3D12_COMMAND_LIST_TYPE_COMPUTE,
                 IID_PPV_ARGS(compute_command_allocator_[i].ReleaseAndGetAddressOf())),
                 "create Donut compute command allocator");
         }
 
-        Utils::throw_if_failed(device_->CreateCommandList(
+        util::Utils::throw_if_failed(device_->CreateCommandList(
             0,
             D3D12_COMMAND_LIST_TYPE_COMPUTE,
             compute_command_allocator_[0].Get(),
@@ -54,7 +54,7 @@ namespace rndr {
             IID_PPV_ARGS(compute_command_list_.ReleaseAndGetAddressOf())),
             "create Donut compute command list");
 
-        Utils::throw_if_failed(
+        util::Utils::throw_if_failed(
             compute_command_list_->Close(),
             "close Donut compute command list");
 
@@ -67,7 +67,7 @@ namespace rndr {
             : "Donut scene import failed");
 
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
-        Utils::throw_if_failed(command_list_->Reset(
+        util::Utils::throw_if_failed(command_list_->Reset(
             command_allocator_[frame_index_].Get(), nullptr));
 
         scene_gpu_ = scene::donut::DonutSceneResourceBuilder::build(
@@ -77,7 +77,7 @@ namespace rndr {
             used_upload_heaps,
             program_argument_.to_load_texture);
 
-        Utils::throw_if_failed(command_list_->Close(),
+        util::Utils::throw_if_failed(command_list_->Close(),
             "close command list on Donut scene resource creation");
         graphics_queue_.execute(command_list_.Get());
         graphics_queue_.wait_idle();

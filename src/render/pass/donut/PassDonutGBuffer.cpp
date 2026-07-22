@@ -5,6 +5,7 @@
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
 #include "util/Logger.h"
@@ -103,20 +104,21 @@ namespace rndr {
                 sizeof(scene::DonutSceneDataGPU::MaterialData));
 
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
             resources_.scene->instance_buffer.Get(),
-            &instance_srv);
+            instance_srv,
+            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER,
-            resources_.scene->vertex_buffer.Get());
+            resources_.scene->vertex_buffer.Get(),
+            eng::ResourceViewBuilder::build_srv(resources_.scene->vertex_buffer.Get()),
+            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER);
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_SUBMESH_BUFFER,
             resources_.scene->submesh_buffer.Get(),
-            &submesh_srv);
+            submesh_srv,
+            eng::ResourceManagerShader::EnumDescPos::DONUT_SUBMESH_BUFFER);
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_BUFFER,
             resources_.scene->material_buffer.Get(),
-            &material_srv);
+            material_srv,
+            eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_BUFFER);
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
@@ -136,16 +138,18 @@ namespace rndr {
                     texture_index < resources_.scene->textures.size(),
                     "Donut material texture index is invalid");
 
-                resources_.shader_manager->create_srv_texture_2d(
-                    eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
+                resources_.shader_manager->create_srv(
                     resources_.scene->textures[texture_index].Get(),
-                    DXGI_FORMAT_UNKNOWN,
+                    eng::ResourceViewBuilder::build_srv(resources_.scene->textures[texture_index].Get(),
+                        eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+                    eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
                     material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
             }
         }
 
-        resources_.sampler_manager->create_sampler_linear_wrap(
-            eng::ResourceManagerSampler::EnumDescPos::DONUT_MATERIAL);
+        resources_.sampler_manager->create_sampler(
+            eng::ResourceManagerSampler::EnumDescPos::DONUT_MATERIAL,
+            eng::ResourceManagerSampler::EnumSamplerType::LINEAR_WRAP);
 
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_0,

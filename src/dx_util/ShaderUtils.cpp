@@ -32,7 +32,7 @@ namespace dxutl {
             if (error_blob) {
                 OutputDebugStringA(static_cast<const char*>(error_blob->GetBufferPointer()));
             }
-            Utils::throw_if_failed(hr, "compile shader");
+            util::Utils::throw_if_failed(hr, "compile shader");
         }
 
         return shader;

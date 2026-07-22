@@ -44,14 +44,14 @@ namespace rndr {
         {
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
 
-            Utils::throw_if_failed(command_list_->Reset(
+            util::Utils::throw_if_failed(command_list_->Reset(
                 command_allocator_[frame_index_].Get(), nullptr));
 
             scene_gpu_ = scene::SceneResourceBuilder::build(
                 *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps,
                 program_argument_.to_load_texture);
 
-            Utils::throw_if_failed(command_list_->Close(),
+            util::Utils::throw_if_failed(command_list_->Close(),
                 "close list on resource creation");
 
             graphics_queue_.execute(command_list_.Get());
@@ -70,7 +70,8 @@ namespace rndr {
         this->create_dummy_textures();
 
         resource_manager_sampler_.create_sampler(
-            eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL);
+            eng::ResourceManagerSampler::EnumDescPos::BENCH_MATERIAL,
+            eng::ResourceManagerSampler::EnumSamplerType::LINEAR_WRAP);
 
         this->init2_();
     }
@@ -165,7 +166,7 @@ namespace rndr {
         (void)row_size_in_bytes;
 
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> upload_buffers(texture_count);
-        Utils::throw_if_failed(command_list_->Reset(
+        util::Utils::throw_if_failed(command_list_->Reset(
             command_allocator_[frame_index_].Get(), nullptr));
 
         for (UINT texture_index = 0; texture_index < texture_count; ++texture_index) {
@@ -211,7 +212,7 @@ namespace rndr {
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 
-        Utils::throw_if_failed(command_list_->Close(),
+        util::Utils::throw_if_failed(command_list_->Close(),
             "close list on dummy texture creation");
         graphics_queue_.execute(command_list_.Get());
         graphics_queue_.wait_idle();

@@ -15,7 +15,7 @@ namespace dxutl {
         }
 #endif
 
-        Utils::throw_if_failed(
+        util::Utils::throw_if_failed(
             CreateDXGIFactory1(IID_PPV_ARGS(factory.ReleaseAndGetAddressOf())),
             "create DXGI factory");
 
@@ -37,10 +37,10 @@ namespace dxutl {
         }
 
         Microsoft::WRL::ComPtr<IDXGIAdapter> warp_adapter;
-        Utils::throw_if_failed(
+        util::Utils::throw_if_failed(
             factory->EnumWarpAdapter(IID_PPV_ARGS(warp_adapter.ReleaseAndGetAddressOf())),
             "enumerate adapter");
-        Utils::throw_if_failed(D3D12CreateDevice(
+        util::Utils::throw_if_failed(D3D12CreateDevice(
             warp_adapter.Get(),
             D3D_FEATURE_LEVEL_11_0,
             IID_PPV_ARGS(device.ReleaseAndGetAddressOf())),
@@ -67,7 +67,7 @@ namespace dxutl {
         swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
         Microsoft::WRL::ComPtr<IDXGISwapChain1> swap_chain;
-        Utils::throw_if_failed(factory->CreateSwapChainForHwnd(
+        util::Utils::throw_if_failed(factory->CreateSwapChainForHwnd(
             command_queue,
             hwnd,
             &swap_chain_desc,
@@ -75,12 +75,12 @@ namespace dxutl {
             nullptr,
             &swap_chain), "create swapchain");
 
-        Utils::throw_if_failed(factory->MakeWindowAssociation(
+        util::Utils::throw_if_failed(factory->MakeWindowAssociation(
             hwnd,
             DXGI_MWA_NO_ALT_ENTER), "factory make window association");
 
         Microsoft::WRL::ComPtr<IDXGISwapChain3> swapchain;
-        Utils::throw_if_failed(swap_chain.As(&swapchain), "swapchain as");
+        util::Utils::throw_if_failed(swap_chain.As(&swapchain), "swapchain as");
         return swapchain;
     }
 

@@ -21,7 +21,7 @@ namespace dxutl {
         heap_props.VisibleNodeMask = 1;
 
         Microsoft::WRL::ComPtr<ID3D12Resource> resource;
-        Utils::throw_if_failed(device->CreateCommittedResource(
+        util::Utils::throw_if_failed(device->CreateCommittedResource(
             &heap_props,
             D3D12_HEAP_FLAG_NONE,
             &resource_desc,
@@ -138,7 +138,7 @@ namespace dxutl {
         read_range.Begin = 0;
         read_range.End = 0;
 
-        Utils::throw_if_failed(upload_buffer->Map(0, &read_range, &mapped_data), "map upload buffer");
+        util::Utils::throw_if_failed(upload_buffer->Map(0, &read_range, &mapped_data), "map upload buffer");
         std::memcpy(mapped_data, source, size_in_bytes);
         upload_buffer->Unmap(0, nullptr);
     }
@@ -149,7 +149,7 @@ namespace dxutl {
         read_range.Begin = 0;
         read_range.End = 0;
 
-        Utils::throw_if_failed(upload_buffer->Map(0, &read_range, &mapped_data), "map upload buffer");
+        util::Utils::throw_if_failed(upload_buffer->Map(0, &read_range, &mapped_data), "map upload buffer");
         return mapped_data;
     }
 

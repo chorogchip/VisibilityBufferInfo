@@ -31,20 +31,10 @@ namespace eng {
     }
 
     void ResourceManagerShader::create_srv(
-        EnumDescPos position,
-        ID3D12Resource* resource,
-        EnumResourceType type,
-        UINT offset = 0) {
-
-        const auto desc = ResourceViewBuilder::build_srv(resource, type);
-        this->create_srv(position, resource, desc, offset);
-    }
-
-    void ResourceManagerShader::create_srv(
-        EnumDescPos position,
         ID3D12Resource* resource,
         const D3D12_SHADER_RESOURCE_VIEW_DESC& desc,
-        UINT offset = 0) {
+        EnumDescPos position,
+        UINT offset) {
 
         const UINT index = static_cast<UINT>(position) + offset;
 
@@ -69,22 +59,11 @@ namespace eng {
         record.srv_desc = desc;
     }
 
-
     void ResourceManagerShader::create_uav(
-        EnumDescPos position,
-        ID3D12Resource* resource,
-        EnumResourceType type = EnumResourceType::BUFFER,
-        UINT offset = 0) {
-
-        const auto desc = ResourceViewBuilder::build_uav(resource, type);
-        this->create_uav(position, resource, desc, offset);
-    }
-
-    void ResourceManagerShader::create_uav(
-        EnumDescPos position,
         ID3D12Resource* resource,
         const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
-        UINT offset = 0) {
+        EnumDescPos position,
+        UINT offset) {
 
         const UINT index = static_cast<UINT>(position) + offset;
 

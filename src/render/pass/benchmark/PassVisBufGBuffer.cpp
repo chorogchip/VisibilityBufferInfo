@@ -7,6 +7,7 @@
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/Assertion.h"
 
@@ -33,8 +34,9 @@ namespace rndr {
         }
 
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
-            resources_.visibility->get());
+            resources_.visibility->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.visibility->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER);
 
         D3D12_SHADER_RESOURCE_VIEW_DESC scene_desc{};
         scene_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -46,33 +48,41 @@ namespace rndr {
         scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->vertices[0]);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->vertices.size());
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER,
-            resources_.vertex_buffer->get(), &scene_desc);
+            resources_.vertex_buffer->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.vertex_buffer->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_VERTEX_BUFFER);
         scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->indices[0]);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->indices.size());
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
-            resources_.index_buffer->get(), &scene_desc);
+            resources_.index_buffer->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.index_buffer->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER);
         scene_desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->meshes.size());
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
-            resources_.mesh_buffer->get(), &scene_desc);
+            resources_.mesh_buffer->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.mesh_buffer->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER);
         scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->objects[0]);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->objects.size());
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
-            resources_.instance_buffer->get(), &scene_desc);
+            resources_.instance_buffer->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.instance_buffer->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER);
         scene_desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->materials.size());
         resources_.shader_manager->create_srv(
-            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER,
-            resources_.material_buffer->get(), &scene_desc);
+            resources_.material_buffer->get(),
+            eng::ResourceViewBuilder::build_srv(resources_.material_buffer->get()),
+            eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER);
 
-        for (UINT i = 0; i < resources_.material_textures.size(); ++i)
+        for (UINT i = 0; i < resources_.material_textures.size(); ++i) {
+            ID3D12Resource* resource = resources_.material_textures[i]->get();
             resources_.shader_manager->create_srv(
-                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                resources_.material_textures[i]->get(), nullptr, i);
+                resource, eng::ResourceViewBuilder::build_srv(resource),
+                eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN, i);
+        }
+
 
         util::assure_next<
             eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER,
@@ -89,9 +99,10 @@ namespace rndr {
         gbuffer_desc.Texture2D.MipLevels = 1;
 
         for (UINT i = 0; i < resources_.gbuffer_count; ++i) {
+            ID3D12Resource* resource = resources_.gbuffers[i]->get();
             resources_.shader_manager->create_srv(
-                eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0,
-                resources_.gbuffers[i]->get(), &gbuffer_desc, i);
+                resource, eng::ResourceViewBuilder::build_srv(resource),
+                eng::ResourceManagerShader::EnumDescPos::BENCH_GBUFFER_0, i);
         }
 
         auto vs = dxutl::compile_shader(

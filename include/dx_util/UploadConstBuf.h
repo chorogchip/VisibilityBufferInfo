@@ -6,8 +6,9 @@
 #include <d3d12.h>
 #include <wrl.h>
 
-#include "dx_util/ResourceUtils.h"
+#include "util/Assume.h"
 #include "util/Logger.h"
+#include "dx_util/ResourceUtils.h"
 
 namespace dxutl {
 
@@ -44,8 +45,10 @@ namespace dxutl {
 
         void update() {
             util::Logger::g_logger.assert_with_log(
-                mapped_ != nullptr, "upload constant buffer is not initialized");
+                mapped_ != nullptr,
+                "upload constant buffer is not initialized");
 
+            MSVC_ASSUME(mapped_ != nullptr);
             std::memcpy(mapped_, &this->buffer, sizeof(T));
         }
 

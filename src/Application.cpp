@@ -23,7 +23,7 @@ void Application::parse_args() {
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 
     for (int i = 1; i < argc; ++i)
-        args.push_back(Utils::wstring_to_string(argv[i]));
+        args.push_back(util::Utils::wstring_to_string(argv[i]));
 
     LocalFree(argv);
 

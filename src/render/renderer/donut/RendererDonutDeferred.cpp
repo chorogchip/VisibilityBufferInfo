@@ -8,6 +8,7 @@
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
+#include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
 #include "util/RenderConstants.h"
 
@@ -353,21 +354,30 @@ namespace rndr {
 			eng::ResourceManagerFrame::EnumRTV::BACK_BUFFER_1,
 			render_targets_[1].get());
 
-		resource_manager_shader_.create_srv_texture_2d(
-			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_SOURCE,
-			hdr_color_buffer_.get(), DXGI_FORMAT_R16G16B16A16_FLOAT);
+		resource_manager_shader_.create_srv(
+			hdr_color_buffer_.get(),
+			eng::ResourceViewBuilder::build_srv(
+				hdr_color_buffer_.get(),
+				eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
+				DXGI_FORMAT_R16G16B16A16_FLOAT),
+			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_SOURCE);
 
 		const D3D12_SHADER_RESOURCE_VIEW_DESC exposure_srv =
 			create_exposure_srv_desc();
 		resource_manager_shader_.create_srv(
-			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_EXPOSURE,
-			exposure_buffer_.get(), &exposure_srv);
-		resource_manager_shader_.create_srv_texture_2d(
-			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_COLOR_LUT,
-			fallback_color_lut_.get());
+			exposure_buffer_.get(),
+			exposure_srv,
+			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_EXPOSURE);
+		resource_manager_shader_.create_srv(
+			fallback_color_lut_.get(),
+			eng::ResourceViewBuilder::build_srv(
+				fallback_color_lut_.get(),
+				eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
+			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_COLOR_LUT);
 
-		resource_manager_sampler_.create_sampler_linear_clamp(
-			eng::ResourceManagerSampler::EnumDescPos::DONUT_BRDF);
+		resource_manager_sampler_.create_sampler(
+			eng::ResourceManagerSampler::EnumDescPos::DONUT_BRDF,
+			eng::ResourceManagerSampler::EnumSamplerType::LINEAR_CLAMP);
 
 		auto vs = dxutl::compile_shader(
 			L"assets/shaders/deferred_lighting_VS.hlsl",

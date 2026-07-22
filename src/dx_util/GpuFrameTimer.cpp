@@ -1,5 +1,6 @@
 #include "dx_util/GpuFrameTimer.h"
 
+#include "util/Assume.h"
 #include "util/Utils.h"
 #include "util/Logger.h"
 #include "dx_util/ResourceUtils.h"
@@ -13,20 +14,20 @@ namespace dxutl {
         query_heap_desc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
         query_heap_desc.NodeMask = 0;
 
-        Utils::throw_if_failed(
+        util::Utils::throw_if_failed(
             p_device->CreateQueryHeap(&query_heap_desc, IID_PPV_ARGS(query_heap_.ReleaseAndGetAddressOf())),
             "create timestamp query heap");
 
         readback_buffer_ = dxutl::create_buffer(p_device, sizeof(UINT64) * BUF_COUNT, D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
 
         UINT64 frequency;
-        Utils::throw_if_failed(p_queue->GetTimestampFrequency(&frequency),
+        util::Utils::throw_if_failed(p_queue->GetTimestampFrequency(&frequency),
             "get timestamp frequency");
 
         timestamp_frequency_rcp_ = 1.0 / static_cast<double>(frequency);
 
         D3D12_RANGE read_range{ 0, sizeof(UINT64) * BUF_COUNT };
-        Utils::throw_if_failed(readback_buffer_->Map(0, &read_range, reinterpret_cast<void**>(&readback_buffer_mapped_)),
+        util::Utils::throw_if_failed(readback_buffer_->Map(0, &read_range, reinterpret_cast<void**>(&readback_buffer_mapped_)),
             "map timestamp readback");
 	}
 
@@ -63,8 +64,12 @@ namespace dxutl {
     void GpuFrameTimer::end_timestamp(ID3D12GraphicsCommandList* p_list, UINT frame_index, UINT slot) {
 
         util::Logger::g_logger.assert_with_log(
-            frame_index < util::Constants::FRAME_COUNT && slot < SLOT_COUNT,
+            frame_index < util::Constants::FRAME_COUNT &&
+            slot < SLOT_COUNT,
             "GPU timestamp index is out of range");
+
+        MSVC_ASSUME(frame_index < util::Constants::FRAME_COUNT);
+        MSVC_ASSUME(slot < SLOT_COUNT);
 
         const UINT timestamp_index = frame_index * SLOT_COUNT * 2 + slot * 2;
 

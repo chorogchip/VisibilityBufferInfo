@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "util/Assume.h"
 #include "util/Logger.h"
 #include "util/Utils.h"
 
@@ -43,6 +44,8 @@ namespace eng {
             texture != nullptr &&
             descriptor_index < RTV_COUNT,
             "invalid RTV descriptor request");
+
+        MSVC_ASSUME(descriptor_index < RTV_COUNT);
 
         const D3D12_RESOURCE_DESC resource_desc = texture->GetDesc();
         RtvRecord& record = rtv_records_[descriptor_index];

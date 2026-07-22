@@ -7,7 +7,7 @@
 
 namespace eng {
     void TextureLoader::init() {
-        Utils::throw_if_failed(
+        util::Utils::throw_if_failed(
             CoInitializeEx(nullptr, COINIT_MULTITHREADED),
             "initialize COM for texture loading");
     }
