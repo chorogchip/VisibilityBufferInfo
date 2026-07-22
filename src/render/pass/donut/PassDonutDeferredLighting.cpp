@@ -11,6 +11,18 @@
 
 namespace rndr {
 
+    namespace {
+
+        enum class RootParam : UINT {
+            CONSTANT_BUFFER,  // c0
+            SM_LIGHT_ENVBRDF,  // t0 t1 t2 t3
+            SAMPLER,  // s0 s1 s2 s3
+            DEPTH_GBUFFER,  // t8 t9 t10 t11 t12
+            IBL_SHADOW_AO,  //  t14 t15 t16 t17
+            OUTPUT,  // u0
+        };
+    }
+
     void PassDonutDeferredLighting::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,
@@ -79,6 +91,7 @@ namespace rndr {
                 eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
                 util::RenderConstants::DONUT_DEPTH_SRV_FORMAT),
             SRVDescPos::DONUT_GBUFFER_DEPTH);
+
         for (UINT i = 0; i < _countof(resources_.gbuffers); ++i) {
             ID3D12Resource* resource = resources_.gbuffers[i]->get();
             resources_.shader_manager->create_srv(
@@ -110,8 +123,7 @@ namespace rndr {
                     eng::ResourceViewBuilder::build_srv(
                         auxiliary_resources[i]->get(),
                         eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
-                    SRVDescPos::DONUT_INDIRECT_DIFFUSE,
-                    i);
+                    SRVDescPos::DONUT_INDIRECT_DIFFUSE, i);
         }
 
         util::assure_next<

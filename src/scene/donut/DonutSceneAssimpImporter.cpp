@@ -221,6 +221,7 @@ namespace scene::donut {
             std::unordered_map<std::string, uint32_t>& texture_cache,
             const aiMaterial* source,
             uint32_t material_index) {
+
             DonutSceneDataCPU::Material material =
                 make_default_material(material_index);
 
@@ -457,9 +458,7 @@ namespace scene::donut {
 
         std::unordered_map<std::string, uint32_t> texture_cache;
         result->materials.reserve(std::max(1u, imported_scene->mNumMaterials));
-        for (uint32_t material_index = 0;
-            material_index < imported_scene->mNumMaterials;
-            ++material_index) {
+        for (uint32_t material_index = 0; material_index < imported_scene->mNumMaterials; ++material_index) {
             result->materials.push_back(import_material(
                 *result,
                 texture_cache,

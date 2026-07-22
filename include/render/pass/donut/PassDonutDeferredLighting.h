@@ -15,6 +15,7 @@ namespace eng {
 namespace rndr {
 
     struct PassDonutDeferredLightingResources {
+
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::ResourceManagerSampler* sampler_manager = nullptr;
 
@@ -24,8 +25,10 @@ namespace rndr {
         eng::GPUResource* buf_diffuse_light_probe = nullptr;
         eng::GPUResource* buf_specular_light_probe = nullptr;
         eng::GPUResource* buf_env_brdf = nullptr;
+
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* gbuffers[4]{};
+
         eng::GPUResource* buf_ibl_diffuse = nullptr;
         eng::GPUResource* buf_ibl_specular = nullptr;
         eng::GPUResource* buf_shadow = nullptr;
@@ -49,15 +52,6 @@ namespace rndr {
             UINT height);
 
     private:
-        enum class RootParam : UINT {
-            CONSTANT_BUFFER,
-            SM_LIGHT_ENVBRDF,
-            SAMPLER,
-            DEPTH_GBUFFER,
-            IBL_SHADOW_AO,
-            OUTPUT,
-        };
-
         PassDonutDeferredLightingResources resources_{};
         eng::GraphicsPipeline pso_;
     };

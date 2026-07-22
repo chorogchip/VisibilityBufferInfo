@@ -174,17 +174,17 @@ namespace scene {
 
     void DonutSceneDataCPU::build_all_visible_draws(
         std::vector<VisibleDraw>& output) const {
+
         output.clear();
         output.reserve(geometry_instances.size());
-        for (uint32_t geometry_instance_id = 0;
-            geometry_instance_id < geometry_instances.size();
-            ++geometry_instance_id) {
+        for (uint32_t geometry_instance_id = 0; geometry_instance_id < geometry_instances.size(); ++geometry_instance_id) {
             output.push_back({ geometry_instance_id });
         }
     }
 
     void DonutSceneDataCPU::sort_visible_draws(
         std::vector<VisibleDraw>& draws) const {
+
         std::sort(draws.begin(), draws.end(),
             [this](const VisibleDraw& lhs, const VisibleDraw& rhs) {
                 const GeometryInstance& lhs_geometry =

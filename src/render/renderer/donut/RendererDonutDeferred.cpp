@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "util/Constants.h"
+#include "util/RenderConstants.h"
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/ResourceManagerFrame.h"
@@ -10,49 +12,8 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
-#include "util/RenderConstants.h"
 
 namespace rndr {
-
-	namespace {
-
-		Microsoft::WRL::ComPtr<ID3D12Resource> create_texture2d_array(
-			ID3D12Device* device,
-			UINT64 width,
-			UINT height,
-			UINT16 array_size,
-			DXGI_FORMAT format,
-			D3D12_RESOURCE_STATES initial_state,
-			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-			const D3D12_CLEAR_VALUE* clear_value = nullptr) {
-
-			D3D12_RESOURCE_DESC desc{};
-			desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-			desc.Width = width;
-			desc.Height = height;
-			desc.DepthOrArraySize = array_size;
-			desc.MipLevels = 1;
-			desc.Format = format;
-			desc.SampleDesc.Count = 1;
-			desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-			desc.Flags = flags;
-
-			return dxutl::create_committed_resource(
-				device, desc, D3D12_HEAP_TYPE_DEFAULT, initial_state, clear_value);
-		}
-
-		D3D12_SHADER_RESOURCE_VIEW_DESC create_exposure_srv_desc() {
-			D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
-			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			desc.Format = DXGI_FORMAT_R32_UINT;
-			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-			desc.Buffer.FirstElement = 0;
-			desc.Buffer.NumElements = 1;
-			desc.Buffer.StructureByteStride = 0;
-			desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-			return desc;
-		}
-	}
 
 	RendererDonutDeferred::RendererDonutDeferred(bool do_prepass)
 		: do_prepass_(do_prepass) {}
@@ -271,17 +232,17 @@ namespace rndr {
 
 	void RendererDonutDeferred::init_lighting_fallbacks_() {
 		fallback_shadow_map_.init(
-			create_texture2d_array(
+			dxutl::create_texture2d_array(
 				device_.Get(), 1, 1, 1, DXGI_FORMAT_R32_FLOAT,
 				D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE).Get(),
 			D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		fallback_diffuse_light_probe_.init(
-			create_texture2d_array(
+			dxutl::create_texture2d_array(
 				device_.Get(), 1, 1, 6, DXGI_FORMAT_R16G16B16A16_FLOAT,
 				D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE).Get(),
 			D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 		fallback_specular_light_probe_.init(
-			create_texture2d_array(
+			dxutl::create_texture2d_array(
 				device_.Get(), 1, 1, 6, DXGI_FORMAT_R16G16B16A16_FLOAT,
 				D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE).Get(),
 			D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -362,8 +323,15 @@ namespace rndr {
 				DXGI_FORMAT_R16G16B16A16_FLOAT),
 			eng::ResourceManagerShader::EnumDescPos::DONUT_TONEMAP_SOURCE);
 
-		const D3D12_SHADER_RESOURCE_VIEW_DESC exposure_srv =
-			create_exposure_srv_desc();
+		D3D12_SHADER_RESOURCE_VIEW_DESC exposure_srv{};
+		exposure_srv.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		exposure_srv.Format = DXGI_FORMAT_R32_UINT;
+		exposure_srv.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+		exposure_srv.Buffer.FirstElement = 0;
+		exposure_srv.Buffer.NumElements = 1;
+		exposure_srv.Buffer.StructureByteStride = 0;
+		exposure_srv.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
 		resource_manager_shader_.create_srv(
 			exposure_buffer_.get(),
 			exposure_srv,
