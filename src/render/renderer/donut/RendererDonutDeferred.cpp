@@ -22,14 +22,11 @@ namespace rndr {
 		program_result_.renderer_name =
 			do_prepass_ ? "DonutDeferredPrepass" : "DonutDeferred";
 
-		const UINT geometry_slot = do_prepass_ ? 2 : 1;
-		const UINT lighting_slot = geometry_slot + 1;
 		if (do_prepass_)
 			program_result_.pass_names[1] = "depth_prepass";
-		program_result_.pass_names[geometry_slot] = "geometry";
-		program_result_.pass_names[lighting_slot] = "lighting";
-
-
+		program_result_.pass_names[do_prepass_ ? 2 : 1] = "geometry";
+		program_result_.pass_names[do_prepass_ ? 3 : 2] = "lighting";
+		program_result_.pass_names[do_prepass_ ? 4 : 3] = "tonemap";
 
 		for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i) {
 			depth_constants_[i].init(device_.Get());
@@ -64,8 +61,6 @@ namespace rndr {
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		}
 
-
-
 		const auto ST = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
 		fallback_shadow_map_.init(dxutl::create_texture2d_array_fallback(
@@ -94,8 +89,6 @@ namespace rndr {
 		dxutl::copy_to_upload_buffer(
 			exposure.Get(), &zero_exposure, sizeof(zero_exposure));
 		exposure_buffer_.init(exposure.Get(), D3D12_RESOURCE_STATE_GENERIC_READ);
-
-
 
 		hdr_color_buffer_.init(
 			dxutl::create_texture2d(
@@ -127,7 +120,7 @@ namespace rndr {
 			for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
 				depth.constant_buffers[i] = &depth_constant_resources_[i];
 			depth.scene = scene_gpu_.get();
-			pass_depth_pre_.init(device_.Get(), program_argument_, depth, true);
+			pass_depth_pre_.init(device_.Get(), program_argument_, depth);
 		}
 
 		pass_gbuffer_.init(device_.Get(), program_argument_, gbuffer, do_prepass_);
@@ -243,6 +236,7 @@ namespace rndr {
 	void RendererDonutDeferred::render_record_() {
 		const UINT geometry_slot = do_prepass_ ? 2 : 1;
 		const UINT lighting_slot = geometry_slot + 1;
+		const UINT tonemap_slot = lighting_slot + 1;
 
 		if (do_prepass_) {
 			frame_time_.start_timestamp(
@@ -259,7 +253,10 @@ namespace rndr {
 
 		frame_time_.start_timestamp(command_list_.Get(), frame_index_, lighting_slot);
 		pass_lighting_.render(command_list_.Get(), frame_index_, width_, height_);
-		pass_tonemap_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
 		frame_time_.end_timestamp(command_list_.Get(), frame_index_, lighting_slot);
+
+		frame_time_.start_timestamp(command_list_.Get(), frame_index_, tonemap_slot);
+		pass_tonemap_.render(command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+		frame_time_.end_timestamp(command_list_.Get(), frame_index_, tonemap_slot);
 	}
 }

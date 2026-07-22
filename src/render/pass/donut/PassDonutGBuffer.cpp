@@ -30,73 +30,26 @@ namespace rndr {
             return desc;
         }
 
-        void validate_resources(const PassDonutGBufferResources& resources) {
-            util::Logger::g_logger.assert_with_log(
-                resources.frame_manager != nullptr &&
-                resources.sampler_manager != nullptr &&
-                resources.shader_manager != nullptr &&
-                resources.depth != nullptr &&
-                resources.scene != nullptr,
-                "Donut G-buffer pass requires valid resources");
-            util::Logger::g_logger.assert_with_log(
-                resources.scene->vertex_buffer != nullptr &&
-                resources.scene->index_buffer != nullptr &&
-                resources.scene->instance_buffer != nullptr &&
-                resources.scene->submesh_buffer != nullptr &&
-                resources.scene->material_buffer != nullptr &&
-                resources.scene->material_constant_buffer != nullptr,
-                "Donut G-buffer pass requires scene buffers");
-            util::Logger::g_logger.assert_with_log(
-                !resources.scene->draws.empty() &&
-                !resources.scene->textures.empty() &&
-                !resources.scene->material_data.empty(),
-                "Donut G-buffer pass requires draw, texture, and material data");
+        enum class RootParam : UINT {
+            PUSH_CONSTANT,
+            VIEW_CONSTANT,
+            GEOMETRY_DATA,
+            MATERIAL_CONSTANT,
+            MATERIAL_TEXTURES,
+            MATERIAL_SAMPLER,
+        };
 
-            for (eng::GPUResource* gbuffer : resources.gbuffers) {
-                util::Logger::g_logger.assert_with_log(
-                    gbuffer != nullptr,
-                    "Donut G-buffer pass requires four render targets");
-            }
-            for (UINT frame_index = 0;
-                frame_index < util::Constants::FRAME_COUNT;
-                ++frame_index) {
-                util::Logger::g_logger.assert_with_log(
-                    resources.constant_buffers[frame_index] != nullptr,
-                    "Donut G-buffer pass requires frame constant buffers");
-            }
-        }
-
-        uint32_t texture_index_for_descriptor(
-            const scene::DonutSceneDataGPU& gpu_scene,
-            const scene::DonutSceneDataGPU::MaterialData& material,
-            UINT slot_index) {
-
-            if (slot_index <
-                static_cast<UINT>(scene::DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT)) {
-                return material.texture_indices[slot_index];
-            }
-            return gpu_scene.fallback_texture_indices[0];
-        }
+        struct PushConstants {
+            uint32_t start_instance_location = 0;
+            uint32_t start_vertex_location = 0;
+            uint32_t position_offset = 0;
+            uint32_t prev_position_offset = 0;
+            uint32_t texcoord_offset = 0;
+            uint32_t normal_offset = 0;
+            uint32_t tangent_offset = 0;
+        };
     }
 
-    enum class RootParam : UINT {
-        PUSH_CONSTANT,
-        VIEW_CONSTANT,
-        GEOMETRY_DATA,
-        MATERIAL_CONSTANT,
-        MATERIAL_TEXTURES,
-        MATERIAL_SAMPLER,
-    };
-
-    struct PushConstants {
-        uint32_t start_instance_location = 0;
-        uint32_t start_vertex_location = 0;
-        uint32_t position_offset = 0;
-        uint32_t prev_position_offset = 0;
-        uint32_t texcoord_offset = 0;
-        uint32_t normal_offset = 0;
-        uint32_t tangent_offset = 0;
-    };
 
     static constexpr UINT PUSH_CONSTANT_DWORD_COUNT =
         sizeof(PushConstants) / sizeof(uint32_t);
@@ -113,7 +66,6 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
         use_motion_vectors_ = false;
-        validate_resources(resources_);
 
         const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
             make_structured_srv_desc(
@@ -154,11 +106,12 @@ namespace rndr {
             ++material_id) {
             const scene::DonutSceneDataGPU::MaterialData& material =
                 resources_.scene->material_data[material_id];
-            for (UINT slot_index = 0;
-                slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
-                ++slot_index) {
-                const uint32_t texture_index = texture_index_for_descriptor(
-                    *resources_.scene, material, slot_index);
+            for (UINT slot_index = 0; slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT; ++slot_index) {
+
+                uint32_t texture_index = resources_.scene->fallback_texture_indices[0];
+                if (slot_index < static_cast<UINT>(scene::DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT))
+                    texture_index = material.texture_indices[slot_index];
+
                 util::Logger::g_logger.assert_with_log(
                     texture_index < resources_.scene->textures.size(),
                     "Donut material texture index is invalid");

@@ -13,62 +13,43 @@ namespace rndr {
 
     namespace {
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC make_structured_srv_desc(
-            UINT element_count,
-            UINT element_stride) {
+        enum class RootParam : UINT {
+            PUSH_CONSTANT,
+            VIEW_CONSTANT,
+            INSTANCE_BUFFER,
+            VERTEX_BUFFER,
+        };
 
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
-            desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            desc.Format = DXGI_FORMAT_UNKNOWN;
-            desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-            desc.Buffer.FirstElement = 0;
-            desc.Buffer.NumElements = element_count;
-            desc.Buffer.StructureByteStride = element_stride;
-            desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-            return desc;
-        }
+        struct PushConstants {
+            uint32_t start_instance_location = 0;
+            uint32_t start_vertex_location = 0;
+            uint32_t position_offset = 0;
+            uint32_t texcoord_offset = 0;
+        };
 
-        void validate_resources(const PassDonutDepthPreResources& resources) {
-            util::Logger::g_logger.assert_with_log(
-                resources.frame_manager != nullptr &&
-                resources.shader_manager != nullptr &&
-                resources.depth != nullptr &&
-                resources.scene != nullptr,
-                "Donut depth pre-pass requires valid resources");
-            util::Logger::g_logger.assert_with_log(
-                resources.scene->vertex_buffer != nullptr &&
-                resources.scene->index_buffer != nullptr &&
-                resources.scene->instance_buffer != nullptr,
-                "Donut depth pre-pass requires scene buffers");
-            for (UINT frame_index = 0;
-                frame_index < util::Constants::FRAME_COUNT;
-                ++frame_index) {
-                util::Logger::g_logger.assert_with_log(
-                    resources.constant_buffers[frame_index] != nullptr,
-                    "Donut depth pre-pass requires frame constant buffers");
-            }
-        }
+        static constexpr UINT PUSH_CONSTANT_DWORD_COUNT =
+            sizeof(PushConstants) / sizeof(uint32_t);
     }
 
     void PassDonutDepthPre::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,
-        const PassDonutDepthPreResources& resources,
-        bool use_prepass_depth) {
-
-        (void)use_prepass_depth;
+        const PassDonutDepthPreResources& resources) {
 
         resources_ = resources;
-        validate_resources(resources_);
 
         resources_.frame_manager->create_dsv(
             eng::ResourceManagerFrame::EnumDSV::DEPTH,
             resources_.depth->get());
 
-        const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
-            make_structured_srv_desc(
-                static_cast<UINT>(resources_.scene->instance_data.size()),
-                sizeof(scene::DonutSceneDataGPU::InstanceData));
+        D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv{};
+        instance_srv.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        instance_srv.Format = DXGI_FORMAT_UNKNOWN;
+        instance_srv.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        instance_srv.Buffer.FirstElement = 0;
+        instance_srv.Buffer.NumElements = resources_.scene->instance_data.size();
+        instance_srv.Buffer.StructureByteStride = sizeof(scene::DonutSceneDataGPU::InstanceData);
+        instance_srv.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
         resources_.shader_manager->create_srv(
             resources_.scene->instance_buffer.Get(),
