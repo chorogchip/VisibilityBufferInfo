@@ -454,10 +454,12 @@ namespace scene::donut {
 
         destination->instance_data.reserve(source.instances.size());
         for (const DonutSceneDataCPU::Instance& source_instance : source.instances) {
+            const DonutSceneDataCPU::Mesh& source_mesh =
+                source.meshes[source_instance.mesh_id];
             DonutSceneDataGPU::InstanceData instance{};
-            instance.mesh_id = source_instance.mesh_id;
             instance.first_geometry_instance =
                 source_instance.first_geometry_instance;
+            instance.first_geometry = source_mesh.first_submesh;
             instance.geometry_instance_count =
                 source_instance.geometry_instance_count;
             instance.transform = to_shader_float3x4(source_instance.world_transform);

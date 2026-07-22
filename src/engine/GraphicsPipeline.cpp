@@ -23,13 +23,6 @@ namespace eng {
         return { elements, _countof(elements) };
     }
 
-    static D3D12_INPUT_LAYOUT_DESC donut_input_layout() {
-        static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
-            { "INDEX", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-        };
-        return { elements, _countof(elements) };
-    }
-
     void GraphicsPipeline::init(ID3D12Device* device) {
         device_ = device;
         pipeline_type_ = PipelineType::Undefined;
@@ -140,10 +133,9 @@ namespace eng {
             "graphics pipeline requires a vertex shader");
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-        desc.InputLayout =
-            fullscreen_ ? D3D12_INPUT_LAYOUT_DESC{} :
-            manual_vertex_fetch_ ? donut_input_layout() :
-            default_input_layout();
+        desc.InputLayout = fullscreen_ || manual_vertex_fetch_
+            ? D3D12_INPUT_LAYOUT_DESC{}
+            : default_input_layout();
         desc.pRootSignature = root_signature_.Get();
         desc.VS = { vertex_shader_->GetBufferPointer(), vertex_shader_->GetBufferSize() };
         if (pixel_shader_)

@@ -53,8 +53,6 @@ namespace rndr {
 
     static constexpr UINT PUSH_CONSTANT_DWORD_COUNT =
         sizeof(PushConstants) / sizeof(uint32_t);
-    static constexpr UINT MATERIAL_TEXTURE_SOURCE_SLOT_COUNT =
-        static_cast<UINT>(scene::DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT);
 
 
     void PassDonutGBuffer::init(

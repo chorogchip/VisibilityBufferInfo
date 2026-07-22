@@ -38,10 +38,10 @@ namespace scene {
         };
 
         struct InstanceData {
-            uint32_t mesh_id = 0;
-            uint32_t first_geometry_instance = 0;
-            uint32_t geometry_instance_count = 0;
             uint32_t flags = 0;
+            uint32_t first_geometry_instance = 0;
+            uint32_t first_geometry = 0;
+            uint32_t geometry_instance_count = 0;
             DirectX::XMFLOAT3X4 transform{};
             DirectX::XMFLOAT3X4 prev_transform{};
         };

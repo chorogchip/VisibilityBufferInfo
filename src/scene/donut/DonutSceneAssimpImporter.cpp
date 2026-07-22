@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -435,7 +436,7 @@ namespace scene::donut {
     std::unique_ptr<DonutSceneDataCPU> DonutSceneAssimpImporter::load(
         const std::filesystem::path& path) {
         auto result = std::make_unique<DonutSceneDataCPU>();
-        result->source_path = path;
+        result->source_path = std::filesystem::absolute(path).lexically_normal();
 
         Assimp::Importer importer;
         const unsigned int flags =
@@ -447,7 +448,8 @@ namespace scene::donut {
             aiProcess_ConvertToLeftHanded |
             aiProcess_SortByPType;
 
-        const aiScene* imported_scene = importer.ReadFile(path.string(), flags);
+        const aiScene* imported_scene = importer.ReadFile(
+            result->source_path.string(), flags);
         if (imported_scene == nullptr || imported_scene->mNumMeshes == 0) {
             result->error_message = importer.GetErrorString();
             if (result->error_message.empty()) {
