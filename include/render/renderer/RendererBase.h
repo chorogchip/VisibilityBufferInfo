@@ -15,7 +15,7 @@
 #include "util/FrameCounter.h"
 #include "dx_util/GPUFrameTimer.h"
 #include "dx_util/UploadConstBuf.h"
-#include "engine/GraphicsQueue.h"
+#include "engine/GPUQueue.h"
 #include "engine/GPUResource.h"
 #include "render/camera/Camera.h"
 #include "render/camera/CameraPathController.h"
@@ -49,7 +49,7 @@ protected:
     ComPtr<IDXGIFactory4> factory_;
     ComPtr<ID3D12Device> device_;
 
-    eng::GraphicsQueue graphics_queue_;
+    eng::GPUQueue graphics_queue_;
     UINT64 fence_values_[util::Constants::FRAME_COUNT]{};
     ComPtr<ID3D12CommandAllocator> command_allocator_[util::Constants::FRAME_COUNT];
     ComPtr<ID3D12GraphicsCommandList> command_list_;

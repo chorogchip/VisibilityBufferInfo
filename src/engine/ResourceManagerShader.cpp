@@ -103,9 +103,9 @@ namespace eng {
         }
 
         DescriptorRecord& record = descriptor_records_[index];
-        if (record.initialized) {
+        if (record.is_initialized) {
             util::Logger::g_logger.assert_with_log(
-                record.kind == DescriptorKind::SRV &&
+                !record.is_uav &&
                 record.resource == resource &&
                 same_desc(record.srv_desc, *desc),
                 "conflicting shader SRV descriptor request");
@@ -113,8 +113,8 @@ namespace eng {
         }
 
         device_->CreateShaderResourceView(resource, desc, get_cpu_adr(position, offset));
-        record.initialized = true;
-        record.kind = DescriptorKind::SRV;
+        record.is_initialized = true;
+        record.is_uav = false;
         record.resource = resource;
         record.srv_desc = *desc;
     }
@@ -154,11 +154,13 @@ namespace eng {
         UINT offset) {
 
         util::Logger::g_logger.assert_with_log(
-            resource != nullptr, "invalid Texture2DArray SRV descriptor request");
+            resource != nullptr,
+            "invalid Texture2DArray SRV descriptor request");
 
         const D3D12_RESOURCE_DESC resource_desc = resource->GetDesc();
         assure_texture_2d_resource(
-            resource_desc, "Texture2DArray SRV requires a non-MS Texture2D resource");
+            resource_desc,
+            "Texture2DArray SRV requires a non-MS Texture2D resource");
 
         D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
         desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -225,9 +227,9 @@ namespace eng {
         }
 
         DescriptorRecord& record = descriptor_records_[index];
-        if (record.initialized) {
+        if (record.is_initialized) {
             util::Logger::g_logger.assert_with_log(
-                record.kind == DescriptorKind::UAV &&
+                record.is_uav &&
                 record.resource == resource &&
                 same_desc(record.uav_desc, *desc),
                 "conflicting shader UAV descriptor request");
@@ -236,8 +238,8 @@ namespace eng {
 
         device_->CreateUnorderedAccessView(
             resource, nullptr, desc, get_cpu_adr(position, offset));
-        record.initialized = true;
-        record.kind = DescriptorKind::UAV;
+        record.is_initialized = true;
+        record.is_uav = true;
         record.resource = resource;
         record.uav_desc = *desc;
     }

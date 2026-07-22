@@ -5,15 +5,15 @@
 
 namespace eng {
 
-    class GraphicsQueue {
+    class GPUQueue {
     public:
-        GraphicsQueue() = default;
-        ~GraphicsQueue();
+        GPUQueue() = default;
+        ~GPUQueue();
 
-        GraphicsQueue(const GraphicsQueue&) = delete;
-        GraphicsQueue& operator=(const GraphicsQueue&) = delete;
-        GraphicsQueue(GraphicsQueue&&) = delete;
-        GraphicsQueue& operator=(GraphicsQueue&&) = delete;
+        GPUQueue(const GPUQueue&) = delete;
+        GPUQueue& operator=(const GPUQueue&) = delete;
+        GPUQueue(GPUQueue&&) = delete;
+        GPUQueue& operator=(GPUQueue&&) = delete;
 
         void init(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
 
@@ -21,7 +21,7 @@ namespace eng {
 
         [[nodiscard]] UINT64 signal();
         void wait(UINT64 fence_value);
-        void wait(const GraphicsQueue& queue, UINT64 fence_value);
+        void wait(const GPUQueue& queue, UINT64 fence_value);
         void wait_idle();
 
         [[nodiscard]] ID3D12CommandQueue* get() const {

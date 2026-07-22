@@ -10,6 +10,7 @@
 namespace eng {
 
     class ResourceManagerFrame {
+
     public:
         enum class EnumRTV : UINT {
             BACK_BUFFER_0,
@@ -48,25 +49,26 @@ namespace eng {
 
     private:
         struct RtvRecord {
-            bool initialized = false;
+            bool is_initialized = false;
             ID3D12Resource* resource = nullptr;
             D3D12_RESOURCE_DESC resource_desc{};
         };
 
         struct DsvRecord {
-            bool initialized = false;
+            bool is_initialized = false;
             ID3D12Resource* resource = nullptr;
             D3D12_RESOURCE_DESC resource_desc{};
             D3D12_DEPTH_STENCIL_VIEW_DESC view_desc{};
         };
 
-        static constexpr UINT RTV_COUNT = static_cast<UINT>(EnumRTV::COUNT);
-        static constexpr UINT DSV_COUNT = static_cast<UINT>(EnumDSV::COUNT);
         ID3D12Device* device_ = nullptr;
-        UINT rtv_size_ = 0;
-        UINT dsv_size_ = 0;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtv_heap_;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsv_heap_;
+        UINT rtv_size_ = 0;
+        UINT dsv_size_ = 0;
+
+        static constexpr UINT RTV_COUNT = static_cast<UINT>(EnumRTV::COUNT);
+        static constexpr UINT DSV_COUNT = static_cast<UINT>(EnumDSV::COUNT);
         std::array<RtvRecord, RTV_COUNT> rtv_records_{};
         std::array<DsvRecord, DSV_COUNT> dsv_records_{};
     };

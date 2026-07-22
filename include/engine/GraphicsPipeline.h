@@ -28,28 +28,28 @@ namespace eng {
         void build();
 
         [[nodiscard]] ID3D12PipelineState* get() const { return pso_.Get(); }
-        [[nodiscard]] ID3D12RootSignature* get_root_signature() const { return root_signature_.Get(); }
+        [[nodiscard]] ID3D12RootSignature* get_root_signature() const {
+            return root_signature_.Get();
+        }
 
     private:
-        enum class PipelineType {
-            Undefined,
-            Graphics,
-            Compute,
-        };
+        enum class PipelineType { Undefined, Graphics, Compute, };
 
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_;
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_;
         ID3D12Device* device_ = nullptr;
+
         PipelineType pipeline_type_ = PipelineType::Undefined;
         Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_;
         Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_;
         Microsoft::WRL::ComPtr<ID3DBlob> compute_shader_;
-        Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_;
-        Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_;
         bool depth_only_ = false;
         bool depth_equal_ = false;
         bool fullscreen_ = false;
         bool manual_vertex_fetch_ = false;
+        std::array<DXGI_FORMAT, D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT>
+            render_target_formats_{};
         UINT render_target_count_ = 1;
-        std::array<DXGI_FORMAT, D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT> render_target_formats_{};
     };
 
 }

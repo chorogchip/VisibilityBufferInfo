@@ -11,7 +11,6 @@
 #include "util/Constants.h"
 #include "util/Utils.h"
 #include "util/TimeUtils.h"
-#include "util/Constants.h"
 #include "util/BenchmarkCsvWriter.h"
 #include "dx_util/DeviceUtils.h"
 #include "engine/TextureLoader.h"

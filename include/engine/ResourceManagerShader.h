@@ -8,6 +8,7 @@
 namespace eng {
 
     class ResourceManagerShader {
+
     public:
         enum class EnumDescPos : UINT {
             DONUT_SHADOW_MAP_ARRAY = 0,
@@ -57,31 +58,37 @@ namespace eng {
         };
 
         void init(ID3D12Device* device, UINT descriptor_count);
+
         void create_srv(
             EnumDescPos position,
             ID3D12Resource* resource,
             const D3D12_SHADER_RESOURCE_VIEW_DESC* desc = nullptr,
             UINT offset = 0);
+
         void create_srv_texture_2d(
             EnumDescPos position,
             ID3D12Resource* resource,
             DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
             UINT offset = 0);
+
         void create_srv_texture_2d_array(
             EnumDescPos position,
             ID3D12Resource* resource,
             DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
             UINT offset = 0);
+
         void create_srv_texture_cube_array(
             EnumDescPos position,
             ID3D12Resource* resource,
             DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
             UINT offset = 0);
+
         void create_uav(
             EnumDescPos position,
             ID3D12Resource* resource,
             const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc = nullptr,
             UINT offset = 0);
+
         void create_uav_texture_2d(
             EnumDescPos position,
             ID3D12Resource* resource,
@@ -105,24 +112,19 @@ namespace eng {
         }
 
     private:
-        enum class DescriptorKind {
-            SRV,
-            UAV,
-        };
-
         struct DescriptorRecord {
-            bool initialized = false;
-            DescriptorKind kind = DescriptorKind::SRV;
+            bool is_initialized = false;
+            bool is_uav = false;
             ID3D12Resource* resource = nullptr;
             D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
             D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc{};
         };
 
         ID3D12Device* device_ = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_;
         UINT descriptor_size_ = 0;
         UINT descriptor_count_ = 0;
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_;
+
         std::vector<DescriptorRecord> descriptor_records_;
     };
-
 }

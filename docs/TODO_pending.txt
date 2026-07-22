@@ -1,7 +1,1 @@
-compute queue async 실제 execute/sync 연결
-
 desc heap binding pass 밖으로 이동 검토
-
-Embedded texture 로딩 지원
-
-빌드 시 scene 날려버리는 문제
