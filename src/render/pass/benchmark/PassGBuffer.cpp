@@ -43,7 +43,9 @@ namespace rndr {
         for (UINT i = 0; i < resources_.material_textures.size(); ++i) {
             ID3D12Resource* resource = resources_.material_textures[i]->get();
             resources_.shader_manager->create_srv(
-                resource, eng::ResourceViewBuilder::build_srv(resource),
+                resource, eng::ResourceViewBuilder::build_srv(
+                    resource,
+                    eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D),
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN, i);
         }
         D3D12_SHADER_RESOURCE_VIEW_DESC gbuffer_desc{};
