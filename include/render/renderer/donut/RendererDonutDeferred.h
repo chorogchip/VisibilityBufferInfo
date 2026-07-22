@@ -3,7 +3,6 @@
 #include <array>
 #include <cstdint>
 #include <vector>
-
 #include <DirectXMath.h>
 
 #include "dx_util/UploadConstBuf.h"
@@ -13,6 +12,7 @@
 #include "render/pass/donut/PassDonutDepthPre.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
 #include "render/pass/donut/PassDonutDeferredLighting.h"
+#include "render/pass/donut/PassDonutTonemap.h"
 
 namespace rndr {
 
@@ -32,11 +32,6 @@ namespace rndr {
 		static constexpr UINT DEFERRED_MAX_LIGHT_PROBES = 16;
 		static constexpr UINT DEPTH_PREPASS_SLOT = 1;
 
-		enum class TonemapRootParam : UINT {
-			CONSTANT_BUFFER,
-			SOURCE_EXPOSURE_LUT,
-			COLOR_LUT_SAMPLER,
-		};
 
 		struct DonutPlanarViewConstants {
 			DirectX::XMFLOAT4X4 mat_world_to_view{};
@@ -126,25 +121,6 @@ namespace rndr {
 			DonutLightProbeConstants light_probes[DEFERRED_MAX_LIGHT_PROBES]{};
 		};
 
-		struct DonutToneMappingConstants {
-			std::uint32_t view_origin[2]{};
-			std::uint32_t view_size[2]{};
-			float log_luminance_scale = 0.0f;
-			float log_luminance_bias = 0.0f;
-			float histogram_low_percentile = 0.0f;
-			float histogram_high_percentile = 0.0f;
-			float eye_adaptation_speed_up = 0.0f;
-			float eye_adaptation_speed_down = 0.0f;
-			float min_adapted_luminance = 1.0f;
-			float max_adapted_luminance = 1.0f;
-			float frame_time = 0.0f;
-			float exposure_scale = 1.0f;
-			float white_point_inv_squared = 1.0f;
-			std::uint32_t source_slice = 0;
-			DirectX::XMFLOAT2 color_lut_texture_size{};
-			DirectX::XMFLOAT2 color_lut_texture_size_inv{};
-		};
-
 		static_assert(sizeof(DonutPlanarViewConstants) == 720);
 		static_assert(sizeof(DonutDepthPassConstants) == 64);
 		static_assert(sizeof(DonutGBufferFillConstants) == 1440);
@@ -152,19 +128,17 @@ namespace rndr {
 		static_assert(sizeof(DonutShadowConstants) == 112);
 		static_assert(sizeof(DonutLightProbeConstants) == 128);
 		static_assert(sizeof(DonutDeferredLightingConstants) == 6496);
-		static_assert(sizeof(DonutToneMappingConstants) == 80);
 
 		void init_constant_buffers_();
 		void init_gbuffers_();
 		void init_lighting_fallbacks_();
-		void init_hdr_output_();
-		void init_tonemap_();
-		void render_tonemap_();
 
 		bool do_prepass_ = false;
 		PassDonutDepthPre pass_depth_pre_;
 		PassDonutGBuffer pass_gbuffer_;
 		PassDonutDeferredLighting pass_lighting_;
+		PassDonutTonemap pass_tonemap_;
+
 		std::vector<eng::GPUResource> gbuffers_;
 		eng::GPUResource hdr_color_buffer_;
 		eng::GPUResource fallback_shadow_map_;
@@ -185,8 +159,6 @@ namespace rndr {
 			util::Constants::FRAME_COUNT> gbuffer_constants_;
 		std::array<dxutl::UploadConstBuf<DonutDeferredLightingConstants>,
 			util::Constants::FRAME_COUNT> lighting_constants_;
-		std::array<dxutl::UploadConstBuf<DonutToneMappingConstants>,
-			util::Constants::FRAME_COUNT> tonemap_constants_;
 		std::array<eng::GPUResource, util::Constants::FRAME_COUNT>
 			depth_constant_resources_;
 		std::array<eng::GPUResource, util::Constants::FRAME_COUNT>
