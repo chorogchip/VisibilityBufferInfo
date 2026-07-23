@@ -25,7 +25,7 @@ namespace rndr {
 
 	private:
 		void init2_() override;
-		void render_prepare_() override;
+		void render_prepare_donut_() override;
 		void render_record_() override;
 
 		static constexpr UINT GBUFFER_COUNT = 4;

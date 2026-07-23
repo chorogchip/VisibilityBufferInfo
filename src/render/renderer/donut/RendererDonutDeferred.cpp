@@ -158,7 +158,7 @@ namespace rndr {
 		pass_tonemap_.init(device_.Get(), program_argument_, tonemap);
 	}
 
-	void RendererDonutDeferred::render_prepare_() {
+	void RendererDonutDeferred::render_prepare_donut_() {
 		const scene::DonutPlanarViewConstants current_view =
 			DonutFrameConstantsBuilder::make_planar_view(
 				camera_, width_, height_);
@@ -166,8 +166,6 @@ namespace rndr {
 			has_previous_view_constants_ ?
 			previous_view_constants_ :
 			current_view;
-
-		update_visible_draws_();
 
 		depth_constants_[frame_index_].buffer =
 			DonutFrameConstantsBuilder::make_depth_constants(current_view);

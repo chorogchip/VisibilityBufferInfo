@@ -28,7 +28,7 @@ namespace rndr {
 		void init1_() override;
 		void render_prepare_() override;
 		virtual void init2_() = 0;
-		void update_visible_draws_();
+		virtual void render_prepare_donut_() = 0;
 		void record_render_instance_upload_(ID3D12GraphicsCommandList* command_list);
 
 		eng::ResourceManagerFrame resource_manager_frame_;

@@ -119,54 +119,48 @@ namespace rndr {
     }
 
     void RendererDonut::render_prepare_() {
+        if (program_argument_.use_vfc) {
+            DirectX::BoundingFrustum view_frustum;
+            DirectX::BoundingFrustum::CreateFromMatrix(
+                view_frustum,
+                camera_.get_mat_proj(width_, height_));
 
-    }
+            DirectX::BoundingFrustum world_frustum;
+            view_frustum.Transform(
+                world_frustum,
+                DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
 
-    void RendererDonut::update_visible_draws_() {
-        if (!program_argument_.use_vfc) {
-            return;
+            scene_cpu_->build_visible_draws(visible_draws_, &world_frustum);
+            scene_cpu_->sort_visible_draws(visible_draws_);
+            scene::donut::DonutSceneResourceBuilder::rebuild_draw_stream(
+                *scene_cpu_,
+                visible_draws_,
+                *scene_gpu_);
+
+            profile_index_count_ = 0.0;
+            for (const scene::DonutSceneDataGPU::Draw& draw : scene_gpu_->draws) {
+                profile_index_count_ +=
+                    static_cast<double>(draw.index_count) *
+                    static_cast<double>(draw.instance_count);
+            }
+
+            const size_t upload_size =
+                scene_gpu_->render_instance_data.size() *
+                sizeof(scene::DonutSceneDataGPU::InstanceData);
+            render_instance_upload_sizes_[frame_index_] = upload_size;
+            if (upload_size != 0) {
+                util::Logger::g_logger.assert_with_log(
+                    scene_gpu_->render_instance_data.size() <=
+                    scene_gpu_->render_instance_capacity,
+                    "Donut visible draw stream exceeds render instance buffer capacity");
+                dxutl::copy_to_upload_buffer(
+                    render_instance_upload_buffers_[frame_index_].Get(),
+                    scene_gpu_->render_instance_data.data(),
+                    upload_size);
+            }
         }
 
-        DirectX::BoundingFrustum view_frustum;
-        DirectX::BoundingFrustum::CreateFromMatrix(
-            view_frustum,
-            camera_.get_mat_proj(width_, height_));
-
-        DirectX::BoundingFrustum world_frustum;
-        view_frustum.Transform(
-            world_frustum,
-            DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
-
-        scene_cpu_->build_visible_draws(visible_draws_, &world_frustum);
-        scene_cpu_->sort_visible_draws(visible_draws_);
-        scene::donut::DonutSceneResourceBuilder::rebuild_draw_stream(
-            *scene_cpu_,
-            visible_draws_,
-            *scene_gpu_);
-
-        profile_index_count_ = 0.0;
-        for (const scene::DonutSceneDataGPU::Draw& draw : scene_gpu_->draws) {
-            profile_index_count_ +=
-                static_cast<double>(draw.index_count) *
-                static_cast<double>(draw.instance_count);
-        }
-
-        const size_t upload_size =
-            scene_gpu_->render_instance_data.size() *
-            sizeof(scene::DonutSceneDataGPU::InstanceData);
-        render_instance_upload_sizes_[frame_index_] = upload_size;
-        if (upload_size == 0) {
-            return;
-        }
-
-        util::Logger::g_logger.assert_with_log(
-            scene_gpu_->render_instance_data.size() <=
-            scene_gpu_->render_instance_capacity,
-            "Donut visible draw stream exceeds render instance buffer capacity");
-        dxutl::copy_to_upload_buffer(
-            render_instance_upload_buffers_[frame_index_].Get(),
-            scene_gpu_->render_instance_data.data(),
-            upload_size);
+        render_prepare_donut_();
     }
 
     void RendererDonut::record_render_instance_upload_(
