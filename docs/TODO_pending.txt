@@ -1,1 +1,0 @@
-desc heap binding pass 밖으로 이동 검토

@@ -55,5 +55,9 @@ namespace rndr {
 			gbuffer_constant_resources_;
 		std::array<eng::GPUResource, util::Constants::FRAME_COUNT>
 			lighting_constant_resources_;
+
+		scene::DonutPlanarViewConstants previous_view_constants_{};
+		bool has_previous_view_constants_ = false;
+		std::uint32_t donut_frame_index_ = 0;
 	};
 }

@@ -14,6 +14,7 @@
 #include "engine/ResourceManagerShader.h"
 #include "engine/ResourceViewBuilder.h"
 #include "engine/RootSignatureBuilder.h"
+#include "render/renderer/donut/DonutFrameConstantsBuilder.h"
 
 namespace rndr {
 
@@ -158,89 +159,33 @@ namespace rndr {
 	}
 
 	void RendererDonutDeferred::render_prepare_() {
-		const float width = static_cast<float>(width_);
-		const float height = static_cast<float>(height_);
-		const DirectX::XMMATRIX world_to_view = camera_.get_mat_view();
-		const DirectX::XMMATRIX view_to_clip = camera_.get_mat_proj(width_, height_);
-		const DirectX::XMMATRIX world_to_clip = world_to_view * view_to_clip;
-		const DirectX::XMMATRIX clip_to_view =
-			DirectX::XMMatrixInverse(nullptr, view_to_clip);
-		const DirectX::XMMATRIX view_to_world =
-			DirectX::XMMatrixInverse(nullptr, world_to_view);
-		const DirectX::XMMATRIX clip_to_world =
-			DirectX::XMMatrixInverse(nullptr, world_to_clip);
-		const CameraPose camera_pose = camera_.get_pose();
+		const scene::DonutPlanarViewConstants current_view =
+			DonutFrameConstantsBuilder::make_planar_view(
+				camera_, width_, height_);
+		const scene::DonutPlanarViewConstants previous_view =
+			has_previous_view_constants_ ?
+			previous_view_constants_ :
+			current_view;
+
 		update_visible_draws_();
 
-		auto write_planar_view = [&](scene::DonutPlanarViewConstants& view) {
-			DirectX::XMStoreFloat4x4(&view.mat_world_to_view, world_to_view);
-			DirectX::XMStoreFloat4x4(&view.mat_view_to_clip, view_to_clip);
-			DirectX::XMStoreFloat4x4(&view.mat_world_to_clip, world_to_clip);
-			DirectX::XMStoreFloat4x4(&view.mat_clip_to_view, clip_to_view);
-			DirectX::XMStoreFloat4x4(&view.mat_view_to_world, view_to_world);
-			DirectX::XMStoreFloat4x4(&view.mat_clip_to_world, clip_to_world);
-			DirectX::XMStoreFloat4x4(&view.mat_view_to_clip_no_offset, view_to_clip);
-			DirectX::XMStoreFloat4x4(&view.mat_world_to_clip_no_offset, world_to_clip);
-			DirectX::XMStoreFloat4x4(&view.mat_clip_to_view_no_offset, clip_to_view);
-			DirectX::XMStoreFloat4x4(&view.mat_clip_to_world_no_offset, clip_to_world);
-
-			view.viewport_origin = { 0.0f, 0.0f };
-			view.viewport_size = { width, height };
-			view.viewport_size_inv = { 1.0f / width, 1.0f / height };
-			view.pixel_offset = { 0.0f, 0.0f };
-			view.clip_to_window_scale = { width * 0.5f, height * -0.5f };
-			view.clip_to_window_bias = { width * 0.5f, height * 0.5f };
-			view.window_to_clip_scale = { 2.0f / width, -2.0f / height };
-			view.window_to_clip_bias = { -1.0f, 1.0f };
-			view.camera_direction_or_position = {
-				camera_pose.position.x,
-				camera_pose.position.y,
-				camera_pose.position.z,
-				1.0f
-			};
-			};
-
 		depth_constants_[frame_index_].buffer =
-			scene::DonutDepthPassConstants{};
-		DirectX::XMStoreFloat4x4(
-			&depth_constants_[frame_index_].buffer.mat_world_to_clip,
-			world_to_clip);
+			DonutFrameConstantsBuilder::make_depth_constants(current_view);
 		depth_constants_[frame_index_].update();
 
 		gbuffer_constants_[frame_index_].buffer =
-			scene::DonutGBufferFillConstants{};
-		write_planar_view(gbuffer_constants_[frame_index_].buffer.view);
-		gbuffer_constants_[frame_index_].buffer.view_prev =
-			gbuffer_constants_[frame_index_].buffer.view;
+			DonutFrameConstantsBuilder::make_gbuffer_constants(
+				current_view, previous_view);
 		gbuffer_constants_[frame_index_].update();
 
 		lighting_constants_[frame_index_].buffer =
-			scene::DonutDeferredLightingConstants{};
-		write_planar_view(lighting_constants_[frame_index_].buffer.view);
-		lighting_constants_[frame_index_].buffer.shadow_map_texture_size = { 1.0f, 1.0f };
-		lighting_constants_[frame_index_].buffer.ambient_color_top =
-		{ 0.05f, 0.05f, 0.05f, 0.0f };
-		lighting_constants_[frame_index_].buffer.ambient_color_bottom =
-		{ 0.02f, 0.02f, 0.02f, 0.0f };
-		lighting_constants_[frame_index_].buffer.indirect_diffuse_scale = 1.0f;
-		lighting_constants_[frame_index_].buffer.indirect_specular_scale = 1.0f;
-		lighting_constants_[frame_index_].buffer.noise_pattern[0] =
-		{ 0.059f, 0.529f, 0.176f, 0.647f };
-		lighting_constants_[frame_index_].buffer.noise_pattern[1] =
-		{ 0.765f, 0.294f, 0.882f, 0.412f };
-		lighting_constants_[frame_index_].buffer.noise_pattern[2] =
-		{ 0.235f, 0.706f, 0.118f, 0.588f };
-		lighting_constants_[frame_index_].buffer.noise_pattern[3] =
-		{ 0.941f, 0.471f, 0.824f, 0.353f };
-		for (UINT i = 0; i < scene::DonutDeferredLightingConstants::DEFERRED_MAX_LIGHTS; ++i) {
-			lighting_constants_[frame_index_].buffer.lights[i].shadow_cascades =
-			{ -1, -1, -1, -1 };
-			lighting_constants_[frame_index_].buffer.lights[i].per_object_shadows =
-			{ -1, -1, -1, -1 };
-			lighting_constants_[frame_index_].buffer.lights[i].shadow_channel =
-			{ -1, -1, -1, -1 };
-		}
+			DonutFrameConstantsBuilder::make_deferred_lighting_constants(
+				current_view, donut_frame_index_);
 		lighting_constants_[frame_index_].update();
+
+		previous_view_constants_ = current_view;
+		has_previous_view_constants_ = true;
+		++donut_frame_index_;
 	}
 
 	void RendererDonutDeferred::render_record_() {
