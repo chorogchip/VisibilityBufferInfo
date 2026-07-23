@@ -25,7 +25,8 @@ namespace dxutl {
         UploadConstBuf& operator=(UploadConstBuf&&) = delete;
 
         ~UploadConstBuf() {
-            resource_->Unmap(0, nullptr);
+            if (resource_)
+                resource_->Unmap(0, nullptr);
         }
 
         void init(ID3D12Device* device) {

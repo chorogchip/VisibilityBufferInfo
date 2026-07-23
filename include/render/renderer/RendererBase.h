@@ -38,6 +38,7 @@ protected:
     virtual void init1_() = 0;
     virtual void render_prepare_() = 0;
     virtual void render_record_() = 0;
+    virtual void before_close_() {}
 
     util::ProgramArgument program_argument_{};
     util::ProgramResult program_result_{};

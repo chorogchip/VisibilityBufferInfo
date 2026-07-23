@@ -105,8 +105,10 @@ camera playback mode에서는 interactive camera input을 무시한다.
 - 6: TVB + G-buffer
 - 7: Donut Deferred
 - 8: Donut Deferred + Depth Pre-Pass
+- 9: Donut Visibility + G-buffer
+- 10: Benchmark Raster Stats
 
-1~6은 benchmark/synthetic 계열 renderer다. 7~8은 실제 scene/Donut 계열 renderer다.
+1~6은 benchmark/synthetic 계열 renderer다. 7~9는 실제 scene/Donut 계열 renderer다. 10은 benchmark scene을 대상으로 GPU compute에서 overdraw/quad 통계를 직접 세는 진단용 renderer다.
 
 ## 6. RendererBase
 

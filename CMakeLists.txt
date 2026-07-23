@@ -25,6 +25,9 @@ set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
 set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
 
+# static third-party libraries
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # ------------------------------------------------------------
 # DirectXTex
 # ------------------------------------------------------------
@@ -47,6 +50,28 @@ FetchContent_MakeAvailable(directxtex)
 set_target_properties(DirectXTex PROPERTIES FOLDER "External/DirectXTex")
 
 # ------------------------------------------------------------
+# fastgltf
+# ------------------------------------------------------------
+set(FASTGLTF_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_DOCS OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_GLTF_RS OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_ASSIMP OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_CPP_MODULES OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(FASTGLTF_COMPILE_AS_CPP20 ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    fastgltf
+    GIT_REPOSITORY https://github.com/spnda/fastgltf.git
+    GIT_TAG v0.9.0
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(fastgltf)
+
+set_target_properties(fastgltf PROPERTIES FOLDER "External/fastgltf")
+
+# ------------------------------------------------------------
 # Assimp
 # ------------------------------------------------------------
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -56,9 +81,6 @@ set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 
 # Exporter 필요 없으면 OFF
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
-
-# static library
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${TVBPERF_ASSIMP_DIR})
 
@@ -186,6 +208,7 @@ target_link_libraries(TVBPerf
     PRIVATE
         assimp
         DirectXTex
+        fastgltf::fastgltf
         d3d12
         dxgi
         d3dcompiler

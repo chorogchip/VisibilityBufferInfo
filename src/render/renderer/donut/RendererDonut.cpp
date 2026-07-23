@@ -1,7 +1,10 @@
 #include "render/renderer/donut/RendererDonut.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
+#include <filesystem>
+#include <string>
 #include <vector>
 
 #include <DirectXCollision.h>
@@ -9,12 +12,34 @@
 #include "dx_util/ResourceUtils.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
 #include "scene/donut/DonutSceneAssimpImporter.h"
+#include "scene/donut/DonutSceneFastGltfImporter.h"
 #include "scene/donut/DonutSceneResourceBuilder.h"
 #include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
 
 namespace rndr {
+
+    namespace {
+
+        bool is_gltf_path(const std::filesystem::path& path) {
+            std::string extension = path.extension().string();
+            std::transform(extension.begin(), extension.end(), extension.begin(),
+                [](unsigned char value) {
+                    return static_cast<char>(std::tolower(value));
+                });
+            return extension == ".gltf" || extension == ".glb";
+        }
+
+        bool use_fastgltf_importer(
+            const std::string& importer,
+            const std::filesystem::path& path) {
+
+            return importer == "fastgltf" ||
+                importer == "gltf" ||
+                (importer == "auto" && is_gltf_path(path));
+        }
+    }
 
     RendererDonut::~RendererDonut() {
         compute_queue_.wait_idle();
@@ -61,8 +86,15 @@ namespace rndr {
             compute_command_list_->Close(),
             "close Donut compute command list");
 
-        scene_cpu_ = scene::donut::DonutSceneAssimpImporter::load(
-            program_argument_.scene_path);
+        if (use_fastgltf_importer(
+            program_argument_.scene_importer,
+            program_argument_.scene_path)) {
+            scene_cpu_ = scene::donut::DonutSceneFastGltfImporter::load(
+                program_argument_.scene_path);
+        } else {
+            scene_cpu_ = scene::donut::DonutSceneAssimpImporter::load(
+                program_argument_.scene_path);
+        }
         util::Logger::g_logger.assert_with_log(
             scene_cpu_ && scene_cpu_->loaded,
             scene_cpu_

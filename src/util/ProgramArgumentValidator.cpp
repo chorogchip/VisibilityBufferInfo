@@ -11,8 +11,8 @@ namespace util {
 
         auto& logger = util::Logger::g_logger;
 
-        logger.assert_with_log(arg.renderer_variant >= 1 && arg.renderer_variant <= 9,
-            "renderer_variant must be between 1 and 9");
+        logger.assert_with_log(arg.renderer_variant >= 1 && arg.renderer_variant <= 10,
+            "renderer_variant must be between 1 and 10");
         logger.assert_with_log(arg.window_width > 0, "window_width must be greater than 0");
         logger.assert_with_log(arg.window_height > 0, "window_height must be greater than 0");
         logger.assert_with_log(arg.measure_frames > 0, "measure_frames must be greater than 0");
@@ -52,6 +52,12 @@ namespace util {
         if (arg.to_use_scene) {
             logger.assert_with_log(!arg.scene_path.empty(),
                 "scene_path must not be empty when to_use_scene is true");
+            logger.assert_with_log(
+                arg.scene_importer == "assimp" ||
+                arg.scene_importer == "fastgltf" ||
+                arg.scene_importer == "gltf" ||
+                arg.scene_importer == "auto",
+                "scene_importer must be assimp, fastgltf, gltf, or auto");
             return;
         }
 

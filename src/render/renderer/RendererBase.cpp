@@ -90,6 +90,7 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
 void RendererBase::close() {
     graphics_queue_.wait_idle();
+    this->before_close_();
 
     const std::string& path = program_argument_.output_filepath;
     if (path == "") return;

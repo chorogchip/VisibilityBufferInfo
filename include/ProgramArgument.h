@@ -18,6 +18,7 @@ namespace util {
     X(bool, to_use_scene, true, to-use-scene) \
     X(bool, to_load_texture, false, to-load-texture) \
     X(bool, use_vfc, true, use-vfc) \
+    X(std::string, scene_importer, "assimp", scene-importer) \
     X(std::string, scene_path, "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx", scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
     X(uint32_t, measure_frames, 24000, measure-frames) \

@@ -1,16 +1,46 @@
 #include "scene/SceneLoader.h"
 
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
+#include <string>
 
 #include "scene/SceneAssimpImporter.h"
+#include "scene/SceneFastGltfImporter.h"
 #include "scene/SceneBuilder.h"
 #include "scene/SceneInfo.h"
 
 namespace scene {
 
+    namespace {
+
+        bool is_gltf_path(const std::filesystem::path& path) {
+            std::string extension = path.extension().string();
+            std::transform(extension.begin(), extension.end(), extension.begin(),
+                [](unsigned char value) {
+                    return static_cast<char>(std::tolower(value));
+                });
+            return extension == ".gltf" || extension == ".glb";
+        }
+
+        bool use_fastgltf_importer(
+            const std::string& importer,
+            const std::filesystem::path& path) {
+
+            return importer == "fastgltf" ||
+                importer == "gltf" ||
+                (importer == "auto" && is_gltf_path(path));
+        }
+    }
+
     std::unique_ptr<SceneDataCPU> SceneLoader::load(const util::ProgramArgument& arg) {
         if (arg.to_use_scene) {
-            return SceneAssimpImporter::load(std::filesystem::current_path() / arg.scene_path);
+            const std::filesystem::path scene_path =
+                std::filesystem::current_path() / arg.scene_path;
+            if (use_fastgltf_importer(arg.scene_importer, scene_path)) {
+                return SceneFastGltfImporter::load(scene_path);
+            }
+            return SceneAssimpImporter::load(scene_path);
         }
 
         SceneInfoSphere gen_info{};
