@@ -19,7 +19,7 @@ namespace rndr {
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* depth = nullptr;
-        eng::GPUResource* visibility_buf;
+        eng::GPUResource* visibility_buf = nullptr;
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
         const scene::DonutSceneDataGPU* scene = nullptr;
     };
@@ -27,6 +27,9 @@ namespace rndr {
     class PassDonutVisibility {
 
     public:
+        static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
+            scene::DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,

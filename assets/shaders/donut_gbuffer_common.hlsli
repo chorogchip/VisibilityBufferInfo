@@ -22,6 +22,14 @@
 #define GBUFFER_VIEW_REGISTER b2
 #define GBUFFER_MATERIAL_SAMPLER_REGISTER s0
 
+#define VISGBUFFER_VISIBILITY_REGISTER t20
+#define VISGBUFFER_INDEX_REGISTER t21
+#define VISGBUFFER_VERTEX_REGISTER t22
+#define VISGBUFFER_INSTANCE_REGISTER t23
+#define VISGBUFFER_SUBMESH_REGISTER t24
+#define VISGBUFFER_GEOMETRY_INSTANCE_REGISTER t25
+#define VISGBUFFER_MATERIAL_REGISTER t26
+
 static const int MaterialDomain_Opaque = 0;
 static const int MaterialDomain_AlphaTested = 1;
 static const int MaterialDomain_AlphaBlended = 2;
@@ -39,10 +47,32 @@ static const uint MaterialFlags_UseTransmissionTexture = 0x00000080;
 static const uint MaterialFlags_MetalnessInRedChannel = 0x00000100;
 static const uint MaterialFlags_UseOpacityTexture = 0x00000200;
 
+static const uint MaterialDataFlags_BaseColorTexture = 0x00000001;
+static const uint MaterialDataFlags_MetalRoughnessTexture = 0x00000002;
+static const uint MaterialDataFlags_NormalTexture = 0x00000004;
+static const uint MaterialDataFlags_EmissiveTexture = 0x00000008;
+static const uint MaterialDataFlags_OcclusionTexture = 0x00000010;
+static const uint MaterialDataFlags_TransmissionTexture = 0x00000020;
+static const uint MaterialDataFlags_OpacityTexture = 0x00000040;
+static const uint MaterialDataFlags_DoubleSided = 0x00000100;
+
 static const uint SizeOfPosition = 12;
 static const uint SizeOfTexcoord = 8;
 static const uint SizeOfPackedNormal = 4;
 static const float DielectricSpecular = 0.04;
+static const uint MaterialTextureDescriptorCount = 7;
+#ifndef DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT
+#define DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT 4096
+#endif
+static const uint MaxMaterialTextureDescriptorCount =
+    DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+static const uint MaterialTextureSlotBaseColor = 0;
+static const uint MaterialTextureSlotMetalRoughness = 1;
+static const uint MaterialTextureSlotNormal = 2;
+static const uint MaterialTextureSlotEmissive = 3;
+static const uint MaterialTextureSlotOcclusion = 4;
+static const uint MaterialTextureSlotTransmission = 5;
+static const uint MaterialTextureSlotOpacity = 6;
 
 struct PlanarViewConstants
 {
@@ -92,6 +122,43 @@ struct InstanceData
     uint numGeometries;
     row_major float3x4 transform;
     row_major float3x4 prevTransform;
+};
+
+struct SubmeshData
+{
+    uint vertexOffset;
+    uint vertexCount;
+    uint indexOffset;
+    uint indexCount;
+    uint materialID;
+    uint pad0;
+    uint pad1;
+    uint pad2;
+};
+
+struct GeometryInstanceData
+{
+    uint instanceID;
+    uint submeshID;
+    uint pad0;
+    uint pad1;
+};
+
+struct MaterialData
+{
+    float4 baseColor;
+    float3 emissiveColor;
+    float roughness;
+    float metalness;
+    float normalScale;
+    float occlusionStrength;
+    float alphaCutoff;
+    uint flags;
+    int domain;
+    uint textureIndices[MaterialTextureDescriptorCount];
+    uint pad0;
+    uint pad1;
+    uint pad2;
 };
 
 struct MaterialConstants
@@ -152,10 +219,20 @@ uint HasMaterialFlag(uint flag)
     return (uint(g_Material.flags) & flag) != 0;
 }
 
+bool HasMaterialDataFlag(MaterialData material, uint flag)
+{
+    return (material.flags & flag) != 0;
+}
+
+bool IsAlphaTestedDomainValue(int domain)
+{
+    return domain == MaterialDomain_AlphaTested ||
+        domain == MaterialDomain_TransmissiveAlphaTested;
+}
+
 bool IsAlphaTestedDomain()
 {
-    return g_Material.domain == MaterialDomain_AlphaTested ||
-        g_Material.domain == MaterialDomain_TransmissiveAlphaTested;
+    return IsAlphaTestedDomainValue(g_Material.domain);
 }
 
 float UnpackR8Snorm(uint value)

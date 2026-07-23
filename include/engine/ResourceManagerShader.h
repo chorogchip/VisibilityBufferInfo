@@ -36,6 +36,7 @@ namespace eng {
             DONUT_TONEMAP_SOURCE = 28,
             DONUT_TONEMAP_EXPOSURE = 29,
             DONUT_TONEMAP_COLOR_LUT = 30,
+            DONUT_VISIBILITY_BUFFER = 31,
             DONUT_MATERIAL_TEXTURE_BEGIN = 64,
 
             BENCH_VISIBILITY_BUFFER = 32,

@@ -682,7 +682,8 @@ namespace scene::donut {
             destination->vertex_buffer, used_upload_heaps);
         upload_buffer(
             device, command_list, gpu_indices.data(), index_byte_size,
-            D3D12_RESOURCE_STATE_INDEX_BUFFER,
+            D3D12_RESOURCE_STATE_INDEX_BUFFER |
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination->index_buffer, used_upload_heaps);
         upload_buffer(
             device, command_list,

@@ -23,6 +23,7 @@ namespace scene {
         static constexpr uint32_t MATERIAL_FLAG_OPACITY_TEXTURE = 1u << 6;
         static constexpr uint32_t MATERIAL_FLAG_DOUBLE_SIDED = 1u << 8;
         static constexpr uint32_t MATERIAL_TEXTURE_DESCRIPTOR_COUNT = 7;
+        static constexpr uint32_t MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT = 4096;
         static constexpr int32_t SHADER_MATERIAL_DOMAIN_OPAQUE = 0;
         static constexpr int32_t SHADER_MATERIAL_DOMAIN_ALPHA_TESTED = 1;
         static constexpr int32_t SHADER_MATERIAL_DOMAIN_ALPHA_BLENDED = 2;

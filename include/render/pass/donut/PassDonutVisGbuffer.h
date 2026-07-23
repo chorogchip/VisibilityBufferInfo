@@ -22,6 +22,7 @@ namespace rndr {
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* gbuffers[4]{};
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
+        const scene::DonutSceneDataGPU* scene = nullptr;
     };
 
     class PassDonutVisGBuffer {

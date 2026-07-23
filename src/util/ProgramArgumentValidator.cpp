@@ -11,8 +11,8 @@ namespace util {
 
         auto& logger = util::Logger::g_logger;
 
-        logger.assert_with_log(arg.renderer_variant >= 1 && arg.renderer_variant <= 8,
-            "renderer_variant must be between 1 and 8");
+        logger.assert_with_log(arg.renderer_variant >= 1 && arg.renderer_variant <= 9,
+            "renderer_variant must be between 1 and 9");
         logger.assert_with_log(arg.window_width > 0, "window_width must be greater than 0");
         logger.assert_with_log(arg.window_height > 0, "window_height must be greater than 0");
         logger.assert_with_log(arg.measure_frames > 0, "measure_frames must be greater than 0");

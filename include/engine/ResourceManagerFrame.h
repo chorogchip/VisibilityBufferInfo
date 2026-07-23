@@ -21,6 +21,7 @@ namespace eng {
             DONUT_GBUFFER_3,
             DONUT_HDR_COLOR,
             DONUT_MOTION_VECTOR,
+            DONUT_VISIBILITY,
 
             BENCH_VISIBILITY,
             BENCH_GBUFFER_0,
