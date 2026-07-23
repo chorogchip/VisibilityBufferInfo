@@ -1,31 +1,49 @@
 #include "ProgramArgument.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 
 #include "util/Constants.h"
+#include "util/Logger.h"
 #include "util/StringUtils.h"
 #include "util/TimeUtils.h"
 
 namespace util {
 
+namespace {
+
+    std::string normalize_argument_name(const std::string& argument) {
+        std::string normalized = argument;
+        if (normalized.rfind("--", 0) == 0) {
+            std::replace(normalized.begin() + 2, normalized.end(), '_', '-');
+        }
+        return normalized;
+    }
+
+}
 
     ProgramArgument ProgramArgument::from_args(const std::vector<std::string>& args) {
         util::ProgramArgument ret{};
 
-        for (size_t i = 0; i < args.size(); ++i) {
+        for (size_t i = 0; i < args.size();) {
+            const std::string option_name = normalize_argument_name(args[i]);
 
 #define X(type, name, defl, arg) \
-        if (args[i] == std::string("--" #arg)) { \
+        if (option_name == std::string("--" #arg)) { \
             if (i + 1 >= args.size()) { \
                 Logger::g_logger.assert_with_log(false, "Missing value for --" #arg); \
             } \
             ret.name = util::StringUtils::parse_value<type>(args[i + 1]); \
-            ++i; \
+            i += 2; \
             continue; \
         }
             ProgramArgument_MAC
 #undef X
+
+            Logger::g_logger << "unknown ProgramArgument: " << args[i] << '\n';
+            Logger::g_logger.assert_with_log(false, "Unknown ProgramArgument");
+            ++i;
         };
 
         return ret;
