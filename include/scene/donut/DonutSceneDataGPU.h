@@ -117,8 +117,8 @@ namespace scene {
         };
 
         struct Draw {
-            uint32_t geometry_instance_id = 0;
-            uint32_t instance_id = 0;
+            uint32_t first_render_instance = 0;
+            uint32_t instance_count = 0;
             uint32_t submesh_id = 0;
             uint32_t index_count = 0;
             uint32_t index_offset = 0;
@@ -129,6 +129,7 @@ namespace scene {
         Microsoft::WRL::ComPtr<ID3D12Resource> vertex_buffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> index_buffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> instance_buffer;
+        Microsoft::WRL::ComPtr<ID3D12Resource> render_instance_buffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> submesh_buffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> geometry_instance_buffer;
         Microsoft::WRL::ComPtr<ID3D12Resource> material_buffer;
@@ -138,9 +139,11 @@ namespace scene {
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
         VertexLayout vertex_layout{};
         uint32_t material_constant_stride = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+        uint32_t render_instance_capacity = 0;
         std::array<uint32_t, 3> fallback_texture_indices{};
 
         std::vector<InstanceData> instance_data;
+        std::vector<InstanceData> render_instance_data;
         std::vector<SubmeshData> submesh_data;
         std::vector<GeometryInstanceData> geometry_instance_data;
         std::vector<MaterialData> material_data;

@@ -9,6 +9,7 @@
 #include "engine/GPUResource.h"
 #include "engine/GraphicsPipeline.h"
 #include "render/renderer/donut/RendererDonut.h"
+#include "render/renderer/donut/DonutNeutralResources.h"
 #include "scene/donut/DonutRenderConstants.h"
 #include "render/pass/donut/PassDonutDepthPre.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
@@ -35,20 +36,12 @@ namespace rndr {
 		PassDonutDeferredLighting pass_lighting_;
 		PassDonutTonemap pass_tonemap_;
 
-		eng::GPUResource fallback_shadow_map_;
-		eng::GPUResource fallback_diffuse_light_probe_;
-		eng::GPUResource fallback_specular_light_probe_;
-		eng::GPUResource fallback_env_brdf_;
+        DonutNeutralResources neutral_resources_;
 
-		std::array<eng::GPUResource, GBUFFER_COUNT> gbuffers_;
+        std::array<eng::GPUResource, GBUFFER_COUNT> gbuffers_;
 
-		eng::GPUResource fallback_ibl_diffuse_;
-		eng::GPUResource fallback_ibl_specular_;
-		eng::GPUResource fallback_shadow_channels_;
-		eng::GPUResource fallback_ambient_occlusion_;
-
-		eng::GPUResource exposure_buffer_;
-		eng::GPUResource hdr_color_buffer_;
+        eng::GPUResource exposure_buffer_;
+        eng::GPUResource hdr_color_buffer_;
 
 		std::array<dxutl::UploadConstBuf<scene::DonutDepthPassConstants>,
 			util::Constants::FRAME_COUNT> depth_constants_;

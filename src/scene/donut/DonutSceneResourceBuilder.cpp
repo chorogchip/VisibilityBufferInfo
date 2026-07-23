@@ -230,6 +230,7 @@ namespace scene::donut {
 
             if (loaded.metadata.dimension != DirectX::TEX_DIMENSION_TEXTURE2D ||
                 DirectX::IsPlanar(loaded.metadata.format) ||
+                loaded.metadata.arraySize != 1 ||
                 loaded.metadata.arraySize > (std::numeric_limits<UINT16>::max)() ||
                 loaded.metadata.mipLevels > (std::numeric_limits<UINT16>::max)() ||
                 loaded.metadata.height > (std::numeric_limits<UINT>::max)()) {
@@ -414,6 +415,42 @@ namespace scene::donut {
         }
     }
 
+    void DonutSceneResourceBuilder::rebuild_draw_stream(
+        const DonutSceneDataCPU& source,
+        const std::vector<DonutSceneDataCPU::VisibleDraw>& visible_draws,
+        DonutSceneDataGPU& destination) {
+
+        destination.draws.clear();
+        destination.render_instance_data.clear();
+        destination.draws.reserve(visible_draws.size());
+        destination.render_instance_data.reserve(visible_draws.size());
+
+        for (const DonutSceneDataCPU::VisibleDraw& visible_draw : visible_draws) {
+            const DonutSceneDataCPU::GeometryInstance& geometry_instance =
+                source.geometry_instances[visible_draw.geometry_instance_id];
+            const DonutSceneDataCPU::Submesh& submesh =
+                source.submeshes[geometry_instance.submesh_id];
+
+            if (destination.draws.empty() ||
+                destination.draws.back().submesh_id != geometry_instance.submesh_id ||
+                destination.draws.back().material_id != submesh.material_id) {
+                destination.draws.push_back({
+                    static_cast<uint32_t>(destination.render_instance_data.size()),
+                    0,
+                    geometry_instance.submesh_id,
+                    submesh.index_count,
+                    submesh.index_offset,
+                    submesh.vertex_offset,
+                    submesh.material_id
+                    });
+            }
+
+            destination.render_instance_data.push_back(
+                destination.instance_data[geometry_instance.instance_id]);
+            ++destination.draws.back().instance_count;
+        }
+    }
+
     std::unique_ptr<DonutSceneDataGPU> DonutSceneResourceBuilder::build(
         const DonutSceneDataCPU& source,
         ID3D12Device* device,
@@ -559,22 +596,9 @@ namespace scene::donut {
         std::vector<DonutSceneDataCPU::VisibleDraw> visible_draws;
         source.build_all_visible_draws(visible_draws);
         source.sort_visible_draws(visible_draws);
-        destination->draws.reserve(visible_draws.size());
-        for (const DonutSceneDataCPU::VisibleDraw& visible_draw : visible_draws) {
-            const DonutSceneDataCPU::GeometryInstance& geometry_instance =
-                source.geometry_instances[visible_draw.geometry_instance_id];
-            const DonutSceneDataCPU::Submesh& submesh =
-                source.submeshes[geometry_instance.submesh_id];
-            destination->draws.push_back({
-                visible_draw.geometry_instance_id,
-                geometry_instance.instance_id,
-                geometry_instance.submesh_id,
-                submesh.index_count,
-                submesh.index_offset,
-                submesh.vertex_offset,
-                submesh.material_id
-            });
-        }
+        rebuild_draw_stream(source, visible_draws, *destination);
+        destination->render_instance_capacity =
+            static_cast<uint32_t>(destination->render_instance_data.size());
 
         std::vector<uint32_t> gpu_indices = source.indices;
         for (const DonutSceneDataCPU::Submesh& submesh : source.submeshes) {
@@ -587,6 +611,9 @@ namespace scene::donut {
         const size_t index_byte_size = gpu_indices.size() * sizeof(uint32_t);
         const size_t instance_byte_size =
             destination->instance_data.size() *
+            sizeof(DonutSceneDataGPU::InstanceData);
+        const size_t render_instance_byte_size =
+            destination->render_instance_data.size() *
             sizeof(DonutSceneDataGPU::InstanceData);
         const size_t submesh_byte_size =
             destination->submesh_data.size() *
@@ -632,6 +659,11 @@ namespace scene::donut {
             destination->instance_data.data(), instance_byte_size,
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination->instance_buffer, used_upload_heaps);
+        upload_buffer(
+            device, command_list,
+            destination->render_instance_data.data(), render_instance_byte_size,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            destination->render_instance_buffer, used_upload_heaps);
         upload_buffer(
             device, command_list,
             destination->submesh_data.data(), submesh_byte_size,

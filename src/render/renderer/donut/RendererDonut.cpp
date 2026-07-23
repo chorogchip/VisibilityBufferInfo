@@ -1,7 +1,10 @@
 #include "render/renderer/donut/RendererDonut.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
+
+#include <DirectXCollision.h>
 
 #include "dx_util/ResourceUtils.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
@@ -77,10 +80,30 @@ namespace rndr {
             used_upload_heaps,
             program_argument_.to_load_texture);
 
+        to_profile_index_count_ = true;
+        profile_index_count_ = 0.0;
+        for (const scene::DonutSceneDataGPU::Draw& draw : scene_gpu_->draws) {
+            profile_index_count_ +=
+                static_cast<double>(draw.index_count) *
+                static_cast<double>(draw.instance_count);
+        }
+
         util::Utils::throw_if_failed(command_list_->Close(),
             "close command list on Donut scene resource creation");
         graphics_queue_.execute(command_list_.Get());
         graphics_queue_.wait_idle();
+
+        const size_t render_instance_upload_size =
+            static_cast<size_t>(scene_gpu_->render_instance_capacity) *
+            sizeof(scene::DonutSceneDataGPU::InstanceData);
+        for (Microsoft::WRL::ComPtr<ID3D12Resource>& upload :
+            render_instance_upload_buffers_) {
+            upload = dxutl::create_buffer(
+                device_.Get(),
+                render_instance_upload_size,
+                D3D12_HEAP_TYPE_UPLOAD,
+                D3D12_RESOURCE_STATE_GENERIC_READ);
+        }
 
         const UINT donut_texture_begin = static_cast<UINT>(
             eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN);
@@ -97,6 +120,85 @@ namespace rndr {
 
     void RendererDonut::render_prepare_() {
 
+    }
+
+    void RendererDonut::update_visible_draws_() {
+        if (!program_argument_.use_vfc) {
+            return;
+        }
+
+        DirectX::BoundingFrustum view_frustum;
+        DirectX::BoundingFrustum::CreateFromMatrix(
+            view_frustum,
+            camera_.get_mat_proj(width_, height_));
+
+        DirectX::BoundingFrustum world_frustum;
+        view_frustum.Transform(
+            world_frustum,
+            DirectX::XMMatrixInverse(nullptr, camera_.get_mat_view()));
+
+        scene_cpu_->build_visible_draws(visible_draws_, &world_frustum);
+        scene_cpu_->sort_visible_draws(visible_draws_);
+        scene::donut::DonutSceneResourceBuilder::rebuild_draw_stream(
+            *scene_cpu_,
+            visible_draws_,
+            *scene_gpu_);
+
+        profile_index_count_ = 0.0;
+        for (const scene::DonutSceneDataGPU::Draw& draw : scene_gpu_->draws) {
+            profile_index_count_ +=
+                static_cast<double>(draw.index_count) *
+                static_cast<double>(draw.instance_count);
+        }
+
+        const size_t upload_size =
+            scene_gpu_->render_instance_data.size() *
+            sizeof(scene::DonutSceneDataGPU::InstanceData);
+        render_instance_upload_sizes_[frame_index_] = upload_size;
+        if (upload_size == 0) {
+            return;
+        }
+
+        util::Logger::g_logger.assert_with_log(
+            scene_gpu_->render_instance_data.size() <=
+            scene_gpu_->render_instance_capacity,
+            "Donut visible draw stream exceeds render instance buffer capacity");
+        dxutl::copy_to_upload_buffer(
+            render_instance_upload_buffers_[frame_index_].Get(),
+            scene_gpu_->render_instance_data.data(),
+            upload_size);
+    }
+
+    void RendererDonut::record_render_instance_upload_(
+        ID3D12GraphicsCommandList* command_list) {
+
+        if (!program_argument_.use_vfc) {
+            return;
+        }
+
+        const size_t upload_size = render_instance_upload_sizes_[frame_index_];
+        if (upload_size == 0) {
+            return;
+        }
+
+        ID3D12Resource* render_instance_buffer =
+            scene_gpu_->render_instance_buffer.Get();
+        dxutl::transition_resource(
+            command_list,
+            render_instance_buffer,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            D3D12_RESOURCE_STATE_COPY_DEST);
+        command_list->CopyBufferRegion(
+            render_instance_buffer,
+            0,
+            render_instance_upload_buffers_[frame_index_].Get(),
+            0,
+            upload_size);
+        dxutl::transition_resource(
+            command_list,
+            render_instance_buffer,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
 }

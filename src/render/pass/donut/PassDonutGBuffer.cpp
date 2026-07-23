@@ -67,7 +67,7 @@ namespace rndr {
 
         const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
             make_structured_srv_desc(
-                static_cast<UINT>(resources_.scene->instance_data.size()),
+                static_cast<UINT>(resources_.scene->render_instance_data.size()),
                 sizeof(scene::DonutSceneDataGPU::InstanceData));
         const D3D12_SHADER_RESOURCE_VIEW_DESC submesh_srv =
             make_structured_srv_desc(
@@ -79,7 +79,7 @@ namespace rndr {
                 sizeof(scene::DonutSceneDataGPU::MaterialData));
 
         resources_.shader_manager->create_srv(
-            resources_.scene->instance_buffer.Get(),
+            resources_.scene->render_instance_buffer.Get(),
             instance_srv,
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
         resources_.shader_manager->create_srv(
@@ -262,7 +262,7 @@ namespace rndr {
 
         for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
             const PushConstants push_constants{
-                draw.instance_id,
+                draw.first_render_instance,
                 0,
                 resources_.scene->vertex_layout.position_offset,
                 resources_.scene->vertex_layout.prev_position_offset,
@@ -289,7 +289,7 @@ namespace rndr {
                     draw.material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT));
 
             command_list->DrawIndexedInstanced(
-                draw.index_count, 1, draw.index_offset, 0, 0);
+                draw.index_count, draw.instance_count, draw.index_offset, 0, 0);
         }
     }
 }

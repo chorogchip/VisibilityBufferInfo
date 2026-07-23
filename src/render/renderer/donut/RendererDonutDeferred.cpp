@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <vector>
 
 #include "util/Constants.h"
 #include "util/RenderConstants.h"
+#include "util/Utils.h"
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/ResourceManagerFrame.h"
@@ -61,24 +63,21 @@ namespace rndr {
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		}
 
-		const auto ST = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
-
-		fallback_shadow_map_.init(dxutl::create_texture2d_array_fallback(
-			device_.Get(), DXGI_FORMAT_R32_FLOAT).Get(), ST);
-		fallback_diffuse_light_probe_.init(dxutl::create_texture2d_cubemap_fallback(
-			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);
-		fallback_specular_light_probe_.init(dxutl::create_texture2d_cubemap_fallback(
-			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);
-		fallback_env_brdf_.init(dxutl::create_texture2d_fallback(
-			device_.Get(), DXGI_FORMAT_R16G16_FLOAT).Get(), ST);
-		fallback_ibl_diffuse_.init(dxutl::create_texture2d_fallback(
-			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);
-		fallback_ibl_specular_.init(dxutl::create_texture2d_fallback(
-			device_.Get(), DXGI_FORMAT_R16G16B16A16_FLOAT).Get(), ST);
-		fallback_shadow_channels_.init(dxutl::create_texture2d_fallback(
-			device_.Get(), DXGI_FORMAT_R8G8B8A8_UNORM).Get(), ST);
-		fallback_ambient_occlusion_.init(dxutl::create_texture2d_fallback(
-			device_.Get(), DXGI_FORMAT_R8_UNORM).Get(), ST);
+		{
+			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
+			util::Utils::throw_if_failed(
+				command_allocator_[frame_index_]->Reset(),
+				"reset command allocator on Donut neutral resource creation");
+			util::Utils::throw_if_failed(
+				command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
+				"reset command list on Donut neutral resource creation");
+			neutral_resources_.init(device_.Get(), command_list_.Get(), used_upload_heaps);
+			util::Utils::throw_if_failed(
+				command_list_->Close(),
+				"close command list on Donut neutral resource creation");
+			graphics_queue_.execute(command_list_.Get());
+			graphics_queue_.wait_idle();
+		}
 
 		const std::uint32_t zero_exposure = 0;
 		auto exposure = dxutl::create_buffer(
@@ -130,17 +129,20 @@ namespace rndr {
 		lighting.sampler_manager = &resource_manager_sampler_;
 		for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
 			lighting.constant_buffers[i] = &lighting_constant_resources_[i];
-		lighting.buf_shadow_map = &fallback_shadow_map_;
-		lighting.buf_diffuse_light_probe = &fallback_diffuse_light_probe_;
-		lighting.buf_specular_light_probe = &fallback_specular_light_probe_;
-		lighting.buf_env_brdf = &fallback_env_brdf_;
+		lighting.buf_shadow_map =
+			&neutral_resources_.black_depth_stencil_texture_2d_array;
+		lighting.buf_diffuse_light_probe =
+			&neutral_resources_.black_cube_map_array;
+		lighting.buf_specular_light_probe =
+			&neutral_resources_.black_cube_map_array;
+		lighting.buf_env_brdf = &neutral_resources_.black_texture;
 		lighting.depth = &depth_stencil_buffer_;
 		for (UINT i = 0; i < GBUFFER_COUNT; ++i)
 			lighting.gbuffers[i] = &gbuffers_[i];
-		lighting.buf_ibl_diffuse = &fallback_ibl_diffuse_;
-		lighting.buf_ibl_specular = &fallback_ibl_specular_;
-		lighting.buf_shadow = &fallback_shadow_channels_;
-		lighting.buf_ao = &fallback_ambient_occlusion_;
+		lighting.buf_ibl_diffuse = &neutral_resources_.black_texture;
+		lighting.buf_ibl_specular = &neutral_resources_.black_texture;
+		lighting.buf_shadow = &neutral_resources_.black_texture;
+		lighting.buf_ao = &neutral_resources_.white_texture;
 		lighting.uav_output = &hdr_color_buffer_;
 		pass_lighting_.init(device_.Get(), program_argument_, lighting);
 
@@ -168,6 +170,7 @@ namespace rndr {
 		const DirectX::XMMATRIX clip_to_world =
 			DirectX::XMMatrixInverse(nullptr, world_to_clip);
 		const CameraPose camera_pose = camera_.get_pose();
+		update_visible_draws_();
 
 		auto write_planar_view = [&](scene::DonutPlanarViewConstants& view) {
 			DirectX::XMStoreFloat4x4(&view.mat_world_to_view, world_to_view);
@@ -216,12 +219,19 @@ namespace rndr {
 		write_planar_view(lighting_constants_[frame_index_].buffer.view);
 		lighting_constants_[frame_index_].buffer.shadow_map_texture_size = { 1.0f, 1.0f };
 		lighting_constants_[frame_index_].buffer.ambient_color_top =
-		{ 0.8f, 0.8f, 0.8f, 1.0f };
+		{ 0.05f, 0.05f, 0.05f, 0.0f };
 		lighting_constants_[frame_index_].buffer.ambient_color_bottom =
-		{ 0.8f, 0.8f, 0.8f, 1.0f };
-		for (UINT y = 0; y < 4; ++y)
-			lighting_constants_[frame_index_].buffer.noise_pattern[y] =
-		{ 0.0f, 0.0f, 0.0f, 0.0f };
+		{ 0.02f, 0.02f, 0.02f, 0.0f };
+		lighting_constants_[frame_index_].buffer.indirect_diffuse_scale = 1.0f;
+		lighting_constants_[frame_index_].buffer.indirect_specular_scale = 1.0f;
+		lighting_constants_[frame_index_].buffer.noise_pattern[0] =
+		{ 0.059f, 0.529f, 0.176f, 0.647f };
+		lighting_constants_[frame_index_].buffer.noise_pattern[1] =
+		{ 0.765f, 0.294f, 0.882f, 0.412f };
+		lighting_constants_[frame_index_].buffer.noise_pattern[2] =
+		{ 0.235f, 0.706f, 0.118f, 0.588f };
+		lighting_constants_[frame_index_].buffer.noise_pattern[3] =
+		{ 0.941f, 0.471f, 0.824f, 0.353f };
 		for (UINT i = 0; i < scene::DonutDeferredLightingConstants::DEFERRED_MAX_LIGHTS; ++i) {
 			lighting_constants_[frame_index_].buffer.lights[i].shadow_cascades =
 			{ -1, -1, -1, -1 };
@@ -237,6 +247,7 @@ namespace rndr {
 		const UINT geometry_slot = do_prepass_ ? 2 : 1;
 		const UINT lighting_slot = geometry_slot + 1;
 		const UINT tonemap_slot = lighting_slot + 1;
+		record_render_instance_upload_(command_list_.Get());
 
 		if (do_prepass_) {
 			frame_time_.start_timestamp(

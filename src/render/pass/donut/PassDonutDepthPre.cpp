@@ -47,12 +47,13 @@ namespace rndr {
         instance_srv.Format = DXGI_FORMAT_UNKNOWN;
         instance_srv.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
         instance_srv.Buffer.FirstElement = 0;
-        instance_srv.Buffer.NumElements = resources_.scene->instance_data.size();
+        instance_srv.Buffer.NumElements = static_cast<UINT>(
+            resources_.scene->render_instance_data.size());
         instance_srv.Buffer.StructureByteStride = sizeof(scene::DonutSceneDataGPU::InstanceData);
         instance_srv.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
         resources_.shader_manager->create_srv(
-            resources_.scene->instance_buffer.Get(),
+            resources_.scene->render_instance_buffer.Get(),
             instance_srv,
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
         resources_.shader_manager->create_srv(
@@ -122,7 +123,7 @@ namespace rndr {
 
         for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
             const PushConstants push_constants{
-                draw.instance_id,
+                draw.first_render_instance,
                 0,
                 resources_.scene->vertex_layout.position_offset,
                 resources_.scene->vertex_layout.texcoord_offset
@@ -131,7 +132,7 @@ namespace rndr {
                 static_cast<UINT>(RootParam::PUSH_CONSTANT),
                 PUSH_CONSTANT_DWORD_COUNT, &push_constants, 0);
             command_list->DrawIndexedInstanced(
-                draw.index_count, 1, draw.index_offset, 0, 0);
+                draw.index_count, draw.instance_count, draw.index_offset, 0, 0);
         }
     }
 }

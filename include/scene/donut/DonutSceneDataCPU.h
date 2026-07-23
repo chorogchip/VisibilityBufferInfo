@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <DirectXCollision.h>
 #include <DirectXMath.h>
 
 #include "math/AABB.h"
@@ -117,6 +118,9 @@ namespace scene {
 
         bool validate(std::string& error_message) const;
         void build_all_visible_draws(std::vector<VisibleDraw>& output) const;
+        void build_visible_draws(
+            std::vector<VisibleDraw>& output,
+            const DirectX::BoundingFrustum* frustum) const;
         void sort_visible_draws(std::vector<VisibleDraw>& draws) const;
     };
 }

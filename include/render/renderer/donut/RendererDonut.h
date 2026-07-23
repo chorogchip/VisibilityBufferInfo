@@ -1,5 +1,11 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <memory>
+#include <vector>
+
+#include <d3d12.h>
 #include <wrl.h>
 
 #include "engine/GPUResource.h"
@@ -22,6 +28,8 @@ namespace rndr {
 		void init1_() override;
 		void render_prepare_() override;
 		virtual void init2_() = 0;
+		void update_visible_draws_();
+		void record_render_instance_upload_(ID3D12GraphicsCommandList* command_list);
 
 		eng::ResourceManagerFrame resource_manager_frame_;
 		eng::ResourceManagerSampler resource_manager_sampler_;
@@ -34,6 +42,11 @@ namespace rndr {
 
 		std::unique_ptr<scene::DonutSceneDataCPU> scene_cpu_;
 		std::unique_ptr<scene::DonutSceneDataGPU> scene_gpu_;
+		std::array<Microsoft::WRL::ComPtr<ID3D12Resource>,
+			util::Constants::FRAME_COUNT> render_instance_upload_buffers_;
+		std::array<size_t, util::Constants::FRAME_COUNT>
+			render_instance_upload_sizes_{};
+		std::vector<scene::DonutSceneDataCPU::VisibleDraw> visible_draws_;
 
 	};
 }

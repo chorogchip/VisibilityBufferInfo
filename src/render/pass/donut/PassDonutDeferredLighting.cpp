@@ -21,6 +21,21 @@ namespace rndr {
             IBL_SHADOW_AO,  //  t14 t15 t16 t17
             OUTPUT,  // u0
         };
+
+        DXGI_FORMAT resolve_depth_srv_format(ID3D12Resource* resource) {
+            const D3D12_RESOURCE_DESC desc = resource->GetDesc();
+
+            switch (desc.Format) {
+            case DXGI_FORMAT_R24G8_TYPELESS:
+                return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            case DXGI_FORMAT_R32_TYPELESS:
+            case DXGI_FORMAT_D32_FLOAT:
+            case DXGI_FORMAT_R32_FLOAT:
+                return DXGI_FORMAT_R32_FLOAT;
+            default:
+                return util::RenderConstants::DONUT_DEPTH_SRV_FORMAT;
+            }
+        }
     }
 
     void PassDonutDeferredLighting::init(
@@ -38,7 +53,7 @@ namespace rndr {
             eng::ResourceViewBuilder::build_srv(
                 resources_.buf_shadow_map->get(),
                 eng::ResourceViewBuilder::EnumResourceType::ARRAY_2D,
-                util::RenderConstants::DONUT_DEPTH_SRV_FORMAT),
+                resolve_depth_srv_format(resources_.buf_shadow_map->get())),
             SRVDescPos::DONUT_SHADOW_MAP_ARRAY);
         resources_.shader_manager->create_srv(
             resources_.buf_diffuse_light_probe->get(),

@@ -173,9 +173,65 @@ namespace scene {
     void DonutSceneDataCPU::build_all_visible_draws(
         std::vector<VisibleDraw>& output) const {
 
+        build_visible_draws(output, nullptr);
+    }
+
+    void DonutSceneDataCPU::build_visible_draws(
+        std::vector<VisibleDraw>& output,
+        const DirectX::BoundingFrustum* frustum) const {
+
         output.clear();
         output.reserve(geometry_instances.size());
-        for (uint32_t geometry_instance_id = 0; geometry_instance_id < geometry_instances.size(); ++geometry_instance_id) {
+
+        const auto append_instance = [this, &output, frustum](uint32_t instance_id) {
+            if (instance_id >= instances.size())
+                return;
+
+            const Instance& instance = instances[instance_id];
+            if (frustum != nullptr &&
+                instance.world_aabb.is_valid &&
+                !frustum->Intersects(instance.world_aabb.to_bounding_box())) {
+                return;
+            }
+
+            const uint32_t geometry_instance_end =
+                instance.first_geometry_instance + instance.geometry_instance_count;
+            for (uint32_t geometry_instance_id = instance.first_geometry_instance;
+                geometry_instance_id < geometry_instance_end;
+                ++geometry_instance_id) {
+                output.push_back({ geometry_instance_id });
+            }
+            };
+
+        const auto visit_node =
+            [this, &output, frustum, &append_instance](
+                const auto& self,
+                uint32_t node_id) -> void {
+            if (node_id >= nodes.size())
+                return;
+
+            const Node& node = nodes[node_id];
+            if (frustum != nullptr &&
+                node.subtree_world_aabb.is_valid &&
+                !frustum->Intersects(node.subtree_world_aabb.to_bounding_box())) {
+                return;
+            }
+
+            if (!is_invalid(node.instance_id))
+                append_instance(node.instance_id);
+
+            for (uint32_t child_id : node.children)
+                self(self, child_id);
+            };
+
+        if (root_node_id < nodes.size()) {
+            visit_node(visit_node, root_node_id);
+            return;
+        }
+
+        for (uint32_t geometry_instance_id = 0;
+            geometry_instance_id < geometry_instances.size();
+            ++geometry_instance_id) {
             output.push_back({ geometry_instance_id });
         }
     }
