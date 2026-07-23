@@ -17,6 +17,8 @@ namespace util {
 		Logger(const Logger&) = delete;
 		Logger& operator=(const Logger&) = delete;
 
+		void flush();
+
 		void add_logging_info(const char* log_info);
 
 		void assert_with_log(

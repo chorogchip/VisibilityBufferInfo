@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include "util/Logger.h"
+
 namespace util {
 
     std::filesystem::path get_scene_fingerprint_output_path(
@@ -47,7 +49,7 @@ namespace util {
 
         std::ofstream output(path, std::ios::out | std::ios::trunc);
         if (!output) {
-            std::cerr << "Failed to open output file: " << path.string() << '\n';
+            util::Logger::g_logger << "Failed to open output file: " << path.string() << '\n';
             return;
         }
 
@@ -71,11 +73,11 @@ namespace util {
         }
 
         if (!output) {
-            std::cerr << "Failed to write output file: " << path.string() << '\n';
+            util::Logger::g_logger << "Failed to write output file: " << path.string() << '\n';
             return;
         }
 
-        std::cout << "Saved CSV: " << path.string() << '\n';
+        util::Logger::g_logger << "Saved CSV: " << path.string() << '\n';
     }
 
 }

@@ -66,8 +66,16 @@ namespace util {
 		uint32_t window_frames) const {
 		Logger::g_logger.assert_with_log(window_frames > 0, "profile window must be greater than 0");
 		std::vector<WindowedData> results;
-
 		const size_t sample_count = frame_times_.empty() ? 0 : frame_times_.front().size();
+
+		util::Logger::g_logger << "[FrameCounter] "
+			<< "frames{" << frames_
+			<< "} measure_start{" << frame_to_start_measure_
+			<< "} measure_end{" << frame_to_end_measure_
+			<< "} sample_count{" << sample_count
+			<< "} window_frames{" << window_frames
+			<< "}\n";
+
 		for (size_t begin = 0; begin < sample_count; begin += window_frames) {
 			const size_t end = (std::min)(begin + window_frames, sample_count);
 			WindowedData result{};
@@ -75,9 +83,17 @@ namespace util {
 			result.time_avg_ms.resize(frame_times_.size());
 			for (size_t pass = 0; pass < frame_times_.size(); ++pass) {
 				double sum = 0.0;
-				for (size_t frame = begin; frame < end; ++frame)
-					sum += frame_times_[pass][frame];
-				result.time_avg_ms[pass] = sum / static_cast<double>(end - begin);
+				double val_min = std::numeric_limits<double>::max() * 0.5;
+				double val_max = 0.0;
+				for (size_t frame = begin; frame < end; ++frame) {
+					double x = frame_times_[pass][frame];
+					sum += x;
+					val_min = std::min(val_min, x);
+					val_max = std::max(val_max, x);
+				}
+				sum -= (val_min + val_max);
+				if (end - begin > 2)
+					result.time_avg_ms[pass] = sum / static_cast<double>(end - begin - 2);
 			}
 
 			if (frame_index_counts_.size() == sample_count) {

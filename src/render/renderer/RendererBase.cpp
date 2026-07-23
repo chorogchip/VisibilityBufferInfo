@@ -90,7 +90,6 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
 
 void RendererBase::close() {
     graphics_queue_.wait_idle();
-    camera_path_controller_.close();
 
     const std::string& path = program_argument_.output_filepath;
     if (path == "") return;
@@ -100,11 +99,11 @@ void RendererBase::close() {
         const auto windows = frame_counter_.summarize_windows(
             program_argument_.profile_window_frames);
         util::write_windowed_benchmark_csv(
-            path,
+            path + "_" + std::to_string(program_argument_.run_id) + "_result.csv",
             program_result_.pass_names,
             windows);
-        return;
     }
+    camera_path_controller_.close();
 
     auto results = frame_counter_.summarize();
 

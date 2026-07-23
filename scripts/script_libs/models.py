@@ -16,22 +16,25 @@ class ProgramArgument:
 
     to_use_scene: bool = True
     to_load_texture: bool = False
+    use_vfc: bool = True
     scene_path: str = (
-        "assets/scenes/unpacked/Bistro_v5_2/"
-        "BistroExterior.fbx"
+        "assets/scenes/unpacked/main_sponza/"
+        "NewSponza_Main_glTF_003.gltf"
     )
 
     warmup_frames: int = 60
-    measure_frames: int = 2400
+    measure_frames: int = 24000
     auto_terminate: bool = False
-    vsync: bool = False
+    vsync: bool = True
     camera_mode: int = 1
-    camera_filepath: str = "camera.csv"
+    camera_filepath: str = "standard_camera.csv"
     camera_keyframe_interval: int = 10
+    to_set_start_frame: bool = False
+    key_frame: int = 0
     profile_window_frames: int = 10
 
-    window_width: int = 1280
-    window_height: int = 720
+    window_width: int = 1920
+    window_height: int = 1080
     seed: int = 0
 
     camera_pos_x: float = 0.0

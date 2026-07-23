@@ -140,9 +140,7 @@ namespace scene {
             }
         }
 
-        for (uint32_t geometry_instance_id = 0;
-            geometry_instance_id < geometry_instances.size();
-            ++geometry_instance_id) {
+        for (uint32_t geometry_instance_id = 0; geometry_instance_id < geometry_instances.size(); ++geometry_instance_id) {
             const GeometryInstance& geometry_instance =
                 geometry_instances[geometry_instance_id];
             if (geometry_instance.instance_id >= instances.size() ||

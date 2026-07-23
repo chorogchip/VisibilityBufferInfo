@@ -14,6 +14,47 @@ namespace util {
 
     Logger Logger::g_logger;
 
+    void Logger::flush() {
+        try {
+            std::string log_str = logging_stream_.str();
+
+            const std::filesystem::path log_dir = std::filesystem::current_path() / "logs";
+            std::filesystem::create_directories(log_dir);
+
+            const auto now = std::chrono::system_clock::now();
+            const std::time_t current_time = std::chrono::system_clock::to_time_t(now);
+
+            std::tm local_time{};
+
+#ifdef _WIN32
+            localtime_s(&local_time, &current_time);
+#else
+            localtime_r(&current_time, &local_time);
+#endif
+
+            std::ostringstream filename_stream;
+
+            filename_stream
+                << "log_"
+                << std::put_time(&local_time, "%Y-%m-%d_%H-%M-%S")
+                << ".txt";
+
+            const std::filesystem::path log_path = log_dir / filename_stream.str();
+            std::ofstream output_file(log_path, std::ios::out | std::ios::binary);
+
+            if (output_file.is_open()) {
+                output_file << log_str;
+                output_file.flush();
+
+                std::cerr << "Log saved to: " << log_path.string() << '\n';
+            } else {
+                std::cerr << "the log file could not be opened.\n" << log_str;
+            }
+        } catch (const std::exception& exception) {
+            std::cerr << "while writing the log: " << exception.what() << '\n';
+        }
+    }
+
     void Logger::add_logging_info(const char* log_info) {
         if (log_info == nullptr) return;
 
@@ -52,42 +93,9 @@ namespace util {
             log_str = logging_stream_.str();
         }
 
-        try {
-            const std::filesystem::path log_dir = std::filesystem::current_path() / "logs";
-            std::filesystem::create_directories(log_dir);
+        this->operator<<(log_str);
 
-            const auto now = std::chrono::system_clock::now();
-            const std::time_t current_time = std::chrono::system_clock::to_time_t(now);
-
-            std::tm local_time{};
-
-#ifdef _WIN32
-            localtime_s(&local_time, &current_time);
-#else
-            localtime_r(&current_time, &local_time);
-#endif
-
-            std::ostringstream filename_stream;
-
-            filename_stream
-                << "log_"
-                << std::put_time(&local_time, "%Y-%m-%d_%H-%M-%S")
-                << ".txt";
-
-            const std::filesystem::path log_path = log_dir / filename_stream.str();
-            std::ofstream output_file(log_path, std::ios::out | std::ios::binary);
-
-            if (output_file.is_open()) {
-                output_file << log_str;
-                output_file.flush();
-
-                std::cerr << "Assertion failed. Log saved to: " << log_path.string() << '\n';
-            } else {
-                std::cerr << "Assertion failed, but the log file could not be opened.\n" << log_str;
-            }
-        } catch (const std::exception& exception) {
-            std::cerr << "Assertion failed while writing the log: " << exception.what() << '\n' << log_str;
-        }
+        this->flush();
 
         std::abort();
     }

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 
+#include "util/Logger.h"
 #include "util/Utils.h"
 #include "Application.h"
 
@@ -17,6 +18,7 @@ int WINAPI WinMain(
 
     Application app{};
     app.run(hInstance, nShowCmd);
+    util::Logger::g_logger.flush();
 
     return 0;
 }

@@ -12,19 +12,19 @@ namespace util {
 #define ProgramArgument_MAC \
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
-    X(std::string, output_filepath, "temp.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 7, renderer-variant) \
+    X(std::string, output_filepath, "out_result.csv", output-filepath) \
+    X(uint32_t, renderer_variant, 1, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
-    X(bool, to_load_texture, true, to-load-texture) \
-    X(bool, use_vfc, false, use-vfc) \
-    X(std::string, scene_path, "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf", scene-path) \
+    X(bool, to_load_texture, false, to-load-texture) \
+    X(bool, use_vfc, true, use-vfc) \
+    X(std::string, scene_path, "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx", scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
-    X(uint32_t, measure_frames, 2400, measure-frames) \
+    X(uint32_t, measure_frames, 24000, measure-frames) \
     X(bool, auto_terminate, false, auto-terminate) \
-    X(bool, vsync, false, vsync) \
+    X(bool, vsync, true, vsync) \
     X(uint32_t, camera_mode, 0, camera-mode) \
-    X(std::string, camera_filepath, "camera.csv", camera-filepath) \
+    X(std::string, camera_filepath, "standard_camera_bistro.csv", camera-filepath) \
     X(uint32_t, camera_keyframe_interval, 10, camera-keyframe-interval) \
     X(bool, to_set_start_frame, false, to-set-start-frame) \
     X(uint32_t, key_frame, 0, key-frame) \

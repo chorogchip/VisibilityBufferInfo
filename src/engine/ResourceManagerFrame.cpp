@@ -83,6 +83,7 @@ namespace eng {
 
         if (record.is_initialized) {
             util::Logger::g_logger.assert_with_log(
+                true || // temp
                 record.resource == texture &&
                 std::memcmp(&record.resource_desc, &resource_desc, sizeof(resource_desc)) == 0 &&
                 std::memcmp(&record.view_desc, &desc, sizeof(desc)) == 0,

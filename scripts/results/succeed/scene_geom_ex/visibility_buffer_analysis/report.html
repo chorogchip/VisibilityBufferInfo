@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>VisibilityBufferInfo Sponza Experiment Analysis</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 32px auto; max-width: 1200px; line-height: 1.5; }
+h1 { margin-bottom: 4px; }
+section { margin: 40px 0; page-break-inside: avoid; }
+img { width: 100%; height: auto; border: 1px solid #ddd; }
+</style>
+</head>
+<body>
+<h1>VisibilityBufferInfo Sponza Experiment Analysis</h1>
+<p>30 runs, 6 renderer variants, 5 ALU levels, 240 profile windows per run.</p>
+<section><h2>01_frame_time_alu_10</h2><img src="plots/01_frame_time_alu_10.png" alt="01_frame_time_alu_10"></section>
+<section><h2>01_frame_time_alu_160</h2><img src="plots/01_frame_time_alu_160.png" alt="01_frame_time_alu_160"></section>
+<section><h2>01_frame_time_alu_20</h2><img src="plots/01_frame_time_alu_20.png" alt="01_frame_time_alu_20"></section>
+<section><h2>01_frame_time_alu_40</h2><img src="plots/01_frame_time_alu_40.png" alt="01_frame_time_alu_40"></section>
+<section><h2>01_frame_time_alu_80</h2><img src="plots/01_frame_time_alu_80.png" alt="01_frame_time_alu_80"></section>
+<section><h2>06_median_time_vs_alu</h2><img src="plots/06_median_time_vs_alu.png" alt="06_median_time_vs_alu"></section>
+<section><h2>07_p95_time_vs_alu</h2><img src="plots/07_p95_time_vs_alu.png" alt="07_p95_time_vs_alu"></section>
+<section><h2>08_speedup_vs_forward</h2><img src="plots/08_speedup_vs_forward.png" alt="08_speedup_vs_forward"></section>
+<section><h2>09_frame_winner_share</h2><img src="plots/09_frame_winner_share.png" alt="09_frame_winner_share"></section>
+<section><h2>10_pass_breakdown_alu_160</h2><img src="plots/10_pass_breakdown_alu_160.png" alt="10_pass_breakdown_alu_160"></section>
+<section><h2>11_alu_bearing_pass_vs_alu</h2><img src="plots/11_alu_bearing_pass_vs_alu.png" alt="11_alu_bearing_pass_vs_alu"></section>
+<section><h2>12_fixed_pass_cost_vs_alu</h2><img src="plots/12_fixed_pass_cost_vs_alu.png" alt="12_fixed_pass_cost_vs_alu"></section>
+<section><h2>13_index_count_vs_frame</h2><img src="plots/13_index_count_vs_frame.png" alt="13_index_count_vs_frame"></section>
+<section><h2>14_time_vs_index_count_alu_160</h2><img src="plots/14_time_vs_index_count_alu_160.png" alt="14_time_vs_index_count_alu_160"></section>
+<section><h2>15_tvb_speedup_by_frame_alu_160</h2><img src="plots/15_tvb_speedup_by_frame_alu_160.png" alt="15_tvb_speedup_by_frame_alu_160"></section>
+<section><h2>16_alu_sensitivity_slope</h2><img src="plots/16_alu_sensitivity_slope.png" alt="16_alu_sensitivity_slope"></section>
+<section><h2>17_winner_heatmap</h2><img src="plots/17_winner_heatmap.png" alt="17_winner_heatmap"></section>
+<section><h2>18_visibility_and_index_count</h2><img src="plots/18_visibility_and_index_count.png" alt="18_visibility_and_index_count"></section>
+<section><h2>19_variability_cv_vs_alu</h2><img src="plots/19_variability_cv_vs_alu.png" alt="19_variability_cv_vs_alu"></section>
+<section><h2>20_normalized_time_per_million_indices</h2><img src="plots/20_normalized_time_per_million_indices.png" alt="20_normalized_time_per_million_indices"></section>
+<section><h2>21_total_time_index_correlation</h2><img src="plots/21_total_time_index_correlation.png" alt="21_total_time_index_correlation"></section>
+<section><h2>22_visibility_residual_vs_frame</h2><img src="plots/22_visibility_residual_vs_frame.png" alt="22_visibility_residual_vs_frame"></section>
+</body>
+</html>
