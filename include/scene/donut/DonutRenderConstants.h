@@ -75,9 +75,9 @@ namespace scene {
 	};
 
 	struct DonutDeferredLightingConstants {
-		static constexpr UINT DEFERRED_MAX_LIGHTS = 16;
-		static constexpr UINT DEFERRED_MAX_SHADOWS = 16;
-		static constexpr UINT DEFERRED_MAX_LIGHT_PROBES = 16;
+		static constexpr std::uint32_t DEFERRED_MAX_LIGHTS = 16;
+		static constexpr std::uint32_t DEFERRED_MAX_SHADOWS = 16;
+		static constexpr std::uint32_t DEFERRED_MAX_LIGHT_PROBES = 16;
 
 		DonutPlanarViewConstants view{};
 		DirectX::XMFLOAT2 shadow_map_texture_size{};

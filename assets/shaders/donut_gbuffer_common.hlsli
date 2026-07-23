@@ -22,6 +22,13 @@
 #define GBUFFER_VIEW_REGISTER b2
 #define GBUFFER_MATERIAL_SAMPLER_REGISTER s0
 
+static const int MaterialDomain_Opaque = 0;
+static const int MaterialDomain_AlphaTested = 1;
+static const int MaterialDomain_AlphaBlended = 2;
+static const int MaterialDomain_Transmissive = 3;
+static const int MaterialDomain_TransmissiveAlphaTested = 4;
+static const int MaterialDomain_TransmissiveAlphaBlended = 5;
+
 static const uint MaterialFlags_DoubleSided = 0x00000002;
 static const uint MaterialFlags_UseMetalRoughOrSpecularTexture = 0x00000004;
 static const uint MaterialFlags_UseBaseOrDiffuseTexture = 0x00000008;
@@ -136,9 +143,19 @@ cbuffer c_Material : register(MATERIAL_CONSTANT_REGISTER, MATERIAL_SPACE)
     MaterialConstants g_Material;
 };
 
+// Donut G-buffer ABI:
+// RT0 diffuseAlbedo.rgb + opacity, RT1 specularF0.rgb + occlusion,
+// RT2 worldNormal.xyz + roughness, RT3 emissive.rgb + unused.
+
 uint HasMaterialFlag(uint flag)
 {
     return (uint(g_Material.flags) & flag) != 0;
+}
+
+bool IsAlphaTestedDomain()
+{
+    return g_Material.domain == MaterialDomain_AlphaTested ||
+        g_Material.domain == MaterialDomain_TransmissiveAlphaTested;
 }
 
 float UnpackR8Snorm(uint value)

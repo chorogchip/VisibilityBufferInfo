@@ -8,6 +8,7 @@
 namespace eng {
     class GPUResource;
     class ResourceManagerFrame;
+    class ResourceManagerSampler;
     class ResourceManagerShader;
 }
 
@@ -15,6 +16,7 @@ namespace rndr {
 
     struct PassDonutDepthPreResources {
         eng::ResourceManagerFrame* frame_manager = nullptr;
+        eng::ResourceManagerSampler* sampler_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
@@ -24,6 +26,9 @@ namespace rndr {
     class PassDonutDepthPre {
 
     public:
+        static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
+            scene::DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,

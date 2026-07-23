@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <assimp/Importer.hpp>
+#include <assimp/GltfMaterial.h>
 #include <assimp/material.h>
 #include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
@@ -128,6 +129,28 @@ namespace scene::donut {
             return fallback;
         }
 
+        DonutSceneDataCPU::EnumMaterialDomain read_material_domain(
+            const aiMaterial* material) {
+
+            if (material == nullptr) {
+                return DonutSceneDataCPU::EnumMaterialDomain::Opaque;
+            }
+
+            aiString alpha_mode;
+            if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, alpha_mode) != AI_SUCCESS) {
+                return DonutSceneDataCPU::EnumMaterialDomain::Opaque;
+            }
+
+            const std::string mode = alpha_mode.C_Str();
+            if (mode == "MASK") {
+                return DonutSceneDataCPU::EnumMaterialDomain::AlphaTested;
+            }
+            if (mode == "BLEND") {
+                return DonutSceneDataCPU::EnumMaterialDomain::AlphaBlended;
+            }
+            return DonutSceneDataCPU::EnumMaterialDomain::Opaque;
+        }
+
         std::optional<std::filesystem::path> read_first_texture_path(
             const aiMaterial* material,
             aiTextureType type) {
@@ -161,6 +184,8 @@ namespace scene::donut {
             case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
             case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
             case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::TRANSMISSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY:
                 return DonutSceneDataCPU::EnumTextureFallback::WHITE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
                 return DonutSceneDataCPU::EnumTextureFallback::FLAT_NORMAL;
@@ -228,13 +253,26 @@ namespace scene::donut {
 
             const DirectX::XMFLOAT4 base_color =
                 read_material_color(source, material_index);
-            material.base_color = { base_color.x, base_color.y, base_color.z, 1.0f };
+            const float opacity = read_material_float(
+                source, AI_MATKEY_OPACITY, base_color.w);
+            material.base_color = {
+                base_color.x,
+                base_color.y,
+                base_color.z,
+                std::clamp(opacity, 0.0f, 1.0f)
+            };
             material.emissive_color = read_material_color3(
                 source, AI_MATKEY_COLOR_EMISSIVE, { 0.0f, 0.0f, 0.0f });
             material.metalness = read_material_float(
                 source, AI_MATKEY_METALLIC_FACTOR, material.metalness);
             material.roughness = read_material_float(
                 source, AI_MATKEY_ROUGHNESS_FACTOR, material.roughness);
+            material.alpha_cutoff = std::clamp(
+                read_material_float(
+                    source, AI_MATKEY_GLTF_ALPHACUTOFF, material.alpha_cutoff),
+                0.0f,
+                1.0f);
+            material.domain = read_material_domain(source);
 
             if (source != nullptr) {
                 aiString name;
@@ -292,6 +330,10 @@ namespace scene::donut {
             set_material_texture(
                 scene, texture_cache, material,
                 DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION, occlusion_path);
+            set_material_texture(
+                scene, texture_cache, material,
+                DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY,
+                read_first_texture_path(source, aiTextureType_OPACITY));
 
             return material;
         }

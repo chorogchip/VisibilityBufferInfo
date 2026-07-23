@@ -115,6 +115,7 @@ namespace rndr {
 		if (do_prepass_) {
 			PassDonutDepthPreResources depth{};
 			depth.frame_manager = &resource_manager_frame_;
+			depth.sampler_manager = &resource_manager_sampler_;
 			depth.shader_manager = &resource_manager_shader_;
 			depth.depth = &depth_stencil_buffer_;
 			for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)

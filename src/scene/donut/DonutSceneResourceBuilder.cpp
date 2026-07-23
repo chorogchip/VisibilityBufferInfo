@@ -185,6 +185,8 @@ namespace scene::donut {
             case DonutSceneDataCPU::EnumMaterialTextureSlot::BASE_COLOR:
             case DonutSceneDataCPU::EnumMaterialTextureSlot::METAL_ROUGHNESS:
             case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::TRANSMISSION:
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY:
                 return DonutSceneDataCPU::EnumTextureFallback::WHITE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::NORMAL:
                 return DonutSceneDataCPU::EnumTextureFallback::FLAT_NORMAL;
@@ -335,6 +337,10 @@ namespace scene::donut {
                 return DonutSceneDataGPU::MATERIAL_FLAG_EMISSIVE_TEXTURE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
                 return DonutSceneDataGPU::MATERIAL_FLAG_OCCLUSION_TEXTURE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::TRANSMISSION:
+                return DonutSceneDataGPU::MATERIAL_FLAG_TRANSMISSION_TEXTURE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY:
+                return DonutSceneDataGPU::MATERIAL_FLAG_OPACITY_TEXTURE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
@@ -353,10 +359,28 @@ namespace scene::donut {
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_EMISSIVE_TEXTURE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION:
                 return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_OCCLUSION_TEXTURE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::TRANSMISSION:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_TRANSMISSION_TEXTURE;
+            case DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY:
+                return DonutSceneDataGPU::SHADER_MATERIAL_FLAG_USE_OPACITY_TEXTURE;
             case DonutSceneDataCPU::EnumMaterialTextureSlot::COUNT:
                 break;
             }
             return 0;
+        }
+
+        int32_t shader_material_domain(
+            DonutSceneDataCPU::EnumMaterialDomain domain) {
+
+            switch (domain) {
+            case DonutSceneDataCPU::EnumMaterialDomain::Opaque:
+                return DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_OPAQUE;
+            case DonutSceneDataCPU::EnumMaterialDomain::AlphaTested:
+                return DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_ALPHA_TESTED;
+            case DonutSceneDataCPU::EnumMaterialDomain::AlphaBlended:
+                return DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_ALPHA_BLENDED;
+            }
+            return DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_OPAQUE;
         }
 
         DonutSceneDataGPU::ShaderMaterialConstants make_shader_material_constants(
@@ -372,13 +396,13 @@ namespace scene::donut {
             constants.specular_color = { 0.04f, 0.04f, 0.04f };
             constants.material_id = static_cast<int32_t>(material_id);
             constants.emissive_color = source.emissive_color;
-            constants.domain = DonutSceneDataGPU::SHADER_MATERIAL_DOMAIN_OPAQUE;
+            constants.domain = source.domain;
             constants.opacity = source.base_color.w;
             constants.roughness = source.roughness;
             constants.metalness = source.metalness;
             constants.normal_texture_scale = source.normal_scale;
             constants.occlusion_strength = source.occlusion_strength;
-            constants.alpha_cutoff = 0.5f;
+            constants.alpha_cutoff = source.alpha_cutoff;
             constants.transmission_factor = 0.0f;
             constants.normal_texture_transform_scale = { 1.0f, 1.0f };
 
@@ -409,8 +433,12 @@ namespace scene::donut {
             constants.occlusion_texture_index =
                 static_cast<int32_t>(source.texture_indices[
                     static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::OCCLUSION)]);
-            constants.transmission_texture_index = 0;
-            constants.opacity_texture_index = 0;
+            constants.transmission_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::TRANSMISSION)]);
+            constants.opacity_texture_index =
+                static_cast<int32_t>(source.texture_indices[
+                    static_cast<size_t>(DonutSceneDataCPU::EnumMaterialTextureSlot::OPACITY)]);
             return constants;
         }
     }
@@ -560,6 +588,8 @@ namespace scene::donut {
             material.metalness = source_material.metalness;
             material.normal_scale = source_material.normal_scale;
             material.occlusion_strength = source_material.occlusion_strength;
+            material.alpha_cutoff = source_material.alpha_cutoff;
+            material.domain = shader_material_domain(source_material.domain);
             if (source_material.double_sided) {
                 material.flags |= DonutSceneDataGPU::MATERIAL_FLAG_DOUBLE_SIDED;
             }

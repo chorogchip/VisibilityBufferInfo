@@ -73,6 +73,16 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
     if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
         baseTexture = t_BaseOrDiffuse.Sample(s_MaterialSampler, input.texCoord);
 
+    float opacity = g_Material.opacity;
+    if (HasMaterialFlag(MaterialFlags_UseOpacityTexture))
+        opacity *= t_Opacity.Sample(s_MaterialSampler, input.texCoord).r;
+    else if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+        opacity *= baseTexture.a;
+    opacity = saturate(opacity);
+
+    if (IsAlphaTestedDomain())
+        clip(opacity - g_Material.alphaCutoff);
+
     float4 metalRoughnessTexture = float4(1.0, 1.0, 1.0, 1.0);
     if (HasMaterialFlag(MaterialFlags_UseMetalRoughOrSpecularTexture))
     {
@@ -87,13 +97,6 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
             t_Occlusion.Sample(s_MaterialSampler, input.texCoord).r;
         occlusion = lerp(1.0, textureOcclusion, g_Material.occlusionStrength);
     }
-
-    float opacity = g_Material.opacity;
-    if (HasMaterialFlag(MaterialFlags_UseOpacityTexture))
-        opacity *= t_Opacity.Sample(s_MaterialSampler, input.texCoord).r;
-    else if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
-        opacity *= baseTexture.a;
-    opacity = saturate(opacity);
 
     float3 normal = normalize(input.normal);
     float4 tangent = input.tangent;

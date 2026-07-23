@@ -19,14 +19,24 @@ namespace scene {
         static constexpr uint32_t MATERIAL_FLAG_NORMAL_TEXTURE = 1u << 2;
         static constexpr uint32_t MATERIAL_FLAG_EMISSIVE_TEXTURE = 1u << 3;
         static constexpr uint32_t MATERIAL_FLAG_OCCLUSION_TEXTURE = 1u << 4;
+        static constexpr uint32_t MATERIAL_FLAG_TRANSMISSION_TEXTURE = 1u << 5;
+        static constexpr uint32_t MATERIAL_FLAG_OPACITY_TEXTURE = 1u << 6;
         static constexpr uint32_t MATERIAL_FLAG_DOUBLE_SIDED = 1u << 8;
+        static constexpr uint32_t MATERIAL_TEXTURE_DESCRIPTOR_COUNT = 7;
         static constexpr int32_t SHADER_MATERIAL_DOMAIN_OPAQUE = 0;
+        static constexpr int32_t SHADER_MATERIAL_DOMAIN_ALPHA_TESTED = 1;
+        static constexpr int32_t SHADER_MATERIAL_DOMAIN_ALPHA_BLENDED = 2;
+        static constexpr int32_t SHADER_MATERIAL_DOMAIN_TRANSMISSIVE = 3;
+        static constexpr int32_t SHADER_MATERIAL_DOMAIN_TRANSMISSIVE_ALPHA_TESTED = 4;
+        static constexpr int32_t SHADER_MATERIAL_DOMAIN_TRANSMISSIVE_ALPHA_BLENDED = 5;
         static constexpr int32_t SHADER_MATERIAL_FLAG_DOUBLE_SIDED = 0x00000002;
         static constexpr int32_t SHADER_MATERIAL_FLAG_USE_METAL_ROUGHNESS_TEXTURE = 0x00000004;
         static constexpr int32_t SHADER_MATERIAL_FLAG_USE_BASE_COLOR_TEXTURE = 0x00000008;
         static constexpr int32_t SHADER_MATERIAL_FLAG_USE_EMISSIVE_TEXTURE = 0x00000010;
         static constexpr int32_t SHADER_MATERIAL_FLAG_USE_NORMAL_TEXTURE = 0x00000020;
         static constexpr int32_t SHADER_MATERIAL_FLAG_USE_OCCLUSION_TEXTURE = 0x00000040;
+        static constexpr int32_t SHADER_MATERIAL_FLAG_USE_TRANSMISSION_TEXTURE = 0x00000080;
+        static constexpr int32_t SHADER_MATERIAL_FLAG_USE_OPACITY_TEXTURE = 0x00000200;
 
         struct VertexLayout {
             uint32_t position_offset = 0;
@@ -71,7 +81,9 @@ namespace scene {
             float metalness = 0.0f;
             float normal_scale = 1.0f;
             float occlusion_strength = 1.0f;
+            float alpha_cutoff = 0.5f;
             uint32_t flags = 0;
+            int32_t domain = SHADER_MATERIAL_DOMAIN_OPAQUE;
             std::array<uint32_t, DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT> texture_indices{};
             uint32_t pad0 = 0;
             uint32_t pad1 = 0;
@@ -153,11 +165,14 @@ namespace scene {
     static_assert(sizeof(DonutSceneDataGPU::InstanceData) == 112);
     static_assert(sizeof(DonutSceneDataGPU::SubmeshData) == 32);
     static_assert(sizeof(DonutSceneDataGPU::GeometryInstanceData) == 16);
-    static_assert(sizeof(DonutSceneDataGPU::MaterialData) == 80);
+    static_assert(
+        DonutSceneDataCPU::MATERIAL_TEXTURE_SLOT_COUNT ==
+        DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT);
+    static_assert(sizeof(DonutSceneDataGPU::MaterialData) == 96);
     static_assert(sizeof(DonutSceneDataGPU::ShaderMaterialConstants) == 208);
     static_assert(offsetof(DonutSceneDataGPU::InstanceData, transform) == 16);
     static_assert(offsetof(DonutSceneDataGPU::SubmeshData, material_id) == 16);
-    static_assert(offsetof(DonutSceneDataGPU::MaterialData, texture_indices) == 48);
+    static_assert(offsetof(DonutSceneDataGPU::MaterialData, texture_indices) == 56);
     static_assert(offsetof(DonutSceneDataGPU::ShaderMaterialConstants, material_id) == 28);
     static_assert(offsetof(DonutSceneDataGPU::ShaderMaterialConstants, base_or_diffuse_texture_index) == 76);
 }

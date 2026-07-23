@@ -18,8 +18,22 @@ namespace scene {
 
         static constexpr uint32_t INVALID_INDEX = static_cast<uint32_t>(-1);
 
+        // Matches the Donut material SRV register order t0..t6.
         enum class EnumMaterialTextureSlot : uint32_t {
-            BASE_COLOR, METAL_ROUGHNESS, NORMAL, EMISSIVE, OCCLUSION, COUNT };
+            BASE_COLOR,
+            METAL_ROUGHNESS,
+            NORMAL,
+            EMISSIVE,
+            OCCLUSION,
+            TRANSMISSION,
+            OPACITY,
+            COUNT
+        };
+        enum class EnumMaterialDomain : uint32_t {
+            Opaque,
+            AlphaTested,
+            AlphaBlended
+        };
         enum class EnumTextureColorSpace : uint32_t { LINEAR, SRGB };
         enum class EnumTextureFallback : uint32_t { WHITE, BLACK, FLAT_NORMAL };
         static constexpr size_t MATERIAL_TEXTURE_SLOT_COUNT =
@@ -41,6 +55,8 @@ namespace scene {
             float metalness = 0.0f;
             float normal_scale = 1.0f;
             float occlusion_strength = 1.0f;
+            float alpha_cutoff = 0.5f;
+            EnumMaterialDomain domain = EnumMaterialDomain::Opaque;
             bool double_sided = false;
             std::array<uint32_t, MATERIAL_TEXTURE_SLOT_COUNT> texture_ids = [] {
                 std::array<uint32_t, MATERIAL_TEXTURE_SLOT_COUNT> ids{};

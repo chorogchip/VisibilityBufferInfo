@@ -27,7 +27,8 @@ namespace rndr {
     class PassDonutVisGBuffer {
 
     public:
-        static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT = 7u;
+        static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
+            scene::DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
 
         void init(
             ID3D12Device* device,
