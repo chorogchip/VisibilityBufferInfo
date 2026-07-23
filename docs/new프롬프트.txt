@@ -1,0 +1,245 @@
+# VisibilityBufferInfo 웹 AI용 프로젝트 설명
+
+이 문서는 코드 저장소에 접근할 수 없는 AI에게 VisibilityBufferInfo 프로젝트의 전체 맥락을 한 번에 전달하기 위한 설명이다. 목적은 AI가 프로젝트의 배경, 이론, 실험 계획, 중요한 판단 기준을 이해하고, 연구 방향이나 발표 자료, 실험 설계, 분석 문서 작성을 도울 수 있게 하는 것이다. 이 문서는 코드 세부 구현을 직접 전제하지 않는다.
+
+## 1. 프로젝트 한 줄 요약
+
+VisibilityBufferInfo는 Triangle Visibility Buffer(TVB)가 Forward Rendering 및 Deferred Rendering과 비교해 어떤 장면 조건에서 성능상 유리하거나 불리해지는지를 실험적으로 분석하는 Direct3D 12 기반 연구 프로젝트다.
+
+최종 목표는 단순히 "TVB가 빠르다/느리다"를 말하는 것이 아니라, 어떤 변수 때문에 성능 우위가 바뀌는지, crossover point가 어디인지, 그 현상을 GPU 병목 관점에서 어떻게 설명할 수 있는지를 제시하는 것이다.
+
+## 2. 배경 이론
+
+전통적인 Forward Rendering은 geometry 처리, visibility 결정, material 계산, texture sampling, shading, output이 한 pass에 결합되어 있다. 이 구조에서는 화면에 최종적으로 보이지 않는 fragment도 overdraw 때문에 pixel shader를 실행할 수 있다. 특히 material shader가 무겁거나 texture sampling이 많으면, 버려질 fragment에 들어간 비용이 커진다.
+
+Deferred Rendering은 먼저 G-buffer에 material 속성, normal, depth 같은 중간 결과를 저장하고, 이후 lighting pass에서 이를 읽어 최종 shading을 한다. 이 방식은 lighting과 geometry를 분리해 복잡한 조명 처리에는 유리하지만, 큰 G-buffer를 쓰고 읽는 memory bandwidth 비용이 생긴다. G-buffer 포맷이 커지거나 해상도가 높아질수록 이 비용은 커진다.
+
+Triangle Visibility Buffer는 G-buffer 대신 triangle ID, instance/object ID, depth 같은 "무엇이 보였는가"에 가까운 정보를 저장한다. 이후 resolve 또는 shading pass에서 해당 ID를 이용해 vertex/index/material 데이터를 다시 읽고, barycentric interpolation과 texture coordinate derivative 등을 재구성해 shading한다.
+
+TVB의 기대 이점은 다음이다.
+
+- 최종 visible sample 중심으로 material 계산을 수행해 overdraw로 버려지는 material 비용을 줄일 수 있다.
+- Deferred의 큰 G-buffer 대신 작은 visibility 정보를 저장해 memory bandwidth를 줄일 수 있다.
+- material 속성 저장 포맷에 덜 묶이므로 다양한 material 표현으로 확장하기 좋다.
+- visibility와 shading을 분리하므로 이후 material sorting, binning, work queue 같은 고도화가 가능하다.
+
+TVB의 주요 비용과 위험은 다음이다.
+
+- resolve/shading 단계에서 vertex, index, object, material 데이터를 간접 접근해야 한다.
+- screen-space 접근 순서와 geometry buffer layout이 잘 맞지 않으면 cache locality가 나빠질 수 있다.
+- barycentric, perspective-correct interpolation, derivative 복원 비용이 생긴다.
+- visibility pass 자체도 기록 비용이 있고, fullscreen resolve pass의 고정 비용이 있다.
+- material이 다양해지면 monolithic shader branch divergence 또는 material classification 비용이 문제가 될 수 있다.
+
+## 3. 핵심 비교 대상
+
+프로젝트는 다음 계열의 렌더링 방식을 비교한다.
+
+- Forward: 단순하고 overdraw가 material 비용까지 전파될 수 있다.
+- Forward + Depth Pre-Pass: 먼저 depth를 채운 뒤 두 번째 pass에서 visible fragment 중심으로 shading한다. overdraw는 줄일 수 있지만 geometry와 rasterization을 두 번 처리한다.
+- Deferred: G-buffer에 material 결과를 저장하고 lighting pass에서 읽는다. G-buffer bandwidth가 핵심 비용이다.
+- Deferred + Depth Pre-Pass: Deferred 앞에 depth pre-pass를 붙인다. overdraw는 줄일 수 있지만 geometry 처리 비용이 추가된다.
+- TVB: visibility buffer를 만들고 fullscreen resolve에서 직접 output을 계산한다.
+- TVB + G-buffer: visibility buffer를 바탕으로 G-buffer를 생성한 뒤 deferred lighting과 비교 가능한 흐름을 만든다.
+
+실제 장면 검증에서는 Donut Deferred renderer를 baseline으로 삼고, 여기에 visibility buffer 방식을 붙이는 방향을 사용한다. Synthetic 실험에서 얻은 결론이 실제 scene에서도 의미가 있는지를 확인하는 것이 중요하다.
+
+## 4. 분석할 주요 변수
+
+TVB의 성능은 하나의 변수만으로 설명되지 않는다. 아래 변수들의 조합이 중요하다.
+
+- Geometry 수: vertex 수, triangle 수, object 수, mesh 수, draw/batch 수
+- Projected triangle size: 화면에서 triangle 하나가 차지하는 pixel 수
+- Overdraw: 가려지는 fragment가 얼마나 많이 발생하는지
+- Quad inefficiency: GPU가 2x2 pixel quad 단위로 pixel shader를 실행하면서 낭비되는 정도
+- Material 비용: ALU 반복 횟수, texture sampling 횟수, texture 수와 크기
+- G-buffer 비용: render target 수, 포맷, bytes per pixel, 해상도
+- Indirect access 비용: TVB resolve에서 vertex/index/object/material 데이터를 다시 읽는 비용
+- Geometry working set: vertex/index/material buffer가 cache에 머무르는지 여부
+- Material 다양성: material 수, 화면상 material 분포, shader branch divergence, PSO switch 비용
+- Camera와 scene 분포: visible triangle 수, scene fingerprint, screen-space material locality
+- Hardware 특성: VRAM bandwidth, L2 cache, rasterizer 처리량, texture sampling throughput, ALU throughput
+
+## 5. 개념적 성능 모델
+
+초기 synthetic 실험에서는 다음 변수를 중심으로 TVB의 유리/불리를 설명한다.
+
+- G: geometry 또는 vertex 처리량
+- P: 화면에 보이는 pixel 수
+- O: overdraw 배수
+- Q: 2x2 quad 실행으로 인한 낭비 배수
+- A: material shader의 ALU 또는 texture sampling 비용
+- V = P x O: rasterization 또는 fragment 후보 규모
+
+상수를 생략한 직관적 모델은 다음과 같다.
+
+Forward:
+G x VS + V x raster + P x O x Q x A
+
+Forward + Prepass:
+G x VS + V x raster + G x VS + V x raster + P x Q x A
+
+TVB:
+G x VS + V x raster + V x record + P x resolve + P x A
+
+이 모델은 정확한 GPU 시간 공식이라기보다, 어떤 항이 어떤 renderer를 불리하게 만드는지 설명하는 틀이다. 예를 들어 material 비용 A가 크고 overdraw O가 크면 Forward가 불리해진다. 반대로 material 비용이 작고 overdraw가 거의 없으면 TVB의 visibility 기록과 resolve 비용이 오히려 손해가 될 수 있다.
+
+## 6. Synthetic 실험 계획
+
+Synthetic scene은 실제 장면을 닮게 만드는 것이 목적이 아니라, 변수들을 분리하고 조절하기 위한 장면이다. 이 프로젝트에서는 sphere scene과 fullscreen quad/layered quad scene을 주로 사용한다.
+
+Sphere scene의 목적:
+
+- object 수, mesh 수, material 수, geometry division을 조절한다.
+- geometry working set과 vertex/index buffer 규모를 변화시킨다.
+- triangle 수와 scene 분포가 각 renderer에 주는 영향을 본다.
+
+Quad scene의 목적:
+
+- 화면을 덮는 primitive를 깊이 방향으로 배치해 overdraw를 통제한다.
+- front-to-back, back-to-front, random ordering을 비교한다.
+- subdivision으로 projected triangle size와 quad inefficiency를 조절한다.
+- material ALU와 texture sampling 부하를 바꾸며 TVB가 언제 유리해지는지 본다.
+
+Synthetic 실험에서 해야 할 일:
+
+- Forward, Forward+Prepass, Deferred, TVB를 공정한 material workload로 비교한다.
+- pass별 timestamp로 geometry, visibility, resolve, lighting 비용을 분리한다.
+- 변수 sweep을 통해 winner map과 crossover point를 찾는다.
+- 입력 크기로 정규화한 비용을 계산한다.
+- 고정 비용과 선형 비용을 분리해 회귀 모델 또는 단순 성능식을 만든다.
+- 결과를 VRAM bandwidth, ALU, texture sampling, rasterization, L2 cache 관점에서 해석한다.
+
+## 7. 실제 scene 실험 계획
+
+Synthetic scene만으로는 실제 게임 장면의 geometry 분포, material 다양성, texture access, overdraw, draw structure를 충분히 설명할 수 없다. 따라서 실제 scene 실험이 중요하다.
+
+대상 scene:
+
+- Amazon Lumberyard Bistro: 일반적인 실내/실외 건축 scene 성격을 가진 비교적 현실적인 부하
+- Sponza: 널리 사용되는 rendering benchmark scene
+- Intel Jungle Ruins: overdraw와 복잡한 geometry/material 조건을 보기 위한 후보
+
+실제 scene 실험에서 해야 할 일:
+
+- 각 scene의 geometry, material, texture, triangle 크기, overdraw, visible index count 등을 fingerprint로 수치화한다.
+- 고정 camera path를 녹화/재생해 renderer 간 동일한 view sequence를 보장한다.
+- Forward, Forward+Prepass, Deferred, Deferred+Prepass, TVB, TVB+G-buffer를 같은 camera/resolution/warm-up/measurement 조건에서 비교한다.
+- 실제 texture loading 여부를 명시하고, texture를 끈 실험과 켠 실험을 구분한다.
+- CPU view frustum culling 사용 여부를 명시한다.
+- 결과는 total time뿐 아니라 pass별 time, frame별 variation, visible index count와 함께 본다.
+- scene 이미지를 함께 제시해 "어떤 장면에서 측정했는가"를 설명한다.
+
+실제 scene 실험에서 특히 중요한 점:
+
+- 화면이 synthetic처럼 보이면 설득력이 떨어진다. 발표나 보고서에는 실제 scene 이미지, albedo texture, 카메라 이동 영상, triangle-id 또는 visibility 시각화가 필요하다.
+- TVB가 빠른 조건뿐 아니라 느린 조건도 찾아야 한다.
+- Deferred보다 TVB가 왜 유리하거나 불리했는지 G-buffer bandwidth와 indirect access 비용의 균형으로 설명해야 한다.
+- scene fingerprint와 성능 결과가 연결되어야 한다. 예를 들어 작은 triangle이 많은 scene인지, visible triangle 수가 많은지, material이 공간적으로 흩어져 있는지 등이 중요하다.
+
+## 8. Donut 기반 계획
+
+실제 scene에서는 NVIDIA Donut의 Deferred renderer를 참고한다. 다만 전체 Donut/NVRHI를 그대로 쓰기보다, 필요한 shader와 data layout 개념을 현재 Direct3D 12 renderer에 이식하는 방향이다.
+
+Donut 기반 실험의 목적:
+
+- 실제 PBR material, texture, scene hierarchy를 가진 장면에서 Deferred baseline을 만든다.
+- 그 위에 visibility buffer 방식의 geometry/material 복원 경로를 추가한다.
+- Deferred G-buffer fill과 TVB visibility/resolve 또는 TVB 기반 G-buffer 생성 비용을 비교한다.
+
+Donut scene data에서 중요한 개념:
+
+- Node tree: scene graph와 transform hierarchy
+- Instance: mesh를 world transform으로 배치한 단위
+- Mesh/Submesh: draw 가능한 geometry와 material 연결
+- Geometry instance: instance와 submesh의 조합
+- Global vertex/index/material/texture buffer: shader가 ID로 접근할 수 있는 GPU-friendly scene representation
+- Visible draw list: culling과 sorting 후 실제 draw에 사용되는 목록
+
+Visibility buffer의 향후 방향:
+
+- visibility pass에서 geometry instance ID와 triangle ID를 저장한다.
+- resolve pass에서 ID를 이용해 submesh, material, index buffer, vertex buffer를 찾아 attribute를 복원한다.
+- material별 binning 또는 sorting을 추가해 monolithic shader의 branch divergence를 줄인다.
+
+## 9. 측정 방법
+
+측정 pipeline:
+
+1. command-line argument parsing
+2. scene 생성 또는 로드
+3. GPU resource 생성
+4. warm-up frame 실행
+5. measurement frame 동안 GPU timestamp 수집
+6. CSV 기록
+7. 자동 종료
+8. Python runner가 결과와 sidecar CSV를 보존
+
+기본 metric:
+
+- total frame GPU time
+- pass별 GPU time
+- min, median, avg, max, p01, p10, p90, p99
+- frame별 windowed time
+- scene fingerprint
+- visible index count 또는 geometry 규모
+- renderer별 winner count와 speedup
+
+추가로 필요하면 hardware profiling을 통해 다음을 본다.
+
+- VRAM read/write traffic
+- L2 cache hit rate
+- texture sampling throughput
+- ALU utilization
+- rasterizer 병목
+- depth/early-Z 효율
+
+## 10. 결과 해석 시 주의할 점
+
+TVB의 장점은 "항상 빠르다"가 아니다. 핵심은 어떤 비용을 줄이고 어떤 비용을 새로 지불하는지다.
+
+Forward와 비교할 때:
+
+- overdraw와 material 비용이 크면 TVB가 유리해질 수 있다.
+- overdraw가 없고 material이 가벼우면 Forward가 유리할 수 있다.
+
+Forward+Prepass와 비교할 때:
+
+- Prepass는 material overdraw를 줄이지만 geometry/rasterization을 두 번 수행한다.
+- TVB는 두 번째 geometry pass 대신 resolve를 수행한다.
+- geometry가 크고 material이 적당히 무거우면 crossover가 생길 수 있다.
+
+Deferred와 비교할 때:
+
+- Deferred는 G-buffer bandwidth가 핵심 비용이다.
+- TVB direct shading은 G-buffer bandwidth를 줄이지만 indirect access와 reconstruction 비용이 있다.
+- TVB+G-buffer는 visibility 기반으로 G-buffer를 만들기 때문에 Deferred와 direct TVB 사이의 중간적 성격을 가진다.
+
+실제 scene에서:
+
+- 결과가 synthetic 모델과 다르면 그 자체가 중요한 연구 결과다.
+- 원인 후보는 projected triangle size, overdraw, material locality, cache working set, texture 특성, draw-call 구조, culling 여부, scene hierarchy, camera path다.
+- hardware counter 없이 병목을 단정하면 안 된다. counter가 없으면 "가설"로 표시한다.
+
+## 11. 앞으로 중요한 방향
+
+현재 프로젝트에서 앞으로 특히 중요한 방향은 다음이다.
+
+- 여러 실제 scene에서 반복 가능한 camera path 기반 측정
+- 실제 texture/albedo가 보이는 화면과 발표용 영상 확보
+- triangle ID 또는 visibility buffer 내용을 시각화해 연구 대상을 직관적으로 보여주기
+- Deferred baseline과 TVB 계열 비교를 실제 scene에서 안정화
+- scene fingerprint와 성능 결과 연결
+- material 다양성과 material locality가 TVB에 주는 영향 분석
+- material sorting, binning, work queue 같은 TVB 고도화 실험
+- hardware profiling으로 memory/cache/raster/ALU 병목 검증
+
+## 12. AI에게 요청할 때 유용한 관점
+
+이 프로젝트를 도와주는 AI는 다음을 우선 고려해야 한다.
+
+- 단순 구현보다 실험 공정성과 해석 가능성이 중요하다.
+- 결과 그래프에는 실험 조건, camera, resolution, renderer variant, warm-up/measure frame, texture loading, culling 여부가 같이 있어야 한다.
+- TVB가 유리한 경우와 불리한 경우를 모두 설명해야 한다.
+- 보고서/발표에서는 synthetic 그래프만으로 부족하므로 실제 scene 이미지와 영상, 직관적인 visibility 시각화가 필요하다.
+- 새로운 실험을 제안할 때는 독립 변수, 고정 조건, 측정 metric, 예상되는 병목, 실패했을 때 해석 후보를 같이 제시해야 한다.

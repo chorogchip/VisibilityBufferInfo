@@ -1,0 +1,318 @@
+# VisibilityBufferInfo 웹 AI용 진행상황 요약
+
+이 문서는 코드 저장소에 접근할 수 없는 AI에게 현재까지의 프로젝트 진행상황을 전달하기 위한 요약이다. 기준 문서는 기존 `프롬프트.txt`, `프롬프트_진행상황.txt`, `명세.txt`이며, 이후 저장소에는 실제 scene 실험과 Donut renderer 관련 작업이 추가된 상태다.
+
+## 1. 현재 프로젝트 상태 요약
+
+프로젝트는 Triangle Visibility Buffer(TVB)의 성능 조건을 실험적으로 분석하는 단계에 있으며, 초반 synthetic 실험 기반은 상당 부분 구현되었다. 이후 우선순위는 실제 scene 기반 측정과 Donut Deferred baseline/visibility 확장으로 이동했다.
+
+현재까지의 큰 흐름:
+
+- Direct3D 12 기반 독립 렌더러를 만들었다.
+- Forward, Forward+DepthPrepass, Deferred, Deferred+DepthPrepass, TVB, TVB+G-buffer 비교 경로를 구성했다.
+- command-line argument, warm-up/measure frame, 자동 종료, CSV 기록, pass별 GPU timestamp 기반 측정을 구현했다.
+- Python runner로 JSON 실험 spec을 읽고 parameter sweep, sample list, 반복 실행, 결과 보존을 수행한다.
+- synthetic sphere/quad scene을 통해 overdraw, geometry, quad waste, ALU workload를 조절하는 실험을 진행했다.
+- TVB의 visibility pass와 fullscreen resolve 경로를 구현했고, barycentric interpolation 및 derivative 재구성까지 확장했다.
+- 실제 scene 측정을 위해 Assimp importer, DirectXTex texture loading, camera record/playback, scene fingerprint, Donut shader/renderer 이식 작업을 진행했다.
+- 최근 방향은 Sponza/Bistro 같은 실제 scene에서 Deferred baseline과 TVB 계열을 비교하고, 발표용 이미지/영상과 visibility 시각화를 확보하는 것이다.
+
+## 2. 완료된 기반 기능
+
+실행 및 측정:
+
+- command-line argument parsing
+- renderer variant 선택
+- window 생성 및 render loop
+- warm-up frame과 measure frame 분리
+- `auto_terminate` 기반 자동 종료
+- VSync on/off 옵션
+- GPU timestamp query readback
+- total/pass별 GPU time CSV 기록
+- min, median, avg, max, p01, p10, p90, p99 집계
+- camera record/playback
+- playback 중 frame window 단위 sidecar CSV 생성
+- Python runner 기반 batch execution과 결과 checkpoint
+
+렌더러:
+
+- Forward
+- Forward + Depth Pre-Pass
+- Deferred
+- Deferred + Depth Pre-Pass
+- TVB direct shading
+- TVB + G-buffer
+- Donut Deferred
+- Donut Deferred + Depth Pre-Pass
+
+공통 rendering infrastructure:
+
+- GPU resource와 resource state를 함께 관리하는 wrapper
+- graphics/compute queue wrapper
+- frame RTV/DSV descriptor manager
+- shader-visible SRV/UAV descriptor manager
+- sampler descriptor manager
+- root signature builder
+- graphics pipeline builder
+- upload constant buffer abstraction
+- texture loader
+
+Scene 및 resource:
+
+- synthetic sphere scene 생성
+- layered quad/fullscreen quad scene 생성
+- object, mesh, material, batch 구성
+- Assimp 기반 외부 scene 로딩
+- scene fingerprint CSV 출력
+- DirectXTex 기반 texture loading
+- dummy texture 생성
+- CPU view-frustum culling 옵션
+- visible index count profile
+
+## 3. TVB 구현 상태
+
+현재 TVB는 기본적으로 두 단계로 구성된다.
+
+1. Visibility pass
+   - object/instance와 primitive를 식별할 수 있는 값을 visibility buffer에 기록한다.
+   - depth buffer와 함께 사용해 최종 visible primitive 정보를 남긴다.
+
+2. Resolve 또는 G-buffer 생성 pass
+   - visibility buffer를 fullscreen으로 읽는다.
+   - 저장된 ID를 통해 vertex/index/object/material buffer를 간접 참조한다.
+   - barycentric coordinate와 perspective-correct interpolation으로 attribute를 복원한다.
+   - UV derivative를 재구성해 texture sampling에 사용한다.
+   - 직접 output을 만들거나 G-buffer를 생성한다.
+
+이미 구현된 핵심:
+
+- visibility buffer 생성
+- fullscreen resolve
+- barycentric interpolation
+- perspective correction
+- derivative 계산
+- synthetic texture sampling 및 ALU workload 공정화
+- TVB direct output과 TVB 기반 G-buffer 생성
+
+아직 중요한 확장:
+
+- 실제 scene용 Donut visibility path 완성
+- material이 다양한 실제 scene에서의 TVB shading 구조
+- material sorting/binning/work queue
+- visibility buffer format 비교
+- hardware counter 기반 원인 분석
+
+## 4. Synthetic 실험 진행상황
+
+초기 synthetic 실험은 TVB의 기본적인 tradeoff를 확인하는 데 사용되었다.
+
+구현된 synthetic 제어 변수:
+
+- object 수
+- material 수
+- mesh/geometry 수
+- geometry division
+- overdraw count
+- 정렬 순서에 따른 overdraw 조건
+- texture count
+- texture size
+- texture sampling count
+- ALU 반복 횟수
+- resolution
+- seed
+
+실험 목적:
+
+- Forward의 overdraw material 비용을 확인
+- Forward+Prepass의 두 번째 geometry/rasterization 비용을 확인
+- TVB visibility record와 resolve 비용을 분리
+- geometry, overdraw, quad waste, ALU의 crossover point를 찾기
+
+관찰된 경향:
+
+- overdraw가 크고 material shader 비용이 높으면 Forward가 불리해진다.
+- front-to-back으로 overdraw가 거의 없으면 Forward가 가장 단순하고 빠를 수 있다.
+- Forward+Prepass는 overdraw material 비용을 줄이지만 geometry와 rasterization을 두 번 수행하는 비용이 있다.
+- TVB는 overdraw와 quad waste로 버려지는 material 계산을 줄일 수 있지만, visibility record와 resolve 고정 비용을 지불한다.
+- geometry만 커지고 material/overdraw/quad 비용이 낮으면 Forward가 계속 유리한 영역이 있다.
+- overdraw-ALU, quad-ALU 실험에서 Forward, Forward+Prepass, TVB가 각각 유리한 영역이 나뉘는 winner map이 관찰되었다.
+- 일부 결과는 hardware counter 없이 추정된 해석이므로, 최종 결론에는 profiling 근거가 필요하다.
+
+성능 모델 측면:
+
+- G: geometry/vertex 수
+- O: overdraw
+- Q: quad waste
+- A: material ALU 비용
+- P: visible pixel 수
+
+위 변수를 이용해 Forward, Forward+Prepass, TVB의 비용식을 세우고, 각 항의 민감도를 비교하는 방식으로 설명을 시작했다.
+
+## 5. 실제 scene 작업 진행상황
+
+연구 우선순위는 synthetic 실험에서 실제 scene 실험으로 이동했다. 이유는 synthetic scene만으로는 실제 renderer의 material, texture, geometry distribution, draw structure, lighting 비용을 설명하기 어렵기 때문이다.
+
+진행된 실제 scene 관련 작업:
+
+- Assimp importer로 외부 scene 로딩
+- mesh/object/material/vertex/index/triangle 통계 수집
+- scene fingerprint 출력
+- DirectXTex texture loading 추가
+- camera path record/playback 추가
+- standard camera CSV 작성
+- Bistro/Sponza 실험 spec 및 결과 번들 추가
+- 실제 scene에서 view-frustum culling 사용 옵션 추가
+- frame별 visible index count와 timing을 같이 볼 수 있는 기반 추가
+
+현재 실험 대상:
+
+- Sponza 계열 scene
+- Amazon Lumberyard Bistro
+- 향후 후보로 Intel Jungle Ruins
+
+실제 scene에서 확인해야 할 것:
+
+- synthetic 모델이 실제 scene에서도 맞는가
+- 실제 scene에서 TVB가 Deferred보다 유리한 조건이 있는가
+- 작은 triangle이 많은 scene에서 TVB resolve의 indirect access 비용이 어떻게 변하는가
+- G-buffer bandwidth와 TVB resolve 비용 중 무엇이 지배적인가
+- texture를 켠 상태와 끈 상태의 차이가 무엇인가
+- view-frustum culling이 renderer 간 비교에 어떤 영향을 주는가
+
+## 6. Donut renderer 진행상황
+
+Donut 전체 renderer를 그대로 사용하는 대신, Donut의 G-buffer/Deferred 관련 shader와 data layout 아이디어를 현재 Direct3D 12 renderer에 가져오는 방향으로 진행 중이다.
+
+진행된 내용:
+
+- Donut shader source 일부를 프로젝트에 추가
+- Donut G-buffer pass 구성 시작
+- Donut Deferred lighting pass 구성
+- tonemap pass 추가
+- Donut scene CPU data 구조 추가
+- Donut scene GPU data 구조 추가
+- Donut Assimp importer 추가
+- Donut scene resource builder 추가
+- Donut Deferred renderer variant 추가
+
+Donut 구조에서 현재 중요한 점:
+
+- 실제 node hierarchy와 instance 분포를 유지한다.
+- mesh/submesh/material/texture를 GPU-friendly global buffer로 만든다.
+- G-buffer fill, deferred lighting, tonemap을 pass 단위로 분리한다.
+- 향후 visibility buffer는 geometry instance ID와 triangle ID를 저장하고, resolve에서 draw/submesh/material/vertex/index를 역참조하는 방향이다.
+
+아직 남은 내용:
+
+- Donut 기반 visibility pass와 visibility-to-GBuffer 또는 visibility shading 경로 완성
+- 실제 texture와 PBR material이 충분히 반영된 화면 확보
+- 발표용 screenshot/video 확보
+- visibility/triangle-id 시각화
+- Donut Deferred와 TVB 계열의 공정한 pass별 비교
+
+## 7. Python 실험 자동화 진행상황
+
+현재 실험 runner는 `scripts/run.py` 중심으로 동작한다.
+
+지원 기능:
+
+- JSON experiment spec 읽기
+- `base` + `sweep` Cartesian product
+- `base` + `samples` 명시 sample list
+- repeat 실행
+- 각 run마다 command-line argument 생성
+- 임시 CSV output 생성
+- raw result CSV 읽기
+- combined CSV 누적
+- run report JSON 저장
+- 실패/중단/부분 성공 상태 기록
+- sidecar CSV 보존
+
+중요한 상태:
+
+- stderr에 log path가 출력되면 return code 0이어도 `salvaged`로 표시될 수 있다.
+- `salvaged`는 결과 row가 있는 상태와 없는 실패를 구분하기 위한 것이다.
+- playback profile에서는 frame window별 sidecar CSV가 추가로 생긴다.
+- 실험 결과는 연구 증거물이므로 삭제하지 않는다.
+
+## 8. 분석 및 결과물 진행상황
+
+이미 생성된 결과물:
+
+- synthetic 실험 CSV
+- winner map
+- total time plot
+- rolling mean plot
+- pass breakdown plot
+- renderer correlation
+- pairwise overhead
+- summary statistics
+- Sobol sample 기반 결과
+- 일부 머신러닝/회귀 기반 모델링 결과
+- Sponza/Bistro scene geometry 실험 결과 번들
+
+분석 방향:
+
+- renderer별 total time 비교
+- pass별 비용 분해
+- ALU 민감도
+- geometry/index count와 frame time의 상관
+- visible geometry 변화와 pass time 변화
+- TVB speedup이 특정 frame 또는 camera 위치에서 어떻게 바뀌는지
+
+앞으로 보강할 부분:
+
+- hardware counter와 연결된 원인 분석
+- scene screenshot/video와 그래프의 결합
+- 실제 scene fingerprint와 synthetic 모델의 연결
+- Deferred vs TVB의 memory bandwidth 설명
+- 작은 triangle이 많은 scene에서 TVB가 불리해지는지 또는 유리해지는지 검증
+
+## 9. 현재 남은 주요 과제
+
+우선순위가 높은 항목:
+
+- 실제 scene에서 Donut Deferred baseline을 안정화한다.
+- Donut 기반 visibility buffer 경로를 완성한다.
+- Bistro/Sponza 등 실제 scene에서 반복 가능한 camera path로 renderer별 시간을 비교한다.
+- 최소한 albedo texture가 보이는 화면을 확보한다.
+- triangle ID 또는 visibility buffer 내용을 시각화한다.
+- 결과 그래프와 scene 영상을 함께 제시할 수 있게 만든다.
+
+성능 분석 과제:
+
+- G-buffer bandwidth 실험
+- TVB indirect access와 geometry working set 실험
+- material 다양성과 material locality 실험
+- material sorting/binning/work queue 실험
+- hardware profiling으로 VRAM traffic, cache behavior, ALU, texture sampling, rasterization counter 확인
+
+문서/발표 과제:
+
+- synthetic 결과와 실제 scene 결과의 관계를 명확히 설명한다.
+- "TVB가 언제 유리한가"를 한 문장 결론보다 조건식/그래프/사례로 제시한다.
+- TVB가 불리한 조건도 숨기지 않고 제시한다.
+- 실제 장면이 보이는 이미지와 영상으로 설득력을 보강한다.
+
+## 10. 현재까지의 날짜별 흐름
+
+- 07-03: 인자 파싱, 자동 종료, Python 실행, GPU timestamp readback 기반 구현
+- 07-06: 외부 scene 수집, Assimp loading, scene 통계 구조 추가
+- 07-07: Forward, Forward+DepthPrepass, Deferred, TVB 기본 구현
+- 07-08: TVB barycentric interpolation, 공통 workload, timestamp CSV, 변수 sweep 추가
+- 07-09: TVB+Deferred, Deferred+DepthPrepass 추가
+- 07-10: instancing과 renderer 구조 리팩토링
+- 07-13: derivative 계산, texture sampler, layered quad scene, Donut 탐색 시작
+- 07-14: 초기 실험 renderer 정리, overdraw 실험
+- 07-15: geometry/overdraw/quad/ALU 모델과 winner map 실험
+- 07-16: quad-ALU 실험 수정, Sobol/ML 기반 분석
+- 07-20: 실제 scene 우선순위 전환, DirectXTex texture loading, camera path, Donut deferred pass 시작
+- 이후: Donut renderer 정리, tonemap pass, view-frustum culling, texture loading refactor, Sponza/Bistro scene experiment 진행
+
+## 11. AI가 현재 상태를 해석할 때 주의할 점
+
+- 기존 진행상황 문서는 7월 20일까지의 요약이므로, 이후 실제 scene/Donut 작업이 추가된 상태임을 감안해야 한다.
+- synthetic 실험 결과는 TVB의 원리를 설명하는 데 유용하지만, 실제 scene 결론을 대신하지 않는다.
+- hardware counter가 없는 해석은 가설로 남겨야 한다.
+- 현재 중요도는 "더 많은 synthetic sweep"보다 "실제 scene에서 보이는 결과와 visibility 고도화" 쪽이 높다.
+- 코드가 없는 AI에게 요청할 때는 renderer variant, scene, camera path, texture loading, culling 여부, warm-up/measure frame을 반드시 함께 알려야 한다.
