@@ -4,9 +4,9 @@ cbuffer nums : register(b0)
     uint total_cnt;
 };
 
-StructuredBuffer<uint> src : register(u0);
-RWStructuredBuffer<uint> dst_block : register(u1);
-RWStructuredBuffer<uint> dst : register(u2);
+StructuredBuffer<uint> src : register(t0);
+RWStructuredBuffer<uint> dst_block : register(u0);
+RWStructuredBuffer<uint> dst : register(u1);
 
 static const uint WARP_SIZE_LOG = 5;
 static const uint WARP_SIZE = 1 << WARP_SIZE_LOG;
@@ -23,7 +23,7 @@ void kernel_prefix_block(uint3 gid : SV_GroupID, uint3 tid : SV_GroupThreadID)
     uint lane = tid.x & (WARP_SIZE - 1);
     uint warp = tid.x >> WARP_SIZE_LOG;
     
-    uint val = idx < total_cnt ? src[idx] : 0.0f;
+    uint val = idx < total_cnt ? src[idx] : 0;
     
     // warp 내부 prefix sum
     for (int offset = 1; offset <= WARP_SIZE / 2; offset <<= 1)
@@ -58,7 +58,8 @@ void kernel_prefix_block(uint3 gid : SV_GroupID, uint3 tid : SV_GroupThreadID)
             dst_block[gid.x] = val_warp;
         
         // 한칸씩 땡겨서 warp별 더해줄거 저장
-        val_warp = WaveReadLaneAt(val_warp, lane - 1);
+        uint source_lane = lane > 0 ? lane - 1 : lane;
+        val_warp = WaveReadLaneAt(val_warp, source_lane);
         if (lane == 0)
             val_warp = 0;
         
