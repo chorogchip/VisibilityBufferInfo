@@ -13,10 +13,10 @@ namespace util {
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, output_filepath, "out_result.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 7, renderer-variant) \
+    X(uint32_t, renderer_variant, 11, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
-    X(bool, to_load_texture, true, to-load-texture) \
+    X(bool, to_load_texture, false, to-load-texture) \
     X(bool, use_vfc, true, use-vfc) \
     X(std::string, scene_importer, "assimp", scene-importer) \
     X(std::string, scene_path, (1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx" : "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf"), scene-path) \

@@ -76,10 +76,8 @@ namespace util {
 
         if (expression) return;
 
-        std::string log_str;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-
             logging_stream_
                 << "\n"
                 << "========== ASSERT FAILED ==========\n"
@@ -89,14 +87,8 @@ namespace util {
                 << "Column   : " << loc.column() << '\n'
                 << "Function : " << loc.function_name() << '\n'
                 << "===================================\n";
-
-            log_str = logging_stream_.str();
         }
-
-        this->operator<<(log_str);
-
         this->flush();
-
         std::abort();
     }
 

@@ -6,18 +6,19 @@
 "run_id": 0,
 "run_name": "no-run-name",
 "output_filepath": "profile_result.csv",
-"_renderer_variant": 1,
+"renderer_variant": 8,
 "variable": 0,
 "to_use_scene": true,
-"to_load_texture": false,
+"to_load_texture": true,
 "use_vfc": true,
-"scene_path": "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+"scene_importer": "assimp",
+"scene_path": "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
 "warmup_frames": 60,
-"measure_frames": 5500,
+"measure_frames": 2500,
 "auto_terminate": true,
 "vsync": false,
 "camera_mode": 2,
-"camera_filepath": "standard_camera_bistro.csv",
+"camera_filepath": "standard_camera.csv",
 "camera_keyframe_interval": 10,
 "to_set_start_frame": false,
 "key_frame": 0,
@@ -48,10 +49,9 @@
 "texture_count": 1,
 "texture_size": 256,
 "texture_sampling_count": 1,
-"_alu_calc_count": 100
+"alu_calc_count": 100
 },
   "sweep": {
-    "renderer_variant": [ 1, 2, 3, 4, 5, 6 ],
-    "alu_calc_count" : [ 1, 5, 10, 20 ]
+
   }
 }

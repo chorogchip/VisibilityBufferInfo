@@ -37,5 +37,6 @@ VSOutput main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     output.texCoord = texCoord;
     output.geometryInstanceID =
         instance.firstGeometryInstanceIndex + localGeometryID + 1;
+    
     return output;
 }

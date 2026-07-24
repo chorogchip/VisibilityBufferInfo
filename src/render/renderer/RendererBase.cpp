@@ -180,12 +180,24 @@ void RendererBase::render() {
 
     graphics_queue_.execute(command_list_.Get());
 
-    if (program_argument_.vsync) {
-        util::Utils::throw_if_failed(swapchain_->Present(1, 0),
-            "swapchain present");
+    const UINT sync_interval = program_argument_.vsync ? 1 : 0;
+    HRESULT hr{};
+    if (!program_argument_.vsync) {
+        hr = swapchain_->Present(1, 0);
     } else {
-        util::Utils::throw_if_failed(swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING),
-            "swapchain present");
+        hr = swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+    }
+    if (FAILED(hr)) {
+        const HRESULT reason = device_->GetDeviceRemovedReason();
+
+        char buffer[256];
+        sprintf_s(
+            buffer,
+            "Present failed: 0x%08X, DeviceRemovedReason: 0x%08X\n",
+            static_cast<unsigned>(hr),
+            static_cast<unsigned>(reason));
+        buffer[255] = 0;
+        util::Logger::g_logger.assert_with_log(false, buffer);
     }
 
     fence_values_[frame_index_] = graphics_queue_.signal();

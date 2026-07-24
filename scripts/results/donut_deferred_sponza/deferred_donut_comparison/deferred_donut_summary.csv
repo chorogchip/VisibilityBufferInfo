@@ -1,0 +1,6 @@
+alu_calc_count,benchmark_deferred_avg_ms,benchmark_deferred_median_ms,benchmark_deferred_prepass_avg_ms,benchmark_deferred_prepass_median_ms,donut_deferred_avg_ms_common_frames,donut_deferred_median_ms_common_frames,donut_deferred_prepass_avg_ms,donut_deferred_prepass_median_ms,benchmark_deferred_over_donut_ratio_avg,benchmark_prepass_over_donut_prepass_ratio_avg
+10,0.753991,0.795595,0.637861,0.699035,2.129322,2.222840,1.174770,1.208350,0.354099,0.542967
+20,1.284874,1.349760,0.897595,0.964720,2.129322,2.222840,1.174770,1.208350,0.603419,0.764061
+40,2.467890,2.518035,1.476325,1.559180,2.129322,2.222840,1.174770,1.208350,1.159003,1.256693
+80,4.836155,4.951025,2.618587,2.785340,2.129322,2.222840,1.174770,1.208350,2.271218,2.229021
+160,9.500093,9.734425,4.947164,5.371645,2.129322,2.222840,1.174770,1.208350,4.461557,4.211177

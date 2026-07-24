@@ -5,6 +5,7 @@
 #include "render/renderer/benchmark/RendererVisBuf.h"
 #include "render/renderer/benchmark/RendererVisBufGBuffer.h"
 #include "render/renderer/benchmark/RendererRasterStats.h"
+#include "render/renderer/benchmark/RendererDebugView.h"
 #include "render/renderer/donut/RendererDonutDeferred.h"
 #include "render/renderer/donut/RendererDonutVisGBuffer.h"
 
@@ -22,6 +23,7 @@ namespace rndr {
         case  8: return std::make_unique<RendererDonutDeferred>(true);
         case  9: return std::make_unique<RendererDonutVisGBuffer>();
         case 10: return std::make_unique<RendererRasterStats>();
+        case 11: return std::make_unique<RendererDebugView>();
         default: util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
         }
     }

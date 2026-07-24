@@ -1,6 +1,7 @@
 #include "engine/GPUQueue.h"
 
 #include "util/Logger.h"
+#include "util/Utils.h"
 
 namespace eng {
 
@@ -33,10 +34,6 @@ namespace eng {
     }
 
     void GPUQueue::execute(ID3D12CommandList* command_list) {
-        util::Logger::g_logger.assert_with_log(
-            queue_ != nullptr && command_list != nullptr,
-            "command queue execute requires an initialized queue and command list");
-
         ID3D12CommandList* command_lists[] = { command_list };
         queue_->ExecuteCommandLists(1, command_lists);
     }

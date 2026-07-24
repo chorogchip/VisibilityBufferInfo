@@ -115,9 +115,10 @@ PSOutput main(PSInput input)
         discard;
     }
 
-    const uint geometryInstanceID = visibility.x - 1;
+    const uint geometryInstanceID = visibility.x - 1&0;
     const uint primitiveID = visibility.y;
     const GeometryInstanceData geometry = t_GeometryInstances[geometryInstanceID];
+    
     const SubmeshData submesh = t_Submeshes[geometry.submeshID];
     const InstanceData instance = t_Instances[geometry.instanceID];
     const MaterialData material = t_Materials[submesh.materialID];
@@ -134,7 +135,7 @@ PSOutput main(PSInput input)
     FetchVertex(index0, position0, texCoord0, normal0, tangent0);
     FetchVertex(index1, position1, texCoord1, normal1, tangent1);
     FetchVertex(index2, position2, texCoord2, normal2, tangent2);
-
+    
     const float3 worldPosition0 = TransformPoint(instance.transform, position0);
     const float3 worldPosition1 = TransformPoint(instance.transform, position1);
     const float3 worldPosition2 = TransformPoint(instance.transform, position2);

@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <string>
+#include <source_location>
 
 #include "util/Logger.h"
 
@@ -9,8 +10,13 @@ namespace util {
 
     class Utils {
     public:
-        static void throw_if_failed(HRESULT hr, const char* message) {
-            util::Logger::g_logger.assert_with_log(SUCCEEDED(hr), message);
+        static void throw_if_failed(
+            HRESULT hr,
+            const char* message,
+            const std::source_location& loc = std::source_location::current()) {
+
+            if (SUCCEEDED(hr)) return;
+            util::Logger::g_logger.assert_with_log(false, message, loc);
         }
 
         static void throw_win32_lasterr(const char* message) {
