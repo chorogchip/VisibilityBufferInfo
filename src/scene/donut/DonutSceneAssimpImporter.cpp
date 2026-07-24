@@ -295,9 +295,13 @@ namespace scene::donut {
 
             std::optional<std::filesystem::path> metal_roughness_path =
                 read_first_texture_path(source, aiTextureType_METALNESS);
-            if (!metal_roughness_path) {
+            if (!metal_roughness_path || metal_roughness_path->empty()) {
                 metal_roughness_path =
                     read_first_texture_path(source, aiTextureType_DIFFUSE_ROUGHNESS);
+            }
+            if (!metal_roughness_path || metal_roughness_path->empty()) {
+                metal_roughness_path =
+                    read_first_texture_path(source, aiTextureType_SPECULAR);
             }
 
             std::optional<std::filesystem::path> normal_path =
