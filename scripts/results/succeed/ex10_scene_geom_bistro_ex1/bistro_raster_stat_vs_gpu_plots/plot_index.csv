@@ -1,0 +1,13 @@
+﻿stat_name,plot_file
+triangle_count,triangle_count_vs_gpu_time.png
+total_fragments,total_fragments_vs_gpu_time.png
+covered_pixels,covered_pixels_vs_gpu_time.png
+overdraw_extra,overdraw_extra_vs_gpu_time.png
+avg_overdraw,avg_overdraw_vs_gpu_time.png
+max_overdraw,max_overdraw_vs_gpu_time.png
+rasterized_triangles,rasterized_triangles_vs_gpu_time.png
+skipped_triangles,skipped_triangles_vs_gpu_time.png
+quad_instances,quad_instances_vs_gpu_time.png
+quad_covered_lanes,quad_covered_lanes_vs_gpu_time.png
+quad_waste_lanes,quad_waste_lanes_vs_gpu_time.png
+quad_efficiency,quad_efficiency_vs_gpu_time.png

@@ -13,7 +13,7 @@ namespace util {
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, output_filepath, "out_result.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 11, renderer-variant) \
+    X(uint32_t, renderer_variant, 10, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
     X(bool, to_load_texture, false, to-load-texture) \
@@ -21,10 +21,10 @@ namespace util {
     X(std::string, scene_importer, "assimp", scene-importer) \
     X(std::string, scene_path, (1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx" : "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf"), scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
-    X(uint32_t, measure_frames, 24000, measure-frames) \
-    X(bool, auto_terminate, false, auto-terminate) \
+    X(uint32_t, measure_frames, 5500, measure-frames) \
+    X(bool, auto_terminate, true, auto-terminate) \
     X(bool, vsync, true, vsync) \
-    X(uint32_t, camera_mode, 0, camera-mode) \
+    X(uint32_t, camera_mode, 2, camera-mode) \
     X(std::string, camera_filepath, "standard_camera_bistro.csv", camera-filepath) \
     X(uint32_t, camera_keyframe_interval, 10, camera-keyframe-interval) \
     X(bool, to_set_start_frame, false, to-set-start-frame) \
