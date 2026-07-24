@@ -57,6 +57,8 @@ namespace rndr {
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
         gbuffer.scene = scene_cpu_.get();
+        gbuffer.materials = &scene_gpu_->materials;
+        gbuffer.to_use_textures = program_argument_.to_load_texture;
 
         if (do_prepass_) {
             PassDepthPreResources depth{};

@@ -27,8 +27,7 @@ namespace scene {
         std::unique_ptr<SceneDataGPU> ret{ new SceneDataGPU{} };
 
         std::unordered_map<std::string, uint32_t> texture_indices;
-        std::vector<eng::MaterialGPU> materials;
-        materials.reserve(src.materials.size());
+        ret->materials.reserve(src.materials.size());
 
         std::vector<SceneDataGPU::MeshMetadata> meshes;
         meshes.reserve(src.meshes.size());
@@ -187,7 +186,7 @@ namespace scene {
                 | (gpu_material.occlusion_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 4 : 0)
                 | (gpu_material.opacity_texture != eng::MaterialGPU::invalid_texture_index ? 1u << 5 : 0);
 
-            materials.emplace_back(gpu_material);
+            ret->materials.emplace_back(gpu_material);
         }
 
         constexpr size_t buffer_size_limit = std::numeric_limits<UINT>::max();
@@ -223,11 +222,11 @@ namespace scene {
 
 
         util::Logger::g_logger.assert_with_log(
-            materials.size() > 0,
+            ret->materials.size() > 0,
             "material buffer must not be empty");
 
         util::Logger::g_logger.assert_with_log_mul_overflow(
-            materials.size(), sizeof(decltype(materials)::value_type), buffer_size_limit,
+            ret->materials.size(), sizeof(decltype(ret->materials)::value_type), buffer_size_limit,
             "material buffer size overflow"
         );
 
@@ -243,7 +242,7 @@ namespace scene {
         const size_t buf_sz_vertices = src.vertices.size() * sizeof(decltype(src.vertices)::value_type);
         const size_t buf_sz_indices = src.indices.size() * sizeof(decltype(src.indices)::value_type);
         const size_t buf_sz_objects = src.objects.size() * sizeof(decltype(src.objects)::value_type);
-        const size_t buf_sz_materials = materials.size() * sizeof(decltype(materials)::value_type);
+        const size_t buf_sz_materials = ret->materials.size() * sizeof(decltype(ret->materials)::value_type);
         const size_t buf_sz_meshes = meshes.size() * sizeof(decltype(meshes)::value_type);
 
         Microsoft::WRL::ComPtr<ID3D12Resource> upload_heap_vertex, upload_heap_index,
@@ -263,7 +262,7 @@ namespace scene {
         dxutl::copy_to_upload_buffer(upload_heap_vertex.Get(), src.vertices.data(), buf_sz_vertices);
         dxutl::copy_to_upload_buffer(upload_heap_index.Get(), src.indices.data(), buf_sz_indices);
         dxutl::copy_to_upload_buffer(upload_heap_object.Get(), src.objects.data(), buf_sz_objects);
-        dxutl::copy_to_upload_buffer(upload_heap_material.Get(), materials.data(), buf_sz_materials);
+        dxutl::copy_to_upload_buffer(upload_heap_material.Get(), ret->materials.data(), buf_sz_materials);
         dxutl::copy_to_upload_buffer(upload_heap_mesh.Get(), meshes.data(), buf_sz_meshes);
 
         p_list->CopyBufferRegion(ret->vertex_buffer.Get(), 0, upload_heap_vertex.Get(), 0, buf_sz_vertices);

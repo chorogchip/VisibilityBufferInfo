@@ -67,15 +67,12 @@ namespace rndr {
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
-            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()                // FRAME_CONSTANT
-            .constant().reg(1)
-                .cnt(1).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()                       // DRAW_CONSTANT
-            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()                // INSTANCE_BUFFER
-            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()                 // MATERIAL_BUFFER
-            .srv_tabl().reg(8)
-                .cnt(arguments.texture_count).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE
-            .spl_tabl().reg(0)
-                .cnt(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()                        // MATERIAL_SAMPLER
+            .root_cbv().reg(0).vis_vtx().add()         // FRAME_CONSTANT
+            .constant().reg(1).cnt(1).vis_vtx().add()  // DRAW_CONSTANT
+            .root_srv().reg(0).vis_vtx().add()         // INSTANCE_BUFFER
+            .root_srv().reg(1).vis_pxl().add()         // MATERIAL_BUFFER
+            .srv_tabl().reg(8).cnt(1).vis_pxl().add()  // MATERIAL_TEXTURE
+            .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
@@ -128,7 +125,7 @@ namespace rndr {
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::MATERIAL_BUFFER),
             resources_.material_buffer_address);
-        command_list->SetGraphicsRootDescriptorTable(
+        if (!resources_.to_use_textures) command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
@@ -146,6 +143,11 @@ namespace rndr {
             command_list->SetGraphicsRoot32BitConstant(
                 static_cast<UINT>(RootParam::DRAW_CONSTANT),
                 batch.object_index, 0);
+            if (resources_.to_use_textures) command_list->SetGraphicsRootDescriptorTable(
+                static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
+                resources_.shader_manager->get_gpu_adr(
+                    eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
+                    (*resources_.materials)[batch.material_index].base_color_texture));
             command_list->DrawIndexedInstanced(
                 mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
         }

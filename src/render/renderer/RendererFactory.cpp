@@ -12,27 +12,17 @@ namespace rndr {
 
     std::unique_ptr<RendererBase> create_renderer(uint32_t renderer_variant) {
         switch (renderer_variant) {
-        case 1:
-        default:
-            return std::make_unique<RendererForward>(false);
-        case 2:
-            return std::make_unique<RendererForward>(true);
-        case 3:
-            return std::make_unique<RendererDeferred>(false);
-        case 4:
-            return std::make_unique<RendererVisBuf>();
-        case 5:
-            return std::make_unique<RendererDeferred>(true);
-        case 6:
-            return std::make_unique<RendererVisBufGBuffer>();
-        case 7:
-            return std::make_unique<RendererDonutDeferred>(false);
-        case 8:
-            return std::make_unique<RendererDonutDeferred>(true);
-        case 9:
-            return std::make_unique<RendererDonutVisGBuffer>();
-        case 10:
-            return std::make_unique<RendererRasterStats>();
+        case  1: return std::make_unique<RendererForward>(false);
+        case  2: return std::make_unique<RendererForward>(true);
+        case  3: return std::make_unique<RendererDeferred>(false);
+        case  4: return std::make_unique<RendererVisBuf>();
+        case  5: return std::make_unique<RendererDeferred>(true);
+        case  6: return std::make_unique<RendererVisBufGBuffer>();
+        case  7: return std::make_unique<RendererDonutDeferred>(false);
+        case  8: return std::make_unique<RendererDonutDeferred>(true);
+        case  9: return std::make_unique<RendererDonutVisGBuffer>();
+        case 10: return std::make_unique<RendererRasterStats>();
+        default: util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
         }
     }
 

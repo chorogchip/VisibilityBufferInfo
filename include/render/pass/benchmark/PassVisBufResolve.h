@@ -5,6 +5,7 @@
 #include "engine/GraphicsPipeline.h"
 #include <vector>
 #include "scene/SceneDataCPU.h"
+#include "engine/MaterialGPU.h"
 
 namespace eng {
     class GPUResource;
@@ -26,6 +27,8 @@ namespace rndr {
         eng::GPUResource* material_buffer = nullptr;
         std::vector<eng::GPUResource*> material_textures;
         const scene::SceneDataCPU* scene = nullptr;
+        const std::vector<eng::MaterialGPU>* materials;
+        bool to_use_textures = false;
         D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_addresses[util::Constants::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;
     };

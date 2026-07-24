@@ -114,10 +114,8 @@ namespace rndr {
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // PASS_CONSTANT
             .srv_tabl().reg(0).cnt(6)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // SCENE_INPUT
-            .srv_tabl().reg(8).cnt(arguments.texture_count)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE
-            .spl_tabl().reg(0).cnt(1)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_SAMPLER
+            .srv_tabl().reg(8).cnt(1).vis_pxl().add()  // MATERIAL_TEXTURE
+            .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
@@ -150,7 +148,7 @@ namespace rndr {
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER));
         command_list->SetGraphicsRootDescriptorTable(
-            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
+            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),  // only binds one, but threre's many descriptor
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(

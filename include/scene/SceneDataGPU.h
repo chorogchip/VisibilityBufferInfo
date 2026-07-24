@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "scene/SceneDataCPU.h"
+#include "engine/MaterialGPU.h"
 
 namespace scene {
 	class SceneDataGPU {
@@ -25,6 +26,7 @@ namespace scene {
 		Microsoft::WRL::ComPtr<ID3D12Resource> object_buffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> material_buffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> mesh_buffer;
+		std::vector<eng::MaterialGPU> materials;
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> textures;
 	};
 }

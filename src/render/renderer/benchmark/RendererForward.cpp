@@ -57,6 +57,8 @@ namespace rndr {
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;
         resources.scene = scene_cpu_.get();
+        resources.materials = &scene_gpu_->materials;
+        resources.to_use_textures = program_argument_.to_load_texture;
         pass_forward_.init(device_.Get(), program_argument_, resources, do_prepass_);
     }
 

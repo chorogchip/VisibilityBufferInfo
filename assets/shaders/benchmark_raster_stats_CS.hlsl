@@ -110,11 +110,11 @@ void count_main(
     if (triangle_index >= gTriangleCount)
         return;
 
-    const RasterStatsTriangle triangle = gTriangles[triangle_index];
+    const RasterStatsTriangle tr = gTriangles[triangle_index];
 
-    const float4 clip0 = project_position(triangle.i0, triangle.object_index);
-    const float4 clip1 = project_position(triangle.i1, triangle.object_index);
-    const float4 clip2 = project_position(triangle.i2, triangle.object_index);
+    const float4 clip0 = project_position(tr.i0, tr.object_index);
+    const float4 clip1 = project_position(tr.i1, tr.object_index);
+    const float4 clip2 = project_position(tr.i2, tr.object_index);
 
     if (clip0.w <= 0.0f || clip1.w <= 0.0f || clip2.w <= 0.0f) {
         InterlockedAdd(gStats[STAT_SKIPPED_TRIANGLES], 1);

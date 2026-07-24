@@ -5,10 +5,6 @@
 #define TEXTURE_COUNT 1
 #endif
 
-#ifndef TEXTURE_SAMPLING_COUNT
-#define TEXTURE_SAMPLING_COUNT 1
-#endif
-
 #ifndef TEXTURE_SIZE
 #define TEXTURE_SIZE 1
 #endif
@@ -18,8 +14,8 @@
 #endif
 
 #if TEXTURE_COUNT > 0
-Texture2D<float4> gTextures[TEXTURE_COUNT] : register(t8);
-SamplerState gSampler[1] : register(s0);
+Texture2D<float4> gTexture : register(t8);
+SamplerState gSampler : register(s0);
 #endif
 
 float3 apply_alu_workload(float3 normal)
@@ -74,26 +70,8 @@ float3 apply_workload(
 {
     float3 result_tex = float3(1.0f, 1.0f, 1.0f);
     
-#if TEXTURE_COUNT > 0 && TEXTURE_SAMPLING_COUNT > 0
-    result_tex = float3(0.0f, 0.0f, 0.0f);
-    
-    [unroll]
-    for (uint it = 0; it < TEXTURE_COUNT; ++it)
-    {
-        [loop]
-        for (uint i = 0; i < TEXTURE_SAMPLING_COUNT; ++i)
-        {
-            float texel_size = 1.0f / float(TEXTURE_SIZE);
-            float2 sample_uv = uv + float2(i, i) * texel_size;
-            
-            result_tex += gTextures[it].SampleGrad(
-                gSampler[0],
-                sample_uv,
-                ddx, ddy).rgb;
-        }
-    }
-    
-    result_tex *= rcp(float(TEXTURE_COUNT * TEXTURE_SAMPLING_COUNT));
+#if TEXTURE_COUNT > 0
+    result_tex = gTexture.SampleGrad(gSampler, uv, ddx, ddy).rgb;
 #endif
     
     float3 result_alu = float3(1.0f, 1.0f, 1.0f);

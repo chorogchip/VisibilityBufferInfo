@@ -156,7 +156,7 @@ namespace rndr {
             SRVDescPos::DONUT_HDR_COLOR_UAV);
 
         auto cs = dxutl::compile_shader(
-            L"assets/shaders/donut/donut_deferred_lighting_CS.hlsl",
+            L"assets/shaders/donut/my_donut_deferred_lighting_CS.hlsl",
             "cs_5_1", "main", arguments
         );
 
