@@ -77,10 +77,6 @@ void main(int2 i_globalIdx : SV_DispatchThreadID)
     gbufferChannels[2] = t_GBuffer2[pixelPosition];
     gbufferChannels[3] = t_GBuffer3[pixelPosition];
     MaterialSample surfaceMaterial = DecodeGBuffer(gbufferChannels);
-    
-    // temp
-    u_Output[pixelPosition] = float4(gbufferChannels[1].rgb, 0);  // specular f0
-    return;
 
     float3 surfaceWorldPos = ReconstructWorldPosition(g_Deferred.view, float2(pixelPosition) + 0.5, t_GBufferDepth[pixelPosition].x);
         

@@ -263,6 +263,7 @@ namespace scene::donut {
             };
             material.emissive_color = read_material_color3(
                 source, AI_MATKEY_COLOR_EMISSIVE, { 0.0f, 0.0f, 0.0f });
+            material.metalness = 1.0f;  // just.. for models no metalic value.. they have metalic texture so..
             material.metalness = read_material_float(
                 source, AI_MATKEY_METALLIC_FACTOR, material.metalness);
             material.roughness = read_material_float(
