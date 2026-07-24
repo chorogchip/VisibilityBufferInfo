@@ -79,8 +79,7 @@ void main(int2 i_globalIdx : SV_DispatchThreadID)
     MaterialSample surfaceMaterial = DecodeGBuffer(gbufferChannels);
     
     // temp
-    u_Output[pixelPosition] = float4(gbufferChannels[0].a, gbufferChannels[1].a, gbufferChannels[2].a, 0.0f);
-    return;
+    u_Output[pixelPosition] = float4(gbufferChannels[1].rgb, 0);  // specular f0
 
     float3 surfaceWorldPos = ReconstructWorldPosition(g_Deferred.view, float2(pixelPosition) + 0.5, t_GBufferDepth[pixelPosition].x);
         
@@ -197,7 +196,7 @@ void main(int2 i_globalIdx : SV_DispatchThreadID)
 
     {
         float3 ambientColor = lerp(g_Deferred.ambientColorBottom.rgb, g_Deferred.ambientColorTop.rgb, surfaceMaterial.shadingNormal.y * 0.5 + 0.5);
-
+        
         diffuseTerm += ambientColor * surfaceMaterial.diffuseAlbedo * ambientOcclusion * surfaceMaterial.occlusion;
         specularTerm += ambientColor * surfaceMaterial.specularF0 * ambientOcclusion * surfaceMaterial.occlusion;
     }

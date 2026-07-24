@@ -125,7 +125,7 @@ namespace rndr {
 		constants.view = view;
 		constants.shadow_map_texture_size = { 1.0f, 1.0f };
 		constants.enable_ambient_occlusion = 0;
-		constants.ambient_color_top = { 0.05f, 0.05f, 0.05f, 0.0f };
+		constants.ambient_color_top = { 0.8f, 0.8f, 0.8f, 0.0f }; // { 0.05f, 0.05f, 0.05f, 0.0f };
 		constants.ambient_color_bottom = { 0.02f, 0.02f, 0.02f, 0.0f };
 		constants.num_lights = 1;
 		constants.num_light_probes = 0;
