@@ -454,8 +454,15 @@ namespace scene::donut {
         destination.render_instance_data.reserve(visible_draws.size());
 
         for (const DonutSceneDataCPU::VisibleDraw& visible_draw : visible_draws) {
+            util::Logger::g_logger.assert_with_log(
+                visible_draw.geometry_instance_id < source.geometry_instances.size(),
+                "Donut visible draw references an invalid geometry instance");
             const DonutSceneDataCPU::GeometryInstance& geometry_instance =
                 source.geometry_instances[visible_draw.geometry_instance_id];
+            util::Logger::g_logger.assert_with_log(
+                geometry_instance.instance_id < destination.instance_data.size() &&
+                geometry_instance.submesh_id < source.submeshes.size(),
+                "Donut geometry instance references invalid draw data");
             const DonutSceneDataCPU::Submesh& submesh =
                 source.submeshes[geometry_instance.submesh_id];
 
@@ -473,8 +480,13 @@ namespace scene::donut {
                     });
             }
 
-            destination.render_instance_data.push_back(
-                destination.instance_data[geometry_instance.instance_id]);
+            DonutSceneDataGPU::InstanceData render_instance =
+                destination.instance_data[geometry_instance.instance_id];
+            // Render instances are draw-specific after sorting, so carry the
+            // exact geometry ID instead of reconstructing it in the shader.
+            render_instance.first_geometry_instance =
+                visible_draw.geometry_instance_id;
+            destination.render_instance_data.push_back(render_instance);
             ++destination.draws.back().instance_count;
         }
     }

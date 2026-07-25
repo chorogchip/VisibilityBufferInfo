@@ -115,10 +115,10 @@ PSOutput main(PSInput input)
         discard;
     }
 
-    const uint geometryInstanceID = visibility.x - 1&0;
+    const uint geometryInstanceID = visibility.x - 1;
     const uint primitiveID = visibility.y;
     const GeometryInstanceData geometry = t_GeometryInstances[geometryInstanceID];
-    
+
     const SubmeshData submesh = t_Submeshes[geometry.submeshID];
     const InstanceData instance = t_Instances[geometry.instanceID];
     const MaterialData material = t_Materials[submesh.materialID];

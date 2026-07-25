@@ -24,7 +24,6 @@ namespace rndr {
 
         struct PushConstants {
             uint32_t start_instance_location = 0;
-            uint32_t submesh_id = 0;
             uint32_t position_offset = 0;
             uint32_t texcoord_offset = 0;
         };
@@ -165,7 +164,6 @@ namespace rndr {
         for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
             const PushConstants push_constants{
                 draw.first_render_instance,
-                draw.submesh_id,
                 resources_.scene->vertex_layout.position_offset,
                 resources_.scene->vertex_layout.texcoord_offset
             };
