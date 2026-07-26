@@ -175,7 +175,7 @@ namespace scene {
             destination.instances.emplace_back(instance);
         }
 
-        void append_node(
+        math::AABB append_node(
             const SceneSourceData& source,
             uint32_t node_id,
             DirectX::FXMMATRIX parent_world,
@@ -185,6 +185,16 @@ namespace scene {
                 DirectX::XMLoadFloat4x4(&node.local_transform);
             const DirectX::XMMATRIX node_world =
                 DirectX::XMMatrixMultiply(local, parent_world);
+
+            SceneCPUData::Node& converted = destination.nodes[node_id];
+            converted.children = node.children;
+            converted.local_transform = node.local_transform;
+            converted.mesh_id = node.mesh_id;
+            DirectX::XMStoreFloat4x4(
+                &converted.world_transform,
+                node_world);
+            converted.first_instance =
+                static_cast<uint32_t>(destination.instances.size());
 
             if (node.mesh_id != source::SceneConstants::INVALID_INDEX) {
                 if (node.instance_count == 0) {
@@ -223,14 +233,25 @@ namespace scene {
                     }
                 }
             }
+            converted.instance_count =
+                static_cast<uint32_t>(destination.instances.size()) -
+                converted.first_instance;
 
-            for (uint32_t child_id : node.children) {
-                append_node(
-                    source,
-                    child_id,
-                    node_world,
-                    destination);
+            math::AABB subtree = math::AABB::create_empty();
+            for (uint32_t instance_id = converted.first_instance; instance_id < converted.first_instance + converted.instance_count; ++instance_id) {
+                subtree = subtree.get_union(
+                    destination.instances[instance_id].world_aabb);
             }
+            for (uint32_t child_id : node.children) {
+                subtree = subtree.get_union(
+                    append_node(
+                        source,
+                        child_id,
+                        node_world,
+                        destination));
+            }
+            converted.subtree_world_aabb = subtree;
+            return subtree;
         }
 
         struct DrawInstance {
@@ -312,7 +333,9 @@ namespace scene {
         SceneCPUData destination{};
         append_materials(source, destination);
         append_geometry(source, destination);
-        append_node(
+        destination.root_node_id = source.root_node_id;
+        destination.nodes.resize(source.nodes.size());
+        destination.world_aabb = append_node(
             source,
             source.root_node_id,
             DirectX::XMMatrixIdentity(),

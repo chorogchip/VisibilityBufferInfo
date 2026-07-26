@@ -62,6 +62,16 @@ namespace scene {
             math::AABB world_aabb{};
         };
 
+        struct Node {
+            std::vector<uint32_t> children;
+            DirectX::XMFLOAT4X4 local_transform{};
+            DirectX::XMFLOAT4X4 world_transform{};
+            uint32_t mesh_id = source::SceneConstants::INVALID_INDEX;
+            uint32_t first_instance = 0;
+            uint32_t instance_count = 0;
+            math::AABB subtree_world_aabb{};
+        };
+
         struct DrawCall {
             uint32_t first_instance = 0;
             uint32_t instance_count = 0;
@@ -77,6 +87,8 @@ namespace scene {
         std::vector<Material> materials;
         std::vector<Submesh> submeshes;
         std::vector<Mesh> meshes;
+        uint32_t root_node_id = source::SceneConstants::INVALID_INDEX;
+        std::vector<Node> nodes;
         std::vector<Instance> instances;
         std::vector<uint32_t> draw_instance_ids;
         std::vector<DrawCall> draw_calls;

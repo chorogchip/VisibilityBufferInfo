@@ -1,6 +1,8 @@
 #include "scene/data/cpu/SceneCPUData.h"
 
+#include <algorithm>
 #include <cstdint>
+#include <vector>
 
 #include "util/Logger.h"
 
@@ -22,6 +24,9 @@ namespace scene {
         util::Logger::g_logger.assert_with_log(
             !instances.empty(),
             "CPU scene has no instances.");
+        util::Logger::g_logger.assert_with_log(
+            !nodes.empty() && root_node_id < nodes.size(),
+            "CPU scene has no valid node tree.");
         util::Logger::g_logger.assert_with_log(
             !draw_instance_ids.empty() && !draw_calls.empty(),
             "CPU scene has no draw calls.");
@@ -79,6 +84,51 @@ namespace scene {
                 instance.mesh_id < meshes.size(),
                 "CPU scene instance references an invalid mesh.");
         }
+
+        std::vector<uint8_t> visited(nodes.size(), 0);
+        std::vector<uint32_t> parent_counts(nodes.size(), 0);
+        std::vector<uint32_t> stack = { root_node_id };
+        while (!stack.empty()) {
+            const uint32_t node_id = stack.back();
+            stack.pop_back();
+            util::Logger::g_logger.assert_with_log(
+                node_id < nodes.size() && visited[node_id] == 0,
+                "CPU scene node tree contains an invalid link or cycle.");
+            visited[node_id] = 1;
+
+            const Node& node = nodes[node_id];
+            util::Logger::g_logger.assert_with_log(
+                node.mesh_id == source::SceneConstants::INVALID_INDEX ||
+                node.mesh_id < meshes.size(),
+                "CPU scene node references an invalid mesh.");
+            util::Logger::g_logger.assert_with_log(
+                node.first_instance <= instances.size() &&
+                node.instance_count <= instances.size() - node.first_instance,
+                "CPU scene node references an invalid instance range.");
+            for (uint32_t instance_id = node.first_instance; instance_id < node.first_instance + node.instance_count; ++instance_id) {
+                util::Logger::g_logger.assert_with_log(
+                    node.mesh_id != source::SceneConstants::INVALID_INDEX &&
+                    instances[instance_id].mesh_id == node.mesh_id,
+                    "CPU scene node instance does not use the node mesh.");
+            }
+
+            for (uint32_t child_id : node.children) {
+                util::Logger::g_logger.assert_with_log(
+                    child_id < nodes.size() && child_id != node_id,
+                    "CPU scene node has an invalid child.");
+                ++parent_counts[child_id];
+                util::Logger::g_logger.assert_with_log(
+                    parent_counts[child_id] == 1,
+                    "CPU scene node has more than one parent.");
+                stack.push_back(child_id);
+            }
+        }
+        util::Logger::g_logger.assert_with_log(
+            std::all_of(
+                visited.begin(),
+                visited.end(),
+                [](uint8_t value) { return value == 1; }),
+            "CPU scene contains a node outside the root tree.");
 
         for (uint32_t instance_id : draw_instance_ids) {
             util::Logger::g_logger.assert_with_log(
