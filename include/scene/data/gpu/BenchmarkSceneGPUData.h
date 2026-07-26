@@ -106,7 +106,6 @@ namespace scene {
         uint32_t render_instance_count = 0;
         uint32_t draw_count = 0;
 
-        void validate() const;
     };
 
     static_assert(sizeof(BenchmarkSceneGPUData::MeshData) == 16);

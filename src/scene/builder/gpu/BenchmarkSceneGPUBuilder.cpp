@@ -14,6 +14,8 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "engine/TextureLoader.h"
+#include "scene/builder/cpu/SceneCPUValidator.h"
+#include "scene/builder/gpu/BenchmarkSceneGPUValidator.h"
 #include "util/Logger.h"
 
 namespace scene {
@@ -240,7 +242,7 @@ namespace scene {
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
             used_upload_heaps,
         bool load_textures) {
-        source.validate();
+        SceneCPUValidator::validate(source);
         util::Logger::g_logger.assert_with_log(
             device != nullptr && command_list != nullptr,
             "GPU scene build requires a device and command list.");
@@ -494,7 +496,7 @@ namespace scene {
             static_cast<uint32_t>(render_instances.size());
         destination.draw_count =
             static_cast<uint32_t>(source.draw_calls.size());
-        destination.validate();
+        BenchmarkSceneGPUValidator::validate(destination);
         return destination;
     }
 }

@@ -22,13 +22,11 @@ namespace scene::source {
 
         uint32_t material_id = SceneConstants::INVALID_INDEX;
 
-        void validate() const;
     };
 
     struct Mesh {
         std::string name;
         std::vector<Primitive> primitives;
 
-        void validate() const;
     };
 }

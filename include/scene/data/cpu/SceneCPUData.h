@@ -94,7 +94,6 @@ namespace scene {
         std::vector<DrawCall> draw_calls;
         math::AABB world_aabb{};
 
-        void validate() const;
     };
 
     static_assert(sizeof(SceneCPUData::Vertex) == 48);

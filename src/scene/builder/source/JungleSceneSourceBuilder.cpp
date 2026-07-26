@@ -11,6 +11,7 @@
 #include <simdjson.h>
 
 #include "JungleSceneSourceBuilderInternal.h"
+#include "scene/builder/source/SceneSourceDataValidator.h"
 #include "util/Logger.h"
 
 namespace scene::source::jungle {
@@ -352,7 +353,7 @@ namespace scene {
             return result;
         }
 
-        scene->validate();
+        SceneSourceDataValidator::validate(*scene);
         result.scene = std::move(scene);
         result.error_message = "ok";
         return result;

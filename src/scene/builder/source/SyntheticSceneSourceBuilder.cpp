@@ -5,6 +5,7 @@
 
 #include <DirectXMath.h>
 
+#include "scene/builder/source/SceneSourceDataValidator.h"
 #include "util/Logger.h"
 
 namespace scene {
@@ -38,7 +39,7 @@ namespace scene {
         scene.nodes[1].mesh_id = 0;
         this->build_instances_(scene, scene.nodes[1]);
 
-        scene.validate();
+        SceneSourceDataValidator::validate(scene);
         return scene;
     }
 

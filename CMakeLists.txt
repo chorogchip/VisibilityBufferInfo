@@ -157,9 +157,9 @@ add_executable(JungleSceneSourceValidate EXCLUDE_FROM_ALL
     src/scene/builder/source/JungleSceneSourceGeometryBuilder.cpp
     src/scene/builder/source/JungleSceneSourceHierarchyBuilder.cpp
     src/scene/builder/source/JungleSceneSourceMaterialBuilder.cpp
-    src/scene/data/source/SceneSourceData.cpp
-    src/scene/data/source/SceneSourceGeometry.cpp
-    src/scene/data/source/SceneSourceHierarchy.cpp
+    src/scene/builder/source/SceneSourceDataValidator.cpp
+    src/scene/builder/source/SceneSourceGeometryValidator.cpp
+    src/scene/builder/source/SceneSourceHierarchyValidator.cpp
     src/util/Logger.cpp
 )
 

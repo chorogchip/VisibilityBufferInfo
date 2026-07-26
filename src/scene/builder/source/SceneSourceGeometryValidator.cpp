@@ -1,49 +1,59 @@
-#include "scene/data/source/SceneSourceGeometry.h"
+#include "scene/builder/source/SceneSourceGeometryValidator.h"
 
 #include "util/Logger.h"
 
-namespace scene::source {
+namespace scene {
 
-    void Primitive::validate() const {
+    void SceneSourceGeometryValidator::validate(
+        const source::Primitive& primitive) {
+
         util::Logger::g_logger.assert_with_log(
-            !positions.empty(),
+            !primitive.positions.empty(),
             "Scene source primitive has no positions.");
         util::Logger::g_logger.assert_with_log(
-            normals.empty() || normals.size() == positions.size(),
+            primitive.normals.empty() ||
+            primitive.normals.size() == primitive.positions.size(),
             "Scene source primitive normal count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            tangents.empty() || tangents.size() == positions.size(),
+            primitive.tangents.empty() ||
+            primitive.tangents.size() == primitive.positions.size(),
             "Scene source primitive tangent count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            uv0.empty() || uv0.size() == positions.size(),
+            primitive.uv0.empty() ||
+            primitive.uv0.size() == primitive.positions.size(),
             "Scene source primitive UV count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            uv1.empty() || uv1.size() == positions.size(),
+            primitive.uv1.empty() ||
+            primitive.uv1.size() == primitive.positions.size(),
             "Scene source primitive UV1 count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            color0.empty() || color0.size() == positions.size(),
+            primitive.color0.empty() ||
+            primitive.color0.size() == primitive.positions.size(),
             "Scene source primitive color0 count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            color1.empty() || color1.size() == positions.size(),
+            primitive.color1.empty() ||
+            primitive.color1.size() == primitive.positions.size(),
             "Scene source primitive color1 count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
-            !indices.empty() && indices.size() % 3 == 0,
+            !primitive.indices.empty() &&
+            primitive.indices.size() % 3 == 0,
             "Scene source primitive must contain indexed triangles.");
 
-        for (uint32_t index : indices) {
+        for (uint32_t index : primitive.indices) {
             util::Logger::g_logger.assert_with_log(
-                index < positions.size(),
+                index < primitive.positions.size(),
                 "Scene source primitive contains an out-of-range index.");
         }
     }
 
-    void Mesh::validate() const {
-        util::Logger::g_logger.assert_with_log(
-            !primitives.empty(),
-            "Scene source mesh has no primitives.");
+    void SceneSourceGeometryValidator::validate(
+        const source::Mesh& mesh) {
 
-        for (const Primitive& primitive : primitives) {
-            primitive.validate();
+        util::Logger::g_logger.assert_with_log(
+            !mesh.primitives.empty(),
+            "Scene source mesh has no primitives.");
+        for (const source::Primitive& primitive : mesh.primitives) {
+            SceneSourceGeometryValidator::validate(primitive);
         }
     }
 }

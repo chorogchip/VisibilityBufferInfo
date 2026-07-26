@@ -28,10 +28,5 @@ namespace scene {
         std::vector<source::Texture> textures;
         std::vector<source::InstanceTransform> instances;
 
-        void validate() const;
-
-    private:
-        void validate_hierarchy_() const;
-        void validate_references_() const;
     };
 }

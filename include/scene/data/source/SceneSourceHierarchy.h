@@ -94,6 +94,5 @@ namespace scene::source {
         std::string stable_id;
         JungleNodeMetadata jungle;
 
-        void validate() const;
     };
 }

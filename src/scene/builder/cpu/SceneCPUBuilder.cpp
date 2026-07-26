@@ -8,6 +8,8 @@
 
 #include <DirectXMath.h>
 
+#include "scene/builder/cpu/SceneCPUValidator.h"
+#include "scene/builder/source/SceneSourceDataValidator.h"
 #include "util/Logger.h"
 
 namespace scene {
@@ -328,7 +330,7 @@ namespace scene {
     }
 
     SceneCPUData SceneCPUBuilder::build(const SceneSourceData& source) {
-        source.validate();
+        SceneSourceDataValidator::validate(source);
 
         SceneCPUData destination{};
         append_materials(source, destination);
@@ -341,7 +343,7 @@ namespace scene {
             DirectX::XMMatrixIdentity(),
             destination);
         append_draw_calls(destination);
-        destination.validate();
+        SceneCPUValidator::validate(destination);
         return destination;
     }
 }

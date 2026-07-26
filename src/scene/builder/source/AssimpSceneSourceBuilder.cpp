@@ -17,6 +17,8 @@
 
 #include <DirectXMath.h>
 
+#include "scene/builder/source/SceneSourceDataValidator.h"
+
 namespace scene {
 
     namespace {
@@ -487,7 +489,7 @@ namespace scene {
                 identity);
         }
 
-        scene->validate();
+        SceneSourceDataValidator::validate(*scene);
         result.scene = std::move(scene);
         return result;
     }
