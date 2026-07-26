@@ -119,6 +119,7 @@ __pycache__/
 
 # Local ad-hoc benchmark runner output
 scripts/results/default/
+assets/scripts/jungle/results/
 
 # Crash dumps
 *.dmp
