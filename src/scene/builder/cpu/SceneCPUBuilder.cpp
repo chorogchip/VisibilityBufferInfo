@@ -42,6 +42,13 @@ namespace scene {
                 source.materials.empty() ? 1 : source.materials.size());
 
             for (const source::Material& material : source.materials) {
+                if (material.alpha_mode == source::AlphaMode::Blend) {
+                    util::Logger::g_logger
+                        << "CPU scene contains alpha-blended material: "
+                        << material.name
+                        << '\n';
+                }
+
                 SceneCPUData::Material converted{};
                 converted.base_color = material.base_color;
                 converted.emissive_color = material.emissive_color;
