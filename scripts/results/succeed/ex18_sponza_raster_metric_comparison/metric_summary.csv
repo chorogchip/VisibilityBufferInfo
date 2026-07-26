@@ -1,0 +1,25 @@
+scene,metric,metric_label,unit,minimum,mean,maximum
+sponza,triangle_count,Visible triangle count,triangles,0.0,1624252.1735999999,3747018.0
+sponza,total_fragments,Total fragments,fragments,0.0,5073253.020400001,11334460.2
+sponza,covered_pixels,Covered pixels,pixels,0.0,1609636.3076,2073600.0
+sponza,overdraw_extra,Extra overdraw fragments,fragments,0.0,3463616.7128,9260860.2
+sponza,avg_overdraw,Average overdraw,fragments / covered pixel,0.0,2.8594576108000003,5.4660784
+sponza,max_overdraw,Maximum overdraw,fragments / pixel,0.0,14.0924,37.6
+sponza,rasterized_triangles,Rasterized triangle count,triangles,0.0,235943.63880000002,527016.4
+sponza,skipped_triangles,Skipped triangle count,triangles,0.0,1388308.5348,3491611.3
+sponza,quad_instances,Quad instances,quads,0.0,1682437.5364,3565009.6
+sponza,quad_covered_lanes,Quad covered lanes,lanes,0.0,5073253.020400001,11334460.2
+sponza,quad_waste_lanes,Quad waste lanes,lanes,0.0,1656497.1252,3464122.6
+sponza,quad_efficiency,Quad efficiency,percent,0.0,69.56676216,97.84769000000001
+sponza_ivy,triangle_count,Visible triangle count,triangles,0.0,5058508.5912,8812576.0
+sponza_ivy,total_fragments,Total fragments,fragments,0.0,5159447.2928,11411626.9
+sponza_ivy,covered_pixels,Covered pixels,pixels,0.0,1609807.232,2073600.0
+sponza_ivy,overdraw_extra,Extra overdraw fragments,fragments,0.0,3549640.0608,9338026.9
+sponza_ivy,avg_overdraw,Average overdraw,fragments / covered pixel,0.0,2.9041470212,5.5032924
+sponza_ivy,max_overdraw,Maximum overdraw,fragments / pixel,0.0,14.7808,37.6
+sponza_ivy,rasterized_triangles,Rasterized triangle count,triangles,0.0,290750.382,707051.9
+sponza_ivy,skipped_triangles,Skipped triangle count,triangles,0.0,4767758.2092,8538524.3
+sponza_ivy,quad_instances,Quad instances,quads,0.0,1752355.4275999998,3641654.0
+sponza_ivy,quad_covered_lanes,Quad covered lanes,lanes,0.0,5159447.2928,11411626.9
+sponza_ivy,quad_waste_lanes,Quad waste lanes,lanes,0.0,1849974.4175999998,3748999.7
+sponza_ivy,quad_efficiency,Quad efficiency,percent,0.0,68.24948183999999,95.33935

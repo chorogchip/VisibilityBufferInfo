@@ -1,0 +1,337 @@
+scene,metric,metric_label,renderer,series,series_kind,pearson_r
+sponza,triangle_count,Visible triangle count,Deferred,total,total,0.6219978193692366
+sponza,triangle_count,Visible triangle count,Deferred,geometry,pass,0.692667027064002
+sponza,triangle_count,Visible triangle count,Deferred,lighting,pass,-0.21813827113450737
+sponza,triangle_count,Visible triangle count,Deferred,tonemap,pass,0.03790907854871427
+sponza,triangle_count,Visible triangle count,Prepass,total,total,0.7218076470133239
+sponza,triangle_count,Visible triangle count,Prepass,depth_prepass,pass,0.988919187143422
+sponza,triangle_count,Visible triangle count,Prepass,geometry,pass,0.6225669334877609
+sponza,triangle_count,Visible triangle count,Prepass,lighting,pass,-0.11650830597380483
+sponza,triangle_count,Visible triangle count,Prepass,tonemap,pass,0.10149895612903191
+sponza,triangle_count,Visible triangle count,VisBuf,total,total,0.6479456767422779
+sponza,triangle_count,Visible triangle count,VisBuf,visibility,pass,0.9889302183852937
+sponza,triangle_count,Visible triangle count,VisBuf,gbuffer,pass,0.5006962273112942
+sponza,triangle_count,Visible triangle count,VisBuf,lighting,pass,-0.17402297563476735
+sponza,triangle_count,Visible triangle count,VisBuf,tonemap,pass,0.014012701938842274
+sponza,total_fragments,Total fragments,Deferred,total,total,0.6745027719535284
+sponza,total_fragments,Total fragments,Deferred,geometry,pass,0.6576228220892554
+sponza,total_fragments,Total fragments,Deferred,lighting,pass,-0.08664231691980301
+sponza,total_fragments,Total fragments,Deferred,tonemap,pass,0.010267268881269788
+sponza,total_fragments,Total fragments,Prepass,total,total,0.4549695088109764
+sponza,total_fragments,Total fragments,Prepass,depth_prepass,pass,0.3347860162099773
+sponza,total_fragments,Total fragments,Prepass,geometry,pass,0.37306473987718114
+sponza,total_fragments,Total fragments,Prepass,lighting,pass,0.31823047659553144
+sponza,total_fragments,Total fragments,Prepass,tonemap,pass,0.8120536396142458
+sponza,total_fragments,Total fragments,VisBuf,total,total,0.5033462594919235
+sponza,total_fragments,Total fragments,VisBuf,visibility,pass,0.42356220623586466
+sponza,total_fragments,Total fragments,VisBuf,gbuffer,pass,0.4694757594521848
+sponza,total_fragments,Total fragments,VisBuf,lighting,pass,0.18412416912885285
+sponza,total_fragments,Total fragments,VisBuf,tonemap,pass,0.6886328841429654
+sponza,covered_pixels,Covered pixels,Deferred,total,total,0.6068658650425983
+sponza,covered_pixels,Covered pixels,Deferred,geometry,pass,0.5386957815050599
+sponza,covered_pixels,Covered pixels,Deferred,lighting,pass,0.18704771684269522
+sponza,covered_pixels,Covered pixels,Deferred,tonemap,pass,0.25883954642539214
+sponza,covered_pixels,Covered pixels,Prepass,total,total,0.5154290420125844
+sponza,covered_pixels,Covered pixels,Prepass,depth_prepass,pass,0.0757357809553914
+sponza,covered_pixels,Covered pixels,Prepass,geometry,pass,0.5235612682683872
+sponza,covered_pixels,Covered pixels,Prepass,lighting,pass,0.3357282417259596
+sponza,covered_pixels,Covered pixels,Prepass,tonemap,pass,0.8996675464114284
+sponza,covered_pixels,Covered pixels,VisBuf,total,total,0.5234856380193769
+sponza,covered_pixels,Covered pixels,VisBuf,visibility,pass,0.14706558381267626
+sponza,covered_pixels,Covered pixels,VisBuf,gbuffer,pass,0.5556269612074447
+sponza,covered_pixels,Covered pixels,VisBuf,lighting,pass,0.4085120492331241
+sponza,covered_pixels,Covered pixels,VisBuf,tonemap,pass,0.7967861328431014
+sponza,overdraw_extra,Extra overdraw fragments,Deferred,total,total,0.6398241413965576
+sponza,overdraw_extra,Extra overdraw fragments,Deferred,geometry,pass,0.6407597545948592
+sponza,overdraw_extra,Extra overdraw fragments,Deferred,lighting,pass,-0.16695433531323486
+sponza,overdraw_extra,Extra overdraw fragments,Deferred,tonemap,pass,-0.0701012017806985
+sponza,overdraw_extra,Extra overdraw fragments,Prepass,total,total,0.39764511892152327
+sponza,overdraw_extra,Extra overdraw fragments,Prepass,depth_prepass,pass,0.38969782988954427
+sponza,overdraw_extra,Extra overdraw fragments,Prepass,geometry,pass,0.2937782262178155
+sponza,overdraw_extra,Extra overdraw fragments,Prepass,lighting,pass,0.28606459234726406
+sponza,overdraw_extra,Extra overdraw fragments,Prepass,tonemap,pass,0.7162306239503526
+sponza,overdraw_extra,Extra overdraw fragments,VisBuf,total,total,0.45488020884661995
+sponza,overdraw_extra,Extra overdraw fragments,VisBuf,visibility,pass,0.476642764560928
+sponza,overdraw_extra,Extra overdraw fragments,VisBuf,gbuffer,pass,0.4027222122905673
+sponza,overdraw_extra,Extra overdraw fragments,VisBuf,lighting,pass,0.09697641294856345
+sponza,overdraw_extra,Extra overdraw fragments,VisBuf,tonemap,pass,0.5965442256350636
+sponza,avg_overdraw,Average overdraw,Deferred,total,total,0.713251839323389
+sponza,avg_overdraw,Average overdraw,Deferred,geometry,pass,0.7244200010920362
+sponza,avg_overdraw,Average overdraw,Deferred,lighting,pass,-0.16787686557972914
+sponza,avg_overdraw,Average overdraw,Deferred,tonemap,pass,-0.06495103521650895
+sponza,avg_overdraw,Average overdraw,Prepass,total,total,0.5682632455110375
+sponza,avg_overdraw,Average overdraw,Prepass,depth_prepass,pass,0.6187865154662882
+sponza,avg_overdraw,Average overdraw,Prepass,geometry,pass,0.46681142915082874
+sponza,avg_overdraw,Average overdraw,Prepass,lighting,pass,0.18140205116951175
+sponza,avg_overdraw,Average overdraw,Prepass,tonemap,pass,0.5894186068731945
+sponza,avg_overdraw,Average overdraw,VisBuf,total,total,0.567071775662984
+sponza,avg_overdraw,Average overdraw,VisBuf,visibility,pass,0.6829801120752715
+sponza,avg_overdraw,Average overdraw,VisBuf,gbuffer,pass,0.4805471240771033
+sponza,avg_overdraw,Average overdraw,VisBuf,lighting,pass,0.06432812534166216
+sponza,avg_overdraw,Average overdraw,VisBuf,tonemap,pass,0.4656391920446003
+sponza,max_overdraw,Maximum overdraw,Deferred,total,total,0.6699162936959899
+sponza,max_overdraw,Maximum overdraw,Deferred,geometry,pass,0.6958944412576274
+sponza,max_overdraw,Maximum overdraw,Deferred,lighting,pass,-0.11200229715563272
+sponza,max_overdraw,Maximum overdraw,Deferred,tonemap,pass,-0.023746026614504045
+sponza,max_overdraw,Maximum overdraw,Prepass,total,total,0.6553298200367044
+sponza,max_overdraw,Maximum overdraw,Prepass,depth_prepass,pass,0.7563841864329471
+sponza,max_overdraw,Maximum overdraw,Prepass,geometry,pass,0.5536390283268317
+sponza,max_overdraw,Maximum overdraw,Prepass,lighting,pass,0.03153414498595791
+sponza,max_overdraw,Maximum overdraw,Prepass,tonemap,pass,0.42191697828847596
+sponza,max_overdraw,Maximum overdraw,VisBuf,total,total,0.5772436471847529
+sponza,max_overdraw,Maximum overdraw,VisBuf,visibility,pass,0.7774234358587477
+sponza,max_overdraw,Maximum overdraw,VisBuf,gbuffer,pass,0.4627706815007376
+sponza,max_overdraw,Maximum overdraw,VisBuf,lighting,pass,0.012401185366346022
+sponza,max_overdraw,Maximum overdraw,VisBuf,tonemap,pass,0.30491842386533957
+sponza,rasterized_triangles,Rasterized triangle count,Deferred,total,total,0.7034684640207516
+sponza,rasterized_triangles,Rasterized triangle count,Deferred,geometry,pass,0.7700885254027217
+sponza,rasterized_triangles,Rasterized triangle count,Deferred,lighting,pass,-0.27146001446489204
+sponza,rasterized_triangles,Rasterized triangle count,Deferred,tonemap,pass,-0.048812789598611905
+sponza,rasterized_triangles,Rasterized triangle count,Prepass,total,total,0.7335357410815186
+sponza,rasterized_triangles,Rasterized triangle count,Prepass,depth_prepass,pass,0.840106378073902
+sponza,rasterized_triangles,Rasterized triangle count,Prepass,geometry,pass,0.6226729534666234
+sponza,rasterized_triangles,Rasterized triangle count,Prepass,lighting,pass,-0.006224797462159475
+sponza,rasterized_triangles,Rasterized triangle count,Prepass,tonemap,pass,0.35034984931741114
+sponza,rasterized_triangles,Rasterized triangle count,VisBuf,total,total,0.7474613876317201
+sponza,rasterized_triangles,Rasterized triangle count,VisBuf,visibility,pass,0.8819817375683755
+sponza,rasterized_triangles,Rasterized triangle count,VisBuf,gbuffer,pass,0.642122578411128
+sponza,rasterized_triangles,Rasterized triangle count,VisBuf,lighting,pass,-0.0993749496351914
+sponza,rasterized_triangles,Rasterized triangle count,VisBuf,tonemap,pass,0.2196221579522648
+sponza,skipped_triangles,Skipped triangle count,Deferred,total,total,0.5953652599364662
+sponza,skipped_triangles,Skipped triangle count,Deferred,geometry,pass,0.6650165078162498
+sponza,skipped_triangles,Skipped triangle count,Deferred,lighting,pass,-0.205063134006539
+sponza,skipped_triangles,Skipped triangle count,Deferred,tonemap,pass,0.050122401952399795
+sponza,skipped_triangles,Skipped triangle count,Prepass,total,total,0.7033991749572722
+sponza,skipped_triangles,Skipped triangle count,Prepass,depth_prepass,pass,0.9885806416559203
+sponza,skipped_triangles,Skipped triangle count,Prepass,geometry,pass,0.6081999710197386
+sponza,skipped_triangles,Skipped triangle count,Prepass,lighting,pass,-0.13046549822276682
+sponza,skipped_triangles,Skipped triangle count,Prepass,tonemap,pass,0.06160524762073199
+sponza,skipped_triangles,Skipped triangle count,VisBuf,total,total,0.6179918094853473
+sponza,skipped_triangles,Skipped triangle count,VisBuf,visibility,pass,0.9822736829923279
+sponza,skipped_triangles,Skipped triangle count,VisBuf,gbuffer,pass,0.4678119233972173
+sponza,skipped_triangles,Skipped triangle count,VisBuf,lighting,pass,-0.18127663926330193
+sponza,skipped_triangles,Skipped triangle count,VisBuf,tonemap,pass,-0.017338781869925098
+sponza,quad_instances,Quad instances,Deferred,total,total,0.7276992393200801
+sponza,quad_instances,Quad instances,Deferred,geometry,pass,0.730709043414574
+sponza,quad_instances,Quad instances,Deferred,lighting,pass,-0.145248486853617
+sponza,quad_instances,Quad instances,Deferred,tonemap,pass,-0.015981339996411457
+sponza,quad_instances,Quad instances,Prepass,total,total,0.5594051112799546
+sponza,quad_instances,Quad instances,Prepass,depth_prepass,pass,0.47498847280454987
+sponza,quad_instances,Quad instances,Prepass,geometry,pass,0.4635076021807795
+sponza,quad_instances,Quad instances,Prepass,lighting,pass,0.26428210291166915
+sponza,quad_instances,Quad instances,Prepass,tonemap,pass,0.7637688911206493
+sponza,quad_instances,Quad instances,VisBuf,total,total,0.6045741882016978
+sponza,quad_instances,Quad instances,VisBuf,visibility,pass,0.5593188740470463
+sponza,quad_instances,Quad instances,VisBuf,gbuffer,pass,0.552873181664917
+sponza,quad_instances,Quad instances,VisBuf,lighting,pass,0.12910279607812236
+sponza,quad_instances,Quad instances,VisBuf,tonemap,pass,0.6288518057573254
+sponza,quad_covered_lanes,Quad covered lanes,Deferred,total,total,0.6745027719535284
+sponza,quad_covered_lanes,Quad covered lanes,Deferred,geometry,pass,0.6576228220892554
+sponza,quad_covered_lanes,Quad covered lanes,Deferred,lighting,pass,-0.08664231691980301
+sponza,quad_covered_lanes,Quad covered lanes,Deferred,tonemap,pass,0.010267268881269788
+sponza,quad_covered_lanes,Quad covered lanes,Prepass,total,total,0.4549695088109764
+sponza,quad_covered_lanes,Quad covered lanes,Prepass,depth_prepass,pass,0.3347860162099773
+sponza,quad_covered_lanes,Quad covered lanes,Prepass,geometry,pass,0.37306473987718114
+sponza,quad_covered_lanes,Quad covered lanes,Prepass,lighting,pass,0.31823047659553144
+sponza,quad_covered_lanes,Quad covered lanes,Prepass,tonemap,pass,0.8120536396142458
+sponza,quad_covered_lanes,Quad covered lanes,VisBuf,total,total,0.5033462594919235
+sponza,quad_covered_lanes,Quad covered lanes,VisBuf,visibility,pass,0.42356220623586466
+sponza,quad_covered_lanes,Quad covered lanes,VisBuf,gbuffer,pass,0.4694757594521848
+sponza,quad_covered_lanes,Quad covered lanes,VisBuf,lighting,pass,0.18412416912885285
+sponza,quad_covered_lanes,Quad covered lanes,VisBuf,tonemap,pass,0.6886328841429654
+sponza,quad_waste_lanes,Quad waste lanes,Deferred,total,total,0.7305264602118757
+sponza,quad_waste_lanes,Quad waste lanes,Deferred,geometry,pass,0.7812719011063701
+sponza,quad_waste_lanes,Quad waste lanes,Deferred,lighting,pass,-0.26224474389533187
+sponza,quad_waste_lanes,Quad waste lanes,Deferred,tonemap,pass,-0.07689492786201964
+sponza,quad_waste_lanes,Quad waste lanes,Prepass,total,total,0.7157476596432876
+sponza,quad_waste_lanes,Quad waste lanes,Prepass,depth_prepass,pass,0.7327554387977527
+sponza,quad_waste_lanes,Quad waste lanes,Prepass,geometry,pass,0.6025363991135468
+sponza,quad_waste_lanes,Quad waste lanes,Prepass,lighting,pass,0.0875414363377513
+sponza,quad_waste_lanes,Quad waste lanes,Prepass,tonemap,pass,0.5141186013401777
+sponza,quad_waste_lanes,Quad waste lanes,VisBuf,total,total,0.745298135181888
+sponza,quad_waste_lanes,Quad waste lanes,VisBuf,visibility,pass,0.7916695312974423
+sponza,quad_waste_lanes,Quad waste lanes,VisBuf,gbuffer,pass,0.6593047278017747
+sponza,quad_waste_lanes,Quad waste lanes,VisBuf,lighting,pass,-0.026790316003920067
+sponza,quad_waste_lanes,Quad waste lanes,VisBuf,tonemap,pass,0.374713836890723
+sponza,quad_efficiency,Quad efficiency,Deferred,total,total,0.477073375416262
+sponza,quad_efficiency,Quad efficiency,Deferred,geometry,pass,0.4072395441788228
+sponza,quad_efficiency,Quad efficiency,Deferred,lighting,pass,0.23832448574090556
+sponza,quad_efficiency,Quad efficiency,Deferred,tonemap,pass,0.23021771955099193
+sponza,quad_efficiency,Quad efficiency,Prepass,total,total,0.4271855795353801
+sponza,quad_efficiency,Quad efficiency,Prepass,depth_prepass,pass,0.09503549436914303
+sponza,quad_efficiency,Quad efficiency,Prepass,geometry,pass,0.45212598393016257
+sponza,quad_efficiency,Quad efficiency,Prepass,lighting,pass,0.23503498228983202
+sponza,quad_efficiency,Quad efficiency,Prepass,tonemap,pass,0.6698063131650015
+sponza,quad_efficiency,Quad efficiency,VisBuf,total,total,0.3817282944879289
+sponza,quad_efficiency,Quad efficiency,VisBuf,visibility,pass,0.13657731385855168
+sponza,quad_efficiency,Quad efficiency,VisBuf,gbuffer,pass,0.3963950068784584
+sponza,quad_efficiency,Quad efficiency,VisBuf,lighting,pass,0.37198112375029824
+sponza,quad_efficiency,Quad efficiency,VisBuf,tonemap,pass,0.5817664412024829
+sponza_ivy,triangle_count,Visible triangle count,Deferred,total,total,0.6571932199328787
+sponza_ivy,triangle_count,Visible triangle count,Deferred,geometry,pass,0.7181814186031437
+sponza_ivy,triangle_count,Visible triangle count,Deferred,lighting,pass,-0.15736862727674708
+sponza_ivy,triangle_count,Visible triangle count,Deferred,tonemap,pass,-0.34796754208629654
+sponza_ivy,triangle_count,Visible triangle count,Prepass,total,total,0.8788806035189143
+sponza_ivy,triangle_count,Visible triangle count,Prepass,depth_prepass,pass,0.9630552754856807
+sponza_ivy,triangle_count,Visible triangle count,Prepass,geometry,pass,0.7673825721919576
+sponza_ivy,triangle_count,Visible triangle count,Prepass,lighting,pass,-0.20561179896377352
+sponza_ivy,triangle_count,Visible triangle count,Prepass,tonemap,pass,0.06091093835718531
+sponza_ivy,triangle_count,Visible triangle count,VisBuf,total,total,0.8284341863037503
+sponza_ivy,triangle_count,Visible triangle count,VisBuf,visibility,pass,0.9857283690578854
+sponza_ivy,triangle_count,Visible triangle count,VisBuf,gbuffer,pass,0.5741930027210577
+sponza_ivy,triangle_count,Visible triangle count,VisBuf,lighting,pass,-0.15423811528796863
+sponza_ivy,triangle_count,Visible triangle count,VisBuf,tonemap,pass,0.18432291005294438
+sponza_ivy,total_fragments,Total fragments,Deferred,total,total,0.6716669906948867
+sponza_ivy,total_fragments,Total fragments,Deferred,geometry,pass,0.6886515451305908
+sponza_ivy,total_fragments,Total fragments,Deferred,lighting,pass,0.02725915448936465
+sponza_ivy,total_fragments,Total fragments,Deferred,tonemap,pass,-0.05459034430938479
+sponza_ivy,total_fragments,Total fragments,Prepass,total,total,0.5224718917697673
+sponza_ivy,total_fragments,Total fragments,Prepass,depth_prepass,pass,0.4484342019876159
+sponza_ivy,total_fragments,Total fragments,Prepass,geometry,pass,0.4806986223535221
+sponza_ivy,total_fragments,Total fragments,Prepass,lighting,pass,0.12792814066700445
+sponza_ivy,total_fragments,Total fragments,Prepass,tonemap,pass,0.5794131937784003
+sponza_ivy,total_fragments,Total fragments,VisBuf,total,total,0.5653504066700541
+sponza_ivy,total_fragments,Total fragments,VisBuf,visibility,pass,0.5403601317352895
+sponza_ivy,total_fragments,Total fragments,VisBuf,gbuffer,pass,0.4663136159862975
+sponza_ivy,total_fragments,Total fragments,VisBuf,lighting,pass,0.18789079297547281
+sponza_ivy,total_fragments,Total fragments,VisBuf,tonemap,pass,0.7766934432181621
+sponza_ivy,covered_pixels,Covered pixels,Deferred,total,total,0.6769201606156136
+sponza_ivy,covered_pixels,Covered pixels,Deferred,geometry,pass,0.6344387209574524
+sponza_ivy,covered_pixels,Covered pixels,Deferred,lighting,pass,0.15198410011916466
+sponza_ivy,covered_pixels,Covered pixels,Deferred,tonemap,pass,0.37690477827792607
+sponza_ivy,covered_pixels,Covered pixels,Prepass,total,total,0.43464881451920423
+sponza_ivy,covered_pixels,Covered pixels,Prepass,depth_prepass,pass,0.1553869188913069
+sponza_ivy,covered_pixels,Covered pixels,Prepass,geometry,pass,0.504924016108093
+sponza_ivy,covered_pixels,Covered pixels,Prepass,lighting,pass,0.2541322655795784
+sponza_ivy,covered_pixels,Covered pixels,Prepass,tonemap,pass,0.7699332869803805
+sponza_ivy,covered_pixels,Covered pixels,VisBuf,total,total,0.4657582834065745
+sponza_ivy,covered_pixels,Covered pixels,VisBuf,visibility,pass,0.2224613835168677
+sponza_ivy,covered_pixels,Covered pixels,VisBuf,gbuffer,pass,0.5298784633767741
+sponza_ivy,covered_pixels,Covered pixels,VisBuf,lighting,pass,0.30643382365162525
+sponza_ivy,covered_pixels,Covered pixels,VisBuf,tonemap,pass,0.8985196550005895
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Deferred,total,total,0.6151446649206297
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Deferred,geometry,pass,0.6491236223907105
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Deferred,lighting,pass,-0.013524885932432106
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Deferred,tonemap,pass,-0.1835158286938651
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Prepass,total,total,0.5069164780403815
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Prepass,depth_prepass,pass,0.5023708615148932
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Prepass,geometry,pass,0.4339201631244912
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Prepass,lighting,pass,0.07845870624907507
+sponza_ivy,overdraw_extra,Extra overdraw fragments,Prepass,tonemap,pass,0.47315992327107653
+sponza_ivy,overdraw_extra,Extra overdraw fragments,VisBuf,total,total,0.549928481930641
+sponza_ivy,overdraw_extra,Extra overdraw fragments,VisBuf,visibility,pass,0.5944655577190651
+sponza_ivy,overdraw_extra,Extra overdraw fragments,VisBuf,gbuffer,pass,0.4085499663007522
+sponza_ivy,overdraw_extra,Extra overdraw fragments,VisBuf,lighting,pass,0.13588859807075457
+sponza_ivy,overdraw_extra,Extra overdraw fragments,VisBuf,tonemap,pass,0.6755507844067238
+sponza_ivy,avg_overdraw,Average overdraw,Deferred,total,total,0.691202954695657
+sponza_ivy,avg_overdraw,Average overdraw,Deferred,geometry,pass,0.7299731623259031
+sponza_ivy,avg_overdraw,Average overdraw,Deferred,lighting,pass,-0.051633080204484025
+sponza_ivy,avg_overdraw,Average overdraw,Deferred,tonemap,pass,-0.22713309592079725
+sponza_ivy,avg_overdraw,Average overdraw,Prepass,total,total,0.67170193434572
+sponza_ivy,avg_overdraw,Average overdraw,Prepass,depth_prepass,pass,0.6868789916991116
+sponza_ivy,avg_overdraw,Average overdraw,Prepass,geometry,pass,0.5886165531089588
+sponza_ivy,avg_overdraw,Average overdraw,Prepass,lighting,pass,-0.0024803358153395834
+sponza_ivy,avg_overdraw,Average overdraw,Prepass,tonemap,pass,0.33214873342945667
+sponza_ivy,avg_overdraw,Average overdraw,VisBuf,total,total,0.6722272376650809
+sponza_ivy,avg_overdraw,Average overdraw,VisBuf,visibility,pass,0.7534664799233569
+sponza_ivy,avg_overdraw,Average overdraw,VisBuf,gbuffer,pass,0.48464869637057356
+sponza_ivy,avg_overdraw,Average overdraw,VisBuf,lighting,pass,0.0780602320152909
+sponza_ivy,avg_overdraw,Average overdraw,VisBuf,tonemap,pass,0.5377739700123313
+sponza_ivy,max_overdraw,Maximum overdraw,Deferred,total,total,0.6432115254753088
+sponza_ivy,max_overdraw,Maximum overdraw,Deferred,geometry,pass,0.682511861873567
+sponza_ivy,max_overdraw,Maximum overdraw,Deferred,lighting,pass,0.016065438371448686
+sponza_ivy,max_overdraw,Maximum overdraw,Deferred,tonemap,pass,-0.25154837498581467
+sponza_ivy,max_overdraw,Maximum overdraw,Prepass,total,total,0.7352207610503501
+sponza_ivy,max_overdraw,Maximum overdraw,Prepass,depth_prepass,pass,0.7658693374335216
+sponza_ivy,max_overdraw,Maximum overdraw,Prepass,geometry,pass,0.6586984777479437
+sponza_ivy,max_overdraw,Maximum overdraw,Prepass,lighting,pass,-0.07076147467146825
+sponza_ivy,max_overdraw,Maximum overdraw,Prepass,tonemap,pass,0.1725235079607573
+sponza_ivy,max_overdraw,Maximum overdraw,VisBuf,total,total,0.6957785595454722
+sponza_ivy,max_overdraw,Maximum overdraw,VisBuf,visibility,pass,0.7875464532165956
+sponza_ivy,max_overdraw,Maximum overdraw,VisBuf,gbuffer,pass,0.5039641282317613
+sponza_ivy,max_overdraw,Maximum overdraw,VisBuf,lighting,pass,0.07047982070149421
+sponza_ivy,max_overdraw,Maximum overdraw,VisBuf,tonemap,pass,0.3453514504506673
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Deferred,total,total,0.6735847584117488
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Deferred,geometry,pass,0.7313447716126684
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Deferred,lighting,pass,-0.05414081059892114
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Deferred,tonemap,pass,-0.34303579518262045
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Prepass,total,total,0.7919260603781096
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Prepass,depth_prepass,pass,0.8334763120818349
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Prepass,geometry,pass,0.7104330053276621
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Prepass,lighting,pass,-0.17752128673209633
+sponza_ivy,rasterized_triangles,Rasterized triangle count,Prepass,tonemap,pass,0.24215774187176106
+sponza_ivy,rasterized_triangles,Rasterized triangle count,VisBuf,total,total,0.8313196507194324
+sponza_ivy,rasterized_triangles,Rasterized triangle count,VisBuf,visibility,pass,0.8719823453188882
+sponza_ivy,rasterized_triangles,Rasterized triangle count,VisBuf,gbuffer,pass,0.6523127765676856
+sponza_ivy,rasterized_triangles,Rasterized triangle count,VisBuf,lighting,pass,-0.024039254586626594
+sponza_ivy,rasterized_triangles,Rasterized triangle count,VisBuf,tonemap,pass,0.35380384252165
+sponza_ivy,skipped_triangles,Skipped triangle count,Deferred,total,total,0.6484516034683008
+sponza_ivy,skipped_triangles,Skipped triangle count,Deferred,geometry,pass,0.7089551882016044
+sponza_ivy,skipped_triangles,Skipped triangle count,Deferred,lighting,pass,-0.1626444143241556
+sponza_ivy,skipped_triangles,Skipped triangle count,Deferred,tonemap,pass,-0.3442750921856703
+sponza_ivy,skipped_triangles,Skipped triangle count,Prepass,total,total,0.8746776992096224
+sponza_ivy,skipped_triangles,Skipped triangle count,Prepass,depth_prepass,pass,0.9608084358056824
+sponza_ivy,skipped_triangles,Skipped triangle count,Prepass,geometry,pass,0.7624080289597523
+sponza_ivy,skipped_triangles,Skipped triangle count,Prepass,lighting,pass,-0.20516135996709303
+sponza_ivy,skipped_triangles,Skipped triangle count,Prepass,tonemap,pass,0.04774067819260818
+sponza_ivy,skipped_triangles,Skipped triangle count,VisBuf,total,total,0.8186373698414413
+sponza_ivy,skipped_triangles,Skipped triangle count,VisBuf,visibility,pass,0.982129986926539
+sponza_ivy,skipped_triangles,Skipped triangle count,VisBuf,gbuffer,pass,0.5621679244916831
+sponza_ivy,skipped_triangles,Skipped triangle count,VisBuf,lighting,pass,-0.16140500039209751
+sponza_ivy,skipped_triangles,Skipped triangle count,VisBuf,tonemap,pass,0.17053192917942853
+sponza_ivy,quad_instances,Quad instances,Deferred,total,total,0.7134884338225623
+sponza_ivy,quad_instances,Quad instances,Deferred,geometry,pass,0.7427467124762718
+sponza_ivy,quad_instances,Quad instances,Deferred,lighting,pass,0.0021729207459026435
+sponza_ivy,quad_instances,Quad instances,Deferred,tonemap,pass,-0.14523240340778826
+sponza_ivy,quad_instances,Quad instances,Prepass,total,total,0.6277474284051109
+sponza_ivy,quad_instances,Quad instances,Prepass,depth_prepass,pass,0.5777383503577848
+sponza_ivy,quad_instances,Quad instances,Prepass,geometry,pass,0.5736573426279952
+sponza_ivy,quad_instances,Quad instances,Prepass,lighting,pass,0.05270075557677675
+sponza_ivy,quad_instances,Quad instances,Prepass,tonemap,pass,0.5196888442509013
+sponza_ivy,quad_instances,Quad instances,VisBuf,total,total,0.677416291379252
+sponza_ivy,quad_instances,Quad instances,VisBuf,visibility,pass,0.6626729553793144
+sponza_ivy,quad_instances,Quad instances,VisBuf,gbuffer,pass,0.5539892550636959
+sponza_ivy,quad_instances,Quad instances,VisBuf,lighting,pass,0.14025204751570508
+sponza_ivy,quad_instances,Quad instances,VisBuf,tonemap,pass,0.7184755664852308
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Deferred,total,total,0.6716669906948867
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Deferred,geometry,pass,0.6886515451305908
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Deferred,lighting,pass,0.02725915448936465
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Deferred,tonemap,pass,-0.05459034430938479
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Prepass,total,total,0.5224718917697673
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Prepass,depth_prepass,pass,0.4484342019876159
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Prepass,geometry,pass,0.4806986223535221
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Prepass,lighting,pass,0.12792814066700445
+sponza_ivy,quad_covered_lanes,Quad covered lanes,Prepass,tonemap,pass,0.5794131937784003
+sponza_ivy,quad_covered_lanes,Quad covered lanes,VisBuf,total,total,0.5653504066700541
+sponza_ivy,quad_covered_lanes,Quad covered lanes,VisBuf,visibility,pass,0.5403601317352895
+sponza_ivy,quad_covered_lanes,Quad covered lanes,VisBuf,gbuffer,pass,0.4663136159862975
+sponza_ivy,quad_covered_lanes,Quad covered lanes,VisBuf,lighting,pass,0.18789079297547281
+sponza_ivy,quad_covered_lanes,Quad covered lanes,VisBuf,tonemap,pass,0.7766934432181621
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Deferred,total,total,0.7034474222661696
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Deferred,geometry,pass,0.7556274146649048
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Deferred,lighting,pass,-0.05357651632222397
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Deferred,tonemap,pass,-0.3246836322868875
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Prepass,total,total,0.7702448184589564
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Prepass,depth_prepass,pass,0.7805175177812125
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Prepass,geometry,pass,0.6967037828600737
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Prepass,lighting,pass,-0.12111035407808547
+sponza_ivy,quad_waste_lanes,Quad waste lanes,Prepass,tonemap,pass,0.3130752671205029
+sponza_ivy,quad_waste_lanes,Quad waste lanes,VisBuf,total,total,0.8277867510165577
+sponza_ivy,quad_waste_lanes,Quad waste lanes,VisBuf,visibility,pass,0.8378050785668254
+sponza_ivy,quad_waste_lanes,Quad waste lanes,VisBuf,gbuffer,pass,0.668185208196328
+sponza_ivy,quad_waste_lanes,Quad waste lanes,VisBuf,lighting,pass,0.014835454994521447
+sponza_ivy,quad_waste_lanes,Quad waste lanes,VisBuf,tonemap,pass,0.4866441722688806
+sponza_ivy,quad_efficiency,Quad efficiency,Deferred,total,total,0.528388719827816
+sponza_ivy,quad_efficiency,Quad efficiency,Deferred,geometry,pass,0.4817616349121252
+sponza_ivy,quad_efficiency,Quad efficiency,Deferred,lighting,pass,0.11521785928891896
+sponza_ivy,quad_efficiency,Quad efficiency,Deferred,tonemap,pass,0.37883026380397095
+sponza_ivy,quad_efficiency,Quad efficiency,Prepass,total,total,0.33486954699477034
+sponza_ivy,quad_efficiency,Quad efficiency,Prepass,depth_prepass,pass,0.10104135153246069
+sponza_ivy,quad_efficiency,Quad efficiency,Prepass,geometry,pass,0.40059739139194694
+sponza_ivy,quad_efficiency,Quad efficiency,Prepass,lighting,pass,0.22515449238550883
+sponza_ivy,quad_efficiency,Quad efficiency,Prepass,tonemap,pass,0.5565224799912442
+sponza_ivy,quad_efficiency,Quad efficiency,VisBuf,total,total,0.31106250476008074
+sponza_ivy,quad_efficiency,Quad efficiency,VisBuf,visibility,pass,0.13729560461107596
+sponza_ivy,quad_efficiency,Quad efficiency,VisBuf,gbuffer,pass,0.35678371923319946
+sponza_ivy,quad_efficiency,Quad efficiency,VisBuf,lighting,pass,0.24568748415229383
+sponza_ivy,quad_efficiency,Quad efficiency,VisBuf,tonemap,pass,0.6435532943483866

@@ -1,0 +1,3 @@
+scene,profile_windows,raster_frames,max_abs_index_difference,mean_abs_index_difference,exact_window_count,window_count,index_correlation
+sponza,250,2500,1.862645149230957e-09,3.94211383536458e-10,250,250,0.9999999999999999
+sponza_ivy,250,2500,3.725290298461914e-09,1.242413418367505e-09,250,250,1.0

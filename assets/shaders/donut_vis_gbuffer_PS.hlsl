@@ -112,7 +112,12 @@ PSOutput main(PSInput input)
     const uint2 visibility = t_Visibility.Load(int3(pixel.xy, 0));
     if (visibility.x == 0)
     {
-        discard;
+        PSOutput backgroundOutput;
+        backgroundOutput.channel0 = 0.0;
+        backgroundOutput.channel1 = 0.0;
+        backgroundOutput.channel2 = 0.0;
+        backgroundOutput.channel3 = 0.0;
+        return backgroundOutput;
     }
 
     const uint geometryInstanceID = visibility.x - 1;
