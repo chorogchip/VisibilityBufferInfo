@@ -8,7 +8,7 @@
 
 namespace scene {
 
-    struct SceneSourceLoadResult {
+    struct JungleSceneSourceBuildResult {
         std::unique_ptr<SceneSourceData> scene;
         std::string error_message;
 
@@ -17,12 +17,11 @@ namespace scene {
         }
     };
 
-    // Decodes a glTF/GLB into the renderer-independent source contract.
-    // Jungle EXT_mesh_gpu_instancing streams and extras.jr hierarchy metadata
-    // are retained instead of being expanded into render objects.
-    class SceneSourceGltfLoader {
+    // Builds renderer-independent source data from a Jungle region GLB.
+    // EXT_mesh_gpu_instancing and extras.jr are required Jungle inputs.
+    class JungleSceneSourceBuilder {
     public:
-        static SceneSourceLoadResult load(
+        static JungleSceneSourceBuildResult build(
             const std::filesystem::path& path);
     };
 }

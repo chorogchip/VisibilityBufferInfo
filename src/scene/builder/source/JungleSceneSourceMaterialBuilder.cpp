@@ -1,4 +1,4 @@
-#include "SceneSourceGltfInternal.h"
+#include "JungleSceneSourceBuilderInternal.h"
 
 #include <optional>
 #include <string>
@@ -6,7 +6,7 @@
 
 #include "util/Logger.h"
 
-namespace scene::source::gltf {
+namespace scene::source::jungle {
 
     namespace {
 

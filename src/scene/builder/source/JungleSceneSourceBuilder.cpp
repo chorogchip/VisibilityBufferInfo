@@ -1,4 +1,4 @@
-#include "scene/data/source/SceneSourceGltfLoader.h"
+#include "scene/builder/source/JungleSceneSourceBuilder.h"
 
 #include <array>
 #include <fstream>
@@ -10,10 +10,10 @@
 #include <fastgltf/tools.hpp>
 #include <simdjson.h>
 
-#include "SceneSourceGltfInternal.h"
+#include "JungleSceneSourceBuilderInternal.h"
 #include "util/Logger.h"
 
-namespace scene::source::gltf {
+namespace scene::source::jungle {
 
     namespace {
 
@@ -238,32 +238,32 @@ namespace scene::source::gltf {
 
 namespace scene {
 
-    SceneSourceLoadResult SceneSourceGltfLoader::load(
+    JungleSceneSourceBuildResult JungleSceneSourceBuilder::build(
         const std::filesystem::path& path) {
 
-        SceneSourceLoadResult result{};
-        source::gltf::Context context{};
+        JungleSceneSourceBuildResult result{};
+        source::jungle::Context context{};
         context.source_path =
             std::filesystem::absolute(path).lexically_normal();
 
         std::optional<fastgltf::Asset> asset =
-            source::gltf::load_asset(context, result.error_message);
+            source::jungle::load_asset(context, result.error_message);
         if (!asset) return result;
 
         auto scene = std::make_unique<SceneSourceData>();
         std::vector<uint32_t> mesh_ids;
-        source::gltf::append_cameras(*asset, *scene);
-        if (!source::gltf::append_materials(
+        source::jungle::append_cameras(*asset, *scene);
+        if (!source::jungle::append_materials(
                 context,
                 *asset,
                 *scene,
                 result.error_message) ||
-            !source::gltf::append_geometry(
+            !source::jungle::append_geometry(
                 *asset,
                 *scene,
                 mesh_ids,
                 result.error_message) ||
-            !source::gltf::append_hierarchy(
+            !source::jungle::append_hierarchy(
                 context,
                 *asset,
                 mesh_ids,

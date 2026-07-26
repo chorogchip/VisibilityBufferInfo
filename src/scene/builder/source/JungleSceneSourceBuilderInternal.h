@@ -10,8 +10,9 @@
 
 #include "scene/data/source/SceneSourceData.h"
 
-namespace scene::source::gltf {
+namespace scene::source::jungle {
 
+    // Shared state for the Jungle source builder implementation files.
     struct NodeMetadata {
         NodeKind kind = NodeKind::Generic;
         Region region = Region::None;

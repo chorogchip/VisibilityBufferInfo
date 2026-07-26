@@ -1,8 +1,8 @@
-#include "SceneSourceGltfInternal.h"
+#include "JungleSceneSourceBuilderInternal.h"
 
 #include <variant>
 
-namespace scene::source::gltf {
+namespace scene::source::jungle {
 
     void append_cameras(
         const fastgltf::Asset& asset,

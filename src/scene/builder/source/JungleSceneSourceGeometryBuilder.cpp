@@ -1,4 +1,4 @@
-#include "SceneSourceGltfInternal.h"
+#include "JungleSceneSourceBuilderInternal.h"
 
 #include <limits>
 #include <string>
@@ -7,7 +7,7 @@
 #include <fastgltf/dxmath_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 
-namespace scene::source::gltf {
+namespace scene::source::jungle {
 
     namespace {
 
