@@ -18,6 +18,15 @@ namespace scene::source {
             uv0.empty() || uv0.size() == positions.size(),
             "Scene source primitive UV count differs from its position count.");
         util::Logger::g_logger.assert_with_log(
+            uv1.empty() || uv1.size() == positions.size(),
+            "Scene source primitive UV1 count differs from its position count.");
+        util::Logger::g_logger.assert_with_log(
+            color0.empty() || color0.size() == positions.size(),
+            "Scene source primitive color0 count differs from its position count.");
+        util::Logger::g_logger.assert_with_log(
+            color1.empty() || color1.size() == positions.size(),
+            "Scene source primitive color1 count differs from its position count.");
+        util::Logger::g_logger.assert_with_log(
             !indices.empty() && indices.size() % 3 == 0,
             "Scene source primitive must contain indexed triangles.");
 

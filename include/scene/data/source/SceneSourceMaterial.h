@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include <DirectXMath.h>
 
@@ -15,8 +16,10 @@ namespace scene::source {
     };
 
     struct Material {
+        std::string name;
         DirectX::XMFLOAT4 base_color = { 1.0f, 1.0f, 1.0f, 1.0f };
         DirectX::XMFLOAT3 emissive_color = { 0.0f, 0.0f, 0.0f };
+        DirectX::XMFLOAT3 specular_color = { 1.0f, 1.0f, 1.0f };
         float emissive_intensity = 1.0f;
 
         float metalness = 0.0f;

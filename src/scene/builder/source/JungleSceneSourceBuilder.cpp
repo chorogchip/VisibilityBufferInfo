@@ -100,6 +100,22 @@ namespace scene::source::jungle {
             if (value == "static_object") {
                 return NodeKind::StaticObject;
             }
+            if (value == "camera") return NodeKind::Camera;
+            if (value == "unresolved_container") {
+                return NodeKind::UnresolvedContainer;
+            }
+            if (value == "static_container") {
+                return NodeKind::StaticContainer;
+            }
+            if (value == "terrain_container") {
+                return NodeKind::TerrainContainer;
+            }
+            if (value == "system_container") {
+                return NodeKind::SystemContainer;
+            }
+            if (value == "prototype_container") {
+                return NodeKind::PrototypeContainer;
+            }
             return NodeKind::Generic;
         }
 
@@ -109,6 +125,37 @@ namespace scene::source::jungle {
             if (value == "extended") return Region::Extended;
             if (value == "pyramid") return Region::Pyramid;
             return Region::None;
+        }
+
+        Provenance parse_provenance(std::string_view value) {
+            if (value == "source") return Provenance::Source;
+            if (value == "computed") return Provenance::Computed;
+            if (value == "inferred") return Provenance::Inferred;
+            return Provenance::None;
+        }
+
+        UnresolvedReason parse_unresolved_reason(
+            std::string_view value) {
+
+            if (value == "exact_origin") {
+                return UnresolvedReason::ExactOrigin;
+            }
+            if (value == "outside_cell_ownership") {
+                return UnresolvedReason::OutsideCellOwnership;
+            }
+            return UnresolvedReason::None;
+        }
+
+        void read_string(
+            simdjson::dom::object& object,
+            const char* key,
+            std::string& value) {
+
+            std::string_view text;
+            if (object[key].get_string().get(text) ==
+                simdjson::SUCCESS) {
+                value.assign(text);
+            }
         }
 
         void extras_callback(
@@ -143,6 +190,39 @@ namespace scene::source::jungle {
                 simdjson::SUCCESS) {
                 metadata.stable_id.assign(text);
             }
+            if (jr["provenance"].get_string().get(text) ==
+                simdjson::SUCCESS) {
+                metadata.jungle.provenance =
+                    parse_provenance(text);
+            }
+            if (jr["unresolved_reason"].get_string().get(text) ==
+                simdjson::SUCCESS) {
+                metadata.jungle.unresolved_reason =
+                    parse_unresolved_reason(text);
+            }
+            read_string(jr, "cell", metadata.jungle.cell);
+            read_string(jr, "system", metadata.jungle.system);
+            read_string(jr, "species", metadata.jungle.species);
+            read_string(
+                jr,
+                "prototype",
+                metadata.jungle.prototype_name);
+            read_string(
+                jr,
+                "prototype_id",
+                metadata.jungle.prototype_id);
+            read_string(
+                jr,
+                "source_object",
+                metadata.jungle.source_object);
+            read_string(
+                jr,
+                "source_prim",
+                metadata.jungle.source_prim);
+            read_string(
+                jr,
+                "source_layer",
+                metadata.jungle.source_layer);
 
             simdjson::dom::object bounds;
             if (jr["bounds"].get_object().get(bounds) ==

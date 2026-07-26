@@ -44,6 +44,75 @@ namespace scene::source::jungle {
             return default_material_id;
         }
 
+        bool append_uv(
+            const fastgltf::Asset& asset,
+            const fastgltf::Primitive& source,
+            const char* semantic,
+            size_t vertex_count,
+            std::vector<DirectX::XMFLOAT2>& destination) {
+
+            const auto attribute = source.findAttribute(semantic);
+            if (attribute == source.attributes.end()) return true;
+
+            const fastgltf::Accessor& accessor =
+                asset.accessors[attribute->accessorIndex];
+            if (accessor.count != vertex_count ||
+                accessor.type != fastgltf::AccessorType::Vec2) {
+                return false;
+            }
+            destination.resize(vertex_count);
+            fastgltf::iterateAccessorWithIndex<DirectX::XMFLOAT2>(
+                asset,
+                accessor,
+                [&](DirectX::XMFLOAT2 value, size_t index) {
+                    destination[index] = value;
+                });
+            return true;
+        }
+
+        bool append_color(
+            const fastgltf::Asset& asset,
+            const fastgltf::Primitive& source,
+            const char* semantic,
+            size_t vertex_count,
+            std::vector<DirectX::XMFLOAT4>& destination) {
+
+            const auto attribute = source.findAttribute(semantic);
+            if (attribute == source.attributes.end()) return true;
+
+            const fastgltf::Accessor& accessor =
+                asset.accessors[attribute->accessorIndex];
+            if (accessor.count != vertex_count) return false;
+            destination.resize(vertex_count);
+
+            if (accessor.type == fastgltf::AccessorType::Vec3) {
+                fastgltf::iterateAccessorWithIndex<
+                    DirectX::XMFLOAT3>(
+                    asset,
+                    accessor,
+                    [&](DirectX::XMFLOAT3 value, size_t index) {
+                        destination[index] = {
+                            value.x,
+                            value.y,
+                            value.z,
+                            1.0f
+                        };
+                    });
+                return true;
+            }
+            if (accessor.type == fastgltf::AccessorType::Vec4) {
+                fastgltf::iterateAccessorWithIndex<
+                    DirectX::XMFLOAT4>(
+                    asset,
+                    accessor,
+                    [&](DirectX::XMFLOAT4 value, size_t index) {
+                        destination[index] = value;
+                    });
+                return true;
+            }
+            return false;
+        }
+
         bool append_primitive(
             const fastgltf::Asset& asset,
             const fastgltf::Primitive& source,
@@ -116,21 +185,31 @@ namespace scene::source::jungle {
                     });
             }
 
-            const auto uv_it =
-                source.findAttribute("TEXCOORD_0");
-            if (uv_it != source.attributes.end()) {
-                const fastgltf::Accessor& accessor =
-                    asset.accessors[uv_it->accessorIndex];
-                primitive.uv0.resize(position_accessor.count);
-                fastgltf::iterateAccessorWithIndex<
-                    DirectX::XMFLOAT2>(
+            if (!append_uv(
                     asset,
-                    accessor,
-                    [&](DirectX::XMFLOAT2 value, size_t index) {
-                        if (index < primitive.uv0.size()) {
-                            primitive.uv0[index] = value;
-                        }
-                    });
+                    source,
+                    "TEXCOORD_0",
+                    position_accessor.count,
+                    primitive.uv0) ||
+                !append_uv(
+                    asset,
+                    source,
+                    "TEXCOORD_1",
+                    position_accessor.count,
+                    primitive.uv1) ||
+                !append_color(
+                    asset,
+                    source,
+                    "COLOR_0",
+                    position_accessor.count,
+                    primitive.color0) ||
+                !append_color(
+                    asset,
+                    source,
+                    "COLOR_1",
+                    position_accessor.count,
+                    primitive.color1)) {
+                return false;
             }
 
             std::vector<uint32_t> source_indices(
@@ -176,6 +255,7 @@ namespace scene::source::jungle {
             const fastgltf::Mesh& source =
                 asset.meshes[source_mesh_id];
             Mesh mesh{};
+            mesh.name.assign(source.name.data(), source.name.size());
             mesh.primitives.reserve(source.primitives.size());
 
             for (const fastgltf::Primitive& source_primitive : source.primitives) {

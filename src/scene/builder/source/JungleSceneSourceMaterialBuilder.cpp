@@ -160,6 +160,7 @@ namespace scene::source::jungle {
 
         Material convert_material(const fastgltf::Material& source) {
             Material result{};
+            result.name.assign(source.name.data(), source.name.size());
             const fastgltf::math::nvec4& base =
                 source.pbrData.baseColorFactor;
             result.base_color = {
@@ -214,6 +215,11 @@ namespace scene::source::jungle {
             }
             if (source.specular) {
                 result.specular = source.specular->specularFactor;
+                result.specular_color = {
+                    source.specular->specularColorFactor[0],
+                    source.specular->specularColorFactor[1],
+                    source.specular->specularColorFactor[2]
+                };
             }
             return result;
         }

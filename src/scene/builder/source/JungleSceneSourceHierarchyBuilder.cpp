@@ -212,6 +212,9 @@ namespace scene::source::jungle {
             const fastgltf::Node& source_node =
                 asset.nodes[source_node_id];
             Node node{};
+            node.name.assign(
+                source_node.name.data(),
+                source_node.name.size());
             DirectX::XMStoreFloat4x4(
                 &node.local_transform,
                 read_local_transform(source_node));
@@ -234,6 +237,7 @@ namespace scene::source::jungle {
                 node.region = metadata.region;
                 node.world_bounds = metadata.world_bounds;
                 node.stable_id = metadata.stable_id;
+                node.jungle = metadata.jungle;
             }
             if (node.kind == NodeKind::Generic) {
                 node.kind = kind_from_name(source_node);
@@ -278,6 +282,7 @@ namespace scene::source::jungle {
         std::string& error_message) {
 
         Node root{};
+        root.name = "JR_LOADER_ROOT";
         root.kind = NodeKind::SceneRoot;
         root.stable_id = "jr:loader:root";
         scene.root_node_id = 0;

@@ -18,6 +18,7 @@ namespace scene::source::jungle {
         Region region = Region::None;
         math::AABB world_bounds{};
         std::string stable_id;
+        JungleNodeMetadata jungle;
     };
 
     struct FileLayout {

@@ -18,7 +18,13 @@ namespace scene::source {
         Cell,
         System,
         InstanceSet,
-        StaticObject
+        StaticObject,
+        Camera,
+        UnresolvedContainer,
+        StaticContainer,
+        TerrainContainer,
+        SystemContainer,
+        PrototypeContainer
     };
 
     enum class Region : uint8_t {
@@ -27,6 +33,32 @@ namespace scene::source {
         Cinematic,
         Extended,
         Pyramid
+    };
+
+    enum class Provenance : uint8_t {
+        None,
+        Source,
+        Computed,
+        Inferred
+    };
+
+    enum class UnresolvedReason : uint8_t {
+        None,
+        ExactOrigin,
+        OutsideCellOwnership
+    };
+
+    struct JungleNodeMetadata {
+        std::string cell;
+        std::string system;
+        std::string species;
+        std::string prototype_name;
+        std::string prototype_id;
+        std::string source_object;
+        std::string source_prim;
+        std::string source_layer;
+        Provenance provenance = Provenance::None;
+        UnresolvedReason unresolved_reason = UnresolvedReason::None;
     };
 
     // Compact glTF TRS plus the reversible source-array index used by the
@@ -43,6 +75,7 @@ namespace scene::source {
     // Matrices use DirectX row-vector order and are not transposed for shaders.
     // An instance range belongs to this node and uses node-local transforms.
     struct Node {
+        std::string name;
         std::vector<uint32_t> children;
         DirectX::XMFLOAT4X4 local_transform = {
             1.0f, 0.0f, 0.0f, 0.0f,
@@ -59,6 +92,7 @@ namespace scene::source {
         Region region = Region::None;
         math::AABB world_bounds{};
         std::string stable_id;
+        JungleNodeMetadata jungle;
 
         void validate() const;
     };
