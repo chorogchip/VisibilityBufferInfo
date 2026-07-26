@@ -54,10 +54,9 @@ namespace util {
                 "scene_path must not be empty when to_use_scene is true");
             logger.assert_with_log(
                 arg.scene_importer == "assimp" ||
-                arg.scene_importer == "fastgltf" ||
-                arg.scene_importer == "gltf" ||
+                arg.scene_importer == "jungle" ||
                 arg.scene_importer == "auto",
-                "scene_importer must be assimp, fastgltf, gltf, or auto");
+                "scene_importer must be assimp, jungle, or auto");
             return;
         }
 

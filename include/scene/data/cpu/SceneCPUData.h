@@ -91,6 +91,7 @@ namespace scene {
         std::vector<Node> nodes;
         std::vector<Instance> instances;
         std::vector<uint32_t> draw_instance_ids;
+        std::vector<DrawCall> all_draw_calls;
         std::vector<DrawCall> draw_calls;
         math::AABB world_aabb{};
 

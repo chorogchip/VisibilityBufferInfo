@@ -343,6 +343,7 @@ namespace scene {
             DirectX::XMMatrixIdentity(),
             destination);
         append_draw_calls(destination);
+        destination.all_draw_calls = destination.draw_calls;
         SceneCPUValidator::validate(destination);
         return destination;
     }
