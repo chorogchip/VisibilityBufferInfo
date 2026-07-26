@@ -6,6 +6,7 @@
 
 namespace scene {
 
+    // Builds the synthetic benchmark plane directly as source scene data.
     struct SyntheticPlaneConfig {
         uint32_t object_count = 1;
         uint32_t overdraw_count = 0;

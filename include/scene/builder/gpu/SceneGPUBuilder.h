@@ -10,6 +10,7 @@
 
 namespace scene {
 
+    // Allocates and uploads the draw-ready CPU scene to D3D12 resources.
     class SceneGPUBuilder {
     public:
         static SceneGPUData build(

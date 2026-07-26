@@ -1,4 +1,4 @@
-#include "scene/data/gpu/SceneGPUBuilder.h"
+#include "scene/builder/gpu/SceneGPUBuilder.h"
 
 #include <array>
 #include <cstddef>

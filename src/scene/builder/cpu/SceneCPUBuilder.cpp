@@ -1,4 +1,4 @@
-#include "scene/data/cpu/SceneCPUBuilder.h"
+#include "scene/builder/cpu/SceneCPUBuilder.h"
 
 #include <algorithm>
 #include <cstdint>

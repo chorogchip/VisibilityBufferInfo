@@ -1,4 +1,4 @@
-#include "scene/SyntheticSceneSourceBuilder.h"
+#include "scene/builder/source/SyntheticSceneSourceBuilder.h"
 
 #include <utility>
 #include <vector>
