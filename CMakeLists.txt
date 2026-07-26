@@ -148,6 +148,38 @@ add_executable(TVBPerf WIN32
 
 target_compile_features(TVBPerf PRIVATE cxx_std_20)
 
+add_executable(JungleSceneSourceValidate EXCLUDE_FROM_ALL
+    tools/jungle/JungleSceneSourceValidate.cpp
+    tools/jungle/JungleSceneSourceValidation.cpp
+    tools/jungle/JungleSceneSourcePackageCollector.cpp
+    src/scene/builder/source/JungleSceneSourceBuilder.cpp
+    src/scene/builder/source/JungleSceneSourceCameraBuilder.cpp
+    src/scene/builder/source/JungleSceneSourceGeometryBuilder.cpp
+    src/scene/builder/source/JungleSceneSourceHierarchyBuilder.cpp
+    src/scene/builder/source/JungleSceneSourceMaterialBuilder.cpp
+    src/scene/data/source/SceneSourceData.cpp
+    src/scene/data/source/SceneSourceGeometry.cpp
+    src/scene/data/source/SceneSourceHierarchy.cpp
+    src/util/Logger.cpp
+)
+
+target_compile_features(JungleSceneSourceValidate PRIVATE cxx_std_20)
+target_include_directories(JungleSceneSourceValidate
+    PRIVATE
+        ${TVBPERF_INCLUDE_DIR}
+)
+target_link_libraries(JungleSceneSourceValidate
+    PRIVATE
+        fastgltf::fastgltf
+)
+
+set_target_properties(JungleSceneSourceValidate PROPERTIES
+    FOLDER "Tools/Jungle"
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release
+)
+
 # include 경로
 target_include_directories(TVBPerf
     PRIVATE
