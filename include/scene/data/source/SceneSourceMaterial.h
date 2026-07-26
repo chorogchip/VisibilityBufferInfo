@@ -1,34 +1,41 @@
 #pragma once
 
-#include <filesystem>
-#include <optional>
+#include <cstdint>
 
 #include <DirectXMath.h>
 
+#include "scene/data/source/SceneSourceTexture.h"
+
 namespace scene::source {
 
-    struct Material {
-        using TexturePath = std::optional<std::filesystem::path>;
+    enum class AlphaMode : uint8_t {
+        Opaque,
+        Mask,
+        Blend
+    };
 
+    struct Material {
         DirectX::XMFLOAT4 base_color = { 1.0f, 1.0f, 1.0f, 1.0f };
         DirectX::XMFLOAT3 emissive_color = { 0.0f, 0.0f, 0.0f };
         float emissive_intensity = 1.0f;
 
         float metalness = 0.0f;
         float roughness = 1.0f;
-        float opacity = 1.0f;
         float alpha_cutoff = 0.5f;
         float normal_scale = 1.0f;
         float occlusion_strength = 1.0f;
+        float transmission = 0.0f;
+        float specular = 1.0f;
+        float ior = 1.5f;
 
-        bool alpha_tested = false;
+        AlphaMode alpha_mode = AlphaMode::Opaque;
         bool double_sided = false;
 
-        TexturePath base_color_texture;
-        TexturePath metal_roughness_texture;
-        TexturePath normal_texture;
-        TexturePath emissive_texture;
-        TexturePath occlusion_texture;
-        TexturePath opacity_texture;
+        TextureRef base_color_texture;
+        TextureRef metal_roughness_texture;
+        TextureRef normal_texture;
+        TextureRef emissive_texture;
+        TextureRef occlusion_texture;
+        TextureRef transmission_texture;
     };
 }

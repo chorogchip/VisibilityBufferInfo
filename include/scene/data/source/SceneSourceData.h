@@ -4,9 +4,11 @@
 #include <vector>
 
 #include "scene/data/source/SceneConstants.h"
+#include "scene/data/source/SceneSourceCamera.h"
 #include "scene/data/source/SceneSourceGeometry.h"
 #include "scene/data/source/SceneSourceHierarchy.h"
 #include "scene/data/source/SceneSourceMaterial.h"
+#include "scene/data/source/SceneSourceTexture.h"
 
 namespace scene {
 
@@ -20,6 +22,11 @@ namespace scene {
         std::vector<source::Node> nodes;
         std::vector<source::Mesh> meshes;
         std::vector<source::Material> materials;
+        std::vector<source::Camera> cameras;
+        std::vector<source::Image> images;
+        std::vector<source::Sampler> samplers;
+        std::vector<source::Texture> textures;
+        std::vector<source::InstanceTransform> instances;
 
         void validate() const;
 

@@ -22,7 +22,9 @@ namespace scene {
 
     private:
         source::Primitive build_primitive_() const;
-        void build_instances_(source::Node& node) const;
+        void build_instances_(
+            SceneSourceData& scene,
+            source::Node& node) const;
 
         SyntheticPlaneConfig config_;
     };

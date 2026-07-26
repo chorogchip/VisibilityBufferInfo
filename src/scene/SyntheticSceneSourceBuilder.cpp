@@ -36,7 +36,7 @@ namespace scene {
         scene.nodes.resize(2);
         scene.nodes[0].children.push_back(1);
         scene.nodes[1].mesh_id = 0;
-        this->build_instances_(scene.nodes[1]);
+        this->build_instances_(scene, scene.nodes[1]);
 
         scene.validate();
         return scene;
@@ -86,6 +86,7 @@ namespace scene {
     }
 
     void SyntheticSceneSourceBuilder::build_instances_(
+        SceneSourceData& scene,
         source::Node& node) const {
         std::vector<uint32_t> order;
         order.reserve(config_.object_count);
@@ -98,7 +99,10 @@ namespace scene {
             order.push_back(object_id);
         }
 
-        node.instance_transforms.reserve(config_.object_count);
+        node.first_instance =
+            static_cast<uint32_t>(scene.instances.size());
+        scene.instances.reserve(
+            scene.instances.size() + config_.object_count);
         for (uint32_t i = 0; i < config_.object_count; ++i) {
             float position_z_offset = 0.0f;
             if (i != 0 && config_.to_remain_only_in_camera) {
@@ -109,12 +113,11 @@ namespace scene {
                 position_z_offset +
                 static_cast<float>(order[i]) /
                 static_cast<float>(config_.object_count);
-            const DirectX::XMMATRIX transform =
-                DirectX::XMMatrixTranslation(0.0f, 0.0f, position_z);
-
-            DirectX::XMFLOAT4X4 stored_transform{};
-            DirectX::XMStoreFloat4x4(&stored_transform, transform);
-            node.instance_transforms.push_back(stored_transform);
+            source::InstanceTransform transform{};
+            transform.translation.z = position_z;
+            transform.source_index = i;
+            scene.instances.push_back(transform);
         }
+        node.instance_count = config_.object_count;
     }
 }

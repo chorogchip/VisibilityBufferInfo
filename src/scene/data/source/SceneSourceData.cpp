@@ -70,12 +70,24 @@ namespace scene {
 
     void SceneSourceData::validate_references_() const {
         for (size_t node_id = 0; node_id < nodes.size(); ++node_id) {
-            const uint32_t mesh_id = nodes[node_id].mesh_id;
+            const source::Node& node = nodes[node_id];
+            const uint32_t mesh_id = node.mesh_id;
             util::Logger::g_logger.assert_with_log(
                 mesh_id == source::SceneConstants::INVALID_INDEX ||
                 mesh_id < meshes.size(),
                 ("Scene source node " + std::to_string(node_id) +
                     " references an invalid mesh.").c_str());
+            util::Logger::g_logger.assert_with_log(
+                node.camera_id == source::SceneConstants::INVALID_INDEX ||
+                node.camera_id < cameras.size(),
+                ("Scene source node " + std::to_string(node_id) +
+                    " references an invalid camera.").c_str());
+            util::Logger::g_logger.assert_with_log(
+                node.first_instance <= instances.size() &&
+                node.instance_count <=
+                instances.size() - node.first_instance,
+                ("Scene source node " + std::to_string(node_id) +
+                    " references an invalid instance range.").c_str());
         }
 
         for (size_t mesh_id = 0; mesh_id < meshes.size(); ++mesh_id) {
@@ -90,6 +102,31 @@ namespace scene {
                         " primitive " + std::to_string(primitive_id) +
                         " references an invalid material.").c_str());
             }
+        }
+
+        for (const source::Texture& texture : textures) {
+            util::Logger::g_logger.assert_with_log(
+                texture.image_id < images.size(),
+                "Scene source texture references an invalid image.");
+            util::Logger::g_logger.assert_with_log(
+                texture.sampler_id == source::SceneConstants::INVALID_INDEX ||
+                texture.sampler_id < samplers.size(),
+                "Scene source texture references an invalid sampler.");
+        }
+
+        const auto validate_texture_ref =
+            [this](const source::TextureRef& texture) {
+            util::Logger::g_logger.assert_with_log(
+                !texture.valid() || texture.texture_id < textures.size(),
+                "Scene source material references an invalid texture.");
+        };
+        for (const source::Material& material : materials) {
+            validate_texture_ref(material.base_color_texture);
+            validate_texture_ref(material.metal_roughness_texture);
+            validate_texture_ref(material.normal_texture);
+            validate_texture_ref(material.emissive_texture);
+            validate_texture_ref(material.occlusion_texture);
+            validate_texture_ref(material.transmission_texture);
         }
     }
 }
