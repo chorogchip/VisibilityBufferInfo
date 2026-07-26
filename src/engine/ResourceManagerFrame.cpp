@@ -1,10 +1,46 @@
 #include "engine/ResourceManagerFrame.h"
 
-#include <cstring>
-
 #include "util/Assume.h"
 #include "util/Logger.h"
 #include "util/Utils.h"
+
+namespace {
+
+    bool is_same_resource_desc(
+        const D3D12_RESOURCE_DESC& lhs,
+        const D3D12_RESOURCE_DESC& rhs) {
+
+        return
+            lhs.Dimension == rhs.Dimension &&
+            lhs.Alignment == rhs.Alignment &&
+            lhs.Width == rhs.Width &&
+            lhs.Height == rhs.Height &&
+            lhs.DepthOrArraySize == rhs.DepthOrArraySize &&
+            lhs.MipLevels == rhs.MipLevels &&
+            lhs.Format == rhs.Format &&
+            lhs.SampleDesc.Count == rhs.SampleDesc.Count &&
+            lhs.SampleDesc.Quality == rhs.SampleDesc.Quality &&
+            lhs.Layout == rhs.Layout &&
+            lhs.Flags == rhs.Flags;
+    }
+
+    bool is_same_dsv_desc(
+        const D3D12_DEPTH_STENCIL_VIEW_DESC& lhs,
+        const D3D12_DEPTH_STENCIL_VIEW_DESC& rhs) {
+
+        if (lhs.Format != rhs.Format ||
+            lhs.ViewDimension != rhs.ViewDimension ||
+            lhs.Flags != rhs.Flags) {
+            return false;
+        }
+
+        if (lhs.ViewDimension == D3D12_DSV_DIMENSION_TEXTURE2D)
+            return lhs.Texture2D.MipSlice == rhs.Texture2D.MipSlice;
+
+        return false;
+    }
+
+}
 
 namespace eng {
 
@@ -53,7 +89,7 @@ namespace eng {
         if (record.is_initialized) {
             util::Logger::g_logger.assert_with_log(
                 record.resource == texture &&
-                std::memcmp(&record.resource_desc, &resource_desc, sizeof(resource_desc)) == 0,
+                is_same_resource_desc(record.resource_desc, resource_desc),
                 "conflicting RTV descriptor request");
         } else {
             device_->CreateRenderTargetView(texture, nullptr, get_rtv(position));
@@ -83,10 +119,9 @@ namespace eng {
 
         if (record.is_initialized) {
             util::Logger::g_logger.assert_with_log(
-                true || // temp
                 record.resource == texture &&
-                std::memcmp(&record.resource_desc, &resource_desc, sizeof(resource_desc)) == 0 &&
-                std::memcmp(&record.view_desc, &desc, sizeof(desc)) == 0,
+                is_same_resource_desc(record.resource_desc, resource_desc) &&
+                is_same_dsv_desc(record.view_desc, desc),
                 "conflicting DSV descriptor request");
         } else {
             device_->CreateDepthStencilView(texture, &desc, get_dsv(position));
