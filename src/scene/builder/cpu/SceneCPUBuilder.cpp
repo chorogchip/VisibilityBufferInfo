@@ -22,9 +22,6 @@ namespace scene {
             if (!reference.valid()) {
                 return std::nullopt;
             }
-            util::Logger::g_logger.assert_with_log(
-                reference.uv_set == 0,
-                "CPU scene supports only texture coordinate set 0.");
             const source::Texture& texture =
                 source.textures[reference.texture_id];
             const source::Image& image =
@@ -32,6 +29,9 @@ namespace scene {
             if (image.is_file_range()) {
                 return std::nullopt;
             }
+            util::Logger::g_logger.assert_with_log(
+                reference.uv_set == 0,
+                "CPU scene supports only texture coordinate set 0.");
             return image.path;
         }
 
@@ -42,9 +42,6 @@ namespace scene {
                 source.materials.empty() ? 1 : source.materials.size());
 
             for (const source::Material& material : source.materials) {
-                util::Logger::g_logger.assert_with_log(
-                    material.alpha_mode != source::AlphaMode::Blend,
-                    "CPU scene does not support alpha-blended materials.");
                 SceneCPUData::Material converted{};
                 converted.base_color = material.base_color;
                 converted.emissive_color = material.emissive_color;
@@ -55,8 +52,7 @@ namespace scene {
                 converted.alpha_cutoff = material.alpha_cutoff;
                 converted.normal_scale = material.normal_scale;
                 converted.occlusion_strength = material.occlusion_strength;
-                converted.alpha_tested =
-                    material.alpha_mode == source::AlphaMode::Mask;
+                converted.alpha_mode = material.alpha_mode;
                 converted.double_sided = material.double_sided;
                 converted.base_color_texture =
                     texture_path(source, material.base_color_texture);

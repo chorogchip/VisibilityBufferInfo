@@ -392,7 +392,7 @@ namespace scene {
             gpu_material.normal_scale = material.normal_scale;
             gpu_material.occlusion_strength =
                 material.occlusion_strength;
-            if (material.alpha_tested) {
+            if (material.alpha_mode != source::AlphaMode::Opaque) {
                 gpu_material.flags |=
                     BenchmarkSceneGPUData::MATERIAL_FLAG_ALPHA_TESTED;
             }

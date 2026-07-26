@@ -728,7 +728,7 @@ namespace scene {
                     DonutSceneGPUData::
                         MATERIAL_FLAG_DOUBLE_SIDED;
             }
-            if (source_material.alpha_tested) {
+            if (source_material.alpha_mode != source::AlphaMode::Opaque) {
                 material.flags |=
                     DonutSceneGPUData::
                         MATERIAL_FLAG_ALPHA_TESTED;

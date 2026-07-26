@@ -9,6 +9,7 @@
 
 #include "math/AABB.h"
 #include "scene/data/source/SceneConstants.h"
+#include "scene/data/source/SceneSourceMaterial.h"
 
 namespace scene {
 
@@ -32,7 +33,7 @@ namespace scene {
             float alpha_cutoff = 0.5f;
             float normal_scale = 1.0f;
             float occlusion_strength = 1.0f;
-            bool alpha_tested = false;
+            source::AlphaMode alpha_mode = source::AlphaMode::Opaque;
             bool double_sided = false;
             TexturePath base_color_texture;
             TexturePath metal_roughness_texture;
