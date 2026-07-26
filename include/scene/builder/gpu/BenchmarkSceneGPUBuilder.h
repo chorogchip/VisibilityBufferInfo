@@ -6,14 +6,14 @@
 #include <wrl.h>
 
 #include "scene/data/cpu/SceneCPUData.h"
-#include "scene/data/gpu/SceneGPUData.h"
+#include "scene/data/gpu/BenchmarkSceneGPUData.h"
 
 namespace scene {
 
     // Allocates and uploads the draw-ready CPU scene to D3D12 resources.
-    class SceneGPUBuilder {
+    class BenchmarkSceneGPUBuilder {
     public:
-        static SceneGPUData build(
+        static BenchmarkSceneGPUData build(
             const SceneCPUData& source,
             ID3D12Device* device,
             ID3D12GraphicsCommandList* command_list,

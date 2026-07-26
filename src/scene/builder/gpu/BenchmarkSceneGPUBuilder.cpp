@@ -1,4 +1,4 @@
-#include "scene/builder/gpu/SceneGPUBuilder.h"
+#include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
 
 #include <array>
 #include <cstddef>
@@ -80,7 +80,7 @@ namespace scene {
             bool srgb,
             ID3D12Device* device,
             ID3D12GraphicsCommandList* command_list,
-            SceneGPUData& destination,
+            BenchmarkSceneGPUData& destination,
             std::unordered_map<std::string, uint32_t>& texture_cache,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
                 used_upload_heaps,
@@ -233,7 +233,7 @@ namespace scene {
         }
     }
 
-    SceneGPUData SceneGPUBuilder::build(
+    BenchmarkSceneGPUData BenchmarkSceneGPUBuilder::build(
         const SceneCPUData& source,
         ID3D12Device* device,
         ID3D12GraphicsCommandList* command_list,
@@ -263,13 +263,13 @@ namespace scene {
             (std::numeric_limits<uint32_t>::max)(),
             "GPU scene data exceeds 32-bit indexing.");
 
-        SceneGPUData destination{};
-        std::vector<SceneGPUData::MeshData> meshes;
-        std::vector<SceneGPUData::SubmeshData> submeshes;
-        std::vector<SceneGPUData::MaterialData> materials;
-        std::vector<SceneGPUData::InstanceData> instances;
-        std::vector<SceneGPUData::InstanceData> render_instances;
-        std::vector<SceneGPUData::DrawData> draws;
+        BenchmarkSceneGPUData destination{};
+        std::vector<BenchmarkSceneGPUData::MeshData> meshes;
+        std::vector<BenchmarkSceneGPUData::SubmeshData> submeshes;
+        std::vector<BenchmarkSceneGPUData::MaterialData> materials;
+        std::vector<BenchmarkSceneGPUData::InstanceData> instances;
+        std::vector<BenchmarkSceneGPUData::InstanceData> render_instances;
+        std::vector<BenchmarkSceneGPUData::DrawData> draws;
         std::unordered_map<std::string, uint32_t> texture_cache;
 
         meshes.reserve(source.meshes.size());
@@ -298,7 +298,7 @@ namespace scene {
 
         materials.reserve(source.materials.size());
         for (const SceneCPUData::Material& material : source.materials) {
-            SceneGPUData::MaterialData gpu_material{};
+            BenchmarkSceneGPUData::MaterialData gpu_material{};
             gpu_material.base_color = material.base_color;
             gpu_material.emissive_color = material.emissive_color;
             gpu_material.emissive_intensity =
@@ -312,11 +312,11 @@ namespace scene {
                 material.occlusion_strength;
             if (material.alpha_tested) {
                 gpu_material.flags |=
-                    SceneGPUData::MATERIAL_FLAG_ALPHA_TESTED;
+                    BenchmarkSceneGPUData::MATERIAL_FLAG_ALPHA_TESTED;
             }
             if (material.double_sided) {
                 gpu_material.flags |=
-                    SceneGPUData::MATERIAL_FLAG_DOUBLE_SIDED;
+                    BenchmarkSceneGPUData::MATERIAL_FLAG_DOUBLE_SIDED;
             }
 
             const SceneCPUData::Material::TexturePath texture_paths[] = {
@@ -334,11 +334,11 @@ namespace scene {
                 false
             };
             constexpr uint32_t texture_flags[] = {
-                SceneGPUData::MATERIAL_FLAG_BASE_COLOR_TEXTURE,
-                SceneGPUData::MATERIAL_FLAG_METAL_ROUGHNESS_TEXTURE,
-                SceneGPUData::MATERIAL_FLAG_NORMAL_TEXTURE,
-                SceneGPUData::MATERIAL_FLAG_EMISSIVE_TEXTURE,
-                SceneGPUData::MATERIAL_FLAG_OCCLUSION_TEXTURE
+                BenchmarkSceneGPUData::MATERIAL_FLAG_BASE_COLOR_TEXTURE,
+                BenchmarkSceneGPUData::MATERIAL_FLAG_METAL_ROUGHNESS_TEXTURE,
+                BenchmarkSceneGPUData::MATERIAL_FLAG_NORMAL_TEXTURE,
+                BenchmarkSceneGPUData::MATERIAL_FLAG_EMISSIVE_TEXTURE,
+                BenchmarkSceneGPUData::MATERIAL_FLAG_OCCLUSION_TEXTURE
             };
 
             for (size_t slot = 0; slot < gpu_material.texture_indices.size(); ++slot) {
@@ -413,7 +413,7 @@ namespace scene {
             device,
             command_list,
             meshes.data(),
-            meshes.size() * sizeof(SceneGPUData::MeshData),
+            meshes.size() * sizeof(BenchmarkSceneGPUData::MeshData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.mesh_buffer,
             used_upload_heaps);
@@ -421,7 +421,7 @@ namespace scene {
             device,
             command_list,
             submeshes.data(),
-            submeshes.size() * sizeof(SceneGPUData::SubmeshData),
+            submeshes.size() * sizeof(BenchmarkSceneGPUData::SubmeshData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.submesh_buffer,
             used_upload_heaps);
@@ -429,7 +429,7 @@ namespace scene {
             device,
             command_list,
             materials.data(),
-            materials.size() * sizeof(SceneGPUData::MaterialData),
+            materials.size() * sizeof(BenchmarkSceneGPUData::MaterialData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.material_buffer,
             used_upload_heaps);
@@ -437,7 +437,7 @@ namespace scene {
             device,
             command_list,
             instances.data(),
-            instances.size() * sizeof(SceneGPUData::InstanceData),
+            instances.size() * sizeof(BenchmarkSceneGPUData::InstanceData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.instance_buffer,
             used_upload_heaps);
@@ -445,7 +445,7 @@ namespace scene {
             device,
             command_list,
             render_instances.data(),
-            render_instances.size() * sizeof(SceneGPUData::InstanceData),
+            render_instances.size() * sizeof(BenchmarkSceneGPUData::InstanceData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.render_instance_buffer,
             used_upload_heaps);
@@ -453,7 +453,7 @@ namespace scene {
             device,
             command_list,
             draws.data(),
-            draws.size() * sizeof(SceneGPUData::DrawData),
+            draws.size() * sizeof(BenchmarkSceneGPUData::DrawData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
             destination.draw_buffer,
             used_upload_heaps);

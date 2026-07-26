@@ -13,7 +13,7 @@
 
 namespace scene {
 
-    struct SceneGPUData {
+    struct BenchmarkSceneGPUData {
         static constexpr uint32_t MATERIAL_FLAG_BASE_COLOR_TEXTURE = 1u << 0;
         static constexpr uint32_t MATERIAL_FLAG_METAL_ROUGHNESS_TEXTURE = 1u << 1;
         static constexpr uint32_t MATERIAL_FLAG_NORMAL_TEXTURE = 1u << 2;
@@ -109,9 +109,9 @@ namespace scene {
         void validate() const;
     };
 
-    static_assert(sizeof(SceneGPUData::MeshData) == 16);
-    static_assert(sizeof(SceneGPUData::SubmeshData) == 32);
-    static_assert(sizeof(SceneGPUData::MaterialData) == 96);
-    static_assert(sizeof(SceneGPUData::InstanceData) == 64);
-    static_assert(sizeof(SceneGPUData::DrawData) == 32);
+    static_assert(sizeof(BenchmarkSceneGPUData::MeshData) == 16);
+    static_assert(sizeof(BenchmarkSceneGPUData::SubmeshData) == 32);
+    static_assert(sizeof(BenchmarkSceneGPUData::MaterialData) == 96);
+    static_assert(sizeof(BenchmarkSceneGPUData::InstanceData) == 64);
+    static_assert(sizeof(BenchmarkSceneGPUData::DrawData) == 32);
 }

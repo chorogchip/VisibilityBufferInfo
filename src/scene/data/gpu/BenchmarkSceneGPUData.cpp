@@ -1,4 +1,4 @@
-#include "scene/data/gpu/SceneGPUData.h"
+#include "scene/data/gpu/BenchmarkSceneGPUData.h"
 
 #include <cstdint>
 
@@ -6,7 +6,7 @@
 
 namespace scene {
 
-    void SceneGPUData::validate() const {
+    void BenchmarkSceneGPUData::validate() const {
         util::Logger::g_logger.assert_with_log(
             static_cast<bool>(vertex_buffer) &&
             static_cast<bool>(index_buffer) &&
