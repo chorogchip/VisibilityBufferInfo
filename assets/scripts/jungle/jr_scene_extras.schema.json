@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visibilitybufferinfo.local/schemas/jr_scene_extras.schema.json",
+  "title": "JungleRuins glTF extras.jr metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "stable_id",
+    "entity_type",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "stable_id": {
+      "type": "string",
+      "pattern": "^jr:"
+    },
+    "entity_type": {
+      "enum": [
+        "root",
+        "region",
+        "cell",
+        "system",
+        "prototype",
+        "static_object",
+        "material",
+        "texture",
+        "camera",
+        "point_instancer"
+      ]
+    },
+    "provenance": {
+      "enum": [
+        "source",
+        "computed",
+        "inferred"
+      ]
+    },
+    "region": {
+      "enum": [
+        "cinematic",
+        "extended",
+        "pyramid",
+        "global"
+      ]
+    },
+    "cell": {
+      "type": "string"
+    },
+    "system": {
+      "type": "string"
+    },
+    "species": {
+      "type": "string"
+    },
+    "prototype": {
+      "type": "string"
+    },
+    "source_object": {
+      "type": "string"
+    },
+    "source_collection": {
+      "type": "string"
+    },
+    "source_prim": {
+      "type": "string"
+    },
+    "source_layer": {
+      "type": "string"
+    },
+    "instance_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "bounds": {
+      "$ref": "#/$defs/bounds"
+    },
+    "position_bounds": {
+      "$ref": "#/$defs/bounds"
+    },
+    "semantic": {
+      "type": "string"
+    },
+    "semantic_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "vec3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "$ref": "#/$defs/vec3"
+        },
+        "max": {
+          "$ref": "#/$defs/vec3"
+        }
+      }
+    }
+  }
+}
+
