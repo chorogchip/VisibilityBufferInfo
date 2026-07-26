@@ -64,21 +64,21 @@ namespace rndr {
         const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
             make_structured_srv_desc(
                 static_cast<UINT>(resources_.scene->render_instance_data.size()),
-                sizeof(scene::DonutSceneDataGPU::InstanceData));
+                sizeof(scene::DonutSceneGPUData::InstanceData));
 
         resources_.shader_manager->create_srv(
-            resources_.scene->render_instance_buffer.Get(),
+            resources_.scene->render_instance_buffer.get(),
             instance_srv,
             eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
         resources_.shader_manager->create_srv(
-            resources_.scene->vertex_buffer.Get(),
-            eng::ResourceViewBuilder::build_srv(resources_.scene->vertex_buffer.Get()),
+            resources_.scene->vertex_buffer.get(),
+            eng::ResourceViewBuilder::build_srv(resources_.scene->vertex_buffer.get()),
             eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER);
 
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
             ++material_id) {
-            const scene::DonutSceneDataGPU::MaterialData& material =
+            const scene::DonutSceneGPUData::MaterialData& material =
                 resources_.scene->material_data[material_id];
             for (UINT slot_index = 0;
                 slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
@@ -89,9 +89,9 @@ namespace rndr {
                     "Donut depth material texture index is invalid");
 
                 resources_.shader_manager->create_srv(
-                    resources_.scene->textures[texture_index].Get(),
+                    resources_.scene->textures[texture_index].get(),
                     eng::ResourceViewBuilder::build_srv(
-                        resources_.scene->textures[texture_index].Get(),
+                        resources_.scene->textures[texture_index].get(),
                         eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                     eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
                     material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
@@ -175,7 +175,7 @@ namespace rndr {
         command_list->ClearDepthStencilView(
             dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
+        for (const auto& draw : resources_.scene->draws) {
             const PushConstants push_constants{
                 draw.first_render_instance,
                 0,
@@ -187,7 +187,8 @@ namespace rndr {
                 PUSH_CONSTANT_DWORD_COUNT, &push_constants, 0);
 
             const D3D12_GPU_VIRTUAL_ADDRESS material_address =
-                resources_.scene->material_constant_buffer->GetGPUVirtualAddress() +
+                resources_.scene->material_constant_buffer.get()->
+                    GetGPUVirtualAddress() +
                 static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(draw.material_id) *
                 resources_.scene->material_constant_stride;
             command_list->SetGraphicsRootConstantBufferView(

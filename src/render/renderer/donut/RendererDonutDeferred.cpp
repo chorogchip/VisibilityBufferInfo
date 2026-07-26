@@ -191,8 +191,6 @@ namespace rndr {
 		const UINT geometry_slot = do_prepass_ ? 2 : 1;
 		const UINT lighting_slot = geometry_slot + 1;
 		const UINT tonemap_slot = lighting_slot + 1;
-		record_render_instance_upload_(command_list_.Get());
-
 		if (do_prepass_) {
 			frame_time_.start_timestamp(
 				command_list_.Get(), frame_index_, 1);

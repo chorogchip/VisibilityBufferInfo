@@ -187,8 +187,6 @@ namespace rndr {
     }
 
     void RendererDonutVisGBuffer::render_record_() {
-        record_render_instance_upload_(command_list_.Get());
-
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 1);
         pass_visibility_.render(
             command_list_.Get(), frame_index_, viewport_, scissor_rect_);

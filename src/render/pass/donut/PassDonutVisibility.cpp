@@ -53,7 +53,7 @@ namespace rndr {
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
             ++material_id) {
-            const scene::DonutSceneDataGPU::MaterialData& material =
+            const scene::DonutSceneGPUData::MaterialData& material =
                 resources_.scene->material_data[material_id];
             for (UINT slot_index = 0;
                 slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
@@ -64,9 +64,9 @@ namespace rndr {
                     "Donut visibility material texture index is invalid");
 
                 resources_.shader_manager->create_srv(
-                    resources_.scene->textures[texture_index].Get(),
+                    resources_.scene->textures[texture_index].get(),
                     eng::ResourceViewBuilder::build_srv(
-                        resources_.scene->textures[texture_index].Get(),
+                        resources_.scene->textures[texture_index].get(),
                         eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                     eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
                     material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
@@ -134,10 +134,11 @@ namespace rndr {
             resources_.constant_buffers[frame_index]->get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.scene->render_instance_buffer->GetGPUVirtualAddress());
+            resources_.scene->render_instance_buffer.get()->
+                GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::VERTEX_BUFFER),
-            resources_.scene->vertex_buffer->GetGPUVirtualAddress());
+            resources_.scene->vertex_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
             resources_.sampler_manager->get_gpu_adr(
@@ -161,7 +162,7 @@ namespace rndr {
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetIndexBuffer(&resources_.scene->index_buffer_view);
 
-        for (const scene::DonutSceneDataGPU::Draw& draw : resources_.scene->draws) {
+        for (const auto& draw : resources_.scene->draws) {
             const PushConstants push_constants{
                 draw.first_render_instance,
                 resources_.scene->vertex_layout.position_offset,
@@ -172,7 +173,8 @@ namespace rndr {
                 PUSH_CONSTANT_DWORD_COUNT, &push_constants, 0);
 
             const D3D12_GPU_VIRTUAL_ADDRESS material_address =
-                resources_.scene->material_constant_buffer->GetGPUVirtualAddress() +
+                resources_.scene->material_constant_buffer.get()->
+                    GetGPUVirtualAddress() +
                 static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(draw.material_id) *
                 resources_.scene->material_constant_stride;
             command_list->SetGraphicsRootConstantBufferView(

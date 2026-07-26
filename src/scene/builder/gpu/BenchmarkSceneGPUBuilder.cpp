@@ -596,4 +596,22 @@ namespace scene {
         BenchmarkSceneGPUValidator::validate(destination);
         return destination;
     }
+
+    void BenchmarkSceneGPUBuilder::rebuild_draws(
+        const SceneCPUData& source,
+        BenchmarkSceneGPUData& destination) {
+        destination.draw_calls = source.draw_calls;
+        destination.draw_count =
+            static_cast<uint32_t>(destination.draw_calls.size());
+
+        for (const auto& draw : destination.draw_calls) {
+            util::Logger::g_logger.assert_with_log(
+                draw.first_instance <=
+                destination.render_instance_count &&
+                draw.instance_count <=
+                destination.render_instance_count -
+                draw.first_instance,
+                "Benchmark draw references an invalid render instance range.");
+        }
+    }
 }

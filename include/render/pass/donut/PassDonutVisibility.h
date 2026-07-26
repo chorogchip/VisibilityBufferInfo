@@ -3,7 +3,7 @@
 #include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
-#include "scene/donut/DonutSceneDataGPU.h"
+#include "scene/data/gpu/DonutSceneGPUData.h"
 
 namespace eng {
     class GPUResource;
@@ -21,14 +21,14 @@ namespace rndr {
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* visibility_buf = nullptr;
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
-        const scene::DonutSceneDataGPU* scene = nullptr;
+        const scene::DonutSceneGPUData* scene = nullptr;
     };
 
     class PassDonutVisibility {
 
     public:
         static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
-            scene::DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+            scene::DonutSceneGPUData::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
 
         void init(
             ID3D12Device* device,

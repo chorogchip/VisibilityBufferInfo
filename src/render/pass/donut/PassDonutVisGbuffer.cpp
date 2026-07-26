@@ -59,7 +59,7 @@ namespace rndr {
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
             ++material_id) {
-            const scene::DonutSceneDataGPU::MaterialData& material =
+            const scene::DonutSceneGPUData::MaterialData& material =
                 resources_.scene->material_data[material_id];
             for (UINT slot_index = 0;
                 slot_index < MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
@@ -70,9 +70,9 @@ namespace rndr {
                     "Donut visibility G-buffer material texture index is invalid");
 
                 resources_.shader_manager->create_srv(
-                    resources_.scene->textures[texture_index].Get(),
+                    resources_.scene->textures[texture_index].get(),
                     eng::ResourceViewBuilder::build_srv(
-                        resources_.scene->textures[texture_index].Get(),
+                        resources_.scene->textures[texture_index].get(),
                         eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
                     eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN,
                     material_id * MATERIAL_TEXTURE_DESCRIPTOR_COUNT + slot_index);
@@ -101,7 +101,7 @@ namespace rndr {
             MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
         util::Logger::g_logger.assert_with_log(
             material_texture_descriptor_count <=
-            scene::DonutSceneDataGPU::MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT,
+            scene::DonutSceneGPUData::MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT,
             "Donut visibility G-buffer material texture descriptor count exceeds shader limit");
         const std::string material_descriptor_count_define =
             std::to_string(material_texture_descriptor_count);
@@ -182,22 +182,23 @@ namespace rndr {
                 eng::ResourceManagerShader::EnumDescPos::DONUT_VISIBILITY_BUFFER));
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INDEX_BUFFER),
-            resources_.scene->index_buffer->GetGPUVirtualAddress());
+            resources_.scene->index_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::VERTEX_BUFFER),
-            resources_.scene->vertex_buffer->GetGPUVirtualAddress());
+            resources_.scene->vertex_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.scene->instance_buffer->GetGPUVirtualAddress());
+            resources_.scene->instance_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::SUBMESH_BUFFER),
-            resources_.scene->submesh_buffer->GetGPUVirtualAddress());
+            resources_.scene->submesh_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::GEOMETRY_INSTANCE_BUFFER),
-            resources_.scene->geometry_instance_buffer->GetGPUVirtualAddress());
+            resources_.scene->geometry_instance_buffer.get()->
+                GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::MATERIAL_BUFFER),
-            resources_.scene->material_buffer->GetGPUVirtualAddress());
+            resources_.scene->material_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_TEXTURES),
             resources_.shader_manager->get_gpu_adr(

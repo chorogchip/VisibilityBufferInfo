@@ -4,7 +4,7 @@
 #include "ProgramArgument.h"
 #include "engine/GPUResource.h"
 #include "engine/GraphicsPipeline.h"
-#include "scene/donut/DonutSceneDataGPU.h"
+#include "scene/data/gpu/DonutSceneGPUData.h"
 
 namespace eng {
     class ResourceManagerFrame;
@@ -22,14 +22,14 @@ namespace rndr {
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* gbuffers[4]{};
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
-        const scene::DonutSceneDataGPU* scene = nullptr;
+        const scene::DonutSceneGPUData* scene = nullptr;
     };
 
     class PassDonutVisGBuffer {
 
     public:
         static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
-            scene::DonutSceneDataGPU::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
+            scene::DonutSceneGPUData::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
 
         void init(
             ID3D12Device* device,

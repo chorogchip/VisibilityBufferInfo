@@ -123,6 +123,9 @@ namespace rndr {
             scene::SceneCPUDrawBuilder::build_visible(
                 *scene_cpu_,
                 world_frustum);
+            scene::BenchmarkSceneGPUBuilder::rebuild_draws(
+                *scene_cpu_,
+                *scene_gpu_);
         }
 
         profile_index_count_ = static_cast<double>(

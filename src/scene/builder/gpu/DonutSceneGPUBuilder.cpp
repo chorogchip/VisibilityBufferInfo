@@ -919,4 +919,31 @@ namespace scene {
         DonutSceneGPUValidator::validate(destination);
         return destination;
     }
+
+    void DonutSceneGPUBuilder::rebuild_draws(
+        const SceneCPUData& source,
+        DonutSceneGPUData& destination) {
+        destination.draws.clear();
+        destination.draws.reserve(source.draw_calls.size());
+        for (const auto& source_draw : source.draw_calls) {
+            util::Logger::g_logger.assert_with_log(
+                source_draw.first_instance <=
+                destination.render_instance_data.size() &&
+                source_draw.instance_count <=
+                destination.render_instance_data.size() -
+                source_draw.first_instance,
+                "Donut draw references an invalid render instance range.");
+
+            DonutSceneGPUData::DrawData draw{};
+            draw.first_render_instance =
+                source_draw.first_instance;
+            draw.instance_count = source_draw.instance_count;
+            draw.submesh_id = source_draw.submesh_id;
+            draw.index_count = source_draw.index_count;
+            draw.index_offset = source_draw.index_offset;
+            draw.vertex_offset = source_draw.vertex_offset;
+            draw.material_id = source_draw.material_id;
+            destination.draws.emplace_back(draw);
+        }
+    }
 }

@@ -20,5 +20,9 @@ namespace scene {
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
                 used_upload_heaps,
             bool load_textures = true);
+
+        static void rebuild_draws(
+            const SceneCPUData& source,
+            BenchmarkSceneGPUData& destination);
     };
 }
