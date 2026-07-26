@@ -12,8 +12,10 @@
 #include "dx_util/ResourceUtils.h"
 #include "engine/ResourceManagerShader.h"
 #include "scene/SceneFingerprint.h"
-#include "scene/SceneLoader.h"
-#include "scene/SceneResourceBuilder.h"
+#include "scene/builder/cpu/SceneCPUBuilder.h"
+#include "scene/builder/cpu/SceneCPUDrawBuilder.h"
+#include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
+#include "scene/builder/source/SceneSourceLoader.h"
 
 namespace rndr {
 
@@ -36,9 +38,13 @@ namespace rndr {
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             buf_constant_[i].init(device_.Get());
 
-        scene_cpu_ = scene::SceneLoader::load(program_argument_);
+        scene::SceneSourceData source =
+            scene::SceneSourceLoader::load(program_argument_);
+        scene_cpu_ = std::make_unique<scene::SceneCPUData>(
+            scene::SceneCPUBuilder::build(source));
         to_profile_index_count_ = true;
-        profile_index_count_ = static_cast<double>(scene_cpu_->count_batch_indices());
+        profile_index_count_ = static_cast<double>(
+            scene::SceneCPUDrawBuilder::count_indices(*scene_cpu_));
 
         scene::SceneFingerprint::write_csv(
             util::get_scene_fingerprint_output_path(program_argument_.output_filepath),
@@ -51,9 +57,14 @@ namespace rndr {
             util::Utils::throw_if_failed(command_list_->Reset(
                 command_allocator_[frame_index_].Get(), nullptr));
 
-            scene_gpu_ = scene::SceneResourceBuilder::build(
-                *scene_cpu_, device_.Get(), command_list_.Get(), used_upload_heaps,
-                program_argument_.to_load_texture);
+            scene_gpu_ =
+                std::make_unique<scene::BenchmarkSceneGPUData>(
+                    scene::BenchmarkSceneGPUBuilder::build(
+                        *scene_cpu_,
+                        device_.Get(),
+                        command_list_.Get(),
+                        used_upload_heaps,
+                        program_argument_.to_load_texture));
 
             util::Utils::throw_if_failed(command_list_->Close(),
                 "close list on resource creation");
@@ -109,10 +120,13 @@ namespace rndr {
                 world_frustum,
                 DirectX::XMMatrixInverse(nullptr, mat_view));
 
-            scene_cpu_->build_batches_from_frustum(world_frustum);
+            scene::SceneCPUDrawBuilder::build_visible(
+                *scene_cpu_,
+                world_frustum);
         }
 
-        profile_index_count_ = static_cast<double>(scene_cpu_->count_batch_indices());
+        profile_index_count_ = static_cast<double>(
+            scene::SceneCPUDrawBuilder::count_indices(*scene_cpu_));
     }
 
     void RendererBenchmark::wrap_scene_resources() {
@@ -120,20 +134,22 @@ namespace rndr {
             scene_gpu_ != nullptr, "benchmark scene GPU data must be initialized");
 
         scene_vertex_buffer_.init(
-            scene_gpu_->vertex_buffer.Get(),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            scene_gpu_->vertex_buffer.get(),
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER |
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene_index_buffer_.init(
-            scene_gpu_->index_buffer.Get(),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        scene_object_buffer_.init(
-            scene_gpu_->object_buffer.Get(),
+            scene_gpu_->index_buffer.get(),
+            D3D12_RESOURCE_STATE_INDEX_BUFFER |
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene_render_instance_buffer_.init(
+            scene_gpu_->render_instance_buffer.get(),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene_material_buffer_.init(
-            scene_gpu_->material_buffer.Get(),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        scene_mesh_buffer_.init(
-            scene_gpu_->mesh_buffer.Get(),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            scene_gpu_->material_buffer.get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene_submesh_buffer_.init(
+            scene_gpu_->submesh_buffer.get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
     void RendererBenchmark::create_dummy_textures() {
@@ -145,8 +161,8 @@ namespace rndr {
             for (const auto& texture : scene_gpu_->textures) {
                 textures_.emplace_back();
                 textures_.back().init(
-                    texture.Get(),
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+                    texture.get(),
+                    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
             }
             return;
         }

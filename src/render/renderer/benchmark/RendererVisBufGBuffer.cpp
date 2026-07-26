@@ -6,7 +6,6 @@
 #include "util/RenderConstants.h"
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
-#include "engine/MaterialGPU.h"
 
 namespace rndr {
 
@@ -67,7 +66,7 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         visibility.instance_buffer_address =
-            scene_object_buffer_.get()->GetGPUVirtualAddress();
+            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
@@ -79,8 +78,8 @@ namespace rndr {
         gbuffer.visibility = &vis_buffer_;
         gbuffer.vertex_buffer = &scene_vertex_buffer_;
         gbuffer.index_buffer = &scene_index_buffer_;
-        gbuffer.mesh_buffer = &scene_mesh_buffer_;
-        gbuffer.instance_buffer = &scene_object_buffer_;
+        gbuffer.submesh_buffer = &scene_submesh_buffer_;
+        gbuffer.instance_buffer = &scene_render_instance_buffer_;
         gbuffer.material_buffer = &scene_material_buffer_;
         gbuffer.scene = scene_cpu_.get();
         for (auto& texture : textures_)

@@ -48,7 +48,7 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         gbuffer.instance_buffer_address =
-            scene_object_buffer_.get()->GetGPUVirtualAddress();
+            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
         gbuffer.material_buffer_address =
             scene_material_buffer_.get()->GetGPUVirtualAddress();
         for (auto& texture : textures_)
@@ -57,7 +57,7 @@ namespace rndr {
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
         gbuffer.scene = scene_cpu_.get();
-        gbuffer.materials = &scene_gpu_->materials;
+        gbuffer.materials = &scene_gpu_->material_data;
         gbuffer.to_use_textures = program_argument_.to_load_texture;
 
         if (do_prepass_) {
@@ -71,7 +71,7 @@ namespace rndr {
                 buf_constant_[1].get()->GetGPUVirtualAddress();
             static_assert(util::Constants::FRAME_COUNT == 2);
             depth.instance_buffer_address =
-                scene_object_buffer_.get()->GetGPUVirtualAddress();
+                scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth.index_buffer_view = scene_gpu_->index_buffer_view;
             depth.scene = scene_cpu_.get();

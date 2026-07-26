@@ -5,8 +5,8 @@
 #include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
-#include "scene/SceneDataCPU.h"
-#include "engine/MaterialGPU.h"
+#include "scene/data/cpu/SceneCPUData.h"
+#include "scene/data/gpu/BenchmarkSceneGPUData.h"
 #include <vector>
 
 namespace eng {
@@ -30,8 +30,9 @@ namespace rndr {
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
-        const scene::SceneDataCPU* scene = nullptr;
-        const std::vector<eng::MaterialGPU>* materials;
+        const scene::SceneCPUData* scene = nullptr;
+        const std::vector<scene::BenchmarkSceneGPUData::MaterialData>*
+            materials = nullptr;
         bool to_use_textures = false;
     };
 

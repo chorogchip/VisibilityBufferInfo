@@ -3,7 +3,7 @@
 #include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
-#include "scene/SceneDataCPU.h"
+#include "scene/data/cpu/SceneCPUData.h"
 
 namespace eng {
     class GPUResource;
@@ -20,7 +20,7 @@ namespace rndr {
         D3D12_GPU_VIRTUAL_ADDRESS instance_buffer_address = 0;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
-        const scene::SceneDataCPU* scene = nullptr;
+        const scene::SceneCPUData* scene = nullptr;
     };
 
     class PassVisibility {

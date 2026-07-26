@@ -75,13 +75,16 @@ namespace rndr {
         command_list->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
         command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const auto& batch : resources_.scene->batches) {
-            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
+        for (const auto& draw : resources_.scene->draw_calls) {
             command_list->SetGraphicsRoot32BitConstant(
                 static_cast<UINT>(RootParam::DRAW_CONSTANT),
-                batch.object_index, 0);
+                draw.first_instance, 0);
             command_list->DrawIndexedInstanced(
-                mesh.index_count, batch.object_count, mesh.index_start, mesh.vertex_start, 0);
+                draw.index_count,
+                draw.instance_count,
+                draw.index_offset,
+                draw.vertex_offset,
+                0);
         }
     }
 

@@ -27,9 +27,8 @@ struct Vertex
 {
     float3 position;
     float3 normal;
+    float4 tangent;
     float2 texcoord0;
-    float2 texcoord1;
-    float3 tangent;
 };
 
 struct InstanceData

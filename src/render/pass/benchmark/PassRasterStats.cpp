@@ -62,7 +62,7 @@ namespace rndr {
                 resources.vertex_buffer->get()->GetGPUVirtualAddress());
             command_list->SetComputeRootShaderResourceView(
                 static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-                resources.object_buffer->get()->GetGPUVirtualAddress());
+                resources.instance_buffer->get()->GetGPUVirtualAddress());
             command_list->SetComputeRootUnorderedAccessView(
                 static_cast<UINT>(RootParam::PIXEL_COUNT_BUFFER),
                 resources.pixel_count_buffer->get()->GetGPUVirtualAddress());
@@ -151,7 +151,7 @@ namespace rndr {
             command_list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         resources_.vertex_buffer->transition(
             command_list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        resources_.object_buffer->transition(
+        resources_.instance_buffer->transition(
             command_list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         resources_.pixel_count_buffer->transition(
             command_list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);

@@ -57,7 +57,7 @@ DebugPSInput main(
     );
 
     float3 tangentWorld = normalize(
-        mul(input.tangent, (float3x3) instanceData.World)
+        mul(input.tangent.xyz, (float3x3) instanceData.World)
     );
 
     tangentWorld = normalize(
@@ -68,7 +68,7 @@ DebugPSInput main(
     output.position = mul(positionView, gProj);
     output.normal = normalize(mul(normalWorld, (float3x3) gView));
     output.texcoord0 = input.texcoord0;
-    output.texcoord1 = input.texcoord1;
+    output.texcoord1 = input.texcoord0;
     output.tangent = normalize(mul(tangentWorld, (float3x3) gView));
     output.world_pos = positionWorld.xyz;
     output.material_index = instanceData.material_index;

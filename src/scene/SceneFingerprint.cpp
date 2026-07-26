@@ -63,7 +63,7 @@ namespace scene {
 		}
 
 		static bool valid_triangle_indices(
-			const SceneDataCPU& scene,
+			const SceneCPUData& scene,
 			uint32_t i0,
 			uint32_t i1,
 			uint32_t i2) {
@@ -149,30 +149,36 @@ namespace scene {
 
 	}
 
-	SceneFingerprint::Metrics SceneFingerprint::analyze(const SceneDataCPU& scene) {
+	SceneFingerprint::Metrics SceneFingerprint::analyze(
+		const SceneCPUData& scene,
+		const util::ProgramArgument& arg) {
 		Metrics metrics{};
-		metrics.source_path = scene.source_path;
-		metrics.ok = scene.loaded;
+		metrics.source_path = arg.to_use_scene
+			? std::filesystem::absolute(arg.scene_path)
+			: std::filesystem::path{};
+		metrics.ok = true;
 		//metrics.message = scene.error_message; for no csv argument support for arbitrary string
 		metrics.message = "no-message";
 		metrics.mesh_count = static_cast<uint32_t>(scene.meshes.size());
-		metrics.object_count = static_cast<uint32_t>(scene.objects.size());
+		metrics.object_count = static_cast<uint32_t>(scene.instances.size());
 		metrics.material_count = static_cast<uint32_t>(scene.materials.size());
 		metrics.vertex_count = static_cast<uint64_t>(scene.vertices.size());
 		metrics.index_count = static_cast<uint64_t>(scene.indices.size());
 		metrics.triangle_count = metrics.index_count / 3;
 
-		if (std::filesystem::exists(scene.source_path)) {
-			metrics.file_size_bytes = std::filesystem::file_size(scene.source_path);
+		if (!metrics.source_path.empty() &&
+			std::filesystem::exists(metrics.source_path)) {
+			metrics.file_size_bytes =
+				std::filesystem::file_size(metrics.source_path);
 		}
 
-		if (metrics.vertex_count > 0) {
-			metrics.bounds_min_x = scene.bounds_min.x;
-			metrics.bounds_min_y = scene.bounds_min.y;
-			metrics.bounds_min_z = scene.bounds_min.z;
-			metrics.bounds_max_x = scene.bounds_max.x;
-			metrics.bounds_max_y = scene.bounds_max.y;
-			metrics.bounds_max_z = scene.bounds_max.z;
+		if (scene.world_aabb.is_valid) {
+			metrics.bounds_min_x = scene.world_aabb.pos_min.x;
+			metrics.bounds_min_y = scene.world_aabb.pos_min.y;
+			metrics.bounds_min_z = scene.world_aabb.pos_min.z;
+			metrics.bounds_max_x = scene.world_aabb.pos_max.x;
+			metrics.bounds_max_y = scene.world_aabb.pos_max.y;
+			metrics.bounds_max_z = scene.world_aabb.pos_max.z;
 		}
 
 		metrics.extent_x = metrics.bounds_max_x - metrics.bounds_min_x;
@@ -183,22 +189,25 @@ namespace scene {
 
 		std::vector<uint64_t> mesh_triangle_counts;
 		std::vector<double> triangle_areas;
-		mesh_triangle_counts.reserve(scene.meshes.size());
+		mesh_triangle_counts.reserve(scene.submeshes.size());
 		triangle_areas.reserve(static_cast<size_t>(metrics.triangle_count));
 
-		for (const auto& mesh : scene.meshes) {
-			const uint64_t mesh_triangles = mesh.index_count / 3;
+		for (const SceneCPUData::Submesh& submesh : scene.submeshes) {
+			const uint64_t mesh_triangles = submesh.index_count / 3;
 			if (mesh_triangles > 0) {
 				mesh_triangle_counts.push_back(mesh_triangles);
 			}
 
-			for (uint32_t offset = 0; offset + 2 < mesh.index_count; offset += 3) {
-				const uint32_t index_pos = mesh.index_start + offset;
+			for (uint32_t offset = 0; offset + 2 < submesh.index_count; offset += 3) {
+				const uint32_t index_pos = submesh.index_offset + offset;
 				if (index_pos + 2 >= scene.indices.size()) continue;
 
-				const uint32_t i0 = scene.indices[index_pos + 0];
-				const uint32_t i1 = scene.indices[index_pos + 1];
-				const uint32_t i2 = scene.indices[index_pos + 2];
+				const uint32_t i0 =
+					scene.indices[index_pos + 0] + submesh.vertex_offset;
+				const uint32_t i1 =
+					scene.indices[index_pos + 1] + submesh.vertex_offset;
+				const uint32_t i2 =
+					scene.indices[index_pos + 2] + submesh.vertex_offset;
 				if (!valid_triangle_indices(scene, i0, i1, i2)) continue;
 
 				const Vec3 p0 = to_vec3(scene.vertices[i0].position);
@@ -243,10 +252,10 @@ namespace scene {
 		metrics.mesh_tri_avg = average_or_zero(mesh_triangle_counts);
 
 		std::map<uint32_t, uint64_t> material_triangle_counts;
-		for (const auto& object : scene.objects) {
-			if (object.mesh_index >= scene.meshes.size()) continue;
-			const auto& mesh = scene.meshes[object.mesh_index];
-			material_triangle_counts[object.material_index] += mesh.index_count / 3;
+		for (const SceneCPUData::DrawCall& draw : scene.all_draw_calls) {
+			material_triangle_counts[draw.material_id] +=
+				static_cast<uint64_t>(draw.index_count / 3) *
+				draw.instance_count;
 		}
 
 		std::vector<uint64_t> material_triangles;
@@ -267,14 +276,15 @@ namespace scene {
 		}
 
 		std::set<std::string> unique_textures;
-		for (const auto& material : scene.materials) {
-			const std::array<const eng::MaterialCPU::TexturePath*, 6> texture_slots = {
+		for (const SceneCPUData::Material& material : scene.materials) {
+			const std::array<
+				const SceneCPUData::Material::TexturePath*,
+				5> texture_slots = {
 				&material.base_color_texture,
-				&material.normal_texture,
 				&material.metal_roughness_texture,
+				&material.normal_texture,
 				&material.emissive_texture,
-				&material.occlusion_texture,
-				&material.opacity_texture
+				&material.occlusion_texture
 			};
 
 			for (const auto* texture_slot : texture_slots) {
@@ -283,9 +293,8 @@ namespace scene {
 				const auto& texture_path = **texture_slot;
 				++metrics.texture_reference_count;
 				unique_textures.insert(path_string(texture_path));
-				if (!texture_path.empty() && texture_path.string()[0] != '*') {
-					const std::filesystem::path resolved = scene.source_path.parent_path() / texture_path;
-					if (!std::filesystem::exists(resolved)) {
+				if (!texture_path.empty()) {
+					if (!std::filesystem::exists(texture_path)) {
 						++metrics.missing_texture_file_count;
 					}
 				}
@@ -313,9 +322,9 @@ namespace scene {
 
 	void SceneFingerprint::write_csv(
 		const std::filesystem::path& path,
-		const SceneDataCPU& scene,
+		const SceneCPUData& scene,
 		const util::ProgramArgument& arg) {
-		const Metrics metrics = analyze(scene);
+		const Metrics metrics = analyze(scene, arg);
 
 		std::ofstream output(path, std::ios::out | std::ios::trunc);
 		if (!output) {

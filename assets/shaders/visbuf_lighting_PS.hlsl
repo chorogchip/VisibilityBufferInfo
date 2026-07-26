@@ -12,22 +12,27 @@ struct Vertex
 {
     float3 position;
     float3 normal;
+    float4 tangent;
     float2 uv0;
-    float2 uv1;
-    float3 tangent;
 };
 
-struct Mesh
+struct Submesh
 {
-    uint vertex_start;
-    uint index_start;
+    uint vertex_offset;
+    uint vertex_count;
+    uint index_offset;
+    uint index_count;
+    uint material_id;
+    uint padding0;
+    uint padding1;
+    uint padding2;
 };
 
 struct ObjectData
 {
-    uint object_id;
-    uint material_index;
-    uint mesh_index;
+    uint instance_id;
+    uint material_id;
+    uint submesh_id;
     uint flags;
     float4x4 World;
 };
@@ -43,7 +48,7 @@ cbuffer MatricesCB : register(b0)
 Texture2D<uint2> gVisibility : register(t0);
 StructuredBuffer<Vertex> gVertices : register(t1);
 StructuredBuffer<uint> gIndices : register(t2);
-StructuredBuffer<Mesh> gMeshes : register(t3);
+StructuredBuffer<Submesh> gSubmeshes : register(t3);
 StructuredBuffer<ObjectData> gObjects : register(t4);
 StructuredBuffer<MaterialData> gMaterials : register(t5);
 
@@ -58,14 +63,14 @@ float4 main(PSInput input) : SV_Target
     uint primitive_id = vis.y;
     
     ObjectData obj = gObjects[object_id];
-    Mesh mesh = gMeshes[obj.mesh_index];
-    uint i0 = gIndices[mesh.index_start + primitive_id * 3 + 0];
-    uint i1 = gIndices[mesh.index_start + primitive_id * 3 + 1];
-    uint i2 = gIndices[mesh.index_start + primitive_id * 3 + 2];
+    Submesh submesh = gSubmeshes[obj.submesh_id];
+    uint i0 = gIndices[submesh.index_offset + primitive_id * 3 + 0];
+    uint i1 = gIndices[submesh.index_offset + primitive_id * 3 + 1];
+    uint i2 = gIndices[submesh.index_offset + primitive_id * 3 + 2];
     
-    Vertex v0 = gVertices[mesh.vertex_start + i0];
-    Vertex v1 = gVertices[mesh.vertex_start + i1];
-    Vertex v2 = gVertices[mesh.vertex_start + i2];
+    Vertex v0 = gVertices[submesh.vertex_offset + i0];
+    Vertex v1 = gVertices[submesh.vertex_offset + i1];
+    Vertex v2 = gVertices[submesh.vertex_offset + i2];
     
     float4 world0 = mul(float4(v0.position, 1.0f), obj.World);
     float4 world1 = mul(float4(v1.position, 1.0f), obj.World);
@@ -112,6 +117,6 @@ float4 main(PSInput input) : SV_Target
         normal1 * bary_perspective.y +
         normal2 * bary_perspective.z);
     
-    float4 base_color = gMaterials[obj.material_index].base_color;
+    float4 base_color = gMaterials[obj.material_id].base_color;
     return float4(apply_workload(uv, d_uv_dx, d_uv_dy, normal), base_color.a);
 }

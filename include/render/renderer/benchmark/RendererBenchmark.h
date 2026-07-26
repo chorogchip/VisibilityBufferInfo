@@ -7,8 +7,8 @@
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
 #include "render/renderer/RendererBase.h"
-#include "scene/SceneDataCPU.h"
-#include "scene/SceneDataGPU.h"
+#include "scene/data/cpu/SceneCPUData.h"
+#include "scene/data/gpu/BenchmarkSceneGPUData.h"
 
 namespace rndr {
 	class RendererBenchmark : public RendererBase {
@@ -26,13 +26,13 @@ namespace rndr {
 		eng::ResourceManagerShader resource_manager_shader_;
 		eng::GPUResource depth_stencil_buffer_;
 
-		std::unique_ptr<scene::SceneDataCPU> scene_cpu_;
-		std::unique_ptr<scene::SceneDataGPU> scene_gpu_;
+		std::unique_ptr<scene::SceneCPUData> scene_cpu_;
+		std::unique_ptr<scene::BenchmarkSceneGPUData> scene_gpu_;
 		eng::GPUResource scene_vertex_buffer_;
 		eng::GPUResource scene_index_buffer_;
-		eng::GPUResource scene_object_buffer_;
+		eng::GPUResource scene_render_instance_buffer_;
 		eng::GPUResource scene_material_buffer_;
-		eng::GPUResource scene_mesh_buffer_;
+		eng::GPUResource scene_submesh_buffer_;
 		std::vector<eng::GPUResource> textures_;
 
 		struct ConstBufMatrices {

@@ -68,13 +68,86 @@ namespace scene {
             used_upload_heaps.emplace_back(std::move(upload));
         }
 
-        DirectX::XMFLOAT3X4 to_shader_transform(
-            const DirectX::XMFLOAT4X4& transform) {
-            return {
-                transform._11, transform._21, transform._31, transform._41,
-                transform._12, transform._22, transform._32, transform._42,
-                transform._13, transform._23, transform._33, transform._43
+        uint32_t create_fallback_texture(
+            ID3D12Device* device,
+            ID3D12GraphicsCommandList* command_list,
+            BenchmarkSceneGPUData& destination,
+            std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
+                used_upload_heaps) {
+            D3D12_RESOURCE_DESC desc{};
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            desc.Width = 1;
+            desc.Height = 1;
+            desc.DepthOrArraySize = 1;
+            desc.MipLevels = 1;
+            desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.SampleDesc.Count = 1;
+            desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+            Microsoft::WRL::ComPtr<ID3D12Resource> texture =
+                dxutl::create_committed_resource(
+                    device,
+                    desc,
+                    D3D12_HEAP_TYPE_DEFAULT,
+                    D3D12_RESOURCE_STATE_COPY_DEST);
+            D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
+            UINT64 upload_size = 0;
+            device->GetCopyableFootprints(
+                &desc,
+                0,
+                1,
+                0,
+                &footprint,
+                nullptr,
+                nullptr,
+                &upload_size);
+            Microsoft::WRL::ComPtr<ID3D12Resource> upload =
+                dxutl::create_buffer(
+                    device,
+                    upload_size,
+                    D3D12_HEAP_TYPE_UPLOAD,
+                    D3D12_RESOURCE_STATE_GENERIC_READ);
+            constexpr std::array<uint8_t, 4> WHITE = {
+                255,
+                255,
+                255,
+                255
             };
+            std::byte* mapped = static_cast<std::byte*>(
+                dxutl::map_upload_buffer(upload.Get()));
+            std::memcpy(
+                mapped + footprint.Offset,
+                WHITE.data(),
+                WHITE.size());
+            upload->Unmap(0, nullptr);
+
+            D3D12_TEXTURE_COPY_LOCATION source{};
+            source.pResource = upload.Get();
+            source.Type =
+                D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+            source.PlacedFootprint = footprint;
+            D3D12_TEXTURE_COPY_LOCATION target{};
+            target.pResource = texture.Get();
+            target.Type =
+                D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            command_list->CopyTextureRegion(
+                &target,
+                0,
+                0,
+                0,
+                &source,
+                nullptr);
+
+            eng::GPUResource gpu_texture{};
+            gpu_texture.init(
+                texture.Get(),
+                D3D12_RESOURCE_STATE_COPY_DEST);
+            gpu_texture.transition(
+                command_list,
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+            destination.textures.emplace_back(std::move(gpu_texture));
+            used_upload_heaps.emplace_back(std::move(upload));
+            return 0;
         }
 
         uint32_t load_texture(
@@ -273,6 +346,13 @@ namespace scene {
         std::vector<BenchmarkSceneGPUData::InstanceData> render_instances;
         std::vector<BenchmarkSceneGPUData::DrawData> draws;
         std::unordered_map<std::string, uint32_t> texture_cache;
+        const uint32_t fallback_texture_id = load_textures
+            ? create_fallback_texture(
+                device,
+                command_list,
+                destination,
+                used_upload_heaps)
+            : source::SceneConstants::INVALID_INDEX;
 
         meshes.reserve(source.meshes.size());
         for (const SceneCPUData::Mesh& mesh : source.meshes) {
@@ -358,6 +438,12 @@ namespace scene {
                     gpu_material.flags |= texture_flags[slot];
                 }
             }
+            if (load_textures &&
+                gpu_material.texture_indices[0] ==
+                source::SceneConstants::INVALID_INDEX) {
+                gpu_material.texture_indices[0] =
+                    fallback_texture_id;
+            }
             materials.emplace_back(gpu_material);
         }
 
@@ -366,17 +452,27 @@ namespace scene {
             const SceneCPUData::Instance& instance =
                 source.instances[instance_id];
             instances.push_back({
-                to_shader_transform(instance.world_transform),
                 instance_id,
-                instance.mesh_id,
                 0,
-                0
+                0,
+                0,
+                instance.world_transform
             });
         }
 
-        render_instances.reserve(source.draw_instance_ids.size());
-        for (uint32_t instance_id : source.draw_instance_ids) {
-            render_instances.emplace_back(instances[instance_id]);
+        render_instances.resize(source.draw_instance_ids.size());
+        for (const SceneCPUData::DrawCall& draw : source.all_draw_calls) {
+            const uint32_t end =
+                draw.first_instance + draw.instance_count;
+            for (uint32_t i = draw.first_instance; i < end; ++i) {
+                const uint32_t instance_id =
+                    source.draw_instance_ids[i];
+                BenchmarkSceneGPUData::InstanceData instance =
+                    instances[instance_id];
+                instance.material_id = draw.material_id;
+                instance.submesh_id = draw.submesh_id;
+                render_instances[i] = instance;
+            }
         }
 
         draws.reserve(source.draw_calls.size());
@@ -479,6 +575,7 @@ namespace scene {
             source.indices.size() * sizeof(uint32_t));
         destination.index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
 
+        destination.material_data = materials;
         destination.draw_calls = source.draw_calls;
         destination.vertex_count =
             static_cast<uint32_t>(source.vertices.size());

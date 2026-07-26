@@ -18,15 +18,10 @@ struct MaterialData
     uint flags;
     uint padding0;
 
-    uint base_color_texture;
-    uint normal_texture;
-    uint metal_roughness_texture;
-    uint emissive_texture;
-
-    uint occlusion_texture;
-    uint opacity_texture;
+    uint texture_indices[5];
     uint padding1;
     uint padding2;
+    uint padding3;
 };
 
 #endif

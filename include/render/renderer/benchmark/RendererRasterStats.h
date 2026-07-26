@@ -44,8 +44,8 @@ namespace rndr {
 
         void allocate_counter_buffers_();
         void allocate_triangle_buffers_();
-        std::uint64_t count_batch_triangles_(
-            const std::vector<scene::SceneDataCPU::ObjectBatch>& batches) const;
+        std::uint64_t count_draw_triangles_(
+            const std::vector<scene::SceneCPUData::DrawCall>& draws) const;
         void build_visible_triangles_();
         void collect_completed_stats_(UINT frame_index);
         void write_stats_csv_() const;

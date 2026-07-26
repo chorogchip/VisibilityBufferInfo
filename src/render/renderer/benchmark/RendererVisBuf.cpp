@@ -4,7 +4,6 @@
 #include <string>
 
 #include "dx_util/ResourceUtils.h"
-#include "engine/MaterialGPU.h"
 #include "dx_util/ShaderUtils.h"
 
 namespace rndr {
@@ -38,7 +37,7 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         visibility.instance_buffer_address =
-            scene_object_buffer_.get()->GetGPUVirtualAddress();
+            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
@@ -53,8 +52,8 @@ namespace rndr {
         resolve.visibility = &vis_buffer_;
         resolve.vertex_buffer = &scene_vertex_buffer_;
         resolve.index_buffer = &scene_index_buffer_;
-        resolve.mesh_buffer = &scene_mesh_buffer_;
-        resolve.instance_buffer = &scene_object_buffer_;
+        resolve.submesh_buffer = &scene_submesh_buffer_;
+        resolve.instance_buffer = &scene_render_instance_buffer_;
         resolve.material_buffer = &scene_material_buffer_;
         for (auto& texture : textures_)
             resolve.material_textures.push_back(&texture);

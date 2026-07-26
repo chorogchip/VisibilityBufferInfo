@@ -3,7 +3,6 @@
 #include "dx_util/ResourceUtils.h"
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
-#include "engine/MaterialGPU.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
 #include "engine/ResourceManagerShader.h"
@@ -64,19 +63,24 @@ namespace rndr {
             resources_.index_buffer->get(),
             scene_desc,
             eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER);
-        scene_desc.Buffer.StructureByteStride = sizeof(uint32_t) * 2;
-        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->meshes.size());
+        scene_desc.Buffer.StructureByteStride =
+            sizeof(scene::BenchmarkSceneGPUData::SubmeshData);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(
+            resources_.scene->submeshes.size());
         resources_.shader_manager->create_srv(
-            resources_.mesh_buffer->get(),
+            resources_.submesh_buffer->get(),
             scene_desc,
             eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER);
-        scene_desc.Buffer.StructureByteStride = sizeof(resources_.scene->objects[0]);
-        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->objects.size());
+        scene_desc.Buffer.StructureByteStride =
+            sizeof(scene::BenchmarkSceneGPUData::InstanceData);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(
+            resources_.scene->draw_instance_ids.size());
         resources_.shader_manager->create_srv(
             resources_.instance_buffer->get(),
             scene_desc,
             eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER);
-        scene_desc.Buffer.StructureByteStride = sizeof(eng::MaterialGPU);
+        scene_desc.Buffer.StructureByteStride =
+            sizeof(scene::BenchmarkSceneGPUData::MaterialData);
         scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->materials.size());
         resources_.shader_manager->create_srv(
             resources_.material_buffer->get(),

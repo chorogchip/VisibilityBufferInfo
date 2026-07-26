@@ -20,16 +20,22 @@ namespace scene {
             static_cast<bool>(scene.draw_buffer),
             "Benchmark GPU scene has an unallocated global buffer.");
         util::Logger::g_logger.assert_with_log(
-            scene.vertex_count > 0 &&
-            scene.index_count > 0 &&
-            scene.mesh_count > 0 &&
-            scene.submesh_count > 0 &&
-            scene.material_count > 0 &&
+            scene.vertex_count > 0 && scene.index_count > 0,
+            "Benchmark GPU scene has no geometry.");
+        util::Logger::g_logger.assert_with_log(
+            scene.mesh_count > 0 && scene.submesh_count > 0,
+            "Benchmark GPU scene has no mesh data.");
+        util::Logger::g_logger.assert_with_log(
+            scene.material_count > 0,
+            "Benchmark GPU scene has no materials.");
+        util::Logger::g_logger.assert_with_log(
             scene.instance_count > 0 &&
-            scene.render_instance_count > 0 &&
+            scene.render_instance_count > 0,
+            "Benchmark GPU scene has no instances.");
+        util::Logger::g_logger.assert_with_log(
             scene.draw_count > 0 &&
             scene.draw_calls.size() == scene.draw_count,
-            "Benchmark GPU scene has invalid element counts.");
+            "Benchmark GPU scene has invalid draw counts.");
         util::Logger::g_logger.assert_with_log(
             scene.vertex_buffer_view.BufferLocation ==
             scene.vertex_buffer.get()->GetGPUVirtualAddress() &&

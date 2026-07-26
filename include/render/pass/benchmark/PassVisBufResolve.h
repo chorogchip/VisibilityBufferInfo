@@ -4,8 +4,8 @@
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include <vector>
-#include "scene/SceneDataCPU.h"
-#include "engine/MaterialGPU.h"
+#include "scene/data/cpu/SceneCPUData.h"
+#include "scene/data/gpu/BenchmarkSceneGPUData.h"
 
 namespace eng {
     class GPUResource;
@@ -22,12 +22,11 @@ namespace rndr {
         eng::GPUResource* visibility = nullptr;
         eng::GPUResource* vertex_buffer = nullptr;
         eng::GPUResource* index_buffer = nullptr;
-        eng::GPUResource* mesh_buffer = nullptr;
+        eng::GPUResource* submesh_buffer = nullptr;
         eng::GPUResource* instance_buffer = nullptr;
         eng::GPUResource* material_buffer = nullptr;
         std::vector<eng::GPUResource*> material_textures;
-        const scene::SceneDataCPU* scene = nullptr;
-        const std::vector<eng::MaterialGPU>* materials;
+        const scene::SceneCPUData* scene = nullptr;
         bool to_use_textures = false;
         D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_addresses[util::Constants::FRAME_COUNT]{};
         eng::ResourceManagerSampler* sampler_manager = nullptr;

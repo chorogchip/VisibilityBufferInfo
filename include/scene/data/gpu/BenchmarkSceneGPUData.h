@@ -65,11 +65,11 @@ namespace scene {
         };
 
         struct InstanceData {
-            DirectX::XMFLOAT3X4 transform{};
             uint32_t instance_id = 0;
-            uint32_t mesh_id = 0;
-            uint32_t pad0 = 0;
-            uint32_t pad1 = 0;
+            uint32_t material_id = 0;
+            uint32_t submesh_id = 0;
+            uint32_t flags = 0;
+            DirectX::XMFLOAT4X4 transform{};
         };
 
         struct DrawData {
@@ -95,6 +95,7 @@ namespace scene {
 
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
+        std::vector<MaterialData> material_data;
         std::vector<SceneCPUData::DrawCall> draw_calls;
 
         uint32_t vertex_count = 0;
@@ -111,6 +112,6 @@ namespace scene {
     static_assert(sizeof(BenchmarkSceneGPUData::MeshData) == 16);
     static_assert(sizeof(BenchmarkSceneGPUData::SubmeshData) == 32);
     static_assert(sizeof(BenchmarkSceneGPUData::MaterialData) == 96);
-    static_assert(sizeof(BenchmarkSceneGPUData::InstanceData) == 64);
+    static_assert(sizeof(BenchmarkSceneGPUData::InstanceData) == 80);
     static_assert(sizeof(BenchmarkSceneGPUData::DrawData) == 32);
 }

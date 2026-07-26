@@ -19,7 +19,7 @@ namespace rndr {
         eng::GPUResource* triangle_buffer = nullptr;
         ID3D12Resource* triangle_upload_buffer = nullptr;
         eng::GPUResource* vertex_buffer = nullptr;
-        eng::GPUResource* object_buffer = nullptr;
+        eng::GPUResource* instance_buffer = nullptr;
         eng::GPUResource* pixel_count_buffer = nullptr;
         eng::GPUResource* stats_buffer = nullptr;
         ID3D12Resource* stats_readback_buffers[util::Constants::FRAME_COUNT]{};

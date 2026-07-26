@@ -90,7 +90,7 @@ namespace rndr {
         resources.triangle_buffer = &triangle_buffer_;
         resources.triangle_upload_buffer = triangle_upload_buffer_.Get();
         resources.vertex_buffer = &scene_vertex_buffer_;
-        resources.object_buffer = &scene_object_buffer_;
+        resources.instance_buffer = &scene_render_instance_buffer_;
         resources.pixel_count_buffer = &pixel_count_buffer_;
         resources.stats_buffer = &stats_buffer_;
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
@@ -162,11 +162,8 @@ namespace rndr {
     }
 
     void RendererRasterStats::allocate_triangle_buffers_() {
-        const auto& max_batches = scene_cpu_->all_batches.empty()
-            ? scene_cpu_->batches
-            : scene_cpu_->all_batches;
         const std::uint64_t max_triangles =
-            this->count_batch_triangles_(max_batches);
+            this->count_draw_triangles_(scene_cpu_->all_draw_calls);
 
         util::Logger::g_logger.assert_with_log(
             max_triangles <= std::numeric_limits<std::uint32_t>::max(),
@@ -199,17 +196,14 @@ namespace rndr {
         visible_triangles_.reserve(triangle_capacity_);
     }
 
-    std::uint64_t RendererRasterStats::count_batch_triangles_(
-        const std::vector<scene::SceneDataCPU::ObjectBatch>& batches) const {
+    std::uint64_t RendererRasterStats::count_draw_triangles_(
+        const std::vector<scene::SceneCPUData::DrawCall>& draws) const {
 
         std::uint64_t result = 0;
-        for (const auto& batch : batches) {
-            util::Logger::g_logger.assert_with_log(
-                batch.mesh_index < scene_cpu_->meshes.size(),
-                "raster stats batch has an invalid mesh index");
-            const auto& mesh = scene_cpu_->meshes[batch.mesh_index];
-            result += (static_cast<std::uint64_t>(mesh.index_count) / 3u) *
-                static_cast<std::uint64_t>(batch.object_count);
+        for (const scene::SceneCPUData::DrawCall& draw : draws) {
+            result +=
+                (static_cast<std::uint64_t>(draw.index_count) / 3u) *
+                draw.instance_count;
         }
         return result;
     }
@@ -218,32 +212,35 @@ namespace rndr {
         visible_triangles_.clear();
 
         const std::uint64_t visible_count =
-            this->count_batch_triangles_(scene_cpu_->batches);
+            this->count_draw_triangles_(scene_cpu_->draw_calls);
         util::Logger::g_logger.assert_with_log(
             visible_count <= triangle_capacity_,
             "visible triangle count exceeds raster stats buffer capacity");
 
         visible_triangles_.reserve(static_cast<std::size_t>(visible_count));
 
-        for (const auto& batch : scene_cpu_->batches) {
+        for (const auto& draw : scene_cpu_->draw_calls) {
             util::Logger::g_logger.assert_with_log(
-                batch.mesh_index < scene_cpu_->meshes.size(),
-                "raster stats batch has an invalid mesh index");
+                draw.submesh_id < scene_cpu_->submeshes.size(),
+                "raster stats draw has an invalid submesh index");
 
-            const auto& mesh = scene_cpu_->meshes[batch.mesh_index];
-            for (std::uint32_t instance = 0; instance < batch.object_count; ++instance) {
-                const std::uint32_t object_index = batch.object_index + instance;
-                util::Logger::g_logger.assert_with_log(
-                    object_index < scene_cpu_->objects.size(),
-                    "raster stats batch has an invalid object range");
+            const scene::SceneCPUData::Submesh& submesh =
+                scene_cpu_->submeshes[draw.submesh_id];
+            for (std::uint32_t instance = 0; instance < draw.instance_count; ++instance) {
+                const std::uint32_t render_instance_id =
+                    draw.first_instance + instance;
 
-                for (std::uint32_t local = 0; local + 2 < mesh.index_count; local += 3) {
-                    const std::uint32_t index_base = mesh.index_start + local;
+                for (std::uint32_t local = 0; local + 2 < draw.index_count; local += 3) {
+                    const std::uint32_t index_base =
+                        draw.index_offset + local;
                     visible_triangles_.push_back({
-                        object_index,
-                        scene_cpu_->indices[index_base + 0] + mesh.vertex_start,
-                        scene_cpu_->indices[index_base + 1] + mesh.vertex_start,
-                        scene_cpu_->indices[index_base + 2] + mesh.vertex_start,
+                        render_instance_id,
+                        scene_cpu_->indices[index_base + 0] +
+                            submesh.vertex_offset,
+                        scene_cpu_->indices[index_base + 1] +
+                            submesh.vertex_offset,
+                        scene_cpu_->indices[index_base + 2] +
+                            submesh.vertex_offset,
                     });
                 }
             }

@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <string>
 
-#include "scene/SceneDataCPU.h"
+#include "scene/data/cpu/SceneCPUData.h"
 #include "ProgramArgument.h"
 
 namespace scene {
@@ -65,11 +65,13 @@ namespace scene {
 
 		static void write_csv(
 			const std::filesystem::path& path,
-			const SceneDataCPU& scene,
+			const SceneCPUData& scene,
 			const util::ProgramArgument& arg);
 
 	private:
-		static Metrics analyze(const SceneDataCPU& scene);
+		static Metrics analyze(
+			const SceneCPUData& scene,
+			const util::ProgramArgument& arg);
 	};
 
 }

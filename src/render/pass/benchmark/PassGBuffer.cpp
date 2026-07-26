@@ -140,18 +140,21 @@ namespace rndr {
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
         command_list->IASetIndexBuffer(&resources_.index_buffer_view);
-        for (const auto& batch : resources_.scene->batches) {
-            const auto& mesh = resources_.scene->meshes[batch.mesh_index];
+        for (const auto& draw : resources_.scene->draw_calls) {
             command_list->SetGraphicsRoot32BitConstant(
                 static_cast<UINT>(RootParam::DRAW_CONSTANT),
-                batch.object_index, 0);
+                draw.first_instance, 0);
             if (resources_.to_use_textures) command_list->SetGraphicsRootDescriptorTable(
                 static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
                 resources_.shader_manager->get_gpu_adr(
                     eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN,
-                    (*resources_.materials)[batch.material_index].base_color_texture));
-            command_list->DrawIndexedInstanced(mesh.index_count, batch.object_count,
-                mesh.index_start, mesh.vertex_start, 0);
+                    (*resources_.materials)[draw.material_id].texture_indices[0]));
+            command_list->DrawIndexedInstanced(
+                draw.index_count,
+                draw.instance_count,
+                draw.index_offset,
+                draw.vertex_offset,
+                0);
         }
     }
 
