@@ -43,25 +43,20 @@ namespace scene::source::jungle {
             return std::nullopt;
         }
 
-        bool decode_buffer_view_image(
+        void decode_buffer_view_image(
             const Context& context,
             const fastgltf::Asset& asset,
             const fastgltf::sources::BufferView& source,
-            Image& image,
-            std::string& error_message) {
+            Image& image) {
 
-            if (source.bufferViewIndex >= asset.bufferViews.size()) {
-                error_message =
-                    "glTF image references an invalid buffer view.";
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                source.bufferViewIndex < asset.bufferViews.size(),
+                "glTF image references an invalid buffer view.");
             const fastgltf::BufferView& view =
                 asset.bufferViews[source.bufferViewIndex];
-            if (view.bufferIndex >= asset.buffers.size()) {
-                error_message =
-                    "glTF image buffer view references an invalid buffer.";
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                view.bufferIndex < asset.buffers.size(),
+                "glTF image buffer view references an invalid buffer.");
 
             image.format = convert_image_format(source.mimeType);
             image.byte_size = view.byteLength;
@@ -71,12 +66,12 @@ namespace scene::source::jungle {
                 image.path = context.source_path;
                 image.byte_offset =
                     context.file_layout.binary_offset + view.byteOffset;
-                return true;
+                return;
             }
 
             const fastgltf::Buffer& buffer =
                 asset.buffers[view.bufferIndex];
-            return std::visit(Overloaded{
+            const bool decoded = std::visit(Overloaded{
                 [&](const fastgltf::sources::URI& uri) {
                     if (!uri.uri.isLocalPath()) return false;
                     image.path =
@@ -90,42 +85,40 @@ namespace scene::source::jungle {
                     return false;
                 }
                 }, buffer.data);
+            util::Logger::g_logger.assert_with_log(
+                decoded,
+                "Jungle image requires a file-backed buffer.");
         }
 
-        bool decode_image(
+        void decode_image(
             const Context& context,
             const fastgltf::Asset& asset,
             const fastgltf::Image& source,
-            Image& image,
-            std::string& error_message) {
+            Image& image) {
 
-            return std::visit(Overloaded{
+            std::visit(Overloaded{
                 [&](const fastgltf::sources::BufferView& buffer_view) {
-                    return decode_buffer_view_image(
+                    decode_buffer_view_image(
                         context,
                         asset,
                         buffer_view,
-                        image,
-                        error_message);
+                        image);
                 },
                 [&](const fastgltf::sources::URI& uri) {
-                    if (!uri.uri.isLocalPath() ||
-                        uri.uri.isDataUri()) {
-                        error_message =
-                            "Jungle source loader requires file-backed images.";
-                        return false;
-                    }
+                    util::Logger::g_logger.assert_with_log(
+                        uri.uri.isLocalPath() &&
+                        !uri.uri.isDataUri(),
+                        "Jungle source builder requires file-backed images.");
                     image.path =
                         (context.source_path.parent_path() /
                             uri.uri.fspath()).lexically_normal();
                     image.byte_offset = uri.fileByteOffset;
                     image.format = convert_image_format(uri.mimeType);
-                    return true;
                 },
                 [&](const auto&) {
-                    error_message =
-                        "Jungle source loader requires file-backed images.";
-                    return false;
+                    util::Logger::g_logger.assert_with_log(
+                        false,
+                        "Jungle source builder requires file-backed images.");
                 }
                 }, source.data);
         }
@@ -225,23 +218,19 @@ namespace scene::source::jungle {
         }
     }
 
-    bool append_materials(
+    void append_materials(
         const Context& context,
         const fastgltf::Asset& asset,
-        SceneSourceData& scene,
-        std::string& error_message) {
+        SceneSourceData& scene) {
 
         scene.images.reserve(asset.images.size());
         for (const fastgltf::Image& source : asset.images) {
             Image image{};
-            if (!decode_image(
+            decode_image(
                 context,
                 asset,
                 source,
-                image,
-                error_message)) {
-                return false;
-            }
+                image);
             scene.images.emplace_back(std::move(image));
         }
 
@@ -267,12 +256,10 @@ namespace scene::source::jungle {
         for (const fastgltf::Texture& source : asset.textures) {
             const std::optional<size_t> image_index =
                 texture_image_index(source);
-            if (!image_index ||
-                *image_index >= scene.images.size()) {
-                error_message =
-                    "glTF texture references an invalid image.";
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                image_index &&
+                *image_index < scene.images.size(),
+                "glTF texture references an invalid image.");
 
             Texture texture{};
             texture.image_id = to_uint32(
@@ -293,6 +280,5 @@ namespace scene::source::jungle {
         if (scene.materials.empty()) {
             scene.materials.emplace_back();
         }
-        return true;
     }
 }

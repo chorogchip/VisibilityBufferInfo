@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,32 +31,27 @@ namespace scene::source::jungle {
         std::vector<NodeMetadata> node_metadata;
     };
 
-    std::optional<fastgltf::Asset> load_asset(
-        Context& context,
-        std::string& error_message);
+    fastgltf::Asset load_asset(Context& context);
 
-    bool append_materials(
+    void append_materials(
         const Context& context,
         const fastgltf::Asset& asset,
-        SceneSourceData& scene,
-        std::string& error_message);
+        SceneSourceData& scene);
 
-    bool append_geometry(
+    void append_geometry(
         const fastgltf::Asset& asset,
         SceneSourceData& scene,
-        std::vector<uint32_t>& mesh_ids,
-        std::string& error_message);
+        std::vector<uint32_t>& mesh_ids);
 
     void append_cameras(
         const fastgltf::Asset& asset,
         SceneSourceData& scene);
 
-    bool append_hierarchy(
+    void append_hierarchy(
         const Context& context,
         const fastgltf::Asset& asset,
         const std::vector<uint32_t>& mesh_ids,
-        SceneSourceData& scene,
-        std::string& error_message);
+        SceneSourceData& scene);
 
     uint32_t to_uint32(size_t value, const char* message);
     DirectX::XMMATRIX read_local_transform(const fastgltf::Node& node);

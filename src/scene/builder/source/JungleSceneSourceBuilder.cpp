@@ -3,7 +3,6 @@
 #include <array>
 #include <fstream>
 #include <limits>
-#include <optional>
 #include <utility>
 
 #include <fastgltf/core.hpp>
@@ -21,22 +20,28 @@ namespace scene::source::jungle {
         constexpr uint32_t GLB_MAGIC = 0x46546c67;
         constexpr uint32_t GLB_BINARY_CHUNK = 0x004e4942;
 
-        bool read_glb_layout(
+        void read_glb_layout(
             const std::filesystem::path& path,
             FileLayout& layout) {
 
-            if (path.extension() != ".glb") return true;
+            util::Logger::g_logger.assert_with_log(
+                path.extension() == ".glb",
+                "Jungle source builder requires a GLB file.");
 
             std::ifstream input(path, std::ios::binary);
-            if (!input) return false;
+            util::Logger::g_logger.assert_with_log(
+                static_cast<bool>(input),
+                "Failed to open the Jungle GLB file.");
 
             uint32_t header[3]{};
             input.read(
                 reinterpret_cast<char*>(header),
                 sizeof(header));
-            if (!input || header[0] != GLB_MAGIC || header[1] != 2) {
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                input &&
+                header[0] == GLB_MAGIC &&
+                header[1] == 2,
+                "Invalid Jungle GLB header.");
 
             while (input) {
                 uint32_t chunk_header[2]{};
@@ -50,11 +55,13 @@ namespace scene::source::jungle {
                 if (chunk_header[1] == GLB_BINARY_CHUNK) {
                     layout.binary_offset = data_offset;
                     layout.binary_size = chunk_header[0];
-                    return true;
+                    return;
                 }
                 input.seekg(chunk_header[0], std::ios::cur);
             }
-            return false;
+            util::Logger::g_logger.assert_with_log(
+                false,
+                "Jungle GLB has no binary chunk.");
         }
 
         bool parse_vec3(
@@ -262,26 +269,17 @@ namespace scene::source::jungle {
             DirectX::XMMatrixMultiply(matrix, flip_z));
     }
 
-    std::optional<fastgltf::Asset> load_asset(
-        Context& context,
-        std::string& error_message) {
+    fastgltf::Asset load_asset(Context& context) {
 
-        if (!read_glb_layout(
+        read_glb_layout(
             context.source_path,
-            context.file_layout)) {
-            error_message = "Invalid GLB container.";
-            return std::nullopt;
-        }
+            context.file_layout);
 
         auto gltf_file =
             fastgltf::GltfDataBuffer::FromPath(context.source_path);
-        if (!gltf_file) {
-            error_message =
-                "fastgltf failed to open scene: " +
-                std::string(
-                    fastgltf::getErrorMessage(gltf_file.error()));
-            return std::nullopt;
-        }
+        util::Logger::g_logger.assert_with_log(
+            static_cast<bool>(gltf_file),
+            "fastgltf failed to open the Jungle scene.");
 
         static constexpr auto SUPPORTED_EXTENSIONS =
             fastgltf::Extensions::EXT_mesh_gpu_instancing |
@@ -307,55 +305,43 @@ namespace scene::source::jungle {
             context.source_path.parent_path(),
             OPTIONS,
             fastgltf::Category::OnlyRenderable);
-        if (!asset) {
-            error_message =
-                "fastgltf failed to parse scene: " +
-                std::string(fastgltf::getErrorMessage(asset.error()));
-            return std::nullopt;
-        }
+        util::Logger::g_logger.assert_with_log(
+            static_cast<bool>(asset),
+            "fastgltf failed to parse the Jungle scene.");
         return std::move(asset.get());
     }
 }
 
 namespace scene {
 
-    JungleSceneSourceBuildResult JungleSceneSourceBuilder::build(
+    std::unique_ptr<SceneSourceData> JungleSceneSourceBuilder::build(
         const std::filesystem::path& path) {
 
-        JungleSceneSourceBuildResult result{};
         source::jungle::Context context{};
         context.source_path =
             std::filesystem::absolute(path).lexically_normal();
 
-        std::optional<fastgltf::Asset> asset =
-            source::jungle::load_asset(context, result.error_message);
-        if (!asset) return result;
+        fastgltf::Asset asset =
+            source::jungle::load_asset(context);
 
         auto scene = std::make_unique<SceneSourceData>();
         std::vector<uint32_t> mesh_ids;
-        source::jungle::append_cameras(*asset, *scene);
-        if (!source::jungle::append_materials(
-                context,
-                *asset,
-                *scene,
-                result.error_message) ||
-            !source::jungle::append_geometry(
-                *asset,
-                *scene,
-                mesh_ids,
-                result.error_message) ||
-            !source::jungle::append_hierarchy(
-                context,
-                *asset,
-                mesh_ids,
-                *scene,
-                result.error_message)) {
-            return result;
-        }
+        source::jungle::append_cameras(asset, *scene);
+        source::jungle::append_materials(
+            context,
+            asset,
+            *scene);
+        source::jungle::append_geometry(
+            asset,
+            *scene,
+            mesh_ids);
+        source::jungle::append_hierarchy(
+            context,
+            asset,
+            mesh_ids,
+            *scene);
 
         SceneSourceDataValidator::validate(*scene);
-        result.scene = std::move(scene);
-        result.error_message = "ok";
-        return result;
+        return scene;
     }
 }

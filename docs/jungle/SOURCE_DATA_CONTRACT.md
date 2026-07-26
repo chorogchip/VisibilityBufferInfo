@@ -14,6 +14,11 @@ geometry, hierarchy, and material responsibilities are split below
 `include/scene/data/source` contains passive data contracts rather than
 file-format decoding or builder policy.
 
+The Jungle builder has no recoverable build-result or threaded error string.
+Its mutating conversion stages are `void` operations and invalid canonical
+input fails immediately through `util::Logger::assert_with_log`. A successful
+public `build` call returns the completed `SceneSourceData` owner.
+
 ## Data ownership
 
 | Source type | Responsibility |

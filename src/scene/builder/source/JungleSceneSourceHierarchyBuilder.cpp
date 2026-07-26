@@ -9,6 +9,8 @@
 #include <fastgltf/dxmath_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 
+#include "util/Logger.h"
+
 namespace scene::source::jungle {
 
     namespace {
@@ -48,25 +50,21 @@ namespace scene::source::jungle {
             return NodeKind::Generic;
         }
 
-        bool append_instances(
+        void append_instances(
             const fastgltf::Asset& asset,
             const fastgltf::Node& source_node,
             SceneSourceData& scene,
-            Node& node,
-            std::string& error_message) {
+            Node& node) {
 
             if (source_node.instancingAttributes.empty()) {
-                return true;
+                return;
             }
 
             const fastgltf::Attribute& first_attribute =
                 source_node.instancingAttributes.front();
-            if (first_attribute.accessorIndex >=
-                asset.accessors.size()) {
-                error_message =
-                    "glTF instancing attribute references an invalid accessor.";
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                first_attribute.accessorIndex < asset.accessors.size(),
+                "glTF instancing attribute references an invalid accessor.");
 
             const size_t instance_count =
                 asset.accessors[first_attribute.accessorIndex].count;
@@ -88,14 +86,16 @@ namespace scene::source::jungle {
                 source_node.findInstancingAttribute("TRANSLATION");
             if (translation_it !=
                 source_node.instancingAttributes.end()) {
+                util::Logger::g_logger.assert_with_log(
+                    translation_it->accessorIndex <
+                    asset.accessors.size(),
+                    "glTF instancing translation references an invalid accessor.");
                 const fastgltf::Accessor& accessor =
                     asset.accessors[
                         translation_it->accessorIndex];
-                if (accessor.count != instance_count) {
-                    error_message =
-                        "glTF instancing translation count differs.";
-                    return false;
-                }
+                util::Logger::g_logger.assert_with_log(
+                    accessor.count == instance_count,
+                    "glTF instancing translation count differs.");
                 fastgltf::iterateAccessorWithIndex<
                     DirectX::XMFLOAT3>(
                     asset,
@@ -114,13 +114,15 @@ namespace scene::source::jungle {
                 source_node.findInstancingAttribute("ROTATION");
             if (rotation_it !=
                 source_node.instancingAttributes.end()) {
+                util::Logger::g_logger.assert_with_log(
+                    rotation_it->accessorIndex <
+                    asset.accessors.size(),
+                    "glTF instancing rotation references an invalid accessor.");
                 const fastgltf::Accessor& accessor =
                     asset.accessors[rotation_it->accessorIndex];
-                if (accessor.count != instance_count) {
-                    error_message =
-                        "glTF instancing rotation count differs.";
-                    return false;
-                }
+                util::Logger::g_logger.assert_with_log(
+                    accessor.count == instance_count,
+                    "glTF instancing rotation count differs.");
                 fastgltf::iterateAccessorWithIndex<
                     DirectX::XMFLOAT4>(
                     asset,
@@ -140,13 +142,15 @@ namespace scene::source::jungle {
                 source_node.findInstancingAttribute("SCALE");
             if (scale_it !=
                 source_node.instancingAttributes.end()) {
+                util::Logger::g_logger.assert_with_log(
+                    scale_it->accessorIndex <
+                    asset.accessors.size(),
+                    "glTF instancing scale references an invalid accessor.");
                 const fastgltf::Accessor& accessor =
                     asset.accessors[scale_it->accessorIndex];
-                if (accessor.count != instance_count) {
-                    error_message =
-                        "glTF instancing scale count differs.";
-                    return false;
-                }
+                util::Logger::g_logger.assert_with_log(
+                    accessor.count == instance_count,
+                    "glTF instancing scale count differs.");
                 fastgltf::iterateAccessorWithIndex<
                     DirectX::XMFLOAT3>(
                     asset,
@@ -165,14 +169,16 @@ namespace scene::source::jungle {
                     "_JR_SOURCE_INDEX");
             if (source_index_it !=
                 source_node.instancingAttributes.end()) {
+                util::Logger::g_logger.assert_with_log(
+                    source_index_it->accessorIndex <
+                    asset.accessors.size(),
+                    "Jungle source-index references an invalid accessor.");
                 const fastgltf::Accessor& accessor =
                     asset.accessors[
                         source_index_it->accessorIndex];
-                if (accessor.count != instance_count) {
-                    error_message =
-                        "Jungle source-index count differs.";
-                    return false;
-                }
+                util::Logger::g_logger.assert_with_log(
+                    accessor.count == instance_count,
+                    "Jungle source-index count differs.");
                 std::vector<uint32_t> indices(instance_count);
                 fastgltf::copyFromAccessor<uint32_t>(
                     asset,
@@ -186,28 +192,22 @@ namespace scene::source::jungle {
                 }
             }
 
-            if (!values_valid) {
-                error_message =
-                    "glTF instancing stream contains a non-finite value.";
-                return false;
-            }
-            return true;
+            util::Logger::g_logger.assert_with_log(
+                values_valid,
+                "glTF instancing stream contains a non-finite value.");
         }
 
-        bool visit_node(
+        void visit_node(
             const Context& context,
             const fastgltf::Asset& asset,
             size_t source_node_id,
             uint32_t parent_id,
             const std::vector<uint32_t>& mesh_ids,
-            SceneSourceData& scene,
-            std::string& error_message) {
+            SceneSourceData& scene) {
 
-            if (source_node_id >= asset.nodes.size()) {
-                error_message =
-                    "glTF hierarchy references an invalid node.";
-                return false;
-            }
+            util::Logger::g_logger.assert_with_log(
+                source_node_id < asset.nodes.size(),
+                "glTF hierarchy references an invalid node.");
 
             const fastgltf::Node& source_node =
                 asset.nodes[source_node_id];
@@ -243,14 +243,11 @@ namespace scene::source::jungle {
                 node.kind = kind_from_name(source_node);
             }
 
-            if (!append_instances(
+            append_instances(
                 asset,
                 source_node,
                 scene,
-                node,
-                error_message)) {
-                return false;
-            }
+                node);
 
             const uint32_t node_id = to_uint32(
                 scene.nodes.size(),
@@ -259,27 +256,22 @@ namespace scene::source::jungle {
             scene.nodes[parent_id].children.push_back(node_id);
 
             for (size_t child_id : source_node.children) {
-                if (!visit_node(
+                visit_node(
                     context,
                     asset,
                     child_id,
                     node_id,
                     mesh_ids,
-                    scene,
-                    error_message)) {
-                    return false;
-                }
+                    scene);
             }
-            return true;
         }
     }
 
-    bool append_hierarchy(
+    void append_hierarchy(
         const Context& context,
         const fastgltf::Asset& asset,
         const std::vector<uint32_t>& mesh_ids,
-        SceneSourceData& scene,
-        std::string& error_message) {
+        SceneSourceData& scene) {
 
         Node root{};
         root.name = "JR_LOADER_ROOT";
@@ -288,10 +280,9 @@ namespace scene::source::jungle {
         scene.root_node_id = 0;
         scene.nodes.emplace_back(std::move(root));
 
-        if (asset.scenes.empty()) {
-            error_message = "glTF asset has no scene.";
-            return false;
-        }
+        util::Logger::g_logger.assert_with_log(
+            !asset.scenes.empty(),
+            "Jungle GLB has no scene.");
 
         const size_t scene_index =
             asset.defaultScene &&
@@ -299,22 +290,17 @@ namespace scene::source::jungle {
             ? *asset.defaultScene
             : 0;
         for (size_t source_node_id : asset.scenes[scene_index].nodeIndices) {
-            if (!visit_node(
+            visit_node(
                 context,
                 asset,
                 source_node_id,
                 scene.root_node_id,
                 mesh_ids,
-                scene,
-                error_message)) {
-                return false;
-            }
+                scene);
         }
 
-        if (scene.nodes.size() == 1) {
-            error_message = "glTF scene has no root nodes.";
-            return false;
-        }
-        return true;
+        util::Logger::g_logger.assert_with_log(
+            scene.nodes.size() != 1,
+            "Jungle GLB scene has no root nodes.");
     }
 }

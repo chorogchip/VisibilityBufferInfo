@@ -1,6 +1,7 @@
 #include "JungleSceneSourceValidationInternal.h"
 
 #include <cmath>
+#include <memory>
 #include <ostream>
 #include <string>
 
@@ -152,17 +153,10 @@ namespace jungle::validation {
 
         output << "Loading " << path.filename().string()
                << "...\n" << std::flush;
-        scene::JungleSceneSourceBuildResult build =
+        std::unique_ptr<scene::SceneSourceData> source_scene =
             scene::JungleSceneSourceBuilder::build(path);
-        if (!build) {
-            error_message =
-                path.filename().string() + ": " +
-                build.error_message;
-            return false;
-        }
 
-        const scene::SceneSourceData& source_scene = *build.scene;
-        for (const scene::source::Node& node : source_scene.nodes) {
+        for (const scene::source::Node& node : source_scene->nodes) {
             if (node.kind == scene::source::NodeKind::Cell) {
                 ++totals.cells;
             } else if (node.kind ==
@@ -170,7 +164,7 @@ namespace jungle::validation {
                 ++totals.systems;
             }
             if (!append_instance_metadata(
-                    source_scene,
+                    *source_scene,
                     node,
                     totals,
                     source_indices,
@@ -181,25 +175,25 @@ namespace jungle::validation {
 
         size_t package_primitives = 0;
         if (!append_geometry(
-                source_scene,
+                *source_scene,
                 totals,
                 package_primitives,
                 error_message)) {
             return false;
         }
-        append_materials(source_scene, totals);
+        append_materials(*source_scene, totals);
 
-        totals.meshes += source_scene.meshes.size();
+        totals.meshes += source_scene->meshes.size();
         totals.primitives += package_primitives;
-        totals.materials += source_scene.materials.size();
-        totals.images += source_scene.images.size();
-        totals.cameras += source_scene.cameras.size();
+        totals.materials += source_scene->materials.size();
+        totals.images += source_scene->images.size();
+        totals.cameras += source_scene->cameras.size();
 
         output
-            << "  nodes=" << source_scene.nodes.size()
-            << ", meshes=" << source_scene.meshes.size()
+            << "  nodes=" << source_scene->nodes.size()
+            << ", meshes=" << source_scene->meshes.size()
             << ", primitives=" << package_primitives
-            << ", instances=" << source_scene.instances.size()
+            << ", instances=" << source_scene->instances.size()
             << '\n';
         return true;
     }
