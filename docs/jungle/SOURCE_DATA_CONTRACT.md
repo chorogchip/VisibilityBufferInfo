@@ -10,8 +10,9 @@ Public data declarations live below `include/scene/data/source`. The glTF
 decoder is owned by `scene::JungleSceneSourceBuilder` in
 `include/scene/builder/source/JungleSceneSourceBuilder.h`. Its camera,
 geometry, hierarchy, and material responsibilities are split below
-`src/scene/builder/source`; `src/scene/data/source` contains data validation,
-not file-format decoding.
+`src/scene/builder/source`, along with source-scene validators.
+`include/scene/data/source` contains passive data contracts rather than
+file-format decoding or builder policy.
 
 ## Data ownership
 
