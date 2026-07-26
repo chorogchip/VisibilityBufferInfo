@@ -5,14 +5,21 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "stable_id",
-    "entity_type",
-    "provenance"
+    "schema_version"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": ["entity_type"]
+      },
+      "then": {
+        "required": ["stable_id", "provenance"]
+      }
+    }
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1"
+      "enum": ["0.1", "0.2"]
     },
     "stable_id": {
       "type": "string",
@@ -21,9 +28,17 @@
     "entity_type": {
       "enum": [
         "root",
+        "scene_root",
+        "scene",
         "region",
         "cell",
         "system",
+        "instance_set",
+        "unresolved_container",
+        "static_container",
+        "terrain_container",
+        "system_container",
+        "prototype_container",
         "prototype",
         "static_object",
         "material",
@@ -71,9 +86,32 @@
     "source_layer": {
       "type": "string"
     },
+    "source_library": {
+      "type": "string"
+    },
+    "artifact_role": {
+      "type": "string"
+    },
+    "renderer_independent": {
+      "type": "boolean"
+    },
+    "root_node": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "region_node": {
+      "type": "integer",
+      "minimum": 0
+    },
     "instance_count": {
       "type": "integer",
       "minimum": 0
+    },
+    "unresolved_reason": {
+      "enum": [
+        "exact_origin",
+        "outside_cell_ownership"
+      ]
     },
     "bounds": {
       "$ref": "#/$defs/bounds"
@@ -120,4 +158,3 @@
     }
   }
 }
-

@@ -22,7 +22,7 @@ import numpy as np
 from pxr import Usd, UsdGeom
 
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 
 USD_LAYER_SPECIES = {
     "Anthurium": "Anthurium",
@@ -829,6 +829,27 @@ def build_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
     }
     cells = terrain_cells + [pyramid_cell]
 
+    static_objects = []
+    for record in blender["global_objects"]:
+        region = (
+            "pyramid"
+            if record["name"] == "Pyramid_EmitterShell"
+            else "global"
+        )
+        static_objects.append(
+            {
+                **record,
+                "entity_type": (
+                    "camera"
+                    if record["object_type"] == "CAMERA"
+                    else "static_object"
+                ),
+                "provenance": "source",
+                "region": region,
+            }
+        )
+    static_objects.sort(key=lambda record: record["stable_id"])
+
     systems_by_region_species: dict[
         tuple[str, str],
         list[dict[str, Any]],
@@ -1015,6 +1036,11 @@ def build_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
             for system in systems
             if system["region"] == region_name
         )
+        region_objects = sorted(
+            record["stable_id"]
+            for record in static_objects
+            if record["region"] == region_name
+        )
         regions.append(
             {
                 "name": region_name,
@@ -1023,6 +1049,7 @@ def build_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
                 "provenance": "source",
                 "cell_ids": region_cells,
                 "system_ids": region_systems,
+                "object_ids": region_objects,
             }
         )
 
@@ -1100,6 +1127,7 @@ def build_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
             ),
             key=lambda record: record["stable_id"],
         ),
+        "static_objects": static_objects,
         "prototypes": prototypes,
         "materials": sorted(
             materials,
@@ -1114,6 +1142,7 @@ def build_manifest(inventory: dict[str, Any]) -> dict[str, Any]:
             "region_count": len(regions),
             "cell_count": len(cells),
             "system_count": len(systems),
+            "static_object_count": len(static_objects),
             "prototype_count": len(prototypes),
             "material_count": len(materials),
             "texture_count": len(textures),

@@ -2,7 +2,7 @@
 
 This catalog defines scene facts and source-to-canonical mappings. It does not encode renderer culling, LOD, draw batching, or pass policy.
 
-- Schema: `0.1`
+- Schema: `0.2`
 - Validation: `pass` (0 errors)
 - Regions: `4`
 - Cells: `81`
@@ -12,7 +12,7 @@ This catalog defines scene facts and source-to-canonical mappings. It does not e
 - Textures: `275`
 - USD PointInstancer sources: `778`
 - USD transform records: `8674676`
-- Exact-origin records kept unresolved: `197`
+- Exact-origin records preserved: `197`
 
 ## Regions
 

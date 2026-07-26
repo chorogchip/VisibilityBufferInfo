@@ -103,6 +103,11 @@ Exact-origin records have been observed in PointInstancer arrays. They are
 reported separately and are not deleted until visual or source evidence proves
 that they are exporter sentinels rather than authored instances.
 
+Spatial splitting must also preserve any non-origin record outside all authored
+cell ownership bounds. Such a record is stored below the region's unresolved
+node with reason `outside_cell_ownership`; it is never clamped or silently
+discarded.
+
 ## 6. Stable identity
 
 Stable IDs use normalized source names, not array positions or renderer IDs.
@@ -192,13 +197,17 @@ initially `inferred` unless they come from an explicit source name or slot.
 
 ## 10. Physical packaging
 
-The first canonical artifact is one logical scene with shared prototypes.
-External textures are allowed. This avoids duplicating prototypes across
-multiple standalone GLB files.
+The canonical scene is one logical scene represented by four physical GLBs:
 
-Smaller cinematic, streaming, LOD, or benchmark packages are derived artifacts.
-They must reference the canonical inventory and document all filtering or
-conversion.
+- `jungle_global.glb`;
+- `jungle_cinematic.glb`;
+- `jungle_extended.glb`;
+- `jungle_pyramid.glb`.
+
+This boundary follows authored regions and contains no renderer-pass policy.
+Every terrain cell and scatter system remains a separate hierarchy node inside
+its region file. Prototype meshes are shared by all instance sets within that
+file. The package manifest records all files and validation counts.
 
 ## 11. Explicit non-goals
 
@@ -231,19 +240,20 @@ Every canonical build reports:
 
 Human-readable documentation is versioned under the repository's
 `docs/jungle/` directory. Pipeline code, schemas, and usage notes are versioned
-under `assets/scripts/jungle/`. Machine-readable JSON reports, copied source
-scenes, and generated GLBs stay in an ignored external working directory.
+under `assets/scripts/jungle/`. Machine-readable JSON reports and generated
+GLBs stay below ignored `assets/scenes/generated/jungle`. The original source
+package stays below `assets/scenes/unpacked/JungleRuins` and is never modified.
 
 ```text
 VisibilityBufferInfo/
-├── docs/jungle/
-└── assets/scripts/jungle/
-
-visbufscene/                         # ignored external working directory
-├── JungleRuins/                     # immutable copied source
-├── reports/                         # generated JSON
-├── work/
-└── exports/                         # generated GLB
+|-- docs/jungle/                                  # versioned contracts and reports
+|-- assets/scripts/jungle/                        # versioned pipeline and schemas
+`-- assets/scenes/
+    |-- unpacked/JungleRuins/                     # immutable original source
+    `-- generated/jungle/                         # ignored generated artifacts
+        |-- packages/                             # renderer-independent GLBs
+        |-- reports/                              # machine-readable validation
+        `-- work/                                 # temporary conversion state
 ```
 
 ## 14. Contract probes

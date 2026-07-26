@@ -1,7 +1,7 @@
 # JungleRuins Source Inventory
 
-- Schema: `0.1`
-- Generated UTC: `2026-07-26T16:56:09.532170+00:00`
+- Schema: `0.2`
+- Generated UTC: `2026-07-26T18:15:12.878768+00:00`
 - Blender: `4.2.23 LTS`
 - Source files: `324`
 - Source bytes: `7435345046`

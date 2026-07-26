@@ -75,14 +75,14 @@ pipeline preserves them until that interpretation is verified.
 
 ## JR-0009 — Keep human documentation under the working-root docs directory
 
-- Status: Accepted
+- Status: Superseded by JR-0015
 - Date: 2026-07-27
 
 Human-readable contracts, decisions, inventories, and validation summaries live
 under the repository's `docs/jungle`. Generators, schemas, and their usage
-notes live under `assets/scripts/jungle`. Machine-readable JSON reports, GLB
-artifacts, and copied source scenes remain in an ignored external working
-directory such as `visbufscene`.
+notes live under `assets/scripts/jungle`. This decision originally placed
+generated artifacts and a copied source scene in an external working directory;
+JR-0015 replaced that part of the workflow.
 
 ## JR-0010 — Prove the contract with a scoped GLB before full-scene export
 
@@ -138,3 +138,65 @@ scatter systems. It stores 74,206 transforms in 21
 bounds. This validates the direct-cell and transform-level spatial-split paths
 together. It does not yet validate final material appearance or define the
 physical packaging of the full scene.
+
+## JR-0015 — Build directly from the repository source package
+
+- Status: Accepted
+- Date: 2026-07-27
+
+The immutable input is `assets/scenes/unpacked/JungleRuins`. The former
+`visbufscene` copy is no longer part of the active workflow. Generated GLBs
+and machine reports are written only below the ignored
+`assets/scenes/generated/jungle` tree.
+
+## JR-0016 — Use four region packages with logical cell boundaries
+
+- Status: Accepted
+- Date: 2026-07-27
+
+The physical output is `global`, `cinematic`, `extended`, and `pyramid`.
+Creating one standalone GLB per cell would repeatedly embed prototype
+geometry and textures. A monolithic GLB approaches the 32-bit GLB container
+limit and prevents region-level loading. Each region GLB therefore keeps its
+authored cell and system nodes and shares prototype meshes inside the file.
+
+## JR-0017 — Source data retains compact instance streams
+
+- Status: Accepted
+- Date: 2026-07-27
+
+`SceneSourceData` stores one 44-byte TRS/source-index record per instance and
+nodes reference contiguous instance ranges. It does not realize instances
+into render objects or store per-instance AABBs. Cell and system boundaries
+remain hierarchy data so a renderer can choose culling and batching later.
+
+## JR-0018 — Embedded images are file ranges
+
+- Status: Accepted
+- Date: 2026-07-27
+
+GLB images are represented by source file, byte offset, byte size, and encoded
+format. This preserves the exact embedded WebP payload without duplicating it
+in source-scene memory. Decoding and GPU upload belong to later layers.
+
+## JR-0019 — Preserve unresolved exact-origin records
+
+- Status: Accepted
+- Date: 2026-07-27
+
+Exact-origin records in a direct-cell source stay in that cell. If a spatially
+split source has no deterministic cell owner, its exact-origin records are
+stored below the region's unresolved-origin node with source array indices
+intact.
+
+## JR-0020 — Preserve every unowned spatial-split record
+
+- Status: Accepted
+- Date: 2026-07-27
+
+Package validation found one non-origin Grass B record outside all 16
+cinematic ownership bounds. Spatial splitting now computes the union of all
+cell selections and places every unselected record below the region's
+unresolved node. Metadata distinguishes `exact_origin` from
+`outside_cell_ownership`, and complete-package coverage must equal the source
+instance and exact-origin counts.
