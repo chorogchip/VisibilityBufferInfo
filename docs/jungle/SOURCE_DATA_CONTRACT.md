@@ -6,8 +6,12 @@
 loading. It represents what the scene contains. It does not select a renderer,
 build draw calls, allocate descriptors, choose LOD, or decide culling policy.
 
-Public declarations live below `include/scene/data/source`. The glTF decoder is
-split across matching implementation files below `src/scene/data/source`.
+Public data declarations live below `include/scene/data/source`. The glTF
+decoder is owned by `scene::JungleSceneSourceBuilder` in
+`include/scene/builder/source/JungleSceneSourceBuilder.h`. Its camera,
+geometry, hierarchy, and material responsibilities are split below
+`src/scene/builder/source`; `src/scene/data/source` contains data validation,
+not file-format decoding.
 
 ## Data ownership
 
@@ -16,8 +20,8 @@ split across matching implementation files below `src/scene/data/source`.
 | `SceneSourceData` | Owns normalized nodes, meshes, materials, cameras, image/texture tables, and compact instance records. |
 | `source::Node` | Owns hierarchy children and references one mesh, camera, and/or contiguous instance range. |
 | `source::InstanceTransform` | Stores translation, quaternion, scale, and reversible source-array index. |
-| `source::Mesh` / `Primitive` | Stores indexed triangles and source material boundaries. |
-| `source::Material` | Stores PBR factors, alpha mode, transmission/specular/IOR values used by Jungle, and texture references. |
+| `source::Mesh` / `Primitive` | Stores mesh names, indexed triangles, source material boundaries, normals, tangents, UV0/UV1, and COLOR_0/COLOR_1. |
+| `source::Material` | Stores material names, PBR factors, alpha mode, transmission/specular/specular-color/IOR values used by Jungle, and texture references. |
 | `source::Image` | References encoded image bytes by file path and optional byte range. |
 | `source::Texture` / `Sampler` | Preserves glTF image and sampling relationships. |
 | `source::Camera` | Preserves the source perspective/orthographic camera parameters. |
@@ -47,10 +51,42 @@ per-instance AABBs.
 | `system` | `System` | Authored scatter/material grouping |
 | `instance_set` | `InstanceSet` | One prototype mesh plus compact TRS range |
 | `static_object` | `StaticObject` | Terrain, river, creek, pyramid, or other unique geometry |
+| `camera` | `Camera` | Authored camera node |
+| `unresolved_container` | `UnresolvedContainer` | Records without a spatial cell owner |
+| `static_container` | `StaticContainer` | Static-object grouping |
+| `terrain_container` | `TerrainContainer` | Per-cell terrain grouping |
+| `system_container` | `SystemContainer` | Per-cell system grouping |
+| `prototype_container` | `PrototypeContainer` | Non-rendered prototype grouping |
 
-`stable_id` remains a string only on nodes because it is the canonical bridge
-between reports, package metadata, and future runtime controls. Descriptive
-source strings that do not affect identity are not copied into C++ structs.
+Nodes retain their glTF name and the selected `extras.jr` fields required to
+reconstruct Jungle ownership and identity:
+
+- `stable_id`, `cell`, `system`, and `species`;
+- `prototype`, `prototype_id`, and `source_object`;
+- `source_prim` and `source_layer`;
+- `provenance` and `unresolved_reason`.
+
+Arbitrary unknown extras and exporter bookkeeping strings are not copied.
+This is a lossless contract for the non-texture data actually authored in the
+four canonical Jungle GLBs, not a general promise to preserve every possible
+glTF extension.
+
+## Geometry attribute normalization
+
+All 242 Jungle primitives retain `POSITION`, `NORMAL`, `TEXCOORD_0`, and
+triangle indices. Optional attributes are retained when present:
+
+| Attribute | SourceData representation | Canonical package count |
+|---|---|---:|
+| `TANGENT` | `XMFLOAT4` | Source-dependent |
+| `TEXCOORD_1` | `XMFLOAT2` | 19 primitives |
+| `COLOR_0` | `XMFLOAT4` | 101 primitives |
+| `COLOR_1` | `XMFLOAT4` | 101 primitives |
+
+glTF `VEC3` colors receive semantic alpha `1.0`; `VEC4` colors retain their
+alpha. Normalized integer accessors are decoded to their normalized float
+values. Attribute arrays must be either absent or exactly match the position
+count.
 
 ## Coordinate normalization
 
@@ -91,6 +127,30 @@ triangles, and texture references. It does not perform filesystem existence
 walks, image decoding, per-instance AABB construction, or a second full scan of
 all 8.67 million transforms. Instance finiteness is checked while accessors are
 decoded.
+
+The explicit package-set validator is a stronger offline check. Build and run
+it from the repository root:
+
+```powershell
+cmake --build out/build/x64-Debug --config Debug `
+  --target JungleSceneSourceValidate
+
+& out/build/x64-Debug/bin/Debug/JungleSceneSourceValidate.exe `
+  assets/scenes/generated/jungle/packages
+```
+
+The 2026-07-27 run called `JungleSceneSourceBuilder::build` once for each
+region package and passed with:
+
+- 8,674,676 instances across all 778 original source streams;
+- every stream containing the exact `source_index` sequence `0..N-1`;
+- 969 instance sets, 81 cells, and 205 systems;
+- 148 meshes, 242 primitives, 127 materials, 281 images, and one camera;
+- 197 exact-origin records, including five unresolved exact-origin records,
+  plus one outside-cell-ownership record;
+- expected UV1/COLOR attribute counts and the River specular color.
+
+The generated GLBs used by this test remain ignored and are not committed.
 
 ## Deliberate downstream boundary
 

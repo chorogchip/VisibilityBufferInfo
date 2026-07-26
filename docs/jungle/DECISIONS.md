@@ -200,3 +200,26 @@ cell selections and places every unselected record below the region's
 unresolved node. Metadata distinguishes `exact_origin` from
 `outside_cell_ownership`, and complete-package coverage must equal the source
 instance and exact-origin counts.
+
+## JR-0021 — Make Jungle conversion an explicit source builder
+
+- Status: Accepted
+- Date: 2026-07-27
+
+`JungleSceneSourceBuilder` owns the canonical Jungle GLB-to-`SceneSourceData`
+conversion below `scene/builder/source`. It is not a generic glTF importer and
+does not adapt Jungle to a renderer-owned structure. The source structs retain
+the non-texture attributes and `extras.jr` identity needed by downstream
+culling, material selection, and instance tracing.
+
+## JR-0022 — Prove SourceData conversion by calling it on all packages
+
+- Status: Accepted
+- Date: 2026-07-27
+
+`JungleSceneSourceValidate` loads the four generated region GLBs through the
+public builder. It verifies complete source-index coverage, canonical totals,
+optional geometry attributes, hierarchy metadata, unresolved records, camera
+data, and the River specular color. The first complete run passed for all
+8,674,676 instances and 778 source streams. This executable is an offline
+contract check and is excluded from the default build.

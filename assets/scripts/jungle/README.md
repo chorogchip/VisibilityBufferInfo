@@ -97,6 +97,21 @@ Validate that every original USD source index occurs exactly once:
   --report (Join-Path $generated 'reports\package_validation.json')
 ```
 
+Validate the C++ Jungle GLB-to-`SceneSourceData` path against the same package
+set:
+
+```powershell
+cmake --build out/build/x64-Debug --config Debug `
+  --target JungleSceneSourceValidate
+
+& out/build/x64-Debug/bin/Debug/JungleSceneSourceValidate.exe `
+  assets/scenes/generated/jungle/packages
+```
+
+This calls the public `JungleSceneSourceBuilder` for every region and checks
+source-index coverage, hierarchy metadata, geometry attributes, materials,
+and cameras after conversion.
+
 ## Physical package policy
 
 - `global`: River, Creek, linked Banyan object, and source camera.
