@@ -43,8 +43,7 @@ namespace rndr {
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
-            .srv_tabl().reg(0).cnt(resources_.gbuffer_count)
-            .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // // GBUFFER_INPUT
+            .srv_tabl().reg(0).cnt(resources_.gbuffer_count).vis_pxl().add()  // GBUFFER_INPUT
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());

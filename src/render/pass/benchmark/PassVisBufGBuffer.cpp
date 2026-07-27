@@ -121,14 +121,10 @@ namespace rndr {
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
-            .root_cbv().reg(0)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // PASS_CONSTANT
-            .srv_tabl().reg(0).cnt(6)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // SCENE_INPUT
-            .srv_tabl().reg(8).cnt(512)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE, unbound
-            .spl_tabl().reg(0).cnt(1)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_SAMPLER
+            .root_cbv().reg(0).vis_pxl().add()  // PASS_CONSTANT
+            .srv_tabl().reg(0).cnt(6).vis_pxl().add()  // SCENE_INPUT
+            .srv_tabl().reg(8).cnt(512).vis_pxl().add()  // MATERIAL_TEXTURE, unbound
+            .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());

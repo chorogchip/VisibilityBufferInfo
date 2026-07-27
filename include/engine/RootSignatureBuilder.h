@@ -19,7 +19,7 @@ namespace eng {
             ParameterProxy& reg(UINT shader_register);
             ParameterProxy& cnt(UINT count);
             ParameterProxy& spc(UINT register_space);
-            ParameterProxy& vis(D3D12_SHADER_VISIBILITY visibility);
+            ParameterProxy& vis_all();
             ParameterProxy& vis_vtx();
             ParameterProxy& vis_pxl();
 

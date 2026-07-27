@@ -157,16 +157,20 @@ namespace rndr {
             L"assets/shaders/donut_gbuffer_PS.hlsl",
             "ps_5_1", "main", arguments);
 
-        const D3D12_SHADER_VISIBILITY view_vis = use_motion_vectors_ ?
-            D3D12_SHADER_VISIBILITY_ALL :
-            D3D12_SHADER_VISIBILITY_VERTEX;
-
         pso_.init(device);
         pso_.set_graphics();
-        auto root_signature = eng::RootSignatureBuilder{}
+
+        eng::RootSignatureBuilder root_builder{};
+        root_builder
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
-            .constant().reg( 1).cnt(PUSH_CONSTANT_DWORD_COUNT).spc(1).vis_vtx().add()
-            .root_cbv().reg( 2)   .spc(2).vis(view_vis).add()
+            .constant().reg( 1).cnt(PUSH_CONSTANT_DWORD_COUNT).spc(1).vis_vtx().add();
+        if (use_motion_vectors_) {
+            root_builder.root_cbv().reg( 2).spc(2).vis_all().add();
+        } else {
+            root_builder.root_cbv().reg( 2).spc(2).vis_vtx().add();
+        }
+
+        auto root_signature = root_builder
             .srv_tabl().reg(10).cnt(2).spc(1).vis_vtx().add()
             .root_cbv().reg( 0)       .spc(0).vis_pxl().add()
             .srv_tabl().reg( 0).cnt(MATERIAL_TEXTURE_DESCRIPTOR_COUNT).spc(0).vis_pxl().add()

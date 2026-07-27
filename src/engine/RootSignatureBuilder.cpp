@@ -33,9 +33,8 @@ namespace eng {
     }
 
     RootSignatureBuilder::ParameterProxy&
-        RootSignatureBuilder::ParameterProxy::vis(
-            D3D12_SHADER_VISIBILITY visibility) {
-        visibility_ = visibility;
+        RootSignatureBuilder::ParameterProxy::vis_all() {
+        visibility_ = D3D12_SHADER_VISIBILITY_ALL;
         return *this;
     }
 

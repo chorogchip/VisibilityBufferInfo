@@ -69,11 +69,10 @@ namespace rndr {
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
-            .root_cbv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // FRAME_CONSTANT
-            .constant().reg(1).cnt(1)
-                .vis(D3D12_SHADER_VISIBILITY_VERTEX).add()                // DRAW_CONSTANT
-            .root_srv().reg(0).vis(D3D12_SHADER_VISIBILITY_VERTEX).add()  // INSTANCE_BUFFER
-            .root_srv().reg(1).vis(D3D12_SHADER_VISIBILITY_PIXEL).add()   // MATERIAL_BUFFER
+            .root_cbv().reg(0).vis_vtx().add()  // FRAME_CONSTANT
+            .constant().reg(1).cnt(1).vis_vtx().add()  // DRAW_CONSTANT
+            .root_srv().reg(0).vis_vtx().add()  // INSTANCE_BUFFER
+            .root_srv().reg(1).vis_pxl().add()  // MATERIAL_BUFFER
             .srv_tabl().reg(8).cnt(1).vis_pxl().add()  // MATERIAL_TEXTURE
             .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
