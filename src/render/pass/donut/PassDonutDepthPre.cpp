@@ -92,10 +92,10 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/donut/donut_depth_VS.hlsl",
-            L"vs_6_6", L"buffer_loads", arguments);
+            L"vs_6_5", L"buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/donut_depth_pre_PS.hlsl",
-            L"ps_6_6", L"main", arguments);
+            L"ps_6_5", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();

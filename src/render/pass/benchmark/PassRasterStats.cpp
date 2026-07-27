@@ -120,13 +120,13 @@ namespace rndr {
 
         auto cs_clear = dxutl::compile_shader(
             L"assets/shaders/benchmark_raster_stats_CS.hlsl",
-            L"cs_6_6", L"clear_main", arguments);
+            L"cs_6_5", L"clear_main", arguments);
         auto cs_count = dxutl::compile_shader(
             L"assets/shaders/benchmark_raster_stats_CS.hlsl",
-            L"cs_6_6", L"count_main", arguments);
+            L"cs_6_5", L"count_main", arguments);
         auto cs_reduce = dxutl::compile_shader(
             L"assets/shaders/benchmark_raster_stats_CS.hlsl",
-            L"cs_6_6", L"reduce_main", arguments);
+            L"cs_6_5", L"reduce_main", arguments);
 
         auto root_signature = eng::RootSignatureBuilder{}
             .root_cbv().reg(0).add()

@@ -67,10 +67,10 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/deferred_geometry_VS.hlsl",
-            L"vs_6_6", L"main", arguments);
+            L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/deferred_geometry_PS.hlsl",
-            L"ps_6_6", L"main", arguments);
+            L"ps_6_5", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();

@@ -3,11 +3,60 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 #include "util/Utils.h"
 #include "util/Logger.h"
 
 namespace eng {
+
+    namespace {
+        Microsoft::WRL::ComPtr<ID3D12InfoQueue> get_info_queue(
+            ID3D12Device* device) {
+
+            Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue;
+            if (device == nullptr) {
+                return info_queue;
+            }
+
+            device->QueryInterface(
+                IID_PPV_ARGS(info_queue.ReleaseAndGetAddressOf()));
+            return info_queue;
+        }
+
+        void log_info_queue_messages(ID3D12InfoQueue* info_queue) {
+            if (info_queue == nullptr) {
+                return;
+            }
+
+            const UINT64 message_count = info_queue->GetNumStoredMessages();
+            if (message_count == 0) {
+                return;
+            }
+
+            util::Logger::g_logger << "D3D12 info queue messages:\n";
+            for (UINT64 message_index = 0;
+                message_index < message_count;
+                ++message_index) {
+                SIZE_T message_size = 0;
+                if (FAILED(info_queue->GetMessage(
+                    message_index, nullptr, &message_size))) {
+                    continue;
+                }
+
+                std::vector<char> message_storage(message_size);
+                D3D12_MESSAGE* message =
+                    reinterpret_cast<D3D12_MESSAGE*>(message_storage.data());
+                if (FAILED(info_queue->GetMessage(
+                    message_index, message, &message_size))) {
+                    continue;
+                }
+
+                util::Logger::g_logger
+                    << "  " << message->pDescription << '\n';
+            }
+        }
+    }
 
     static D3D12_INPUT_LAYOUT_DESC default_input_layout() {
         static constexpr D3D12_INPUT_ELEMENT_DESC elements[] = {
@@ -125,6 +174,12 @@ namespace eng {
 
             for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
                 pso_.emplace_back();
+                Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue =
+                    get_info_queue(device_);
+                if (info_queue) {
+                    info_queue->ClearStoredMessages();
+                }
+
                 const HRESULT result = device_->CreateComputePipelineState(
                     &desc, IID_PPV_ARGS(&pso_.back()));
                 if (FAILED(result)) {
@@ -133,6 +188,7 @@ namespace eng {
                         << std::hex << static_cast<unsigned long>(result)
                         << '\n';
                     util::Logger::g_logger << stream.str();
+                    log_info_queue_messages(info_queue.Get());
                 }
                 util::Logger::g_logger.assert_with_log(
                     SUCCEEDED(result), "create compute pipeline state");
@@ -205,6 +261,12 @@ namespace eng {
 
         for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
             pso_.emplace_back();
+            Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue =
+                get_info_queue(device_);
+            if (info_queue) {
+                info_queue->ClearStoredMessages();
+            }
+
             const HRESULT result = device_->CreateGraphicsPipelineState(
                 &desc,
                 IID_PPV_ARGS(&pso_.back()));
@@ -214,6 +276,7 @@ namespace eng {
                     << std::hex << static_cast<unsigned long>(result)
                     << '\n';
                 util::Logger::g_logger << stream.str();
+                log_info_queue_messages(info_queue.Get());
             }
             util::Utils::throw_if_failed(
                 result,
