@@ -28,7 +28,7 @@ namespace eng {
         pixel_shader_.Reset();
         compute_shader_.Reset();
         root_signature_.Reset();
-        pso_.Reset();
+        pso_.clear();
         depth_only_ = false;
         depth_equal_ = false;
         fullscreen_ = false;
@@ -36,6 +36,7 @@ namespace eng {
         render_target_count_ = 1;
         render_target_formats_.fill(DXGI_FORMAT_UNKNOWN);
         render_target_formats_[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        virtually_duplicate_count = 1;
     }
 
     void GraphicsPipeline::set_graphics() {
@@ -99,6 +100,10 @@ namespace eng {
         fullscreen_ = true;
     }
 
+    void GraphicsPipeline::set_shader_count(UINT count) {
+        virtually_duplicate_count = count;
+    }
+
     void GraphicsPipeline::build() {
         util::Logger::g_logger.assert_with_log(
             device_ != nullptr && root_signature_ != nullptr,
@@ -116,10 +121,14 @@ namespace eng {
                 compute_shader_->GetBufferSize()
             };
 
-            const HRESULT result = device_->CreateComputePipelineState(
-                &desc, IID_PPV_ARGS(&pso_));
-            util::Logger::g_logger.assert_with_log(
-                SUCCEEDED(result), "create compute pipeline state");
+
+            for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
+                pso_.emplace_back();
+                const HRESULT result = device_->CreateComputePipelineState(
+                    &desc, IID_PPV_ARGS(&pso_.back()));
+                util::Logger::g_logger.assert_with_log(
+                    SUCCEEDED(result), "create compute pipeline state");
+            }
             return;
         }
 
@@ -179,9 +188,12 @@ namespace eng {
         desc.DSVFormat = fullscreen_ ? DXGI_FORMAT_UNKNOWN : DXGI_FORMAT_D32_FLOAT;
         desc.SampleDesc.Count = 1;
 
-        util::Utils::throw_if_failed(
-            device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_)),
-            "create graphics pipeline state");
+        for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
+            pso_.emplace_back();
+            util::Utils::throw_if_failed(
+                device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_.back())),
+                "create graphics pipeline state");
+        }
     }
 
 }

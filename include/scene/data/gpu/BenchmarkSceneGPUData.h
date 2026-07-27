@@ -50,8 +50,8 @@ namespace scene {
             float alpha_cutoff = 0.5f;
             float normal_scale = 1.0f;
             float occlusion_strength = 1.0f;
+            uint32_t virtual_shader_id = 0;
             uint32_t flags = 0;
-            uint32_t pad0 = 0;
             std::array<uint32_t, 5> texture_indices = {
                 source::SceneConstants::INVALID_INDEX,
                 source::SceneConstants::INVALID_INDEX,

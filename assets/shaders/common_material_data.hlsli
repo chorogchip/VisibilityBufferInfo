@@ -15,8 +15,8 @@ struct MaterialData
 
     float normal_scale;
     float occlusion_strength;
+    uint virtual_shader_id;
     uint flags;
-    uint padding0;
 
     uint texture_indices[5];
     uint padding1;

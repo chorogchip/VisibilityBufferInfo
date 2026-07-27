@@ -33,6 +33,7 @@ namespace scene::source {
 
         AlphaMode alpha_mode = AlphaMode::Opaque;
         bool double_sided = false;
+        uint32_t virtual_shader_id = 0;
 
         TextureRef base_color_texture;
         TextureRef metal_roughness_texture;

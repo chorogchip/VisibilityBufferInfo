@@ -35,6 +35,7 @@ namespace scene {
             float occlusion_strength = 1.0f;
             source::AlphaMode alpha_mode = source::AlphaMode::Opaque;
             bool double_sided = false;
+            uint32_t virtual_shader_id = 0;
             TexturePath base_color_texture;
             TexturePath metal_roughness_texture;
             TexturePath normal_texture;

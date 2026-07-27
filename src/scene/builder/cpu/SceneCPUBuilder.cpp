@@ -54,6 +54,7 @@ namespace scene {
                 converted.occlusion_strength = material.occlusion_strength;
                 converted.alpha_mode = material.alpha_mode;
                 converted.double_sided = material.double_sided;
+                converted.virtual_shader_id = material.virtual_shader_id;
                 converted.base_color_texture =
                     texture_path(source, material.base_color_texture);
                 converted.metal_roughness_texture =

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -25,9 +26,11 @@ namespace eng {
         void set_render_targets(UINT count, DXGI_FORMAT format);
         void set_render_targets(UINT count, const DXGI_FORMAT* formats);
         void set_fullscreen();
+        void set_shader_count(UINT count);
         void build();
 
-        [[nodiscard]] ID3D12PipelineState* get() const { return pso_.Get(); }
+        [[nodiscard]] ID3D12PipelineState* get() const { return pso_[0].Get(); }
+        [[nodiscard]] ID3D12PipelineState* get(uint32_t index) const { return pso_[index].Get(); }
         [[nodiscard]] ID3D12RootSignature* get_root_signature() const {
             return root_signature_.Get();
         }
@@ -36,7 +39,7 @@ namespace eng {
         enum class PipelineType { Undefined, Graphics, Compute, };
 
         Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_;
-        Microsoft::WRL::ComPtr<ID3D12PipelineState> pso_;
+        std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> pso_;
         ID3D12Device* device_ = nullptr;
 
         PipelineType pipeline_type_ = PipelineType::Undefined;
@@ -50,6 +53,7 @@ namespace eng {
         std::array<DXGI_FORMAT, D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT>
             render_target_formats_{};
         UINT render_target_count_ = 1;
+        uint32_t virtually_duplicate_count = 1;
     };
 
 }

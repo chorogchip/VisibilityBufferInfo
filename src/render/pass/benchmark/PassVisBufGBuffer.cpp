@@ -125,9 +125,9 @@ namespace rndr {
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // PASS_CONSTANT
             .srv_tabl().reg(0).cnt(6)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // SCENE_INPUT
-            .srv_tabl().reg(8).cnt(arguments.texture_count)
+            .srv_tabl().reg(8).cnt(512)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE, unbound
-            .spl_tabl().reg(0).cnt(512)
+            .spl_tabl().reg(0).cnt(1)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());

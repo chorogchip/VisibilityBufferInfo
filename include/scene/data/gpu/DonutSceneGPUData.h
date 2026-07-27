@@ -78,6 +78,7 @@ namespace scene {
             float normal_scale = 1.0f;
             float occlusion_strength = 1.0f;
             float alpha_cutoff = 0.5f;
+            uint32_t virtual_shader_id = 0;
             uint32_t flags = 0;
             int32_t domain = SHADER_MATERIAL_DOMAIN_OPAQUE;
             std::array<uint32_t, MATERIAL_TEXTURE_DESCRIPTOR_COUNT>
@@ -90,7 +91,6 @@ namespace scene {
                 }();
             uint32_t pad0 = 0;
             uint32_t pad1 = 0;
-            uint32_t pad2 = 0;
         };
 
         struct ShaderMaterialConstants {
@@ -176,7 +176,7 @@ namespace scene {
     static_assert(sizeof(DonutSceneGPUData::ShaderMaterialConstants) == 208);
     static_assert(offsetof(DonutSceneGPUData::InstanceData, transform) == 16);
     static_assert(offsetof(DonutSceneGPUData::SubmeshData, material_id) == 16);
-    static_assert(offsetof(DonutSceneGPUData::MaterialData, texture_indices) == 56);
+    static_assert(offsetof(DonutSceneGPUData::MaterialData, texture_indices) == 56);  // TODO check
     static_assert(offsetof(
         DonutSceneGPUData::ShaderMaterialConstants,
         material_id) == 28);

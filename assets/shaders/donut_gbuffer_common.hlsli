@@ -153,12 +153,12 @@ struct MaterialData
     float normalScale;
     float occlusionStrength;
     float alphaCutoff;
+    uint virtual_shader_id;
     uint flags;
     int domain;
     uint textureIndices[MaterialTextureDescriptorCount];
     uint pad0;
     uint pad1;
-    uint pad2;
 };
 
 struct MaterialConstants
