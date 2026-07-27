@@ -17,6 +17,7 @@
 #include "dx_util/UploadConstBuf.h"
 #include "engine/GPUQueue.h"
 #include "engine/GPUResource.h"
+#include "render/capture/FrameCapture.h"
 #include "render/camera/Camera.h"
 #include "render/camera/CameraPathController.h"
 
@@ -67,6 +68,7 @@ protected:
     D3D12_RECT scissor_rect_{};
 
     rndr::CameraPathController camera_path_controller_{};
+    rndr::FrameCapture frame_capture_{};
     util::FrameCounter frame_counter_{};
     dxutl::GpuFrameTimer frame_time_{};
 };

@@ -68,6 +68,8 @@ void RendererBase::init(HWND hwnd, const util::ProgramArgument& arg) {
         render_targets_[i].init(back_buffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
     }
 
+    frame_capture_.init(device_.Get(), arg, render_targets_[0].get());
+
     viewport_.TopLeftX = 0.0f;
     viewport_.TopLeftY = 0.0f;
     viewport_.Width = static_cast<float>(width_);
@@ -93,6 +95,8 @@ void RendererBase::close() {
     this->before_close_();
 
     const std::string& path = program_argument_.output_filepath;
+    frame_capture_.close();
+
     if (path == "") return;
 
 
@@ -151,6 +155,8 @@ void RendererBase::close() {
 
 void RendererBase::render() {
 
+    frame_capture_.process_completed(frame_index_);
+
     camera_path_controller_.before_render();
 
     this->render_prepare_();
@@ -170,6 +176,11 @@ void RendererBase::render() {
 
     this->render_record_();
 
+    frame_capture_.capture(
+        command_list_.Get(),
+        frame_index_,
+        render_targets_[frame_index_]);
+
     render_targets_[frame_index_].transition(
         command_list_.Get(),
         D3D12_RESOURCE_STATE_PRESENT);
@@ -182,9 +193,8 @@ void RendererBase::render() {
 
     graphics_queue_.execute(command_list_.Get());
 
-    const UINT sync_interval = program_argument_.vsync ? 1 : 0;
     HRESULT hr{};
-    if (!program_argument_.vsync) {
+    if (program_argument_.vsync) {
         hr = swapchain_->Present(1, 0);
     } else {
         hr = swapchain_->Present(0, DXGI_PRESENT_ALLOW_TEARING);

@@ -247,6 +247,8 @@ target_link_libraries(TVBPerf
         user32
         gdi32
         kernel32
+        ole32
+        windowscodecs
         Shell32
 )
 

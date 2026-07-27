@@ -27,6 +27,14 @@ namespace util {
         }
         logger.assert_with_log(arg.profile_window_frames > 0,
             "profile_window_frames must be greater than 0");
+        logger.assert_with_log(arg.capture_stride > 0,
+            "capture_stride must be greater than 0");
+        logger.assert_with_log(arg.capture_fps > 0,
+            "capture_fps must be greater than 0");
+        if (arg.capture_frames) {
+            logger.assert_with_log(!arg.capture_output_dir.empty(),
+                "capture_output_dir must not be empty when capture_frames is true");
+        }
 
         logger.assert_with_log(std::isfinite(arg.camera_pos_x), "camera_pos_x must be finite");
         logger.assert_with_log(std::isfinite(arg.camera_pos_y), "camera_pos_y must be finite");

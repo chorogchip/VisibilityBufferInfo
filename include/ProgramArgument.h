@@ -30,6 +30,10 @@ namespace util {
     X(bool, to_set_start_frame, to-set-start-frame) \
     X(uint32_t, key_frame, key-frame) \
     X(uint32_t, profile_window_frames, profile-window-frames) \
+    X(bool, capture_frames, capture-frames) \
+    X(std::string, capture_output_dir, capture-output-dir) \
+    X(uint32_t, capture_stride, capture-stride) \
+    X(uint32_t, capture_fps, capture-fps) \
     X(uint32_t, window_width, window-width) \
     X(uint32_t, window_height, window-height) \
     X(uint32_t, seed, seed) \
