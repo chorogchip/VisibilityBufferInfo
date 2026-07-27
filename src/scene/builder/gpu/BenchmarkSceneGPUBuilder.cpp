@@ -451,12 +451,19 @@ namespace scene {
         for (uint32_t instance_id = 0; instance_id < source.instances.size(); ++instance_id) {
             const SceneCPUData::Instance& instance =
                 source.instances[instance_id];
+
+            DirectX::XMFLOAT4X4 gpu_transform{};
+            DirectX::XMStoreFloat4x4(
+                &gpu_transform,
+                DirectX::XMMatrixTranspose(
+                    DirectX::XMLoadFloat4x4(&instance.world_transform)));
+
             instances.push_back({
                 instance_id,
                 0,
                 0,
                 0,
-                instance.world_transform
+                gpu_transform
             });
         }
 
