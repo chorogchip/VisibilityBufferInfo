@@ -17,6 +17,7 @@ namespace util {
     void Logger::flush() {
         try {
             std::string log_str = logging_stream_.str();
+            if (log_str.empty()) return;
 
             const std::filesystem::path log_dir = std::filesystem::current_path() / "logs";
             std::filesystem::create_directories(log_dir);

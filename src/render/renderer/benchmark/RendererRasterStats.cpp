@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <string>
 
@@ -342,7 +343,7 @@ namespace rndr {
                 << quad_efficiency << '\n';
         }
 
-        util::Logger::g_logger
+        std::cout
             << "Saved raster stats CSV: " << path.string() << '\n';
     }
 

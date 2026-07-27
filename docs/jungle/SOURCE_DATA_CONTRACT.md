@@ -158,11 +158,23 @@ region package and passed with:
 
 The generated GLBs used by this test remain ignored and are not committed.
 
-## Deliberate downstream boundary
+## Downstream runtime boundary
 
-The current benchmark and Donut CPU/GPU scene types are derived consumers.
-They may initially support only subsets such as opaque rendering. They must not
-cause source data to discard alpha blend, transmission, embedded images,
-system identity, cell identity, or source instance indices. Future renderer
-work should consume selected source nodes/cells and build only the necessary
-derived render data.
+Both renderer families now load Jungle through the same source-owned path:
+
+```text
+SceneSourceLoader -> JungleSceneSourceBuilder -> SceneSourceData
+  -> SceneCPUBuilder
+  -> BenchmarkSceneGPUBuilder or DonutSceneGPUBuilder
+```
+
+The current CPU material retains the source alpha-mode enum. Existing GPU
+layouts lower both mask and blend to their alpha-tested flag/domain until a
+true ordered blend pass exists. Embedded WebP byte ranges remain represented
+losslessly in SourceData, while downstream decode/upload is still pending.
+Those renderer limitations do not remove source material or image data.
+
+The global final package reached renderer variants 1-11. A complete
+74,206-instance cell also reached variants 1-9 and 11; RasterStats variant 10
+hit its independent realized-triangle allocation limit. Detailed commands and
+scope are in `RUNTIME_RENDERER_PATHS.md`.

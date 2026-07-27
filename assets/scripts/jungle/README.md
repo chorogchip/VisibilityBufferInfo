@@ -112,6 +112,44 @@ This calls the public `JungleSceneSourceBuilder` for every region and checks
 source-index coverage, hierarchy metadata, geometry attributes, materials,
 and cameras after conversion.
 
+## Run the renderer paths
+
+The final global package is the smallest final artifact that reaches every
+registered renderer:
+
+```powershell
+& 'C:\Program Files\Blender Foundation\Blender 4.2\4.2\python\bin\python.exe' `
+  scripts/run.py `
+  assets/scripts/jungle/runtime_all_renderers.json
+```
+
+To include the compact scatter-instance path, first generate the complete
+`M_3x4_01` cell probe:
+
+```powershell
+& $blender --background --factory-startup `
+  (Join-Path $scene 'Blender\JungleRuins_Main.blend') `
+  --python (Join-Path $repo 'assets\scripts\jungle\build_contract_probe.py') `
+  -- `
+  --scene-root $scene `
+  --manifest (Join-Path $generated 'reports\canonical_scene_manifest.json') `
+  --output (Join-Path $generated 'probes\jungle_M_3x4_01_complete_cell.glb') `
+  --report (Join-Path $generated 'reports\runtime_probe_build.json') `
+  --docs-output (Join-Path $generated 'reports\runtime_probe_build.md') `
+  --cell M_3x4_01 `
+  --species all
+
+& 'C:\Program Files\Blender Foundation\Blender 4.2\4.2\python\bin\python.exe' `
+  scripts/run.py `
+  assets/scripts/jungle/runtime_instanced_all_renderers.json
+```
+
+Variants 1-9 and 11 complete on the 74,206-instance probe. Variant 10
+(`RendererRasterStats`) currently fails because it allocates a realized
+triangle record for every instance/triangle pair. The Jungle importer and
+normal renderer paths do not depend on that diagnostic renderer's scale
+limit. See `../../../docs/jungle/RUNTIME_RENDERER_PATHS.md`.
+
 ## Physical package policy
 
 - `global`: River, Creek, linked Banyan object, and source camera.

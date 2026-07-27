@@ -223,3 +223,15 @@ optional geometry attributes, hierarchy metadata, unresolved records, camera
 data, and the River specular color. The first complete run passed for all
 8,674,676 instances and 778 source streams. This executable is an offline
 contract check and is excluded from the default build.
+
+## JR-0023 — Route every renderer through the scene-owned conversion path
+
+- Status: Accepted
+- Date: 2026-07-27
+
+Benchmark and Donut renderers both consume
+`SceneSourceData -> SceneCPUData -> family GPU data`. Jungle is not converted
+directly into a renderer-owned structure. The global final package reached all
+11 registered variants. A complete 74,206-instance cell reached variants 1-9
+and 11; variant 10 retains its independent realized-triangle allocation limit
+and is not a Jungle import acceptance gate.
