@@ -84,6 +84,11 @@ namespace scene {
             uint32_t material_id = 0;
         };
 
+        struct DrawInstance {
+            uint32_t instance_id = 0;
+            uint32_t submesh_id = 0;
+        };
+
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
         std::vector<Material> materials;
@@ -92,12 +97,12 @@ namespace scene {
         uint32_t root_node_id = source::SceneConstants::INVALID_INDEX;
         std::vector<Node> nodes;
         std::vector<Instance> instances;
-        std::vector<uint32_t> draw_instance_ids;
-        std::vector<DrawCall> all_draw_calls;
+        std::vector<DrawInstance> draw_instances;
         std::vector<DrawCall> draw_calls;
         math::AABB world_aabb{};
 
     };
 
     static_assert(sizeof(SceneCPUData::Vertex) == 48);
+    static_assert(sizeof(SceneCPUData::DrawInstance) == 8);
 }

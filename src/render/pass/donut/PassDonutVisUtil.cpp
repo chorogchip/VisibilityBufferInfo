@@ -112,23 +112,23 @@ namespace rndr {
 
         auto cs_clear = dxutl::compile_shader(
             L"assets/shaders/visutil/material_binning_CS.hlsl",
-            "cs_6_6",
-            "kernel_clear_counts",
+            L"cs_6_6",
+            L"kernel_clear_counts",
             arguments);
         auto cs_binning = dxutl::compile_shader(
             L"assets/shaders/visutil/material_binning_CS.hlsl",
-            "cs_6_6",
-            "kernel_material_binning",
+            L"cs_6_6",
+            L"kernel_material_binning",
             arguments);
         auto cs_prefix = dxutl::compile_shader(
             L"assets/shaders/visutil/prefix_scan.CS.hlsl",
-            "cs_6_6",
-            "kernel_prefix_block",
+            L"cs_6_6",
+            L"kernel_prefix_block",
             arguments);
         auto cs_flatten = dxutl::compile_shader(
             L"assets/shaders/visutil/material_flatten_CS.hlsl",
-            "cs_6_6",
-            "kernel_material_flatten",
+            L"cs_6_6",
+            L"kernel_material_flatten",
             arguments);
 
         auto clear_root_signature = eng::RootSignatureBuilder{}

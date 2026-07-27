@@ -70,6 +70,11 @@ namespace scene {
             uint32_t pad1 = 0;
         };
 
+        struct DrawInstanceData {
+            uint32_t instance_id = 0;
+            uint32_t submesh_id = 0;
+        };
+
         struct MaterialData {
             DirectX::XMFLOAT4 base_color = { 1.0f, 1.0f, 1.0f, 1.0f };
             DirectX::XMFLOAT3 emissive_color = { 0.0f, 0.0f, 0.0f };
@@ -131,20 +136,11 @@ namespace scene {
             float hair_diffuse_reflection_weight = 0.0f;
         };
 
-        struct DrawData {
-            uint32_t first_render_instance = 0;
-            uint32_t instance_count = 0;
-            uint32_t submesh_id = 0;
-            uint32_t index_count = 0;
-            uint32_t index_offset = 0;
-            uint32_t vertex_offset = 0;
-            uint32_t material_id = 0;
-        };
-
         eng::GPUResource vertex_buffer;
         eng::GPUResource index_buffer;
         eng::GPUResource instance_buffer;
-        eng::GPUResource render_instance_buffer;
+        eng::GPUResource draw_instance_buffer;
+        eng::GPUResource draw_instance_id_buffer;
         eng::GPUResource submesh_buffer;
         eng::GPUResource geometry_instance_buffer;
         eng::GPUResource material_buffer;
@@ -157,26 +153,26 @@ namespace scene {
         uint32_t index_count = 0;
         uint32_t material_constant_stride =
             D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
-        uint32_t render_instance_capacity = 0;
+        uint32_t draw_instance_id_capacity = 0;
         std::array<uint32_t, 3> fallback_texture_indices{};
 
         std::vector<InstanceData> instance_data;
-        std::vector<InstanceData> render_instance_data;
+        std::vector<DrawInstanceData> draw_instance_data;
         std::vector<SubmeshData> submesh_data;
         std::vector<GeometryInstanceData> geometry_instance_data;
         std::vector<MaterialData> material_data;
-        std::vector<DrawData> draws;
 
     };
 
     static_assert(sizeof(DonutSceneGPUData::InstanceData) == 112);
     static_assert(sizeof(DonutSceneGPUData::SubmeshData) == 32);
     static_assert(sizeof(DonutSceneGPUData::GeometryInstanceData) == 16);
+    static_assert(sizeof(DonutSceneGPUData::DrawInstanceData) == 8);
     static_assert(sizeof(DonutSceneGPUData::MaterialData) == 96);
     static_assert(sizeof(DonutSceneGPUData::ShaderMaterialConstants) == 208);
     static_assert(offsetof(DonutSceneGPUData::InstanceData, transform) == 16);
     static_assert(offsetof(DonutSceneGPUData::SubmeshData, material_id) == 16);
-    static_assert(offsetof(DonutSceneGPUData::MaterialData, texture_indices) == 56);  // TODO check
+    static_assert(offsetof(DonutSceneGPUData::MaterialData, texture_indices) == 60);
     static_assert(offsetof(
         DonutSceneGPUData::ShaderMaterialConstants,
         material_id) == 28);

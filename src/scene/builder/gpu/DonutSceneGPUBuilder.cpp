@@ -529,7 +529,7 @@ namespace scene {
             (std::numeric_limits<uint32_t>::max)() &&
             source.instances.size() <=
             (std::numeric_limits<uint32_t>::max)() &&
-            source.draw_instance_ids.size() <=
+            source.draw_instances.size() <=
             (std::numeric_limits<uint32_t>::max)(),
             "Donut GPU scene exceeds 32-bit indexing.");
 
@@ -632,55 +632,21 @@ namespace scene {
             }
         }
 
-        destination.render_instance_data.reserve(
-            source.draw_instance_ids.size());
-        destination.draws.reserve(source.draw_calls.size());
-        for (const SceneCPUData::DrawCall& source_draw : source.draw_calls) {
-            DonutSceneGPUData::DrawData draw{};
-            draw.first_render_instance =
-                static_cast<uint32_t>(
-                    destination.render_instance_data.size());
-            draw.instance_count = source_draw.instance_count;
-            draw.submesh_id = source_draw.submesh_id;
-            draw.index_count = source_draw.index_count;
-            draw.index_offset = source_draw.index_offset;
-            draw.vertex_offset = source_draw.vertex_offset;
-            draw.material_id = source_draw.material_id;
-
-            const uint32_t instance_end =
-                source_draw.first_instance +
-                source_draw.instance_count;
-            for (uint32_t cursor = source_draw.first_instance; cursor < instance_end; ++cursor) {
-                const uint32_t instance_id =
-                    source.draw_instance_ids[cursor];
-                const SceneCPUData::Instance& source_instance =
-                    source.instances[instance_id];
-                const SceneCPUData::Mesh& source_mesh =
-                    source.meshes[source_instance.mesh_id];
-                util::Logger::g_logger.assert_with_log(
-                    source_draw.submesh_id >=
-                    source_mesh.first_submesh &&
-                    source_draw.submesh_id <
-                    source_mesh.first_submesh +
-                    source_mesh.submesh_count,
-                    "Donut draw submesh does not belong to its instance mesh.");
-
-                DonutSceneGPUData::InstanceData render_instance =
-                    destination.instance_data[instance_id];
-                render_instance.first_geometry_instance +=
-                    source_draw.submesh_id -
-                    source_mesh.first_submesh;
-                render_instance.first_geometry =
-                    source_draw.submesh_id;
-                render_instance.geometry_instance_count = 1;
-                destination.render_instance_data.push_back(
-                    render_instance);
-            }
-            destination.draws.push_back(draw);
+        destination.draw_instance_data.reserve(
+            source.draw_instances.size());
+        std::vector<uint32_t> draw_instance_ids;
+        draw_instance_ids.reserve(source.draw_instances.size());
+        for (uint32_t draw_instance_id = 0;
+            draw_instance_id < source.draw_instances.size();
+            ++draw_instance_id) {
+            const SceneCPUData::DrawInstance& source_draw_instance =
+                source.draw_instances[draw_instance_id];
+            destination.draw_instance_data.push_back({
+                source_draw_instance.instance_id,
+                source_draw_instance.submesh_id
+            });
+            draw_instance_ids.push_back(draw_instance_id);
         }
-        destination.render_instance_capacity =
-            static_cast<uint32_t>(
-                destination.render_instance_data.size());
 
         destination.fallback_texture_indices[0] =
             create_fallback_texture(
@@ -860,11 +826,19 @@ namespace scene {
         upload_buffer(
             device,
             command_list,
-            destination.render_instance_data.data(),
-            destination.render_instance_data.size() *
-            sizeof(DonutSceneGPUData::InstanceData),
+            destination.draw_instance_data.data(),
+            destination.draw_instance_data.size() *
+            sizeof(DonutSceneGPUData::DrawInstanceData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-            destination.render_instance_buffer,
+            destination.draw_instance_buffer,
+            used_upload_heaps);
+        upload_buffer(
+            device,
+            command_list,
+            draw_instance_ids.data(),
+            draw_instance_ids.size() * sizeof(uint32_t),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            destination.draw_instance_id_buffer,
             used_upload_heaps);
         upload_buffer(
             device,
@@ -915,35 +889,10 @@ namespace scene {
             "Donut index buffer exceeds the D3D12 view limit.");
         destination.index_buffer_view.Format =
             DXGI_FORMAT_R32_UINT;
+        destination.draw_instance_id_capacity =
+            static_cast<uint32_t>(draw_instance_ids.size());
 
         DonutSceneGPUValidator::validate(destination);
         return destination;
-    }
-
-    void DonutSceneGPUBuilder::rebuild_draws(
-        const SceneCPUData& source,
-        DonutSceneGPUData& destination) {
-        destination.draws.clear();
-        destination.draws.reserve(source.draw_calls.size());
-        for (const auto& source_draw : source.draw_calls) {
-            util::Logger::g_logger.assert_with_log(
-                source_draw.first_instance <=
-                destination.render_instance_data.size() &&
-                source_draw.instance_count <=
-                destination.render_instance_data.size() -
-                source_draw.first_instance,
-                "Donut draw references an invalid render instance range.");
-
-            DonutSceneGPUData::DrawData draw{};
-            draw.first_render_instance =
-                source_draw.first_instance;
-            draw.instance_count = source_draw.instance_count;
-            draw.submesh_id = source_draw.submesh_id;
-            draw.index_count = source_draw.index_count;
-            draw.index_offset = source_draw.index_offset;
-            draw.vertex_offset = source_draw.vertex_offset;
-            draw.material_id = source_draw.material_id;
-            destination.draws.emplace_back(draw);
-        }
     }
 }

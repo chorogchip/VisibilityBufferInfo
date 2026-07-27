@@ -1,113 +1,22 @@
 #include "dx_util/ShaderUtils.h"
 
-#include <array>
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "util/Logger.h"
 #include "util/Utils.h"
-
-namespace {
-
-    struct ProgramArgumentDefines {
-        std::string gbuffer_count_define;
-        std::string texture_count_define;
-        std::string texture_sampling_count_define;
-        std::string texture_size_define;
-        std::string alu_calc_count_define;
-        std::array<D3D_SHADER_MACRO, 6> defines{};
-
-        explicit ProgramArgumentDefines(const util::ProgramArgument& args)
-            : gbuffer_count_define(std::to_string(args.gbuffer_cnt)),
-            texture_count_define(std::to_string(args.texture_count)),
-            texture_sampling_count_define(
-                std::to_string(args.texture_sampling_count)),
-            texture_size_define(std::to_string(args.texture_size)),
-            alu_calc_count_define(std::to_string(args.alu_calc_count)),
-            defines{ {
-                { "GBUFFER_COUNT", gbuffer_count_define.c_str() },
-                { "TEXTURE_COUNT", texture_count_define.c_str() },
-                { "TEXTURE_SAMPLING_COUNT",
-                    texture_sampling_count_define.c_str() },
-                { "TEXTURE_SIZE", texture_size_define.c_str() },
-                { "ALU_CALC_COUNT", alu_calc_count_define.c_str() },
-                { nullptr, nullptr }
-            } } {
-        }
-    };
-
-    std::wstring widen(std::string_view text) {
-        if (text.empty()) {
-            return {};
-        }
-
-        const int size = MultiByteToWideChar(
-            CP_UTF8,
-            0,
-            text.data(),
-            static_cast<int>(text.size()),
-            nullptr,
-            0);
-        std::wstring result(static_cast<size_t>(size), L'\0');
-        MultiByteToWideChar(
-            CP_UTF8,
-            0,
-            text.data(),
-            static_cast<int>(text.size()),
-            result.data(),
-            size);
-        return result;
-    }
-
-    std::string normalize_target_profile(const char* target) {
-        std::string profile = target != nullptr ? target : "";
-        if (profile.ends_with("_5_0") || profile.ends_with("_5_1")) {
-            profile.replace(profile.size() - 3, 3, "6_6");
-        }
-        return profile;
-    }
-
-    void append_argument(
-        std::vector<std::wstring>& storage,
-        std::vector<LPCWSTR>& arguments,
-        std::wstring value) {
-
-        storage.emplace_back(std::move(value));
-        arguments.push_back(storage.back().c_str());
-    }
-
-    void append_define_arguments(
-        const D3D_SHADER_MACRO* defines,
-        std::vector<std::wstring>& storage,
-        std::vector<LPCWSTR>& arguments) {
-
-        if (defines == nullptr) {
-            return;
-        }
-
-        for (const D3D_SHADER_MACRO* define = defines;
-            define->Name != nullptr;
-            ++define) {
-
-            std::string value = define->Name;
-            if (define->Definition != nullptr) {
-                value += "=";
-                value += define->Definition;
-            }
-
-            append_argument(storage, arguments, L"-D");
-            append_argument(storage, arguments, widen(value));
-        }
-    }
-}
 
 namespace dxutl {
 
     Microsoft::WRL::ComPtr<IDxcBlob> compile_shader(
         const std::wstring& path,
-        const char* target,
-        const char* entry_point,
-        const D3D_SHADER_MACRO* defines) {
+        const wchar_t* target,
+        const wchar_t* entry_point,
+        const std::vector<std::wstring>& defines) {
+
+        util::Logger::g_logger.assert_with_log(
+            target != nullptr && entry_point != nullptr,
+            "shader target and entry point must be valid");
 
         Microsoft::WRL::ComPtr<IDxcUtils> utils;
         util::Utils::throw_if_failed(
@@ -134,28 +43,26 @@ namespace dxutl {
             utils->LoadFile(path.c_str(), nullptr, source.ReleaseAndGetAddressOf()),
             "load shader source");
 
-        const std::string normalized_target = normalize_target_profile(target);
-
-        std::vector<std::wstring> argument_storage;
-        argument_storage.reserve(16);
-        std::vector<LPCWSTR> arguments;
-        arguments.reserve(16);
-
-        append_argument(argument_storage, arguments, path);
-        append_argument(argument_storage, arguments, L"-E");
-        append_argument(argument_storage, arguments, widen(entry_point));
-        append_argument(argument_storage, arguments, L"-T");
-        append_argument(argument_storage, arguments, widen(normalized_target));
+        std::vector<LPCWSTR> arguments = {
+            path.c_str(),
+            L"-E",
+            entry_point,
+            L"-T",
+            target
+        };
 
 #if defined(_DEBUG)
-        append_argument(argument_storage, arguments, L"-Zi");
-        append_argument(argument_storage, arguments, L"-Od");
-        append_argument(argument_storage, arguments, L"-Qembed_debug");
+        arguments.push_back(L"-Zi");
+        arguments.push_back(L"-Od");
+        arguments.push_back(L"-Qembed_debug");
 #else
-        append_argument(argument_storage, arguments, L"-O3");
+        arguments.push_back(L"-O3");
 #endif
 
-        append_define_arguments(defines, argument_storage, arguments);
+        for (const std::wstring& define_argument : defines) {
+            arguments.push_back(L"-D");
+            arguments.push_back(define_argument.c_str());
+        }
 
         DxcBuffer source_buffer{};
         source_buffer.Ptr = source->GetBufferPointer();
@@ -179,15 +86,28 @@ namespace dxutl {
                 IID_PPV_ARGS(errors.ReleaseAndGetAddressOf()),
                 nullptr),
             "get DXC errors");
-        if (errors && errors->GetStringLength() > 0) {
-            OutputDebugStringA(errors->GetStringPointer());
-        }
 
         HRESULT status = S_OK;
         util::Utils::throw_if_failed(
             result->GetStatus(&status),
             "get DXC compile status");
-        util::Utils::throw_if_failed(status, "compile shader");
+        if (FAILED(status)) {
+            util::Logger::g_logger
+                << "DXC compile failed for "
+                << util::Utils::wstring_to_string(path)
+                << "\n";
+
+            if (errors && errors->GetStringLength() > 0) {
+                util::Logger::g_logger
+                    << "DXC diagnostics:\n"
+                    << errors->GetStringPointer();
+            } else {
+                util::Logger::g_logger
+                    << "DXC returned no diagnostic text.\n";
+            }
+
+            util::Logger::g_logger.assert_with_log(false, "compile shader");
+        }
 
         Microsoft::WRL::ComPtr<IDxcBlob> shader;
         util::Utils::throw_if_failed(
@@ -201,15 +121,22 @@ namespace dxutl {
 
     Microsoft::WRL::ComPtr<IDxcBlob> compile_shader(
         const std::wstring& path,
-        const char* target,
-        const char* entry_point,
+        const wchar_t* target,
+        const wchar_t* entry_point,
         const util::ProgramArgument& args) {
 
-        ProgramArgumentDefines define_storage(args);
+        const std::vector<std::wstring> defines = {
+            std::wstring(L"GBUFFER_COUNT=") + std::to_wstring(args.gbuffer_cnt),
+            std::wstring(L"TEXTURE_COUNT=") + std::to_wstring(args.texture_count),
+            std::wstring(L"TEXTURE_SAMPLING_COUNT=") +
+                std::to_wstring(args.texture_sampling_count),
+            std::wstring(L"TEXTURE_SIZE=") + std::to_wstring(args.texture_size),
+            std::wstring(L"ALU_CALC_COUNT=") + std::to_wstring(args.alu_calc_count)
+        };
         return compile_shader(
             path,
             target,
             entry_point,
-            define_storage.defines.data());
+            defines);
     }
 }

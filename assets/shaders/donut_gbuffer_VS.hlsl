@@ -4,6 +4,10 @@ StructuredBuffer<InstanceData> t_Instances :
     register(GBUFFER_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
 ByteAddressBuffer t_Vertices :
     register(GBUFFER_VERTEX_REGISTER, GBUFFER_INPUT_SPACE);
+StructuredBuffer<DrawInstanceData> t_DrawInstances :
+    register(GBUFFER_DRAW_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+StructuredBuffer<uint> t_DrawInstanceIDs :
+    register(GBUFFER_DRAW_INSTANCE_ID_REGISTER, GBUFFER_INPUT_SPACE);
 
 cbuffer c_Push : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
 {
@@ -20,9 +24,11 @@ struct VSOutput
 
 VSOutput main(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID)
 {
-    const uint instanceIndex = instanceId + g_Push.startInstanceLocation;
+    const uint compactedSlot = instanceId + g_Push.startInstanceLocation;
+    const uint drawInstanceID = t_DrawInstanceIDs[compactedSlot];
+    const DrawInstanceData drawInstance = t_DrawInstances[drawInstanceID];
+    const InstanceData instance = t_Instances[drawInstance.instanceID];
     const uint vertexIndex = vertexId + g_Push.startVertexLocation;
-    const InstanceData instance = t_Instances[instanceIndex];
 
     const float3 position = asfloat(t_Vertices.Load3(
         g_Push.positionOffset + vertexIndex * SizeOfPosition));

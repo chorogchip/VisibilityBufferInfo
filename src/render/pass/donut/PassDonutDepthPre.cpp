@@ -19,6 +19,8 @@ namespace rndr {
             VIEW_CONSTANT,
             INSTANCE_BUFFER,
             VERTEX_BUFFER,
+            DRAW_INSTANCE_BUFFER,
+            DRAW_INSTANCE_ID_BUFFER,
             MATERIAL_CONSTANT,
             MATERIAL_TEXTURES,
             MATERIAL_SAMPLER,
@@ -61,20 +63,6 @@ namespace rndr {
             eng::ResourceManagerFrame::EnumDSV::DEPTH,
             resources_.depth->get());
 
-        const D3D12_SHADER_RESOURCE_VIEW_DESC instance_srv =
-            make_structured_srv_desc(
-                static_cast<UINT>(resources_.scene->render_instance_data.size()),
-                sizeof(scene::DonutSceneGPUData::InstanceData));
-
-        resources_.shader_manager->create_srv(
-            resources_.scene->render_instance_buffer.get(),
-            instance_srv,
-            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER);
-        resources_.shader_manager->create_srv(
-            resources_.scene->vertex_buffer.get(),
-            eng::ResourceViewBuilder::build_srv(resources_.scene->vertex_buffer.get()),
-            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER);
-
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
             ++material_id) {
@@ -102,16 +90,12 @@ namespace rndr {
             eng::ResourceManagerSampler::EnumDescPos::DONUT_MATERIAL,
             eng::ResourceManagerSampler::EnumSamplerType::LINEAR_WRAP);
 
-        util::assure_next<
-            eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER,
-            eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER>();
-
         auto vs = dxutl::compile_shader(
             L"assets/shaders/donut/donut_depth_VS.hlsl",
-            "vs_5_1", "buffer_loads", arguments);
+            L"vs_6_6", L"buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/donut_depth_pre_PS.hlsl",
-            "ps_5_1", "main", arguments);
+            L"ps_6_6", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
@@ -119,8 +103,10 @@ namespace rndr {
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
             .constant().reg(1).cnt(PUSH_CONSTANT_DWORD_COUNT).spc(1).vis_vtx().add()
             .root_cbv().reg(2).spc(2).vis_vtx().add()
-            .srv_tabl().reg(10).cnt(1).spc(1).vis_vtx().add()
-            .srv_tabl().reg(11).cnt(1).spc(1).vis_vtx().add()
+            .root_srv().reg(10).spc(1).vis_vtx().add()
+            .root_srv().reg(11).spc(1).vis_vtx().add()
+            .root_srv().reg(12).spc(1).vis_vtx().add()
+            .root_srv().reg(13).spc(1).vis_vtx().add()
             .root_cbv().reg(0).spc(0).vis_pxl().add()
             .srv_tabl().reg(0).cnt(MATERIAL_TEXTURE_DESCRIPTOR_COUNT).spc(0).vis_pxl().add()
             .spl_tabl().reg(0).cnt(1).spc(2).vis_pxl().add()
@@ -153,14 +139,18 @@ namespace rndr {
         command_list->SetGraphicsRootConstantBufferView(
             static_cast<UINT>(RootParam::VIEW_CONSTANT),
             resources_.constant_buffers[frame_index]->get()->GetGPUVirtualAddress());
-        command_list->SetGraphicsRootDescriptorTable(
+        command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.shader_manager->get_gpu_adr(
-                eng::ResourceManagerShader::EnumDescPos::DONUT_INSTANCE_BUFFER));
-        command_list->SetGraphicsRootDescriptorTable(
+            resources_.scene->instance_buffer.get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::VERTEX_BUFFER),
-            resources_.shader_manager->get_gpu_adr(
-                eng::ResourceManagerShader::EnumDescPos::DONUT_VERTEX_BUFFER));
+            resources_.scene->vertex_buffer.get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_BUFFER),
+            resources_.scene->draw_instance_buffer.get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_ID_BUFFER),
+            resources_.scene->draw_instance_id_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
             resources_.sampler_manager->get_gpu_adr(
@@ -175,9 +165,10 @@ namespace rndr {
         command_list->ClearDepthStencilView(
             dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const auto& draw : resources_.scene->draws) {
+        for (const auto& draw :
+            resources_.draw_stream->draw_calls_compacted) {
             const PushConstants push_constants{
-                draw.first_render_instance,
+                draw.first_instance,
                 0,
                 resources_.scene->vertex_layout.position_offset,
                 resources_.scene->vertex_layout.texcoord_offset

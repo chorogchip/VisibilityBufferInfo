@@ -25,18 +25,27 @@ cbuffer MatricesCB : register(b0)
 
 struct InstanceData
 {
-    uint object_id;
-    uint material_index;
-    uint mesh_index;
-    uint flags;
+    uint instance_id;
+    uint pad0;
+    uint pad1;
+    uint pad2;
     float4x4 World;
 };
 
-StructuredBuffer<InstanceData> gInstance : register(t0);
+struct DrawInstanceData
+{
+    uint instance_id;
+    uint submesh_id;
+};
+
+StructuredBuffer<InstanceData> gInstances : register(t0);
+StructuredBuffer<DrawInstanceData> gDrawInstances : register(t10);
+StructuredBuffer<uint> gDrawInstanceIDs : register(t11);
 
 cbuffer DrawCB : register(b1)
 {
-    uint gObjectIndex;
+    uint gStartInstance;
+    uint gMaterialID;
 };
 
 DebugPSInput main(
@@ -45,8 +54,9 @@ DebugPSInput main(
     uint vertexID : SV_VertexID
 )
 {
-    const uint instanceIndex = gObjectIndex + instanceID;
-    const InstanceData instanceData = gInstance[instanceIndex];
+    const uint drawInstanceID = gDrawInstanceIDs[gStartInstance + instanceID];
+    const DrawInstanceData drawInstance = gDrawInstances[drawInstanceID];
+    const InstanceData instanceData = gInstances[drawInstance.instance_id];
 
     const float4 positionLocal = float4(input.position, 1.0f);
     const float4 positionWorld = mul(positionLocal, instanceData.World);
@@ -71,11 +81,11 @@ DebugPSInput main(
     output.texcoord1 = input.texcoord0;
     output.tangent = normalize(mul(tangentWorld, (float3x3) gView));
     output.world_pos = positionWorld.xyz;
-    output.material_index = instanceData.material_index;
-    output.instance_id = instanceIndex;
-    output.object_id = instanceData.object_id;
-    output.mesh_index = instanceData.mesh_index;
-    output.flags = instanceData.flags;
+    output.material_index = gMaterialID;
+    output.instance_id = instanceData.instance_id;
+    output.object_id = drawInstanceID;
+    output.mesh_index = drawInstance.submesh_id;
+    output.flags = 0;
     output.vertex_id = vertexID;
 
     return output;

@@ -17,6 +17,8 @@
 #define GBUFFER_PUSH_REGISTER b1
 #define GBUFFER_INSTANCE_REGISTER t10
 #define GBUFFER_VERTEX_REGISTER t11
+#define GBUFFER_DRAW_INSTANCE_REGISTER t12
+#define GBUFFER_DRAW_INSTANCE_ID_REGISTER t13
 
 #define GBUFFER_VIEW_SPACE space2
 #define GBUFFER_VIEW_REGISTER b2
@@ -142,6 +144,12 @@ struct GeometryInstanceData
     uint submeshID;
     uint pad0;
     uint pad1;
+};
+
+struct DrawInstanceData
+{
+    uint instanceID;
+    uint submeshID;
 };
 
 struct MaterialData

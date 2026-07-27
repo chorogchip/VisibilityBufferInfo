@@ -13,7 +13,8 @@ namespace scene {
             static_cast<bool>(scene.vertex_buffer) &&
             static_cast<bool>(scene.index_buffer) &&
             static_cast<bool>(scene.instance_buffer) &&
-            static_cast<bool>(scene.render_instance_buffer) &&
+            static_cast<bool>(scene.draw_instance_buffer) &&
+            static_cast<bool>(scene.draw_instance_id_buffer) &&
             static_cast<bool>(scene.submesh_buffer) &&
             static_cast<bool>(scene.geometry_instance_buffer) &&
             static_cast<bool>(scene.material_buffer) &&
@@ -23,11 +24,10 @@ namespace scene {
             scene.vertex_count > 0 &&
             scene.index_count > 0 &&
             !scene.instance_data.empty() &&
-            !scene.render_instance_data.empty() &&
+            !scene.draw_instance_data.empty() &&
             !scene.submesh_data.empty() &&
             !scene.geometry_instance_data.empty() &&
-            !scene.material_data.empty() &&
-            !scene.draws.empty(),
+            !scene.material_data.empty(),
             "Donut GPU scene has missing render data.");
         util::Logger::g_logger.assert_with_log(
             scene.vertex_layout.position_offset <
@@ -49,11 +49,6 @@ namespace scene {
             sizeof(uint32_t) &&
             scene.index_buffer_view.Format == DXGI_FORMAT_R32_UINT,
             "Donut GPU scene has an invalid index-buffer view.");
-        util::Logger::g_logger.assert_with_log(
-            scene.render_instance_data.size() <=
-            scene.render_instance_capacity,
-            "Donut GPU scene exceeds its render-instance capacity.");
-
         for (const DonutSceneGPUData::InstanceData& instance : scene.instance_data) {
             const uint64_t geometry_end =
                 static_cast<uint64_t>(
@@ -73,21 +68,24 @@ namespace scene {
                 "Donut GPU scene has an invalid geometry instance.");
         }
 
-        uint64_t render_instance_cursor = 0;
-        for (const DonutSceneGPUData::DrawData& draw : scene.draws) {
+        for (const DonutSceneGPUData::DrawInstanceData& draw_instance :
+            scene.draw_instance_data) {
             util::Logger::g_logger.assert_with_log(
-                draw.first_render_instance ==
-                render_instance_cursor &&
-                draw.instance_count > 0 &&
-                draw.submesh_id < scene.submesh_data.size() &&
-                draw.material_id < scene.material_data.size(),
-                "Donut GPU scene has an invalid draw.");
-            render_instance_cursor += draw.instance_count;
+                draw_instance.instance_id < scene.instance_data.size() &&
+                draw_instance.submesh_id < scene.submesh_data.size(),
+                "Donut GPU scene has an invalid draw instance.");
+            const DonutSceneGPUData::InstanceData& instance =
+                scene.instance_data[draw_instance.instance_id];
+            util::Logger::g_logger.assert_with_log(
+                draw_instance.submesh_id >= instance.first_geometry &&
+                draw_instance.submesh_id <
+                instance.first_geometry + instance.geometry_instance_count,
+                "Donut GPU scene draw instance submesh is outside its instance geometry range.");
         }
         util::Logger::g_logger.assert_with_log(
-            render_instance_cursor ==
-            scene.render_instance_data.size(),
-            "Donut GPU scene draws do not cover render instances.");
+            scene.draw_instance_id_capacity >=
+            scene.draw_instance_data.size(),
+            "Donut GPU scene draw-instance ID buffer is under-sized.");
 
         for (const DonutSceneGPUData::MaterialData& material : scene.material_data) {
             for (uint32_t texture_id : material.texture_indices) {

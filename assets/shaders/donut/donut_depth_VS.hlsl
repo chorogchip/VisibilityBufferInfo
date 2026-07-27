@@ -53,6 +53,13 @@ ByteAddressBuffer t_Instances : REGISTER_SRV(DEPTH_BINDING_INSTANCE_BUFFER, DEPT
 StructuredBuffer<InstanceData> t_Instances : REGISTER_SRV(DEPTH_BINDING_INSTANCE_BUFFER, DEPTH_SPACE_INPUT);
 #endif
 ByteAddressBuffer t_Vertices : REGISTER_SRV(DEPTH_BINDING_VERTEX_BUFFER, DEPTH_SPACE_INPUT);
+struct DrawInstanceData
+{
+    uint instanceID;
+    uint submeshID;
+};
+StructuredBuffer<DrawInstanceData> t_DrawInstances : REGISTER_SRV(DEPTH_BINDING_DRAW_INSTANCE_BUFFER, DEPTH_SPACE_INPUT);
+StructuredBuffer<uint> t_DrawInstanceIDs : REGISTER_SRV(DEPTH_BINDING_DRAW_INSTANCE_ID_BUFFER, DEPTH_SPACE_INPUT);
 
 DECLARE_PUSH_CONSTANTS(DepthPushConstants, g_Push, DEPTH_BINDING_PUSH_CONSTANTS, DEPTH_SPACE_INPUT);
 
@@ -65,13 +72,15 @@ void buffer_loads(
     out float2 o_texCoord : TEXCOORD
 )
 {
-    i_instance += g_Push.startInstanceLocation;
+    const uint compactedSlot = i_instance + g_Push.startInstanceLocation;
+    const uint drawInstanceID = t_DrawInstanceIDs[compactedSlot];
+    const DrawInstanceData drawInstance = t_DrawInstances[drawInstanceID];
     i_vertex += g_Push.startVertexLocation;
 
 #ifdef TARGET_D3D11
-    const InstanceData instance = LoadInstanceData(t_Instances, i_instance * c_SizeOfInstanceData);
+    const InstanceData instance = LoadInstanceData(t_Instances, drawInstance.instanceID * c_SizeOfInstanceData);
 #else
-    const InstanceData instance = t_Instances[i_instance];
+    const InstanceData instance = t_Instances[drawInstance.instanceID];
 #endif
 
     float3 pos = asfloat(t_Vertices.Load3(g_Push.positionOffset + i_vertex * c_SizeOfPosition));

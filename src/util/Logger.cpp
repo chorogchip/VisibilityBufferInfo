@@ -40,6 +40,9 @@ namespace util {
                 << std::put_time(&local_time, "%Y-%m-%d_%H-%M-%S")
                 << ".txt";
 
+            std::cout << log_str;
+            std::cerr << log_str;
+
             const std::filesystem::path log_path = log_dir / filename_stream.str();
             std::ofstream output_file(log_path, std::ios::out | std::ios::binary);
 

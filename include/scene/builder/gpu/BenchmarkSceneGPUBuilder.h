@@ -21,8 +21,5 @@ namespace scene {
                 used_upload_heaps,
             bool load_textures = true);
 
-        static void rebuild_draws(
-            const SceneCPUData& source,
-            BenchmarkSceneGPUData& destination);
     };
 }

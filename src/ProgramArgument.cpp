@@ -11,6 +11,56 @@
 
 namespace util {
 
+    ProgramArgument::ProgramArgument()
+        : run_id(0),
+        run_name("no-run-name"),
+        output_filepath("out_result.csv"),
+        renderer_variant(6),
+        variable(0),
+        to_use_scene(true),
+        to_load_texture(true),
+        use_vfc(true),
+        scene_importer("auto"),
+        scene_path("assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx"),
+        warmup_frames(60),
+        measure_frames(5500),
+        auto_terminate(false),
+        vsync(true),
+        camera_mode(0),
+        camera_filepath("standard_camera_bistro.csv"),
+        camera_keyframe_interval(10),
+        to_set_start_frame(false),
+        key_frame(0),
+        profile_window_frames(10),
+        window_width(1280),
+        window_height(720),
+        seed(0),
+        camera_pos_x(0.0f),
+        camera_pos_y(0.0f),
+        camera_pos_z(-10.0f),
+        camera_lookat_x(0.0f),
+        camera_lookat_y(0.0f),
+        camera_lookat_z(0.0f),
+        camera_near_z(0.1f),
+        camera_far_z(1000.0f),
+        camera_fov(0.785f),
+        object_count(1),
+        material_count(1),
+        geometry_count(1),
+        overdraw_count(0),
+        to_remain_only_in_camera(false),
+        z_min(-1.0f),
+        z_max(1.0f),
+        xy_minmax(1.0f),
+        radius(0.5f),
+        geometry_div(1),
+        gbuffer_cnt(1),
+        texture_count(1),
+        texture_size(256),
+        texture_sampling_count(1),
+        alu_calc_count(100) {
+    }
+
 namespace {
 
     std::string normalize_argument_name(const std::string& argument) {
@@ -29,7 +79,7 @@ namespace {
         for (size_t i = 0; i < args.size();) {
             const std::string option_name = normalize_argument_name(args[i]);
 
-#define X(type, name, defl, arg) \
+#define X(type, name, arg) \
         if (option_name == std::string("--" #arg)) { \
             if (i + 1 >= args.size()) { \
                 Logger::g_logger.assert_with_log(false, "Missing value for --" #arg); \
@@ -51,7 +101,7 @@ namespace {
 
     std::string ProgramArgument::get_header_string() {
         std::ostringstream stream;
-#define X(type, name, defl, argname) \
+#define X(type, name, argname) \
         stream << (#argname) << ',';
         ProgramArgument_MAC;
 #undef X
@@ -62,7 +112,7 @@ namespace {
 
     std::string ProgramArgument::to_string() const {
         std::ostringstream stream;
-#define X(type, name, defl, argname) \
+#define X(type, name, argname) \
         stream << (this->name) << ',';
         ProgramArgument_MAC;
 #undef X

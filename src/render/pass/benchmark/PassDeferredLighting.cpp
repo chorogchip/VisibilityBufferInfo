@@ -34,11 +34,11 @@ namespace rndr {
         
         auto vs = dxutl::compile_shader(
             L"assets/shaders/deferred_lighting_VS.hlsl",
-            "vs_5_0", "main", arguments);
+            L"vs_6_6", L"main", arguments);
 
         auto ps = dxutl::compile_shader(
             L"assets/shaders/deferred_lighting_PS.hlsl",
-            "ps_5_0", "main", arguments);
+            L"ps_6_6", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();

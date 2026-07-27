@@ -29,8 +29,7 @@ namespace scene {
             scene.root_node_id < scene.nodes.size(),
             "CPU scene has no valid node tree.");
         util::Logger::g_logger.assert_with_log(
-            !scene.draw_instance_ids.empty() &&
-            !scene.all_draw_calls.empty() &&
+            !scene.draw_instances.empty() &&
             !scene.draw_calls.empty(),
             "CPU scene has no draw calls.");
 
@@ -140,36 +139,55 @@ namespace scene {
                 [](uint8_t value) { return value == 1; }),
             "CPU scene contains a node outside the root tree.");
 
-        for (uint32_t instance_id : scene.draw_instance_ids) {
+        for (const SceneCPUData::DrawInstance& draw_instance :
+            scene.draw_instances) {
             util::Logger::g_logger.assert_with_log(
-                instance_id < scene.instances.size(),
-                "CPU scene draw stream references an invalid instance.");
+                draw_instance.instance_id < scene.instances.size() &&
+                draw_instance.submesh_id < scene.submeshes.size(),
+                "CPU scene draw stream references an invalid draw instance.");
+            const SceneCPUData::Instance& instance =
+                scene.instances[draw_instance.instance_id];
+            const SceneCPUData::Mesh& mesh = scene.meshes[instance.mesh_id];
+            util::Logger::g_logger.assert_with_log(
+                draw_instance.submesh_id >= mesh.first_submesh &&
+                draw_instance.submesh_id <
+                mesh.first_submesh + mesh.submesh_count,
+                "CPU scene draw instance submesh does not belong to its mesh.");
         }
 
-        const std::vector<SceneCPUData::DrawCall>* draw_lists[] = {
-            &scene.all_draw_calls,
-            &scene.draw_calls
-        };
-        for (const std::vector<SceneCPUData::DrawCall>* draws : draw_lists) {
-            for (const SceneCPUData::DrawCall& draw : *draws) {
-                const uint64_t instance_end =
-                    static_cast<uint64_t>(draw.first_instance) +
-                    draw.instance_count;
-                util::Logger::g_logger.assert_with_log(
-                    draw.instance_count > 0 &&
-                    draw.submesh_id < scene.submeshes.size() &&
-                    instance_end <= scene.draw_instance_ids.size(),
-                    "CPU scene draw call has an invalid range.");
+        uint64_t draw_instance_cursor = 0;
+        for (const SceneCPUData::DrawCall& draw : scene.draw_calls) {
+            const uint64_t instance_end =
+                static_cast<uint64_t>(draw.first_instance) +
+                draw.instance_count;
+            util::Logger::g_logger.assert_with_log(
+                draw.instance_count > 0 &&
+                draw.first_instance == draw_instance_cursor &&
+                draw.submesh_id < scene.submeshes.size() &&
+                instance_end <= scene.draw_instances.size(),
+                "CPU scene draw call has an invalid range.");
 
-                const SceneCPUData::Submesh& submesh =
-                    scene.submeshes[draw.submesh_id];
+            const SceneCPUData::Submesh& submesh =
+                scene.submeshes[draw.submesh_id];
+            util::Logger::g_logger.assert_with_log(
+                draw.index_count == submesh.index_count &&
+                draw.index_offset == submesh.index_offset &&
+                draw.vertex_offset == submesh.vertex_offset &&
+                draw.material_id == submesh.material_id,
+                "CPU scene draw call disagrees with its submesh.");
+
+            for (uint32_t cursor = draw.first_instance;
+                cursor < instance_end;
+                ++cursor) {
                 util::Logger::g_logger.assert_with_log(
-                    draw.index_count == submesh.index_count &&
-                    draw.index_offset == submesh.index_offset &&
-                    draw.vertex_offset == submesh.vertex_offset &&
-                    draw.material_id == submesh.material_id,
-                    "CPU scene draw call disagrees with its submesh.");
+                    scene.draw_instances[cursor].submesh_id ==
+                    draw.submesh_id,
+                    "CPU scene draw call contains a mismatched draw instance.");
             }
+            draw_instance_cursor = instance_end;
         }
+        util::Logger::g_logger.assert_with_log(
+            draw_instance_cursor == scene.draw_instances.size(),
+            "CPU scene draw calls do not cover draw instances.");
     }
 }

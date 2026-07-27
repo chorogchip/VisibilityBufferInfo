@@ -153,6 +153,7 @@ namespace rndr {
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             visibility.constant_buffers[i] = &gbuffer_constant_resources_[i];
         visibility.scene = scene_gpu_.get();
+        visibility.draw_stream = &draw_stream_;
         pass_visibility_.init(device_.Get(), program_argument_, visibility, false);
 
         PassDonutVisUtilResources visutil{};

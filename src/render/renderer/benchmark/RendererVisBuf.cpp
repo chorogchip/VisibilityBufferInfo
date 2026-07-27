@@ -37,10 +37,15 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         visibility.instance_buffer_address =
-            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+            scene_instance_buffer_.get()->GetGPUVirtualAddress();
+        visibility.draw_instance_buffer_address =
+            scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+        visibility.draw_instance_id_buffer_address =
+            scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
         visibility.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         visibility.index_buffer_view = scene_gpu_->index_buffer_view;
         visibility.scene = scene_cpu_.get();
+        visibility.draw_stream = &draw_stream_;
         pass_visibility_.init(device_.Get(), program_argument_, visibility);
 
         PassVisBufResolveResources resolve{};
@@ -53,7 +58,8 @@ namespace rndr {
         resolve.vertex_buffer = &scene_vertex_buffer_;
         resolve.index_buffer = &scene_index_buffer_;
         resolve.submesh_buffer = &scene_submesh_buffer_;
-        resolve.instance_buffer = &scene_render_instance_buffer_;
+        resolve.instance_buffer = &scene_instance_buffer_;
+        resolve.draw_instance_buffer = &scene_draw_instance_buffer_;
         resolve.material_buffer = &scene_material_buffer_;
         for (auto& texture : textures_)
             resolve.material_textures.push_back(&texture);

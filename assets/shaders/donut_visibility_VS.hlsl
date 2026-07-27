@@ -4,6 +4,10 @@ StructuredBuffer<InstanceData> t_Instances :
     register(GBUFFER_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
 ByteAddressBuffer t_Vertices :
     register(GBUFFER_VERTEX_REGISTER, GBUFFER_INPUT_SPACE);
+StructuredBuffer<DrawInstanceData> t_DrawInstances :
+    register(GBUFFER_DRAW_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+StructuredBuffer<uint> t_DrawInstanceIDs :
+    register(GBUFFER_DRAW_INSTANCE_ID_REGISTER, GBUFFER_INPUT_SPACE);
 
 cbuffer c_Push : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
 {
@@ -21,8 +25,10 @@ struct VSOutput
 
 VSOutput main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
-    const uint instanceIndex = instanceID + g_StartInstanceLocation;
-    const InstanceData instance = t_Instances[instanceIndex];
+    const uint compactedSlot = instanceID + g_StartInstanceLocation;
+    const uint drawInstanceID = t_DrawInstanceIDs[compactedSlot];
+    const DrawInstanceData drawInstance = t_DrawInstances[drawInstanceID];
+    const InstanceData instance = t_Instances[drawInstance.instanceID];
 
     const float3 position = asfloat(t_Vertices.Load3(
         g_PositionOffset + vertexID * SizeOfPosition));
@@ -33,8 +39,10 @@ VSOutput main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
     VSOutput output;
     output.clipPosition = mul(float4(worldPosition, 1.0), g_GBuffer.view.matWorldToClip);
     output.texCoord = texCoord;
+    const uint geometryOffset =
+        drawInstance.submeshID - instance.firstGeometryIndex;
     output.geometryInstanceID =
-        instance.firstGeometryInstanceIndex + 1;
+        instance.firstGeometryInstanceIndex + geometryOffset + 1;
 
     return output;
 }

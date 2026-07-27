@@ -28,10 +28,15 @@ namespace rndr {
                 buf_constant_[1].get()->GetGPUVirtualAddress();
             static_assert(util::Constants::FRAME_COUNT == 2);
             depth_resources.instance_buffer_address =
-                scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+                scene_instance_buffer_.get()->GetGPUVirtualAddress();
+            depth_resources.draw_instance_buffer_address =
+                scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+            depth_resources.draw_instance_id_buffer_address =
+                scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
             depth_resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth_resources.index_buffer_view = scene_gpu_->index_buffer_view;
             depth_resources.scene = scene_cpu_.get();
+            depth_resources.draw_stream = &draw_stream_;
             pass_depth_pre_.init(device_.Get(), program_argument_, depth_resources);
         }
 
@@ -48,7 +53,11 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         resources.instance_buffer_address =
-            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+            scene_instance_buffer_.get()->GetGPUVirtualAddress();
+        resources.draw_instance_buffer_address =
+            scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+        resources.draw_instance_id_buffer_address =
+            scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
         resources.material_buffer_address =
             scene_material_buffer_.get()->GetGPUVirtualAddress();
         for (auto& texture : textures_)
@@ -57,6 +66,7 @@ namespace rndr {
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;
         resources.scene = scene_cpu_.get();
+        resources.draw_stream = &draw_stream_;
         resources.materials = &scene_gpu_->material_data;
         resources.to_use_textures = program_argument_.to_load_texture;
         pass_forward_.init(device_.Get(), program_argument_, resources, do_prepass_);

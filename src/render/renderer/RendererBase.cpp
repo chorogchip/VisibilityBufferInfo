@@ -163,6 +163,8 @@ void RendererBase::render() {
         command_list_->Reset(command_allocator_[frame_index_].Get(), nullptr),
         "command list reset on render start");
 
+    this->render_update_scene_resources_();
+
     frame_time_.start_timestamp(
         command_list_.Get(), frame_index_, dxutl::GpuFrameTimer::TOTAL_SLOT);
 

@@ -111,6 +111,7 @@ namespace rndr {
 		for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
 			gbuffer.constant_buffers[i] = &gbuffer_constant_resources_[i];
 		gbuffer.scene = scene_gpu_.get();
+		gbuffer.draw_stream = &draw_stream_;
 
 		if (do_prepass_) {
 			PassDonutDepthPreResources depth{};
@@ -121,6 +122,7 @@ namespace rndr {
 			for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
 				depth.constant_buffers[i] = &depth_constant_resources_[i];
 			depth.scene = scene_gpu_.get();
+			depth.draw_stream = &draw_stream_;
 			pass_depth_pre_.init(device_.Get(), program_argument_, depth);
 		}
 

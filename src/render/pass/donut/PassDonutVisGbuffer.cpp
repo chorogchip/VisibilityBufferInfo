@@ -1,6 +1,7 @@
 #include "render/pass/donut/PassDonutVisGbuffer.h"
 
 #include <string>
+#include <vector>
 
 #include "dx_util/ShaderUtils.h"
 #include "engine/GPUResource.h"
@@ -103,20 +104,17 @@ namespace rndr {
             material_texture_descriptor_count <=
             scene::DonutSceneGPUData::MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT,
             "Donut visibility G-buffer material texture descriptor count exceeds shader limit");
-        const std::string material_descriptor_count_define =
-            std::to_string(material_texture_descriptor_count);
-        const D3D_SHADER_MACRO ps_defines[] = {
-            { "DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT",
-                material_descriptor_count_define.c_str() },
-            { nullptr, nullptr }
+        const std::vector<std::wstring> ps_defines = {
+            std::wstring(L"DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
+                std::to_wstring(material_texture_descriptor_count)
         };
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_VS.hlsl",
-            "vs_5_1", "main", arguments);
+            L"vs_6_6", L"main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/donut_vis_gbuffer_PS.hlsl",
-            "ps_5_1", "main", ps_defines);
+            L"ps_6_6", L"main", ps_defines);
 
         pso_.init(device);
         pso_.set_graphics();

@@ -6,6 +6,7 @@
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/data/cpu/SceneCPUData.h"
+#include "scene/data/cpu/SceneCPUDrawStream.h"
 #include "scene/data/gpu/BenchmarkSceneGPUData.h"
 #include <vector>
 
@@ -25,12 +26,15 @@ namespace rndr {
         eng::GPUResource* depth = nullptr;
         D3D12_GPU_VIRTUAL_ADDRESS constant_buffer_addresses[util::Constants::FRAME_COUNT]{};
         D3D12_GPU_VIRTUAL_ADDRESS instance_buffer_address = 0;
+        D3D12_GPU_VIRTUAL_ADDRESS draw_instance_buffer_address = 0;
+        D3D12_GPU_VIRTUAL_ADDRESS draw_instance_id_buffer_address = 0;
         D3D12_GPU_VIRTUAL_ADDRESS material_buffer_address = 0;
         std::vector<eng::GPUResource*> material_textures;
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
         const scene::SceneCPUData* scene = nullptr;
+        const scene::SceneCPUDrawStream* draw_stream = nullptr;
         const std::vector<scene::BenchmarkSceneGPUData::MaterialData>*
             materials = nullptr;
         bool to_use_textures = false;

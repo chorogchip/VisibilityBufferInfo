@@ -1,6 +1,7 @@
 #include "render/renderer/benchmark/RendererBenchmark.h"
 
 #include <cstring>
+#include <limits>
 
 #include <DirectXCollision.h>
 
@@ -13,7 +14,7 @@
 #include "engine/ResourceManagerShader.h"
 #include "scene/SceneFingerprint.h"
 #include "scene/builder/cpu/SceneCPUBuilder.h"
-#include "scene/builder/cpu/SceneCPUDrawBuilder.h"
+#include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
 #include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
 #include "scene/builder/source/SceneSourceFactory.h"
 
@@ -41,9 +42,12 @@ namespace rndr {
         auto scene_source = scene::SceneSourceFactory::create_scene(program_argument_);
         scene_cpu_ = std::make_unique<scene::SceneCPUData>(
             scene::SceneCPUBuilder::build(*scene_source));
+        scene::SceneCPUDrawStreamBuilder::build_all(
+            *scene_cpu_,
+            draw_stream_);
         to_profile_index_count_ = true;
         profile_index_count_ = static_cast<double>(
-            scene::SceneCPUDrawBuilder::count_indices(*scene_cpu_));
+            scene::SceneCPUDrawStreamBuilder::count_indices(draw_stream_));
 
         scene::SceneFingerprint::write_csv(
             util::get_scene_fingerprint_output_path(program_argument_.output_filepath),
@@ -73,6 +77,7 @@ namespace rndr {
         }
 
         this->wrap_scene_resources();
+        this->create_draw_instance_id_upload_buffers();
 
         if (program_argument_.to_load_texture)
             program_argument_.texture_count = static_cast<UINT>(scene_gpu_->textures.size());
@@ -119,16 +124,19 @@ namespace rndr {
                 world_frustum,
                 DirectX::XMMatrixInverse(nullptr, mat_view));
 
-            scene::SceneCPUDrawBuilder::build_visible(
+            scene::SceneCPUDrawStreamBuilder::build_visible(
                 *scene_cpu_,
+                draw_stream_,
                 world_frustum);
-            scene::BenchmarkSceneGPUBuilder::rebuild_draws(
-                *scene_cpu_,
-                *scene_gpu_);
+            draw_stream_dirty_ = true;
         }
 
         profile_index_count_ = static_cast<double>(
-            scene::SceneCPUDrawBuilder::count_indices(*scene_cpu_));
+            scene::SceneCPUDrawStreamBuilder::count_indices(draw_stream_));
+    }
+
+    void RendererBenchmark::render_update_scene_resources_() {
+        this->update_draw_instance_id_buffer();
     }
 
     void RendererBenchmark::wrap_scene_resources() {
@@ -143,8 +151,14 @@ namespace rndr {
             scene_gpu_->index_buffer.get(),
             D3D12_RESOURCE_STATE_INDEX_BUFFER |
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        scene_render_instance_buffer_.init(
-            scene_gpu_->render_instance_buffer.get(),
+        scene_instance_buffer_.init(
+            scene_gpu_->instance_buffer.get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene_draw_instance_buffer_.init(
+            scene_gpu_->draw_instance_buffer.get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        scene_draw_instance_id_buffer_.init(
+            scene_gpu_->draw_instance_id_buffer.get(),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         scene_material_buffer_.init(
             scene_gpu_->material_buffer.get(),
@@ -152,6 +166,63 @@ namespace rndr {
         scene_submesh_buffer_.init(
             scene_gpu_->submesh_buffer.get(),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    }
+
+    void RendererBenchmark::create_draw_instance_id_upload_buffers() {
+        util::Logger::g_logger.assert_with_log(
+            scene_gpu_ != nullptr &&
+            scene_gpu_->draw_instance_id_capacity > 0,
+            "benchmark draw-instance ID buffer capacity is invalid");
+
+        const uint64_t byte_size =
+            static_cast<uint64_t>(scene_gpu_->draw_instance_id_capacity) *
+            sizeof(uint32_t);
+        util::Logger::g_logger.assert_with_log(
+            byte_size <= (std::numeric_limits<UINT64>::max)(),
+            "benchmark draw-instance ID upload size overflow");
+
+        for (auto& upload : draw_instance_id_upload_buffers_) {
+            upload = dxutl::create_buffer(
+                device_.Get(),
+                byte_size,
+                D3D12_HEAP_TYPE_UPLOAD,
+                D3D12_RESOURCE_STATE_GENERIC_READ);
+        }
+    }
+
+    void RendererBenchmark::update_draw_instance_id_buffer() {
+        if (!draw_stream_dirty_)
+            return;
+
+        util::Logger::g_logger.assert_with_log(
+            draw_stream_.draw_instance_ids_compacted.size() <=
+            scene_gpu_->draw_instance_id_capacity,
+            "benchmark compacted draw-instance ID stream exceeds GPU capacity");
+
+        const uint64_t byte_size =
+            static_cast<uint64_t>(
+                draw_stream_.draw_instance_ids_compacted.size()) *
+            sizeof(uint32_t);
+        if (byte_size > 0) {
+            dxutl::copy_to_upload_buffer(
+                draw_instance_id_upload_buffers_[frame_index_].Get(),
+                draw_stream_.draw_instance_ids_compacted.data(),
+                static_cast<size_t>(byte_size));
+            scene_draw_instance_id_buffer_.transition(
+                command_list_.Get(),
+                D3D12_RESOURCE_STATE_COPY_DEST);
+            command_list_->CopyBufferRegion(
+                scene_draw_instance_id_buffer_.get(),
+                0,
+                draw_instance_id_upload_buffers_[frame_index_].Get(),
+                0,
+                byte_size);
+            scene_draw_instance_id_buffer_.transition(
+                command_list_.Get(),
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        }
+
+        draw_stream_dirty_ = false;
     }
 
     void RendererBenchmark::create_dummy_textures() {

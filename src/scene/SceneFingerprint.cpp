@@ -252,7 +252,7 @@ namespace scene {
 		metrics.mesh_tri_avg = average_or_zero(mesh_triangle_counts);
 
 		std::map<uint32_t, uint64_t> material_triangle_counts;
-		for (const SceneCPUData::DrawCall& draw : scene.all_draw_calls) {
+		for (const SceneCPUData::DrawCall& draw : scene.draw_calls) {
 			material_triangle_counts[draw.material_id] +=
 				static_cast<uint64_t>(draw.index_count / 3) *
 				draw.instance_count;

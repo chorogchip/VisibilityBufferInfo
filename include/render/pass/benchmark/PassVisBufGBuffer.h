@@ -23,6 +23,7 @@ namespace rndr {
         eng::GPUResource* index_buffer = nullptr;
         eng::GPUResource* submesh_buffer = nullptr;
         eng::GPUResource* instance_buffer = nullptr;
+        eng::GPUResource* draw_instance_buffer = nullptr;
         eng::GPUResource* material_buffer = nullptr;
         std::vector<eng::GPUResource*> material_textures;
         const scene::SceneCPUData* scene = nullptr;

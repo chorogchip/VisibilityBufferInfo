@@ -17,6 +17,8 @@ namespace rndr {
             VIEW_CONSTANT,
             INSTANCE_BUFFER,
             VERTEX_BUFFER,
+            DRAW_INSTANCE_BUFFER,
+            DRAW_INSTANCE_ID_BUFFER,
             MATERIAL_CONSTANT,
             MATERIAL_TEXTURES,
             MATERIAL_SAMPLER,
@@ -79,10 +81,10 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/donut_visibility_VS.hlsl",
-            "vs_5_1", "main", arguments);
+            L"vs_6_6", L"main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/donut_visibility_PS.hlsl",
-            "ps_5_1", "main", arguments);
+            L"ps_6_6", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
@@ -92,6 +94,8 @@ namespace rndr {
             .root_cbv().reg(2).spc(2).vis_vtx().add()
             .root_srv().reg(10).spc(1).vis_vtx().add()
             .root_srv().reg(11).spc(1).vis_vtx().add()
+            .root_srv().reg(12).spc(1).vis_vtx().add()
+            .root_srv().reg(13).spc(1).vis_vtx().add()
             .root_cbv().reg(0).spc(0).vis_pxl().add()
             .srv_tabl().reg(0).cnt(MATERIAL_TEXTURE_DESCRIPTOR_COUNT).spc(0).vis_pxl().add()
             .spl_tabl().reg(0).cnt(1).spc(2).vis_pxl().add()
@@ -134,11 +138,17 @@ namespace rndr {
             resources_.constant_buffers[frame_index]->get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
-            resources_.scene->render_instance_buffer.get()->
+            resources_.scene->instance_buffer.get()->
                 GetGPUVirtualAddress());
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::VERTEX_BUFFER),
             resources_.scene->vertex_buffer.get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_BUFFER),
+            resources_.scene->draw_instance_buffer.get()->GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_ID_BUFFER),
+            resources_.scene->draw_instance_id_buffer.get()->GetGPUVirtualAddress());
         command_list->SetGraphicsRootDescriptorTable(
             static_cast<UINT>(RootParam::MATERIAL_SAMPLER),
             resources_.sampler_manager->get_gpu_adr(
@@ -162,9 +172,10 @@ namespace rndr {
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetIndexBuffer(&resources_.scene->index_buffer_view);
 
-        for (const auto& draw : resources_.scene->draws) {
+        for (const auto& draw :
+            resources_.draw_stream->draw_calls_compacted) {
             const PushConstants push_constants{
-                draw.first_render_instance,
+                draw.first_instance,
                 resources_.scene->vertex_layout.position_offset,
                 resources_.scene->vertex_layout.texcoord_offset
             };

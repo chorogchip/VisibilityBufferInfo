@@ -3,6 +3,7 @@
 #include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
+#include "scene/data/cpu/SceneCPUDrawStream.h"
 #include "scene/data/gpu/DonutSceneGPUData.h"
 
 namespace eng {
@@ -21,6 +22,7 @@ namespace rndr {
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
         const scene::DonutSceneGPUData* scene = nullptr;
+        const scene::SceneCPUDrawStream* draw_stream = nullptr;
     };
 
     class PassDonutDepthPre {

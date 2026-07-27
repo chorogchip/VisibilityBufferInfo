@@ -28,13 +28,19 @@ struct Submesh
     uint padding2;
 };
 
-struct ObjectData
+struct InstanceData
 {
     uint instance_id;
-    uint material_id;
-    uint submesh_id;
-    uint flags;
+    uint pad0;
+    uint pad1;
+    uint pad2;
     float4x4 World;
+};
+
+struct DrawInstanceData
+{
+    uint instance_id;
+    uint submesh_id;
 };
 
 cbuffer MatricesCB : register(b0)
@@ -49,8 +55,9 @@ Texture2D<uint2> gVisibility : register(t0);
 StructuredBuffer<Vertex> gVertices : register(t1);
 StructuredBuffer<uint> gIndices : register(t2);
 StructuredBuffer<Submesh> gSubmeshes : register(t3);
-StructuredBuffer<ObjectData> gObjects : register(t4);
-StructuredBuffer<MaterialData> gMaterials : register(t5);
+StructuredBuffer<InstanceData> gInstances : register(t4);
+StructuredBuffer<DrawInstanceData> gDrawInstances : register(t5);
+StructuredBuffer<MaterialData> gMaterials : register(t6);
 
 float4 main(PSInput input) : SV_Target
 {
@@ -59,11 +66,13 @@ float4 main(PSInput input) : SV_Target
     
     if (vis.x == 0) return float4(0.1f, 0.1f, 0.15f, 1.0f);
     
-    uint object_id = vis.x - 1;
+    uint drawInstanceID = vis.x - 1;
     uint primitive_id = vis.y;
     
-    ObjectData obj = gObjects[object_id];
-    Submesh submesh = gSubmeshes[obj.submesh_id];
+    DrawInstanceData drawInstance = gDrawInstances[drawInstanceID];
+    InstanceData instance = gInstances[drawInstance.instance_id];
+    Submesh submesh = gSubmeshes[drawInstance.submesh_id];
+    uint materialID = submesh.material_id;
     uint i0 = gIndices[submesh.index_offset + primitive_id * 3 + 0];
     uint i1 = gIndices[submesh.index_offset + primitive_id * 3 + 1];
     uint i2 = gIndices[submesh.index_offset + primitive_id * 3 + 2];
@@ -72,9 +81,9 @@ float4 main(PSInput input) : SV_Target
     Vertex v1 = gVertices[submesh.vertex_offset + i1];
     Vertex v2 = gVertices[submesh.vertex_offset + i2];
     
-    float4 world0 = mul(float4(v0.position, 1.0f), obj.World);
-    float4 world1 = mul(float4(v1.position, 1.0f), obj.World);
-    float4 world2 = mul(float4(v2.position, 1.0f), obj.World);
+    float4 world0 = mul(float4(v0.position, 1.0f), instance.World);
+    float4 world1 = mul(float4(v1.position, 1.0f), instance.World);
+    float4 world2 = mul(float4(v2.position, 1.0f), instance.World);
 
     float4 view0 = mul(world0, gView);
     float4 view1 = mul(world1, gView);
@@ -108,16 +117,16 @@ float4 main(PSInput input) : SV_Target
     float2 d_uv_dx = uv0_grad.dx;
     float2 d_uv_dy = uv0_grad.dy;
     
-    float3 normal0 = mul(mul(float4(v0.normal, 0.0f), obj.World).xyz, (float3x3) gView);
-    float3 normal1 = mul(mul(float4(v1.normal, 0.0f), obj.World).xyz, (float3x3) gView);
-    float3 normal2 = mul(mul(float4(v2.normal, 0.0f), obj.World).xyz, (float3x3) gView);
+    float3 normal0 = mul(mul(float4(v0.normal, 0.0f), instance.World).xyz, (float3x3) gView);
+    float3 normal1 = mul(mul(float4(v1.normal, 0.0f), instance.World).xyz, (float3x3) gView);
+    float3 normal2 = mul(mul(float4(v2.normal, 0.0f), instance.World).xyz, (float3x3) gView);
 
     float3 normal = normalize(
         normal0 * bary_perspective.x +
         normal1 * bary_perspective.y +
         normal2 * bary_perspective.z);
     
-    float4 base_color = gMaterials[obj.material_id].base_color;
-    uint index = gMaterials[obj.material_id].texture_indices[0];
+    float4 base_color = gMaterials[materialID].base_color;
+    uint index = gMaterials[materialID].texture_indices[0];
     return float4(apply_workload_visbuf(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
 }

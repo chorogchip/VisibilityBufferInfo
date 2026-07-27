@@ -25,7 +25,11 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         resources.instance_buffer_address =
-            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+            scene_instance_buffer_.get()->GetGPUVirtualAddress();
+        resources.draw_instance_buffer_address =
+            scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+        resources.draw_instance_id_buffer_address =
+            scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
         resources.material_buffer_address =
             scene_material_buffer_.get()->GetGPUVirtualAddress();
         for (auto& texture : textures_)
@@ -33,6 +37,7 @@ namespace rndr {
         resources.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         resources.index_buffer_view = scene_gpu_->index_buffer_view;
         resources.scene = scene_cpu_.get();
+        resources.draw_stream = &draw_stream_;
         pass_debug_view_.init(device_.Get(), program_argument_, resources);
     }
 

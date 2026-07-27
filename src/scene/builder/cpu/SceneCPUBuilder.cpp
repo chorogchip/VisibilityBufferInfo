@@ -253,13 +253,7 @@ namespace scene {
             return subtree;
         }
 
-        struct DrawInstance {
-            uint32_t submesh_id = 0;
-            uint32_t instance_id = 0;
-        };
-
         void append_draw_calls(SceneCPUData& destination) {
-            std::vector<DrawInstance> draw_instances;
             for (uint32_t instance_id = 0; instance_id < destination.instances.size(); ++instance_id) {
                 const SceneCPUData::Instance& instance =
                     destination.instances[instance_id];
@@ -268,14 +262,16 @@ namespace scene {
                 const uint32_t submesh_end =
                     mesh.first_submesh + mesh.submesh_count;
                 for (uint32_t submesh_id = mesh.first_submesh; submesh_id < submesh_end; ++submesh_id) {
-                    draw_instances.push_back({ submesh_id, instance_id });
+                    destination.draw_instances.push_back(
+                        { instance_id, submesh_id });
                 }
             }
 
             std::sort(
-                draw_instances.begin(),
-                draw_instances.end(),
-                [](const DrawInstance& left, const DrawInstance& right) {
+                destination.draw_instances.begin(),
+                destination.draw_instances.end(),
+                [](const SceneCPUData::DrawInstance& left,
+                    const SceneCPUData::DrawInstance& right) {
                     if (left.submesh_id != right.submesh_id) {
                         return left.submesh_id < right.submesh_id;
                     }
@@ -283,31 +279,27 @@ namespace scene {
                 });
 
             size_t begin = 0;
-            while (begin < draw_instances.size()) {
+            while (begin < destination.draw_instances.size()) {
                 size_t end = begin + 1;
-                while (end < draw_instances.size() &&
-                    draw_instances[end].submesh_id ==
-                    draw_instances[begin].submesh_id) {
+                while (end < destination.draw_instances.size() &&
+                    destination.draw_instances[end].submesh_id ==
+                    destination.draw_instances[begin].submesh_id) {
                     ++end;
                 }
 
                 util::Logger::g_logger.assert_with_log(
-                    destination.draw_instance_ids.size() <=
+                    destination.draw_instances.size() <=
                     (std::numeric_limits<uint32_t>::max)() &&
-                    end - begin <=
-                    (std::numeric_limits<uint32_t>::max)() -
-                    destination.draw_instance_ids.size() &&
                     destination.draw_calls.size() <
                     (std::numeric_limits<uint32_t>::max)(),
                     "CPU scene draw stream exceeds 32-bit indexing.");
 
                 const uint32_t submesh_id =
-                    draw_instances[begin].submesh_id;
+                    destination.draw_instances[begin].submesh_id;
                 const SceneCPUData::Submesh& submesh =
                     destination.submeshes[submesh_id];
                 SceneCPUData::DrawCall draw{};
-                draw.first_instance = static_cast<uint32_t>(
-                    destination.draw_instance_ids.size());
+                draw.first_instance = static_cast<uint32_t>(begin);
                 draw.instance_count =
                     static_cast<uint32_t>(end - begin);
                 draw.submesh_id = submesh_id;
@@ -317,10 +309,6 @@ namespace scene {
                 draw.material_id = submesh.material_id;
                 destination.draw_calls.emplace_back(draw);
 
-                for (size_t i = begin; i < end; ++i) {
-                    destination.draw_instance_ids.push_back(
-                        draw_instances[i].instance_id);
-                }
                 begin = end;
             }
         }
@@ -340,7 +328,6 @@ namespace scene {
             DirectX::XMMatrixIdentity(),
             destination);
         append_draw_calls(destination);
-        destination.all_draw_calls = destination.draw_calls;
         SceneCPUValidator::validate(destination);
         return destination;
     }

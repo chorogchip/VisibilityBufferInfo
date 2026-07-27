@@ -48,7 +48,11 @@ namespace rndr {
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
         gbuffer.instance_buffer_address =
-            scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+            scene_instance_buffer_.get()->GetGPUVirtualAddress();
+        gbuffer.draw_instance_buffer_address =
+            scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+        gbuffer.draw_instance_id_buffer_address =
+            scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
         gbuffer.material_buffer_address =
             scene_material_buffer_.get()->GetGPUVirtualAddress();
         for (auto& texture : textures_)
@@ -57,6 +61,7 @@ namespace rndr {
         gbuffer.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
         gbuffer.index_buffer_view = scene_gpu_->index_buffer_view;
         gbuffer.scene = scene_cpu_.get();
+        gbuffer.draw_stream = &draw_stream_;
         gbuffer.materials = &scene_gpu_->material_data;
         gbuffer.to_use_textures = program_argument_.to_load_texture;
 
@@ -71,10 +76,15 @@ namespace rndr {
                 buf_constant_[1].get()->GetGPUVirtualAddress();
             static_assert(util::Constants::FRAME_COUNT == 2);
             depth.instance_buffer_address =
-                scene_render_instance_buffer_.get()->GetGPUVirtualAddress();
+                scene_instance_buffer_.get()->GetGPUVirtualAddress();
+            depth.draw_instance_buffer_address =
+                scene_draw_instance_buffer_.get()->GetGPUVirtualAddress();
+            depth.draw_instance_id_buffer_address =
+                scene_draw_instance_id_buffer_.get()->GetGPUVirtualAddress();
             depth.vertex_buffer_view = scene_gpu_->vertex_buffer_view;
             depth.index_buffer_view = scene_gpu_->index_buffer_view;
             depth.scene = scene_cpu_.get();
+            depth.draw_stream = &draw_stream_;
             pass_depth_pre_.init(device_.Get(), program_argument_, depth);
         }
         pass_gbuffer_.init(device_.Get(), program_argument_, gbuffer, do_prepass_);

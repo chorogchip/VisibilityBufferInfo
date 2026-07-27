@@ -66,21 +66,15 @@ namespace scene {
 
         struct InstanceData {
             uint32_t instance_id = 0;
-            uint32_t material_id = 0;
-            uint32_t submesh_id = 0;
-            uint32_t flags = 0;
+            uint32_t pad0 = 0;
+            uint32_t pad1 = 0;
+            uint32_t pad2 = 0;
             DirectX::XMFLOAT4X4 transform{};
         };
 
-        struct DrawData {
-            uint32_t first_instance = 0;
-            uint32_t instance_count = 0;
+        struct DrawInstanceData {
+            uint32_t instance_id = 0;
             uint32_t submesh_id = 0;
-            uint32_t index_count = 0;
-            uint32_t index_offset = 0;
-            uint32_t vertex_offset = 0;
-            uint32_t material_id = 0;
-            uint32_t pad0 = 0;
         };
 
         eng::GPUResource vertex_buffer;
@@ -89,14 +83,13 @@ namespace scene {
         eng::GPUResource submesh_buffer;
         eng::GPUResource material_buffer;
         eng::GPUResource instance_buffer;
-        eng::GPUResource render_instance_buffer;
-        eng::GPUResource draw_buffer;
+        eng::GPUResource draw_instance_buffer;
+        eng::GPUResource draw_instance_id_buffer;
         std::vector<eng::GPUResource> textures;
 
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view{};
         D3D12_INDEX_BUFFER_VIEW index_buffer_view{};
         std::vector<MaterialData> material_data;
-        std::vector<SceneCPUData::DrawCall> draw_calls;
 
         uint32_t vertex_count = 0;
         uint32_t index_count = 0;
@@ -104,8 +97,8 @@ namespace scene {
         uint32_t submesh_count = 0;
         uint32_t material_count = 0;
         uint32_t instance_count = 0;
-        uint32_t render_instance_count = 0;
-        uint32_t draw_count = 0;
+        uint32_t draw_instance_count = 0;
+        uint32_t draw_instance_id_capacity = 0;
 
     };
 
@@ -113,5 +106,5 @@ namespace scene {
     static_assert(sizeof(BenchmarkSceneGPUData::SubmeshData) == 32);
     static_assert(sizeof(BenchmarkSceneGPUData::MaterialData) == 96);
     static_assert(sizeof(BenchmarkSceneGPUData::InstanceData) == 80);
-    static_assert(sizeof(BenchmarkSceneGPUData::DrawData) == 32);
+    static_assert(sizeof(BenchmarkSceneGPUData::DrawInstanceData) == 8);
 }

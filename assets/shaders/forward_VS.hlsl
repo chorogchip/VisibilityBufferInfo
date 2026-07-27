@@ -8,23 +8,34 @@ cbuffer MatricesCB : register(b0)
 
 struct InstanceData
 {
-    uint object_id;
-    uint material_index;
-    uint mesh_index;
-    uint flags;
+    uint instance_id;
+    uint pad0;
+    uint pad1;
+    uint pad2;
     float4x4 World;
 };
 
-StructuredBuffer<InstanceData> gInstance : register(t0);
+struct DrawInstanceData
+{
+    uint instance_id;
+    uint submesh_id;
+};
+
+StructuredBuffer<InstanceData> gInstances : register(t0);
+StructuredBuffer<DrawInstanceData> gDrawInstances : register(t10);
+StructuredBuffer<uint> gDrawInstanceIDs : register(t11);
 
 cbuffer DrawCB : register(b1)
 {
-    uint gObjectIndex;
+    uint gStartInstance;
+    uint gMaterialID;
 }
 
 PSInput main(VSInput input, uint instanceID : SV_InstanceID)
 {
-    InstanceData instance_data = gInstance[gObjectIndex + instanceID];
+    const uint drawInstanceID = gDrawInstanceIDs[gStartInstance + instanceID];
+    const DrawInstanceData drawInstance = gDrawInstances[drawInstanceID];
+    const InstanceData instance_data = gInstances[drawInstance.instance_id];
     
     PSInput output;
     
@@ -42,7 +53,7 @@ PSInput main(VSInput input, uint instanceID : SV_InstanceID)
     output.texcoord0 = input.texcoord0;
     output.texcoord1 = input.texcoord0;
     output.tangent = mul(tangent_world, (float3x3)gView);
-    output.material_index = instance_data.material_index;
+    output.material_index = gMaterialID;
     
     return output;
 }

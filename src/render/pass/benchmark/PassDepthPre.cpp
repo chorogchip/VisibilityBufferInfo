@@ -16,6 +16,13 @@ namespace rndr {
             FRAME_CONSTANT,
             DRAW_CONSTANT,
             INSTANCE_BUFFER,
+            DRAW_INSTANCE_BUFFER,
+            DRAW_INSTANCE_ID_BUFFER,
+        };
+
+        struct DrawConstants {
+            uint32_t first_instance = 0;
+            uint32_t material_id = 0;
         };
     }
 
@@ -32,15 +39,17 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/depth_prepass_VS.hlsl",
-            "vs_5_0", "main", arguments);
+            L"vs_6_6", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .set_flags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)
             .root_cbv().reg(0).vis_vtx().add()         // FRAME_CONSTANT
-            .constant().reg(1).cnt(1).vis_vtx().add()  // DRAW_CONSTANT
+            .constant().reg(1).cnt(2).vis_vtx().add()  // DRAW_CONSTANT
             .root_srv().reg(0).vis_vtx().add()         // INSTANCE_BUFFER
+            .root_srv().reg(10).vis_vtx().add()        // DRAW_INSTANCE_BUFFER
+            .root_srv().reg(11).vis_vtx().add()        // DRAW_INSTANCE_ID_BUFFER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
@@ -66,6 +75,12 @@ namespace rndr {
         command_list->SetGraphicsRootShaderResourceView(
             static_cast<UINT>(RootParam::INSTANCE_BUFFER),
             resources_.instance_buffer_address);
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_BUFFER),
+            resources_.draw_instance_buffer_address);
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::DRAW_INSTANCE_ID_BUFFER),
+            resources_.draw_instance_id_buffer_address);
 
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetVertexBuffers(0, 1, &resources_.vertex_buffer_view);
@@ -75,10 +90,14 @@ namespace rndr {
         command_list->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
         command_list->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-        for (const auto& draw : resources_.scene->draw_calls) {
-            command_list->SetGraphicsRoot32BitConstant(
+        for (const auto& draw : resources_.draw_stream->draw_calls_compacted) {
+            const DrawConstants draw_constants{
+                draw.first_instance,
+                draw.material_id
+            };
+            command_list->SetGraphicsRoot32BitConstants(
                 static_cast<UINT>(RootParam::DRAW_CONSTANT),
-                draw.first_instance, 0);
+                2, &draw_constants, 0);
             command_list->DrawIndexedInstanced(
                 draw.index_count,
                 draw.instance_count,

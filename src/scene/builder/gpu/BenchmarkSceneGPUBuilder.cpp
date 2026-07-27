@@ -332,9 +332,7 @@ namespace scene {
             (std::numeric_limits<uint32_t>::max)() &&
             source.instances.size() <=
             (std::numeric_limits<uint32_t>::max)() &&
-            source.draw_instance_ids.size() <=
-            (std::numeric_limits<uint32_t>::max)() &&
-            source.draw_calls.size() <=
+            source.draw_instances.size() <=
             (std::numeric_limits<uint32_t>::max)(),
             "GPU scene data exceeds 32-bit indexing.");
 
@@ -343,8 +341,8 @@ namespace scene {
         std::vector<BenchmarkSceneGPUData::SubmeshData> submeshes;
         std::vector<BenchmarkSceneGPUData::MaterialData> materials;
         std::vector<BenchmarkSceneGPUData::InstanceData> instances;
-        std::vector<BenchmarkSceneGPUData::InstanceData> render_instances;
-        std::vector<BenchmarkSceneGPUData::DrawData> draws;
+        std::vector<BenchmarkSceneGPUData::DrawInstanceData> draw_instances;
+        std::vector<uint32_t> draw_instance_ids;
         std::unordered_map<std::string, uint32_t> texture_cache;
         const uint32_t fallback_texture_id = load_textures
             ? create_fallback_texture(
@@ -467,33 +465,18 @@ namespace scene {
             });
         }
 
-        render_instances.resize(source.draw_instance_ids.size());
-        for (const SceneCPUData::DrawCall& draw : source.all_draw_calls) {
-            const uint32_t end =
-                draw.first_instance + draw.instance_count;
-            for (uint32_t i = draw.first_instance; i < end; ++i) {
-                const uint32_t instance_id =
-                    source.draw_instance_ids[i];
-                BenchmarkSceneGPUData::InstanceData instance =
-                    instances[instance_id];
-                instance.material_id = draw.material_id;
-                instance.submesh_id = draw.submesh_id;
-                render_instances[i] = instance;
-            }
-        }
-
-        draws.reserve(source.draw_calls.size());
-        for (const SceneCPUData::DrawCall& draw : source.draw_calls) {
-            draws.push_back({
-                draw.first_instance,
-                draw.instance_count,
-                draw.submesh_id,
-                draw.index_count,
-                draw.index_offset,
-                draw.vertex_offset,
-                draw.material_id,
-                0
+        draw_instances.reserve(source.draw_instances.size());
+        draw_instance_ids.reserve(source.draw_instances.size());
+        for (uint32_t draw_instance_id = 0;
+            draw_instance_id < source.draw_instances.size();
+            ++draw_instance_id) {
+            const SceneCPUData::DrawInstance& source_draw_instance =
+                source.draw_instances[draw_instance_id];
+            draw_instances.push_back({
+                source_draw_instance.instance_id,
+                source_draw_instance.submesh_id
             });
+            draw_instance_ids.push_back(draw_instance_id);
         }
 
         upload_buffer(
@@ -549,18 +532,19 @@ namespace scene {
         upload_buffer(
             device,
             command_list,
-            render_instances.data(),
-            render_instances.size() * sizeof(BenchmarkSceneGPUData::InstanceData),
+            draw_instances.data(),
+            draw_instances.size() *
+            sizeof(BenchmarkSceneGPUData::DrawInstanceData),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-            destination.render_instance_buffer,
+            destination.draw_instance_buffer,
             used_upload_heaps);
         upload_buffer(
             device,
             command_list,
-            draws.data(),
-            draws.size() * sizeof(BenchmarkSceneGPUData::DrawData),
+            draw_instance_ids.data(),
+            draw_instance_ids.size() * sizeof(uint32_t),
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-            destination.draw_buffer,
+            destination.draw_instance_id_buffer,
             used_upload_heaps);
 
         util::Logger::g_logger.assert_with_log(
@@ -583,7 +567,6 @@ namespace scene {
         destination.index_buffer_view.Format = DXGI_FORMAT_R32_UINT;
 
         destination.material_data = materials;
-        destination.draw_calls = source.draw_calls;
         destination.vertex_count =
             static_cast<uint32_t>(source.vertices.size());
         destination.index_count =
@@ -596,29 +579,11 @@ namespace scene {
             static_cast<uint32_t>(source.materials.size());
         destination.instance_count =
             static_cast<uint32_t>(source.instances.size());
-        destination.render_instance_count =
-            static_cast<uint32_t>(render_instances.size());
-        destination.draw_count =
-            static_cast<uint32_t>(source.draw_calls.size());
+        destination.draw_instance_count =
+            static_cast<uint32_t>(draw_instances.size());
+        destination.draw_instance_id_capacity =
+            static_cast<uint32_t>(draw_instance_ids.size());
         BenchmarkSceneGPUValidator::validate(destination);
         return destination;
-    }
-
-    void BenchmarkSceneGPUBuilder::rebuild_draws(
-        const SceneCPUData& source,
-        BenchmarkSceneGPUData& destination) {
-        destination.draw_calls = source.draw_calls;
-        destination.draw_count =
-            static_cast<uint32_t>(destination.draw_calls.size());
-
-        for (const auto& draw : destination.draw_calls) {
-            util::Logger::g_logger.assert_with_log(
-                draw.first_instance <=
-                destination.render_instance_count &&
-                draw.instance_count <=
-                destination.render_instance_count -
-                draw.first_instance,
-                "Benchmark draw references an invalid render instance range.");
-        }
     }
 }

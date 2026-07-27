@@ -74,14 +74,23 @@ namespace rndr {
         scene_desc.Buffer.StructureByteStride =
             sizeof(scene::BenchmarkSceneGPUData::InstanceData);
         scene_desc.Buffer.NumElements = static_cast<UINT>(
-            resources_.scene->draw_instance_ids.size());
+            resources_.scene->instances.size());
         resources_.shader_manager->create_srv(
             resources_.instance_buffer->get(),
             scene_desc,
             eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER);
         scene_desc.Buffer.StructureByteStride =
+            sizeof(scene::BenchmarkSceneGPUData::DrawInstanceData);
+        scene_desc.Buffer.NumElements = static_cast<UINT>(
+            resources_.scene->draw_instances.size());
+        resources_.shader_manager->create_srv(
+            resources_.draw_instance_buffer->get(),
+            scene_desc,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_DRAW_INSTANCE_BUFFER);
+        scene_desc.Buffer.StructureByteStride =
             sizeof(scene::BenchmarkSceneGPUData::MaterialData);
-        scene_desc.Buffer.NumElements = static_cast<UINT>(resources_.scene->materials.size());
+        scene_desc.Buffer.NumElements = static_cast<UINT>(
+            resources_.scene->materials.size());
         resources_.shader_manager->create_srv(
             resources_.material_buffer->get(),
             scene_desc,
@@ -102,20 +111,21 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::BENCH_INDEX_BUFFER,
             eng::ResourceManagerShader::EnumDescPos::BENCH_MESH_BUFFER,
             eng::ResourceManagerShader::EnumDescPos::BENCH_INSTANCE_BUFFER,
+            eng::ResourceManagerShader::EnumDescPos::BENCH_DRAW_INSTANCE_BUFFER,
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_VS.hlsl",
-            "vs_5_1", "main", arguments);
+            L"vs_6_6", L"main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_PS.hlsl",
-            "ps_5_1", "main", arguments);
+            L"ps_6_6", L"main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
         auto root_signature = eng::RootSignatureBuilder{}
             .root_cbv().reg(0).vis_pxl().add()  // PASS_CONSTANT
-            .srv_tabl().reg(0).cnt(6).vis_pxl().add()  // SCENE_INPUT
+            .srv_tabl().reg(0).cnt(7).vis_pxl().add()  // SCENE_INPUT
             .srv_tabl().reg(8).cnt(512).vis_pxl().add()  // MATERIAL_TEXTURE, unbound
             .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);

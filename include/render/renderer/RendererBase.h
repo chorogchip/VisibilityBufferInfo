@@ -37,6 +37,7 @@ public:
 protected:
     virtual void init1_() = 0;
     virtual void render_prepare_() = 0;
+    virtual void render_update_scene_resources_() {}
     virtual void render_record_() = 0;
     virtual void before_close_() {}
 

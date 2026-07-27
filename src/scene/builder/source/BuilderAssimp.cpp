@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <initializer_list>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -34,6 +35,22 @@ namespace scene {
                 value.a3, value.b3, value.c3, value.d3,
                 value.a4, value.b4, value.c4, value.d4
             };
+        }
+
+        DirectX::XMFLOAT2 to_float2(const aiVector3D& value) {
+            return { value.x, value.y };
+        }
+
+        DirectX::XMFLOAT3 to_float3(const aiVector3D& value) {
+            return { value.x, value.y, value.z };
+        }
+
+        DirectX::XMFLOAT4X4 identity_matrix() {
+            DirectX::XMFLOAT4X4 identity{};
+            DirectX::XMStoreFloat4x4(
+                &identity,
+                DirectX::XMMatrixIdentity());
+            return identity;
         }
 
         DirectX::XMFLOAT4 fallback_color(uint32_t material_id) {
@@ -115,6 +132,19 @@ namespace scene {
             return input;
         }
 
+        std::optional<TextureInput> read_texture(
+            const aiMaterial* material,
+            std::initializer_list<aiTextureType> types) {
+
+            for (const aiTextureType type : types) {
+                if (std::optional<TextureInput> texture =
+                    read_texture(material, type)) {
+                    return texture;
+                }
+            }
+            return std::nullopt;
+        }
+
         source::ImageFormat image_format(
             const std::filesystem::path& path) {
 
@@ -144,10 +174,14 @@ namespace scene {
                 static_cast<std::filesystem::path::value_type>('*');
         }
 
+        struct TextureRegistry {
+            SceneSourceData& scene;
+            const std::filesystem::path& scene_directory;
+            std::unordered_map<std::string, uint32_t> ids;
+        };
+
         source::TextureRef add_texture(
-            SceneSourceData& scene,
-            std::unordered_map<std::string, uint32_t>& texture_ids,
-            const std::filesystem::path& scene_directory,
+            TextureRegistry& registry,
             const std::optional<TextureInput>& input) {
 
             if (!input || input->path.empty() || is_embedded(input->path)) {
@@ -155,13 +189,13 @@ namespace scene {
             }
 
             std::filesystem::path path = input->path;
-            if (path.is_relative()) path = scene_directory / path;
+            if (path.is_relative()) path = registry.scene_directory / path;
             path = std::filesystem::absolute(path).lexically_normal();
 
-            const std::string key = path.generic_string();
-            const auto found = texture_ids.find(key);
             uint32_t texture_id = source::SceneConstants::INVALID_INDEX;
-            if (found != texture_ids.end()) {
+            const std::string key = path.generic_string();
+            const auto found = registry.ids.find(key);
+            if (found != registry.ids.end()) {
                 texture_id = found->second;
             } else {
                 source::Image image{};
@@ -169,12 +203,14 @@ namespace scene {
                 image.format = image_format(path);
 
                 source::Texture texture{};
-                texture.image_id = static_cast<uint32_t>(scene.images.size());
+                texture.image_id =
+                    static_cast<uint32_t>(registry.scene.images.size());
 
-                texture_id = static_cast<uint32_t>(scene.textures.size());
-                scene.images.emplace_back(std::move(image));
-                scene.textures.emplace_back(texture);
-                texture_ids.emplace(key, texture_id);
+                texture_id =
+                    static_cast<uint32_t>(registry.scene.textures.size());
+                registry.scene.images.emplace_back(std::move(image));
+                registry.scene.textures.emplace_back(texture);
+                registry.ids.emplace(key, texture_id);
             }
 
             source::TextureRef reference{};
@@ -184,9 +220,7 @@ namespace scene {
         }
 
         source::Material build_material(
-            SceneSourceData& scene,
-            std::unordered_map<std::string, uint32_t>& texture_ids,
-            const std::filesystem::path& scene_directory,
+            TextureRegistry& registry,
             const aiMaterial* input,
             uint32_t material_id) {
 
@@ -222,45 +256,24 @@ namespace scene {
                 material.double_sided = two_sided != 0;
             }
 
-            std::optional<TextureInput> base_color =
-                read_texture(input, aiTextureType_BASE_COLOR);
-            if (!base_color) {
-                base_color = read_texture(input, aiTextureType_DIFFUSE);
-            }
-
-            std::optional<TextureInput> metal_roughness =
-                read_texture(input, aiTextureType_METALNESS);
-            if (!metal_roughness) {
-                metal_roughness =
-                    read_texture(input, aiTextureType_DIFFUSE_ROUGHNESS);
-            }
-            if (!metal_roughness) {
-                metal_roughness = read_texture(input, aiTextureType_SPECULAR);
-            }
-
-            std::optional<TextureInput> normal =
-                read_texture(input, aiTextureType_NORMALS);
-            if (!normal) normal = read_texture(input, aiTextureType_HEIGHT);
-
-            std::optional<TextureInput> occlusion =
-                read_texture(input, aiTextureType_AMBIENT_OCCLUSION);
-            if (!occlusion) {
-                occlusion = read_texture(input, aiTextureType_LIGHTMAP);
-            }
-
-            material.base_color_texture = add_texture(
-                scene, texture_ids, scene_directory, base_color);
-            material.metal_roughness_texture = add_texture(
-                scene, texture_ids, scene_directory, metal_roughness);
-            material.normal_texture = add_texture(
-                scene, texture_ids, scene_directory, normal);
-            material.emissive_texture = add_texture(
-                scene,
-                texture_ids,
-                scene_directory,
-                read_texture(input, aiTextureType_EMISSIVE));
-            material.occlusion_texture = add_texture(
-                scene, texture_ids, scene_directory, occlusion);
+            material.base_color_texture = add_texture(registry, read_texture(
+                input,
+                { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE }));
+            material.metal_roughness_texture = add_texture(registry, read_texture(
+                input,
+                {
+                    aiTextureType_METALNESS,
+                    aiTextureType_DIFFUSE_ROUGHNESS,
+                    aiTextureType_SPECULAR
+                }));
+            material.normal_texture = add_texture(registry, read_texture(
+                input,
+                { aiTextureType_NORMALS, aiTextureType_HEIGHT }));
+            material.emissive_texture =
+                add_texture(registry, read_texture(input, aiTextureType_EMISSIVE));
+            material.occlusion_texture = add_texture(registry, read_texture(
+                input,
+                { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP }));
             return material;
         }
 
@@ -276,35 +289,25 @@ namespace scene {
             }
 
             source::Primitive primitive{};
+            const bool has_normals = input->HasNormals();
+            const bool has_tangents = input->HasTangentsAndBitangents();
+            const bool has_uv0 = input->HasTextureCoords(0);
+
             primitive.positions.reserve(input->mNumVertices);
-            if (input->HasNormals()) {
-                primitive.normals.reserve(input->mNumVertices);
-            }
-            if (input->HasTangentsAndBitangents()) {
-                primitive.tangents.reserve(input->mNumVertices);
-            }
-            if (input->HasTextureCoords(0)) {
-                primitive.uv0.reserve(input->mNumVertices);
-            }
+            if (has_normals) primitive.normals.reserve(input->mNumVertices);
+            if (has_tangents) primitive.tangents.reserve(input->mNumVertices);
+            if (has_uv0) primitive.uv0.reserve(input->mNumVertices);
 
             for (uint32_t vertex_id = 0; vertex_id < input->mNumVertices; ++vertex_id) {
-                const aiVector3D& position = input->mVertices[vertex_id];
-                primitive.positions.push_back({
-                    position.x,
-                    position.y,
-                    position.z
-                });
+                primitive.positions.push_back(
+                    to_float3(input->mVertices[vertex_id]));
 
-                if (input->HasNormals()) {
-                    const aiVector3D& normal = input->mNormals[vertex_id];
-                    primitive.normals.push_back({
-                        normal.x,
-                        normal.y,
-                        normal.z
-                    });
+                if (has_normals) {
+                    primitive.normals.push_back(
+                        to_float3(input->mNormals[vertex_id]));
                 }
 
-                if (input->HasTangentsAndBitangents()) {
+                if (has_tangents) {
                     const aiVector3D& normal = input->mNormals[vertex_id];
                     const aiVector3D& tangent = input->mTangents[vertex_id];
                     const aiVector3D cross = normal ^ tangent;
@@ -320,9 +323,9 @@ namespace scene {
                     });
                 }
 
-                if (input->HasTextureCoords(0)) {
-                    const aiVector3D& uv = input->mTextureCoords[0][vertex_id];
-                    primitive.uv0.push_back({ uv.x, uv.y });
+                if (has_uv0) {
+                    primitive.uv0.push_back(
+                        to_float2(input->mTextureCoords[0][vertex_id]));
                 }
             }
 
@@ -343,6 +346,43 @@ namespace scene {
                 : 0;
             destination.primitives.emplace_back(std::move(primitive));
             return true;
+        }
+
+        void build_materials(
+            SceneSourceData& scene,
+            const aiScene& input,
+            const std::filesystem::path& scene_directory) {
+
+            TextureRegistry textures{ scene, scene_directory };
+            scene.materials.reserve(std::max(1u, input.mNumMaterials));
+            for (uint32_t material_id = 0; material_id < input.mNumMaterials; ++material_id) {
+                scene.materials.push_back(
+                    build_material(textures, input.mMaterials[material_id], material_id));
+            }
+            if (scene.materials.empty()) scene.materials.emplace_back();
+        }
+
+        std::vector<uint32_t> build_meshes(
+            SceneSourceData& scene,
+            const aiScene& input) {
+
+            std::vector<uint32_t> mesh_ids(
+                input.mNumMeshes,
+                source::SceneConstants::INVALID_INDEX);
+            for (uint32_t input_mesh_id = 0; input_mesh_id < input.mNumMeshes; ++input_mesh_id) {
+                source::Mesh mesh{};
+                if (!build_mesh(
+                    mesh,
+                    input.mMeshes[input_mesh_id],
+                    static_cast<uint32_t>(scene.materials.size()))) {
+                    continue;
+                }
+
+                mesh_ids[input_mesh_id] =
+                    static_cast<uint32_t>(scene.meshes.size());
+                scene.meshes.emplace_back(std::move(mesh));
+            }
+            return mesh_ids;
         }
 
         uint32_t add_node(
@@ -384,12 +424,8 @@ namespace scene {
                         continue;
                     }
 
-                    DirectX::XMFLOAT4X4 identity{};
-                    DirectX::XMStoreFloat4x4(
-                        &identity,
-                        DirectX::XMMatrixIdentity());
                     const uint32_t attachment_id =
-                        add_node(scene, node_id, identity);
+                        add_node(scene, node_id, identity_matrix());
                     scene.nodes[attachment_id].mesh_id =
                         mesh_ids[input_mesh_id];
                 }
@@ -429,50 +465,18 @@ namespace scene {
         }
 
         auto scene = std::make_unique<SceneSourceData>();
-        std::unordered_map<std::string, uint32_t> texture_ids;
-        scene->materials.reserve(std::max(1u, input->mNumMaterials));
-        for (uint32_t material_id = 0; material_id < input->mNumMaterials; ++material_id) {
-            scene->materials.push_back(build_material(
-                *scene,
-                texture_ids,
-                source_path.parent_path(),
-                input->mMaterials[material_id],
-                material_id));
-        }
-        if (scene->materials.empty()) {
-            scene->materials.emplace_back();
-        }
-
-        std::vector<uint32_t> mesh_ids(
-            input->mNumMeshes,
-            source::SceneConstants::INVALID_INDEX);
-        for (uint32_t input_mesh_id = 0; input_mesh_id < input->mNumMeshes; ++input_mesh_id) {
-            source::Mesh mesh{};
-            if (!build_mesh(
-                mesh,
-                input->mMeshes[input_mesh_id],
-                static_cast<uint32_t>(scene->materials.size()))) {
-                continue;
-            }
-
-            mesh_ids[input_mesh_id] =
-                static_cast<uint32_t>(scene->meshes.size());
-            scene->meshes.emplace_back(std::move(mesh));
-        }
+        build_materials(*scene, *input, source_path.parent_path());
+        const std::vector<uint32_t> mesh_ids = build_meshes(*scene, *input);
 
         util::Logger::g_logger.assert_with_log(!scene->meshes.empty(), "no triangle");
 
         build_nodes(*scene, input->mRootNode, source::SceneConstants::INVALID_INDEX, mesh_ids);
 
         if (scene->nodes.empty()) {
-            DirectX::XMFLOAT4X4 identity{};
-            DirectX::XMStoreFloat4x4(
-                &identity,
-                DirectX::XMMatrixIdentity());
             add_node(
                 *scene,
                 source::SceneConstants::INVALID_INDEX,
-                identity);
+                identity_matrix());
         }
 
         SceneSourceDataValidator::validate(*scene);
