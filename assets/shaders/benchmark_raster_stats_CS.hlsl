@@ -7,20 +7,23 @@ cbuffer MatricesCB : register(b0)
 
 cbuffer RasterStatsCB : register(b1)
 {
+    uint gDrawIndex;
+    uint gTriangleStart;
     uint gTriangleCount;
     uint gWidth;
     uint gHeight;
     uint gPixelCount;
     uint gCountGroupCountX;
-    uint3 gPadding;
+    uint gPadding;
 };
 
-struct RasterStatsTriangle
+struct RasterStatsDraw
 {
-    uint object_index;
-    uint i0;
-    uint i1;
-    uint i2;
+    uint first_draw_instance;
+    uint instance_count;
+    uint index_offset;
+    uint index_count;
+    uint vertex_offset;
 };
 
 struct Vertex
@@ -33,16 +36,25 @@ struct Vertex
 
 struct InstanceData
 {
-    uint object_id;
-    uint material_index;
-    uint mesh_index;
-    uint flags;
+    uint instance_id;
+    uint pad0;
+    uint pad1;
+    uint pad2;
     float4x4 World;
 };
 
-StructuredBuffer<RasterStatsTriangle> gTriangles : register(t0);
-StructuredBuffer<Vertex> gVertices : register(t1);
-StructuredBuffer<InstanceData> gInstances : register(t2);
+struct DrawInstanceData
+{
+    uint instance_id;
+    uint submesh_id;
+};
+
+StructuredBuffer<RasterStatsDraw> gDraws : register(t0);
+StructuredBuffer<uint> gIndices : register(t1);
+StructuredBuffer<Vertex> gVertices : register(t2);
+StructuredBuffer<InstanceData> gInstances : register(t3);
+StructuredBuffer<DrawInstanceData> gDrawInstances : register(t4);
+StructuredBuffer<uint> gDrawInstanceIDs : register(t5);
 RWStructuredBuffer<uint> gPixelCounts : register(u0);
 RWStructuredBuffer<uint> gStats : register(u1);
 
@@ -71,13 +83,50 @@ bool point_in_triangle(float2 p, float2 v0, float2 v1, float2 v2, float area)
     return e0 >= 0.0f && e1 >= 0.0f && e2 >= 0.0f;
 }
 
-float4 project_position(uint vertex_index, uint object_index)
+float4 project_position(uint vertex_index, uint draw_instance_id)
 {
     const float3 local_pos = gVertices[vertex_index].position;
-    const InstanceData instance_data = gInstances[object_index];
+    const DrawInstanceData draw_instance = gDrawInstances[draw_instance_id];
+    const InstanceData instance_data =
+        gInstances[draw_instance.instance_id];
     const float4 world_pos = mul(float4(local_pos, 1.0f), instance_data.World);
     const float4 view_pos = mul(world_pos, gView);
     return mul(view_pos, gProj);
+}
+
+bool load_triangle(
+    uint local_triangle_index,
+    out uint draw_instance_id,
+    out uint i0,
+    out uint i1,
+    out uint i2)
+{
+    draw_instance_id = 0;
+    i0 = 0;
+    i1 = 0;
+    i2 = 0;
+
+    const RasterStatsDraw draw = gDraws[gDrawIndex];
+    const uint triangles_per_instance = draw.index_count / 3u;
+    if (triangles_per_instance == 0)
+        return false;
+
+    const uint triangle_in_draw = gTriangleStart + local_triangle_index;
+    const uint instance_ordinal =
+        triangle_in_draw / triangles_per_instance;
+    if (instance_ordinal >= draw.instance_count)
+        return false;
+
+    const uint triangle_ordinal =
+        triangle_in_draw - instance_ordinal * triangles_per_instance;
+    draw_instance_id =
+        gDrawInstanceIDs[draw.first_draw_instance + instance_ordinal];
+
+    const uint index_base = draw.index_offset + triangle_ordinal * 3u;
+    i0 = gIndices[index_base + 0u] + draw.vertex_offset;
+    i1 = gIndices[index_base + 1u] + draw.vertex_offset;
+    i2 = gIndices[index_base + 2u] + draw.vertex_offset;
+    return true;
 }
 
 float2 clip_to_screen(float4 clip_pos)
@@ -109,11 +158,18 @@ void count_main(
     if (triangle_index >= gTriangleCount)
         return;
 
-    const RasterStatsTriangle tr = gTriangles[triangle_index];
+    uint draw_instance_id = 0;
+    uint i0 = 0;
+    uint i1 = 0;
+    uint i2 = 0;
+    if (!load_triangle(triangle_index, draw_instance_id, i0, i1, i2)) {
+        InterlockedAdd(gStats[STAT_SKIPPED_TRIANGLES], 1);
+        return;
+    }
 
-    const float4 clip0 = project_position(tr.i0, tr.object_index);
-    const float4 clip1 = project_position(tr.i1, tr.object_index);
-    const float4 clip2 = project_position(tr.i2, tr.object_index);
+    const float4 clip0 = project_position(i0, draw_instance_id);
+    const float4 clip1 = project_position(i1, draw_instance_id);
+    const float4 clip2 = project_position(i2, draw_instance_id);
 
     if (clip0.w <= 0.0f || clip1.w <= 0.0f || clip2.w <= 0.0f) {
         InterlockedAdd(gStats[STAT_SKIPPED_TRIANGLES], 1);

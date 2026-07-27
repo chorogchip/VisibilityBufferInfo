@@ -80,7 +80,7 @@ namespace rndr {
         program_result_.pass_names[1] = "raster_stats";
 
         this->allocate_counter_buffers_();
-        this->allocate_triangle_buffers_();
+        this->allocate_draw_buffers_();
 
         PassRasterStatsResources resources{};
         resources.constant_buffer_addresses[0] =
@@ -88,10 +88,13 @@ namespace rndr {
         resources.constant_buffer_addresses[1] =
             buf_constant_[1].get()->GetGPUVirtualAddress();
         static_assert(util::Constants::FRAME_COUNT == 2);
-        resources.triangle_buffer = &triangle_buffer_;
-        resources.triangle_upload_buffer = triangle_upload_buffer_.Get();
+        resources.draw_buffer = &draw_buffer_;
+        resources.draw_upload_buffer = draw_upload_buffer_.Get();
+        resources.index_buffer = &scene_index_buffer_;
         resources.vertex_buffer = &scene_vertex_buffer_;
-        resources.instance_buffer = &scene_render_instance_buffer_;
+        resources.instance_buffer = &scene_instance_buffer_;
+        resources.draw_instance_buffer = &scene_draw_instance_buffer_;
+        resources.draw_instance_id_buffer = &scene_draw_instance_id_buffer_;
         resources.pixel_count_buffer = &pixel_count_buffer_;
         resources.stats_buffer = &stats_buffer_;
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
@@ -104,7 +107,7 @@ namespace rndr {
     void RendererRasterStats::render_prepare_() {
         this->collect_completed_stats_(frame_index_);
         RendererBenchmark::render_prepare_();
-        this->build_visible_triangles_();
+        this->build_visible_draws_();
     }
 
     void RendererRasterStats::render_record_() {
@@ -112,7 +115,7 @@ namespace rndr {
         pass_stats_.render(
             command_list_.Get(),
             frame_index_,
-            static_cast<std::uint32_t>(visible_triangles_.size()),
+            visible_draws_,
             width_,
             height_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
@@ -120,7 +123,7 @@ namespace rndr {
         pending_stats_[frame_index_] = {
             true,
             frame_number_,
-            static_cast<std::uint32_t>(visible_triangles_.size())
+            visible_triangle_count_
         };
         ++frame_number_;
     }
@@ -162,39 +165,67 @@ namespace rndr {
         }
     }
 
-    void RendererRasterStats::allocate_triangle_buffers_() {
-        const std::uint64_t max_triangles =
-            this->count_draw_triangles_(scene_cpu_->all_draw_calls);
+    void RendererRasterStats::allocate_draw_buffers_() {
+        const std::uint64_t max_draws =
+            this->count_draw_chunks_(scene_cpu_->draw_calls);
 
         util::Logger::g_logger.assert_with_log(
-            max_triangles <= std::numeric_limits<std::uint32_t>::max(),
-            "raster stats triangle count must fit in uint32");
+            max_draws <= std::numeric_limits<std::uint32_t>::max(),
+            "raster stats draw count must fit in uint32");
         util::Logger::g_logger.assert_with_log_mul_overflow(
-            max_triangles,
-            sizeof(RasterStatsTriangle),
+            max_draws,
+            sizeof(RasterStatsDraw),
             std::numeric_limits<std::uint64_t>::max(),
-            "raster stats triangle buffer size overflow");
+            "raster stats draw buffer size overflow");
 
-        triangle_capacity_ = static_cast<std::uint32_t>(
-            (std::max<std::uint64_t>)(max_triangles, 1));
-        const std::uint64_t triangle_buffer_size =
-            static_cast<std::uint64_t>(triangle_capacity_) *
-            sizeof(RasterStatsTriangle);
+        draw_capacity_ = static_cast<std::uint32_t>(
+            (std::max<std::uint64_t>)(max_draws, 1));
+        const std::uint64_t draw_buffer_size =
+            static_cast<std::uint64_t>(draw_capacity_) *
+            sizeof(RasterStatsDraw);
 
-        triangle_buffer_.init(
+        draw_buffer_.init(
             dxutl::create_buffer(
                 device_.Get(),
-                triangle_buffer_size,
+                draw_buffer_size,
                 D3D12_HEAP_TYPE_DEFAULT,
                 D3D12_RESOURCE_STATE_COPY_DEST).Get(),
             D3D12_RESOURCE_STATE_COPY_DEST);
-        triangle_upload_buffer_ = dxutl::create_buffer(
+        draw_upload_buffer_ = dxutl::create_buffer(
             device_.Get(),
-            triangle_buffer_size,
+            draw_buffer_size,
             D3D12_HEAP_TYPE_UPLOAD,
             D3D12_RESOURCE_STATE_GENERIC_READ);
 
-        visible_triangles_.reserve(triangle_capacity_);
+        visible_draws_.reserve(draw_capacity_);
+    }
+
+    std::uint64_t RendererRasterStats::count_draw_chunks_(
+        const std::vector<scene::SceneCPUData::DrawCall>& draws) const {
+
+        std::uint64_t result = 0;
+        for (const scene::SceneCPUData::DrawCall& draw : draws) {
+            const std::uint32_t triangles_per_instance =
+                draw.index_count / 3u;
+            if (triangles_per_instance == 0 || draw.instance_count == 0)
+                continue;
+
+            const std::uint32_t max_instances_per_chunk =
+                (std::max<std::uint32_t>)(
+                    1u,
+                    std::numeric_limits<std::uint32_t>::max() /
+                    triangles_per_instance);
+            const std::uint64_t chunk_count =
+                (static_cast<std::uint64_t>(draw.instance_count) +
+                    max_instances_per_chunk - 1u) /
+                max_instances_per_chunk;
+            util::Logger::g_logger.assert_with_log(
+                result <= std::numeric_limits<std::uint64_t>::max() -
+                chunk_count,
+                "raster stats draw chunk count overflow");
+            result += chunk_count;
+        }
+        return result;
     }
 
     std::uint64_t RendererRasterStats::count_draw_triangles_(
@@ -202,58 +233,75 @@ namespace rndr {
 
         std::uint64_t result = 0;
         for (const scene::SceneCPUData::DrawCall& draw : draws) {
-            result +=
+            const std::uint64_t draw_triangle_count =
                 (static_cast<std::uint64_t>(draw.index_count) / 3u) *
                 draw.instance_count;
+            util::Logger::g_logger.assert_with_log(
+                result <= std::numeric_limits<std::uint64_t>::max() -
+                draw_triangle_count,
+                "raster stats triangle count overflow");
+            result += draw_triangle_count;
         }
         return result;
     }
 
-    void RendererRasterStats::build_visible_triangles_() {
-        visible_triangles_.clear();
+    void RendererRasterStats::build_visible_draws_() {
+        visible_draws_.clear();
 
-        const std::uint64_t visible_count =
-            this->count_draw_triangles_(scene_cpu_->draw_calls);
+        const std::uint64_t visible_draw_count =
+            this->count_draw_chunks_(draw_stream_.draw_calls_compacted);
+        visible_triangle_count_ =
+            this->count_draw_triangles_(draw_stream_.draw_calls_compacted);
         util::Logger::g_logger.assert_with_log(
-            visible_count <= triangle_capacity_,
-            "visible triangle count exceeds raster stats buffer capacity");
+            visible_draw_count <= draw_capacity_,
+            "visible draw count exceeds raster stats buffer capacity");
 
-        visible_triangles_.reserve(static_cast<std::size_t>(visible_count));
+        visible_draws_.reserve(static_cast<std::size_t>(visible_draw_count));
 
-        for (const auto& draw : scene_cpu_->draw_calls) {
+        for (const auto& draw : draw_stream_.draw_calls_compacted) {
             util::Logger::g_logger.assert_with_log(
-                draw.submesh_id < scene_cpu_->submeshes.size(),
-                "raster stats draw has an invalid submesh index");
+                draw.submesh_id < scene_cpu_->submeshes.size() &&
+                static_cast<std::uint64_t>(draw.first_instance) +
+                draw.instance_count <=
+                draw_stream_.draw_instance_ids_compacted.size(),
+                "raster stats draw stream has an invalid draw");
 
-            const scene::SceneCPUData::Submesh& submesh =
-                scene_cpu_->submeshes[draw.submesh_id];
-            for (std::uint32_t instance = 0; instance < draw.instance_count; ++instance) {
-                const std::uint32_t render_instance_id =
-                    draw.first_instance + instance;
+            const std::uint32_t triangles_per_instance =
+                draw.index_count / 3u;
+            if (triangles_per_instance == 0 || draw.instance_count == 0)
+                continue;
 
-                for (std::uint32_t local = 0; local + 2 < draw.index_count; local += 3) {
-                    const std::uint32_t index_base =
-                        draw.index_offset + local;
-                    visible_triangles_.push_back({
-                        render_instance_id,
-                        scene_cpu_->indices[index_base + 0] +
-                            submesh.vertex_offset,
-                        scene_cpu_->indices[index_base + 1] +
-                            submesh.vertex_offset,
-                        scene_cpu_->indices[index_base + 2] +
-                            submesh.vertex_offset,
-                    });
-                }
+            const std::uint32_t max_instances_per_chunk =
+                (std::max<std::uint32_t>)(
+                    1u,
+                    std::numeric_limits<std::uint32_t>::max() /
+                    triangles_per_instance);
+            std::uint32_t first_draw_instance = draw.first_instance;
+            std::uint32_t remaining_instances = draw.instance_count;
+            while (remaining_instances > 0) {
+                const std::uint32_t chunk_instances =
+                    (std::min<std::uint32_t>)(
+                        remaining_instances,
+                        max_instances_per_chunk);
+                visible_draws_.push_back({
+                    first_draw_instance,
+                    chunk_instances,
+                    draw.index_offset,
+                    draw.index_count,
+                    draw.vertex_offset
+                });
+                first_draw_instance += chunk_instances;
+                remaining_instances -= chunk_instances;
             }
         }
 
-        if (!visible_triangles_.empty()) {
+        if (!visible_draws_.empty()) {
             const std::uint64_t bytes =
-                static_cast<std::uint64_t>(visible_triangles_.size()) *
-                sizeof(RasterStatsTriangle);
+                static_cast<std::uint64_t>(visible_draws_.size()) *
+                sizeof(RasterStatsDraw);
             dxutl::copy_to_upload_buffer(
-                triangle_upload_buffer_.Get(),
-                visible_triangles_.data(),
+                draw_upload_buffer_.Get(),
+                visible_draws_.data(),
                 static_cast<std::size_t>(bytes));
         }
     }
