@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <d3d12.h>
-#include <d3dcompiler.h>
+#include <dxcapi.h>
 #include <wrl.h>
 
 namespace eng {
@@ -17,9 +17,9 @@ namespace eng {
         void set_graphics();
         void set_compute();
         void set_root_signature(ID3D12RootSignature* root_signature);
-        void set_shader_vertex(ID3DBlob* shader);
-        void set_shader_pixel(ID3DBlob* shader);
-        void set_shader_compute(ID3DBlob* shader);
+        void set_shader_vertex(IDxcBlob* shader);
+        void set_shader_pixel(IDxcBlob* shader);
+        void set_shader_compute(IDxcBlob* shader);
         void set_manual_vertex_fetch();
         void set_depth_only();
         void set_depth_equal();
@@ -43,9 +43,9 @@ namespace eng {
         ID3D12Device* device_ = nullptr;
 
         PipelineType pipeline_type_ = PipelineType::Undefined;
-        Microsoft::WRL::ComPtr<ID3DBlob> vertex_shader_;
-        Microsoft::WRL::ComPtr<ID3DBlob> pixel_shader_;
-        Microsoft::WRL::ComPtr<ID3DBlob> compute_shader_;
+        Microsoft::WRL::ComPtr<IDxcBlob> vertex_shader_;
+        Microsoft::WRL::ComPtr<IDxcBlob> pixel_shader_;
+        Microsoft::WRL::ComPtr<IDxcBlob> compute_shader_;
         bool depth_only_ = false;
         bool depth_equal_ = false;
         bool fullscreen_ = false;

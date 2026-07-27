@@ -1,6 +1,8 @@
 #include "engine/GraphicsPipeline.h"
 
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 #include "util/Utils.h"
 #include "util/Logger.h"
@@ -51,14 +53,13 @@ namespace eng {
         root_signature_ = root_signature;
     }
 
-
-    void GraphicsPipeline::set_shader_vertex(ID3DBlob* shader) {
+    void GraphicsPipeline::set_shader_vertex(IDxcBlob* shader) {
         vertex_shader_ = shader;
     }
-    void GraphicsPipeline::set_shader_pixel(ID3DBlob* shader) {
+    void GraphicsPipeline::set_shader_pixel(IDxcBlob* shader) {
         pixel_shader_ = shader;
     }
-    void GraphicsPipeline::set_shader_compute(ID3DBlob* shader) {
+    void GraphicsPipeline::set_shader_compute(IDxcBlob* shader) {
         compute_shader_ = shader;
     }
 
@@ -126,6 +127,13 @@ namespace eng {
                 pso_.emplace_back();
                 const HRESULT result = device_->CreateComputePipelineState(
                     &desc, IID_PPV_ARGS(&pso_.back()));
+                if (FAILED(result)) {
+                    std::ostringstream stream;
+                    stream << "CreateComputePipelineState HRESULT=0x"
+                        << std::hex << static_cast<unsigned long>(result)
+                        << '\n';
+                    util::Logger::g_logger << stream.str();
+                }
                 util::Logger::g_logger.assert_with_log(
                     SUCCEEDED(result), "create compute pipeline state");
             }
@@ -144,9 +152,16 @@ namespace eng {
             ? D3D12_INPUT_LAYOUT_DESC{}
             : default_input_layout();
         desc.pRootSignature = root_signature_.Get();
-        desc.VS = { vertex_shader_->GetBufferPointer(), vertex_shader_->GetBufferSize() };
-        if (pixel_shader_)
-            desc.PS = { pixel_shader_->GetBufferPointer(), pixel_shader_->GetBufferSize() };
+        desc.VS = {
+            vertex_shader_->GetBufferPointer(),
+            vertex_shader_->GetBufferSize()
+        };
+        if (pixel_shader_) {
+            desc.PS = {
+                pixel_shader_->GetBufferPointer(),
+                pixel_shader_->GetBufferSize()
+            };
+        }
 
         desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
         desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
@@ -190,8 +205,18 @@ namespace eng {
 
         for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
             pso_.emplace_back();
+            const HRESULT result = device_->CreateGraphicsPipelineState(
+                &desc,
+                IID_PPV_ARGS(&pso_.back()));
+            if (FAILED(result)) {
+                std::ostringstream stream;
+                stream << "CreateGraphicsPipelineState HRESULT=0x"
+                    << std::hex << static_cast<unsigned long>(result)
+                    << '\n';
+                util::Logger::g_logger << stream.str();
+            }
             util::Utils::throw_if_failed(
-                device_->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso_.back())),
+                result,
                 "create graphics pipeline state");
         }
     }

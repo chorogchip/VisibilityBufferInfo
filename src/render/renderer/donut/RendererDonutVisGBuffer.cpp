@@ -6,17 +6,44 @@
 #include "dx_util/ResourceUtils.h"
 #include "render/renderer/donut/DonutFrameConstantsBuilder.h"
 #include "util/Constants.h"
+#include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
 
 namespace rndr {
 
+    namespace {
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> create_uav_buffer(
+            ID3D12Device* device,
+            UINT64 size_in_bytes,
+            D3D12_RESOURCE_STATES initial_state) {
+
+            D3D12_RESOURCE_DESC desc{};
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            desc.Width = size_in_bytes;
+            desc.Height = 1;
+            desc.DepthOrArraySize = 1;
+            desc.MipLevels = 1;
+            desc.SampleDesc.Count = 1;
+            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+            return dxutl::create_committed_resource(
+                device,
+                desc,
+                D3D12_HEAP_TYPE_DEFAULT,
+                initial_state);
+        }
+    }
+
     void RendererDonutVisGBuffer::init2_() {
         program_result_.renderer_name = "DonutVisGBuffer";
         program_result_.pass_names[1] = "visibility";
-        program_result_.pass_names[2] = "gbuffer";
-        program_result_.pass_names[3] = "lighting";
-        program_result_.pass_names[4] = "tonemap";
+        program_result_.pass_names[2] = "visutil";
+        program_result_.pass_names[3] = "gbuffer";
+        program_result_.pass_names[4] = "lighting";
+        program_result_.pass_names[5] = "tonemap";
 
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i) {
             gbuffer_constants_[i].init(device_.Get());
@@ -105,6 +132,18 @@ namespace rndr {
                 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS).Get(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+        const std::uint64_t pixel_count =
+            static_cast<std::uint64_t>(width_) * height_;
+        util::Logger::g_logger.assert_with_log(
+            pixel_count <= UINT32_MAX,
+            "Donut visibility util pixel list exceeds 32-bit indexing");
+        visutil_pixel_list_.init(
+            create_uav_buffer(
+                device_.Get(),
+                pixel_count * sizeof(std::uint32_t) * 2,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
         PassDonutVisibilityResources visibility{};
         visibility.frame_manager = &resource_manager_frame_;
         visibility.sampler_manager = &resource_manager_sampler_;
@@ -115,6 +154,13 @@ namespace rndr {
             visibility.constant_buffers[i] = &gbuffer_constant_resources_[i];
         visibility.scene = scene_gpu_.get();
         pass_visibility_.init(device_.Get(), program_argument_, visibility, false);
+
+        PassDonutVisUtilResources visutil{};
+        visutil.shader_manager = &resource_manager_shader_;
+        visutil.visibility_buf = &visibility_buffer_;
+        visutil.scene = scene_gpu_.get();
+        visutil.pixel_list = &visutil_pixel_list_;
+        pass_visutil_.init(device_.Get(), program_argument_, visutil);
 
         PassDonutVisGBufferResources gbuffer{};
         gbuffer.frame_manager = &resource_manager_frame_;
@@ -193,17 +239,21 @@ namespace rndr {
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
-        pass_gbuffer_.render(
-            command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        pass_visutil_.render(command_list_.Get(), width_, height_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 3);
-        pass_lighting_.render(command_list_.Get(), frame_index_, width_, height_);
+        pass_gbuffer_.render(
+            command_list_.Get(), frame_index_, viewport_, scissor_rect_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 3);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 4);
+        pass_lighting_.render(command_list_.Get(), frame_index_, width_, height_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 4);
+
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 5);
         pass_tonemap_.render(
             command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 4);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 5);
     }
 }

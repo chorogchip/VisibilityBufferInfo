@@ -1,13 +1,4 @@
-#include "../common_material_data.hlsli"
-
-struct ObjectData
-{
-    uint instance_id;
-    uint material_id;
-    uint submesh_id;
-    uint flags;
-    float4x4 World;
-};
+#include "../donut_gbuffer_common.hlsli"
 
 cbuffer nums : register(b0)
 {
@@ -25,66 +16,67 @@ cbuffer nums : register(b0)
 #define BLOCK_WID 16
 #endif
 
-#define THREAD_CNT  (BLOCK_WID * BLOCK_WID)
+#define THREAD_CNT (BLOCK_WID * BLOCK_WID)
+#define MATERIAL_OVERFLOW_BIN (MATERIAL_BIN_COUNT - 1)
+#define MATERIAL_MAX_REAL_SHADER_ID (MATERIAL_BIN_COUNT - 2)
 
 Texture2D<uint2> gVisibility : register(t0);
-StructuredBuffer<ObjectData> gObjects : register(t4);
-StructuredBuffer<MaterialData> gMaterials : register(t5);
+StructuredBuffer<GeometryInstanceData> gGeometryInstances : register(t1);
+StructuredBuffer<SubmeshData> gSubmeshes : register(t2);
+StructuredBuffer<MaterialData> gMaterials : register(t3);
 RWStructuredBuffer<uint> gBinCounts : register(u0);
 
 groupshared uint sBinCounts[MATERIAL_BIN_COUNT];
 
-[numthreads(BLOCK_WID, BLOCK_WID, 1)]
-void kernel_material_binning(uint3 pos : SV_DispatchThreadID, uint3 grp : SV_GroupThreadID)
+uint ResolveShaderID(uint2 visibility)
 {
-    uint ind = grp.y * BLOCK_WID + grp.x;
-    
-    [unroll]
-    for (uint i1 = ind; i1 < MATERIAL_BIN_COUNT; i1 += THREAD_CNT)
+    const uint geometry_instance_id = visibility.x - 1;
+    const GeometryInstanceData geometry = gGeometryInstances[geometry_instance_id];
+    const SubmeshData submesh = gSubmeshes[geometry.submeshID];
+    const MaterialData material = gMaterials[submesh.materialID];
+    return material.virtual_shader_id <= MATERIAL_MAX_REAL_SHADER_ID
+        ? material.virtual_shader_id
+        : MATERIAL_OVERFLOW_BIN;
+}
+
+[numthreads(MATERIAL_BIN_COUNT, 1, 1)]
+void kernel_clear_counts(uint3 tid : SV_GroupThreadID)
+{
+    gBinCounts[tid.x] = 0;
+}
+
+[numthreads(BLOCK_WID, BLOCK_WID, 1)]
+void kernel_material_binning(
+    uint3 pos : SV_DispatchThreadID,
+    uint3 grp : SV_GroupThreadID)
+{
+    const uint group_index = grp.y * BLOCK_WID + grp.x;
+
+    for (uint i = group_index; i < MATERIAL_BIN_COUNT; i += THREAD_CNT)
     {
-        sBinCounts[i1] = 0;
+        sBinCounts[i] = 0;
     }
     GroupMemoryBarrierWithGroupSync();
-    
-    uint2 pixel = pos.xy;
-    
+
+    const uint2 pixel = pos.xy;
     if (pixel.x < screen_width && pixel.y < screen_height)
     {
-        uint2 vis = gVisibility.Load(int3(pixel, 0));
-    
-        if (vis.x != 0)
+        const uint2 visibility = gVisibility.Load(int3(pixel, 0));
+        if (visibility.x != 0)
         {
-            uint object_id = vis.x - 1;
-    
-            uint material_id = gObjects[object_id].material_id;
-            uint shader_id = gMaterials[material_id].virtual_shader_id;
-    
-            if (shader_id < MATERIAL_BIN_COUNT)
-            {
-                InterlockedAdd(sBinCounts[shader_id], 1);
-            }
+            const uint shader_id = ResolveShaderID(visibility);
+            InterlockedAdd(sBinCounts[shader_id], 1);
         }
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
-    [unroll]
-    for (uint i2 = ind; i2 < MATERIAL_BIN_COUNT; i2 += THREAD_CNT)
+
+    for (uint i = group_index; i < MATERIAL_BIN_COUNT; i += THREAD_CNT)
     {
-        uint cnt = sBinCounts[i2];
-        if (cnt != 0)
+        const uint count = sBinCounts[i];
+        if (count != 0)
         {
-            InterlockedAdd(gBinCounts[i2], cnt);
+            InterlockedAdd(gBinCounts[i], count);
         }
     }
 }
-
-/*
-대부분이 PBR shader라서 특정 인덱스 하나가 많다면은 interlockedadd보단 바로 prefix sum 비슷하게 가는게 나을 것이다.
-사실 그냥 PBR을 compact 안하고 전체에 launch하는게 나을지도 모른다.
-그리고 별개로 지금 사이즈별로 테스트해봐야 한다
-
-일단 material수 상한 256으로 잡는다.
-16x16이면 FHD 풀스크린에 8천개 타일이다
-256 atomic -> 8000 atomic이면
-*/

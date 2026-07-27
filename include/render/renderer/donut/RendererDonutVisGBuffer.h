@@ -8,6 +8,7 @@
 #include "render/pass/donut/PassDonutDeferredLighting.h"
 #include "render/pass/donut/PassDonutTonemap.h"
 #include "render/pass/donut/PassDonutVisibility.h"
+#include "render/pass/donut/PassDonutVisUtil.h"
 #include "render/pass/donut/PassDonutVisGbuffer.h"
 #include "render/renderer/donut/DonutNeutralResources.h"
 #include "render/renderer/donut/RendererDonut.h"
@@ -28,6 +29,7 @@ namespace rndr {
         static constexpr UINT GBUFFER_COUNT = 4;
 
         PassDonutVisibility pass_visibility_;
+        PassDonutVisUtil pass_visutil_;
         PassDonutVisGBuffer pass_gbuffer_;
         PassDonutDeferredLighting pass_lighting_;
         PassDonutTonemap pass_tonemap_;
@@ -35,6 +37,7 @@ namespace rndr {
         DonutNeutralResources neutral_resources_;
 
         eng::GPUResource visibility_buffer_;
+        eng::GPUResource visutil_pixel_list_;
         std::array<eng::GPUResource, GBUFFER_COUNT> gbuffers_;
         eng::GPUResource exposure_buffer_;
         eng::GPUResource hdr_color_buffer_;

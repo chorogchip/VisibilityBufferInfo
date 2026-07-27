@@ -72,6 +72,37 @@ FetchContent_MakeAvailable(fastgltf)
 set_target_properties(fastgltf PROPERTIES FOLDER "External/fastgltf")
 
 # ------------------------------------------------------------
+# DirectX Shader Compiler
+# ------------------------------------------------------------
+# Use the official binary package. Building DXC from source would pull in
+# LLVM and is far heavier than this runtime shader-compilation use case.
+FetchContent_Declare(
+    dxc
+    URL https://www.nuget.org/api/v2/package/Microsoft.Direct3D.DXC/1.8.2505.32
+    URL_HASH SHA256=C6E82B70C14552F1DD58E4A79C93EEAB1567EEB0A9EE63A51564C410429BCE3E
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+
+FetchContent_MakeAvailable(dxc)
+
+set(TVBPERF_DXC_ROOT ${dxc_SOURCE_DIR}/build/native)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(TVBPERF_DXC_ARCH x64)
+else()
+    set(TVBPERF_DXC_ARCH x86)
+endif()
+
+add_library(DXC::dxcompiler SHARED IMPORTED GLOBAL)
+set_target_properties(DXC::dxcompiler PROPERTIES
+    IMPORTED_IMPLIB
+        "${TVBPERF_DXC_ROOT}/lib/${TVBPERF_DXC_ARCH}/dxcompiler.lib"
+    IMPORTED_LOCATION
+        "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxcompiler.dll"
+    INTERFACE_INCLUDE_DIRECTORIES
+        "${TVBPERF_DXC_ROOT}/include"
+)
+
+# ------------------------------------------------------------
 # Assimp
 # ------------------------------------------------------------
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -209,6 +240,7 @@ target_link_libraries(TVBPerf
         assimp
         DirectXTex
         fastgltf::fastgltf
+        DXC::dxcompiler
         d3d12
         dxgi
         d3dcompiler
@@ -275,6 +307,16 @@ add_custom_target(CopyShaders ALL
 )
 
 add_dependencies(CopyShaders TVBPerf)
+
+add_custom_command(TARGET TVBPerf POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:DXC::dxcompiler>"
+        "$<TARGET_FILE_DIR:TVBPerf>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxil.dll"
+        "$<TARGET_FILE_DIR:TVBPerf>"
+    COMMENT "Copying DXC runtime DLLs to output directory"
+)
 
 # 작업 디렉터리 설정
 set_property(TARGET TVBPerf PROPERTY
