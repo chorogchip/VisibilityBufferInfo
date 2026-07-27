@@ -13,17 +13,19 @@ namespace util {
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, output_filepath, "out_result.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 9, renderer-variant) \
+    X(uint32_t, renderer_variant, 2, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
-    X(bool, to_load_texture, true, to-load-texture) \
+    X(bool, to_load_texture, false, to-load-texture) \
     X(bool, use_vfc, true, use-vfc) \
     X(std::string, scene_importer, "auto", scene-importer) \
     X(std::string, scene_path, ( \
-        1 ? "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf" : \
         1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx" : \
         1 ? "../../../../../assets/scenes/generated/jungle/packages/jungle_cinematic.glb" : \
         1 ? "../../../../../assets/scenes/generated/jungle/packages/jungle_pyramid.glb" : \
+        1 ? "../../../../../assets/scenes/generated/jungle/packages/jungle_global.glb" : \
+        1 ? "../../../../../assets/scenes/generated/jungle/packages/jungle_extended.glb" : \
+        1 ? "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf" : \
         ""), scene-path) \
     X(uint32_t, warmup_frames, 60, warmup-frames) \
     X(uint32_t, measure_frames, 5500, measure-frames) \

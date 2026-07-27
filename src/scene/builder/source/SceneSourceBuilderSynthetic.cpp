@@ -17,6 +17,7 @@
 
 #include <DirectXMath.h>
 
+#include "util/Logger.h"
 #include "scene/builder/source/SceneSourceDataValidator.h"
 
 namespace scene {
@@ -410,10 +411,9 @@ namespace scene {
         }
     }
 
-    AssimpSceneSourceBuildResult AssimpSceneSourceBuilder::build(
+    std::unique_ptr<SceneSourceData> AssimpSceneSourceBuilder::build(
         const std::filesystem::path& path) {
 
-        AssimpSceneSourceBuildResult result{};
         Assimp::Importer importer;
         const std::filesystem::path source_path =
             std::filesystem::absolute(path).lexically_normal();
@@ -428,11 +428,11 @@ namespace scene {
 
         const aiScene* input = importer.ReadFile(source_path.string(), flags);
         if (input == nullptr || input->mNumMeshes == 0) {
-            result.error_message = importer.GetErrorString();
-            if (result.error_message.empty()) {
-                result.error_message = "Assimp returned no meshes.";
-            }
-            return result;
+            util::Logger::g_logger <<
+                "error building scene from assimp: " <<
+                importer.GetErrorString();
+            util::Logger::g_logger.assert_with_log(false);
+            return nullptr;
         }
 
         auto scene = std::make_unique<SceneSourceData>();
@@ -467,11 +467,7 @@ namespace scene {
             scene->meshes.emplace_back(std::move(mesh));
         }
 
-        if (scene->meshes.empty()) {
-            result.error_message =
-                "Assimp scene has no triangle meshes after filtering.";
-            return result;
-        }
+        util::Logger::g_logger.assert_with_log(!scene->meshes.empty(), "no triangle");
 
         build_nodes(
             *scene,
@@ -490,7 +486,6 @@ namespace scene {
         }
 
         SceneSourceDataValidator::validate(*scene);
-        result.scene = std::move(scene);
-        return result;
+        return std::move(scene);
     }
 }

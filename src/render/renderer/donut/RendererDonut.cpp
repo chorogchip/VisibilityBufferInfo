@@ -11,7 +11,7 @@
 #include "scene/builder/cpu/SceneCPUBuilder.h"
 #include "scene/builder/cpu/SceneCPUDrawBuilder.h"
 #include "scene/builder/gpu/DonutSceneGPUBuilder.h"
-#include "scene/builder/source/SceneSourceLoader.h"
+#include "scene/builder/source/SceneSourceFactory.h"
 #include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
@@ -38,10 +38,9 @@ namespace rndr {
         resource_manager_frame_.init(device_.Get());
         resource_manager_sampler_.init(device_.Get());
 
-        scene::SceneSourceData source =
-            scene::SceneSourceLoader::load(program_argument_);
+        auto scene_source = scene::SceneSourceFactory::create_scene(program_argument_);
         scene_cpu_ = std::make_unique<scene::SceneCPUData>(
-            scene::SceneCPUBuilder::build(source));
+            scene::SceneCPUBuilder::build(*scene_source));
 
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
         util::Utils::throw_if_failed(command_list_->Reset(

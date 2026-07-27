@@ -24,7 +24,9 @@ namespace rndr {
         case  9: return std::make_unique<RendererDonutVisGBuffer>();
         case 10: return std::make_unique<RendererRasterStats>();
         case 11: return std::make_unique<RendererDebugView>();
-        default: util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
+        default:
+            util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
+            return nullptr;
         }
     }
 

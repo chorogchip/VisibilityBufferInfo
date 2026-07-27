@@ -15,7 +15,7 @@
 #include "scene/builder/cpu/SceneCPUBuilder.h"
 #include "scene/builder/cpu/SceneCPUDrawBuilder.h"
 #include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
-#include "scene/builder/source/SceneSourceLoader.h"
+#include "scene/builder/source/SceneSourceFactory.h"
 
 namespace rndr {
 
@@ -38,10 +38,9 @@ namespace rndr {
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             buf_constant_[i].init(device_.Get());
 
-        scene::SceneSourceData source =
-            scene::SceneSourceLoader::load(program_argument_);
+        auto scene_source = scene::SceneSourceFactory::create_scene(program_argument_);
         scene_cpu_ = std::make_unique<scene::SceneCPUData>(
-            scene::SceneCPUBuilder::build(source));
+            scene::SceneCPUBuilder::build(*scene_source));
         to_profile_index_count_ = true;
         profile_index_count_ = static_cast<double>(
             scene::SceneCPUDrawBuilder::count_indices(*scene_cpu_));
