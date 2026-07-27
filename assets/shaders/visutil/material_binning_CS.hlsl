@@ -31,6 +31,7 @@ Texture2D<uint2> gVisibility : register(t0);
 StructuredBuffer<ObjectData> gObjects : register(t4);
 StructuredBuffer<MaterialData> gMaterials : register(t5);
 RWStructuredBuffer<uint> gBinCounts : register(u0);
+
 groupshared uint sBinCounts[MATERIAL_BIN_COUNT];
 
 [numthreads(BLOCK_WID, BLOCK_WID, 1)]
