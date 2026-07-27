@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <string>
@@ -251,6 +252,7 @@ namespace scene {
             std::unordered_map<std::string, uint32_t>& cache,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
                 used_upload_heaps,
+            const std::function<void()>& flush_uploads,
             bool load_textures) {
 
             if (!load_textures || !path) return std::nullopt;
@@ -404,6 +406,9 @@ namespace scene {
                 static_cast<uint32_t>(destination.textures.size());
             destination.textures.emplace_back(std::move(gpu_texture));
             used_upload_heaps.emplace_back(std::move(upload));
+            if (flush_uploads) {
+                flush_uploads();
+            }
             cache.emplace(cache_key, texture_id);
             return texture_id;
         }
@@ -514,6 +519,7 @@ namespace scene {
         ID3D12GraphicsCommandList* command_list,
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
             used_upload_heaps,
+        const std::function<void()>& flush_uploads,
         bool load_textures) {
 
         SceneCPUValidator::validate(source);
@@ -747,6 +753,7 @@ namespace scene {
                         destination,
                         texture_cache,
                         used_upload_heaps,
+                        flush_uploads,
                         load_textures);
                 material.texture_indices[slot] =
                     texture_id

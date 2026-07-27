@@ -1,7 +1,10 @@
 #include "dx_util/ResourceUtils.h"
 
 #include <cstring>
+#include <iomanip>
+#include <sstream>
 
+#include "util/Logger.h"
 #include "util/Utils.h"
 
 namespace dxutl {
@@ -21,13 +24,34 @@ namespace dxutl {
         heap_props.VisibleNodeMask = 1;
 
         Microsoft::WRL::ComPtr<ID3D12Resource> resource;
-        util::Utils::throw_if_failed(device->CreateCommittedResource(
+        const HRESULT result = device->CreateCommittedResource(
             &heap_props,
             D3D12_HEAP_FLAG_NONE,
             &resource_desc,
             initial_state,
             clear_value,
-            IID_PPV_ARGS(resource.ReleaseAndGetAddressOf())),
+            IID_PPV_ARGS(resource.ReleaseAndGetAddressOf()));
+        if (FAILED(result)) {
+            std::ostringstream stream;
+            stream
+                << "CreateCommittedResource HRESULT=0x"
+                << std::hex << static_cast<unsigned long>(result)
+                << std::dec
+                << " dimension=" << static_cast<uint32_t>(resource_desc.Dimension)
+                << " width=" << resource_desc.Width
+                << " height=" << resource_desc.Height
+                << " depthOrArraySize=" << resource_desc.DepthOrArraySize
+                << " mipLevels=" << resource_desc.MipLevels
+                << " format=" << static_cast<uint32_t>(resource_desc.Format)
+                << " sampleCount=" << resource_desc.SampleDesc.Count
+                << " layout=" << static_cast<uint32_t>(resource_desc.Layout)
+                << " flags=0x" << std::hex
+                << static_cast<uint32_t>(resource_desc.Flags)
+                << '\n';
+            util::Logger::g_logger << stream.str();
+        }
+        util::Logger::g_logger.assert_with_log(
+            SUCCEEDED(result),
             "create committed resource");
 
         return resource;

@@ -49,6 +49,26 @@ namespace rndr {
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> used_upload_heaps;
         util::Utils::throw_if_failed(command_list_->Reset(
             command_allocator_[frame_index_].Get(), nullptr));
+        const auto flush_uploads = [&]() {
+            if (used_upload_heaps.empty()) {
+                return;
+            }
+
+            util::Utils::throw_if_failed(
+                command_list_->Close(),
+                "close command list on Donut scene upload flush");
+            graphics_queue_.execute(command_list_.Get());
+            graphics_queue_.wait_idle();
+            used_upload_heaps.clear();
+            util::Utils::throw_if_failed(
+                command_allocator_[frame_index_]->Reset(),
+                "reset command allocator on Donut scene upload flush");
+            util::Utils::throw_if_failed(
+                command_list_->Reset(
+                    command_allocator_[frame_index_].Get(),
+                    nullptr),
+                "reset command list on Donut scene upload flush");
+        };
 
         scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
             scene::DonutSceneGPUBuilder::build(
@@ -56,6 +76,7 @@ namespace rndr {
                 device_.Get(),
                 command_list_.Get(),
                 used_upload_heaps,
+                flush_uploads,
                 program_argument_.to_load_texture));
 
         to_profile_index_count_ = true;
