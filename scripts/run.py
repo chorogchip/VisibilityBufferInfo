@@ -72,6 +72,16 @@ def render_argument(value: Any) -> str:
     return str(value)
 
 
+def argument_enabled(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int | float):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+
 def trim_error(value: Any) -> str:
     text = str(value or "").strip()
     if len(text) <= ERROR_TEXT_LIMIT:
@@ -149,6 +159,19 @@ def copy_if_possible(source: Path, destination: Path) -> str:
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+        return ""
+    except Exception as error:
+        return trim_error(error)
+
+
+def copy_directory_if_possible(source: Path, destination: Path) -> str:
+    try:
+        if not source.exists() or not source.is_dir():
+            return f"Directory does not exist: {source}"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(source, destination)
         return ""
     except Exception as error:
         return trim_error(error)
@@ -489,6 +512,14 @@ def run_experiment(
         for repeat in range(repeat_count):
             for combination in combinations:
                 raw_path = temporary_dir / f"run_{run_index:05d}.csv"
+                capture_requested = argument_enabled(
+                    combination.get("capture_frames", False)
+                )
+                raw_capture_dir = (
+                    temporary_dir / f"run_{run_index:05d}_capture"
+                    if capture_requested
+                    else None
+                )
                 arguments = {
                     **combination,
                     "run_id": run_index,
@@ -496,6 +527,9 @@ def run_experiment(
                     "output_filepath": str(raw_path),
                     "auto_terminate": True,
                 }
+                if raw_capture_dir is not None:
+                    arguments["capture_output_dir"] = str(raw_capture_dir)
+
                 command = command_for(executable, arguments)
                 print(f"[{run_index + 1}/{total}] {subprocess.list2cmdline(command)}")
 
@@ -550,11 +584,29 @@ def run_experiment(
                     artifact_csvs,
                     artifact_copy_errors,
                 ) = copy_run_files(raw_path, individual_dir, should_copy)
+                artifact_dirs: list[str] = []
+
+                if raw_capture_dir is not None:
+                    destination = individual_dir / raw_capture_dir.name
+                    copy_error = copy_directory_if_possible(
+                        raw_capture_dir,
+                        destination,
+                    )
+                    if copy_error:
+                        artifact_copy_errors.append(
+                            f"{raw_capture_dir.name}: {copy_error}"
+                        )
+                    else:
+                        artifact_dirs.append(str(destination))
 
                 if artifact_csvs:
                     print("  -> copied sidecar CSV(s):")
                     for artifact_path in artifact_csvs:
                         print(f"     {artifact_path}")
+                if artifact_dirs:
+                    print("  -> copied artifact directories:")
+                    for artifact_dir in artifact_dirs:
+                        print(f"     {artifact_dir}")
                 for copy_error in artifact_copy_errors:
                     print(f"WARNING: Could not copy run artifact: {copy_error}", file=sys.stderr)
 
@@ -571,6 +623,10 @@ def run_experiment(
                         "raw_csv": str(raw_path) if raw_path.exists() else None,
                         "individual_csv": individual_csv or None,
                         "artifact_csvs": artifact_csvs,
+                        "artifact_dirs": artifact_dirs,
+                        "capture_output_dir": (
+                            str(raw_capture_dir) if raw_capture_dir is not None else None
+                        ),
                         "raw_row_count": len(raw_rows),
                         "error": combined_error or None,
                         "csv_write_error": csv_write_error or None,
