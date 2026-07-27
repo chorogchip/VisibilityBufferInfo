@@ -7,7 +7,7 @@
 
 namespace scene {
 
-    class AssimpSceneSourceBuilder {
+    class BuilderAssimp {
 
     public:
         static std::unique_ptr<SceneSourceData> build(const std::filesystem::path& path);

@@ -121,7 +121,8 @@ GBufferOutput main(PSInput input)
         normal2 * bary_perspective.z);
     
         float4 base_color = gMaterials[obj.material_id].base_color;
-        gbuffer_value = float4(apply_workload(uv, d_uv_dx, d_uv_dy, normal), base_color.a);
+        uint index = gMaterials[obj.material_id].texture_indices[0];
+        gbuffer_value = float4(apply_workload_visbuf(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
     }
     
     return make_gbuffer_output(gbuffer_value);

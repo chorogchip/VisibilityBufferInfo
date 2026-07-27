@@ -1,4 +1,4 @@
-#include "scene/builder/source/AssimpSceneSourceBuilder.h"
+#include "scene/builder/source/BuilderAssimp.h"
 
 #include <algorithm>
 #include <cctype>
@@ -7,14 +7,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 #include <assimp/Importer.hpp>
 #include <assimp/GltfMaterial.h>
 #include <assimp/material.h>
 #include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-
 #include <DirectXMath.h>
 
 #include "util/Logger.h"
@@ -366,11 +364,7 @@ namespace scene {
             return node_id;
         }
 
-        void build_nodes(
-            SceneSourceData& scene,
-            const aiNode* input,
-            uint32_t parent_id,
-            const std::vector<uint32_t>& mesh_ids) {
+        void build_nodes(SceneSourceData& scene, const aiNode* input, uint32_t parent_id, const std::vector<uint32_t>& mesh_ids) {
 
             if (input == nullptr) return;
 
@@ -411,8 +405,7 @@ namespace scene {
         }
     }
 
-    std::unique_ptr<SceneSourceData> AssimpSceneSourceBuilder::build(
-        const std::filesystem::path& path) {
+    std::unique_ptr<SceneSourceData> BuilderAssimp::build(const std::filesystem::path& path) {
 
         Assimp::Importer importer;
         const std::filesystem::path source_path =
@@ -469,11 +462,8 @@ namespace scene {
 
         util::Logger::g_logger.assert_with_log(!scene->meshes.empty(), "no triangle");
 
-        build_nodes(
-            *scene,
-            input->mRootNode,
-            source::SceneConstants::INVALID_INDEX,
-            mesh_ids);
+        build_nodes(*scene, input->mRootNode, source::SceneConstants::INVALID_INDEX, mesh_ids);
+
         if (scene->nodes.empty()) {
             DirectX::XMFLOAT4X4 identity{};
             DirectX::XMStoreFloat4x4(

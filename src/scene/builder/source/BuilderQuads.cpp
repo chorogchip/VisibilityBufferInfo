@@ -1,4 +1,4 @@
-#include "scene/builder/source/synth/SyntheticQuads.h"
+#include "scene/builder/source/BuilderQuads.h"
 
 #include <utility>
 
@@ -8,10 +8,10 @@
 namespace scene {
 
     namespace {
-        static source::Primitive build_primitive_(const SyntheticQuads::SyntheticQuadsConfig& config);
+        static source::Primitive build_primitive_(const BuilderQuads::BuilderQuadsConfig& config);
     }
 
-    std::unique_ptr<SceneSourceData> SyntheticQuads::build(const SyntheticQuadsConfig& config) {
+    std::unique_ptr<SceneSourceData> BuilderQuads::build(const BuilderQuadsConfig& config) {
         auto scene = std::make_unique<SceneSourceData>();
 
         util::Logger::g_logger.assert_with_log(
@@ -46,14 +46,13 @@ namespace scene {
             order.push_back(object_id);
         }
 
-        auto& node = scene->nodes[0];
+        auto& node = scene->nodes[1];
         node.first_instance =
             static_cast<uint32_t>(scene->instances.size());
         scene->instances.reserve(
             scene->instances.size() + config.object_count);
         for (uint32_t i = 0; i < config.object_count; ++i) {
             float position_z_offset = 0.0f;
-
             const float position_z =
                 position_z_offset +
                 static_cast<float>(order[i]) /
@@ -71,7 +70,7 @@ namespace scene {
 
     namespace {
 
-        static source::Primitive build_primitive_(const SyntheticQuads::SyntheticQuadsConfig& config) {
+        static source::Primitive build_primitive_(const BuilderQuads::BuilderQuadsConfig& config) {
             source::Primitive primitive{};
             primitive.material_id = 0;
 

@@ -5,8 +5,8 @@
 #include "ProgramArgument.h"
 #include "util/Logger.h"
 #include "util/MyPath.h"
-#include "scene/builder/source/synth/SyntheticQuads.h"
-#include "scene/builder/source/AssimpSceneSourceBuilder.h"
+#include "scene/builder/source/BuilderQuads.h"
+#include "scene/builder/source/BuilderAssimp.h"
 #include "scene/builder/source/JungleSceneSourceBuilder.h"
 
 namespace scene {
@@ -14,11 +14,11 @@ namespace scene {
     std::unique_ptr<SceneSourceData> SceneSourceFactory::create_scene(const util::ProgramArgument& argument) {
 
         if (!argument.to_use_scene) {
-            SyntheticQuads::SyntheticQuadsConfig config{};
+            BuilderQuads::BuilderQuadsConfig config{};
             config.object_count = argument.object_count;
             config.overdraw_count = argument.overdraw_count;
             config.division = argument.geometry_div;
-            return SyntheticQuads::build(config);
+            return BuilderQuads::build(config);
         }
 
         const auto path = util::MyPath(argument.scene_path).get_absolute();
@@ -29,6 +29,6 @@ namespace scene {
             return JungleSceneSourceBuilder::build(path.get());
         }
 
-        return AssimpSceneSourceBuilder::build(path.get());
+        return BuilderAssimp::build(path.get());
     }
 }

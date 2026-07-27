@@ -7,15 +7,15 @@
 
 namespace scene {
 
-	class SyntheticQuads {
+	class BuilderQuads {
 
 	public:
-		struct SyntheticQuadsConfig {
+		struct BuilderQuadsConfig {
 			uint32_t object_count;
 			uint32_t overdraw_count;
 			uint32_t division;
 		};
 
-		static std::unique_ptr<SceneSourceData> build(const SyntheticQuadsConfig& config);
+		static std::unique_ptr<SceneSourceData> build(const BuilderQuadsConfig& config);
 	};
 }

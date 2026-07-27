@@ -106,10 +106,10 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_VS.hlsl",
-            "vs_5_0", "main", arguments);
+            "vs_5_1", "main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_PS.hlsl",
-            "ps_5_0", "main", arguments);
+            "ps_5_1", "main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
@@ -118,7 +118,7 @@ namespace rndr {
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // PASS_CONSTANT
             .srv_tabl().reg(0).cnt(6)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // SCENE_INPUT
-            .srv_tabl().reg(8).cnt(1).vis_pxl().add()  // MATERIAL_TEXTURE
+            .srv_tabl().reg(8).cnt(512).vis_pxl().add()  // MATERIAL_TEXTURE, unbound
             .spl_tabl().reg(0).cnt(1).vis_pxl().add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
@@ -152,7 +152,7 @@ namespace rndr {
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_VISIBILITY_BUFFER));
         command_list->SetGraphicsRootDescriptorTable(
-            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),  // only binds one, but threre's many descriptor
+            static_cast<UINT>(RootParam::MATERIAL_TEXTURE),
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_TEXTURE_BEGIN));
         command_list->SetGraphicsRootDescriptorTable(

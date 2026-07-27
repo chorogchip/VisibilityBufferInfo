@@ -13,10 +13,10 @@ namespace util {
     X(uint32_t, run_id, 0, run-id) \
     X(std::string, run_name, "no-run-name", run-name) \
     X(std::string, output_filepath, "out_result.csv", output-filepath) \
-    X(uint32_t, renderer_variant, 2, renderer-variant) \
+    X(uint32_t, renderer_variant, 6, renderer-variant) \
     X(uint32_t, variable, 0, variable) \
     X(bool, to_use_scene, true, to-use-scene) \
-    X(bool, to_load_texture, false, to-load-texture) \
+    X(bool, to_load_texture, true, to-load-texture) \
     X(bool, use_vfc, true, use-vfc) \
     X(std::string, scene_importer, "auto", scene-importer) \
     X(std::string, scene_path, ( \

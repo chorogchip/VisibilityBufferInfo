@@ -14,7 +14,7 @@
 #endif
 
 #if TEXTURE_COUNT > 0
-Texture2D<float4> gTexture : register(t8);
+Texture2D<float4> gTextures[512] : register(t8);
 SamplerState gSampler : register(s0);
 #endif
 
@@ -71,7 +71,30 @@ float3 apply_workload(
     float3 result_tex = float3(1.0f, 1.0f, 1.0f);
     
 #if TEXTURE_COUNT > 0
-    result_tex = gTexture.SampleGrad(gSampler, uv, ddx, ddy).rgb;
+    result_tex = gTextures[0].SampleGrad(gSampler, uv, ddx, ddy).rgb;
+#endif
+    
+    float3 result_alu = float3(1.0f, 1.0f, 1.0f);
+   
+#if ALU_CALC_COUNT > 0
+    result_alu = apply_alu_workload(normal);
+#endif
+    
+    return result_tex + result_alu * 0.001f;
+
+}
+
+float3 apply_workload_visbuf(
+    uint index,
+    float2 uv,
+    float2 ddx, float2 ddy,
+    float3 normal
+)
+{
+    float3 result_tex = float3(1.0f, 1.0f, 1.0f);
+    
+#if TEXTURE_COUNT > 0
+    result_tex = gTextures[NonUniformResourceIndex(index)].SampleGrad(gSampler, uv, ddx, ddy).rgb;
 #endif
     
     float3 result_alu = float3(1.0f, 1.0f, 1.0f);

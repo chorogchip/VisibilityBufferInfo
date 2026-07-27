@@ -113,10 +113,10 @@ namespace rndr {
 
         auto vs = dxutl::compile_shader(
             L"assets/shaders/visbuf_lighting_VS.hlsl",
-            "vs_5_0", "main", arguments);
+            "vs_5_1", "main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/visbuf_gbuffer_PS.hlsl",
-            "ps_5_0", "main", arguments);
+            "ps_5_1", "main", arguments);
 
         pso_.init(device);
         pso_.set_graphics();
@@ -126,8 +126,8 @@ namespace rndr {
             .srv_tabl().reg(0).cnt(6)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // SCENE_INPUT
             .srv_tabl().reg(8).cnt(arguments.texture_count)
-                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE
-            .spl_tabl().reg(0).cnt(1)
+                .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_TEXTURE, unbound
+            .spl_tabl().reg(0).cnt(512)
                 .vis(D3D12_SHADER_VISIBILITY_PIXEL).add()  // MATERIAL_SAMPLER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
