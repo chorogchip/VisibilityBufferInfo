@@ -1,0 +1,134 @@
+
+
+[5주차 발표 - 한 번 정리]
+
+Nanite, Doon Dark Ages, Horizon, GPU Zen 4에서 visbility buffer 개념이 등장했다.
+이유는 다음과 같다.
+- 픽셀보다 작은 삼각형이 많음 - 2x2 quad 낭비가 재질 평가까지 지속됨, depth prepass로 두번 처리해야됨
+-> 가시성 판정과 재질 평가를 분리하자!
+- Gbuffer 를 안 만들 수 있다! 단 이는 주로 논문의 접근이다. Doom이 forward를 쓰긴 하는데 이조차 가벼운 Gbuffer를 만들었다.
+
+조금 더 심층적으로 들어가면 visibility buffer가 이득을 볼 수 있는 구간을 이전 발표에서 다뤘다 (3개의 지점)
+그와 동시에 단점도 다뤘다 (triangle indirect access, barycentric derivative, material 처리)
+
+이제 장단점에 대해 실험을 해봤다
+
+visibility buffer의 구현에 대해서는 다음 선택사항이 있다
+
+
+ID 포맷은 어떻게 할 것인가?
+- 삼각형과 material을 알아야 한다 -> instance와 local triangle ID를 알면된다 -> draw call이 instance와 submesh를 나타냄
+	-> draw call ID, local triangle ID 를 패킹
+- 64bit에 욱여넣기 가능
+- depth test의 효율적 abuse 가능
+- Nanite에서 주로 주목
+
+barycentric 어떻게 복원할 것인가?
+1. visbuf에 람다 두개 저장: 대역폭쓰지만 계산줌, persective를 저장하면 attribute복원연산 줌, screen-space를 저장하는게 해석적 ddx구하기 편함
+2. 삼각형을 읽고 다시 계산: 순수 계산, 메모리대역폭 아낌
+3. 삼각형별로 별도로 setup 계산: 1/w uv/w 등을 저장가능. 버퍼 추가로 씀. 재활용하므로 큰 삼각형에 유리.
+
+derivative 어떻게 계산할 것인가?
+1. PS로 각 lane이 uv를 얻은 후 직접 ddx(uv) 계산 - 빠르고 기존 raser와 비슷하지만 픽셀 다르면 오류.
+2. CS에서 derivative도 가능하다 (SM 6.6부터, PS와 동일, 단 thread 수 x y가 2의 배수로 맞춰줘야 함.)
+3. CS에서 명시적 quad lane 계산 (위와 동일하지만 이식성이 떨어진다. 하지만 방향을 거꾸로 할수도 있다는 장점)
+사실상 1 2 3 은 같은 방법이라고 볼 수 있음 (구현의 차이)
+4. CS에서 visibility부터 읽어서 직접 uv구해 ddx구하기 (문제는 유지되면서 연산량만 많아짐)
+5. 한 픽셀에서 중복해 이웃 픽셀 위치에서 uv부터 계산 (문제 해결, 정확도 좋음, 계산량 많음.)
+6. 5를 uv부터가 아니라 변화량만 해석적으로 계산 (문제 해결, 계산량 줄임, 하지만 수치적으로 기존 래스터와 살짝 값 다를 수 있음)
+7. 1/w에 대한 화면공간의 UVQ를 이용해 해석적으로 계산 (6과 근본적으로 같다.)
+8. 7과 동일한 연산을 하되 삼각형마다 UVQ 평면을 미리 계산해놓음 (삼각형데이터 재활용시 유리)
+9. visbuf에 직접 ddx ddy를 저장해놓음 (interpolation활용해 자연스럽게 저장가능, 안정적, 하지만 추가 대역폭 필요, 양 꽤 많음,
+	PS에서 material별로 절차적으로 UV를 조작하는 등의 연산은 제한됨)
+10. barycentric을 저장 후 123 같은 방법으로 보간 (문제 여전함, 계산 매우 적음, 추가 메모리 대역폭)
+공통적으로 1,2,3,4,10에서 문제가 발생할 경우
+- 5,6,7,8로 fallback하거나
+- 반대방향 픽셀을 시도하거나 (또 문제 가능)
+- 그냥 고정되거나 적당한 mip을 읽거나 할수있다
+단 여기서 material graph가 존재할 경우에 그래프에서 uv를 건드릴수 있는데 (회전한다던지.. 스케일이나 오프셋만큼 이동한다던지)
+- graph에 해석적 derivative를 전파하면서 연산할 수 있고
+- 혹은 그냥 마지막 uv값으로 1,2,3을 쓸 수 있다 (문제 발생 가능)
+
+Material 어떻게 평가할 것인가?
+- bindless heap을 nonuniformaccess, 구현 간단한 나이브한 접근 (하지만 material별로 셰이더나 로직이 다르면 못씀)
+- uber shader로 divergence하며 처리, dispatch수는 적음
+- shader binning
+	- 타일별로 material 있는거 모아서 하면 타일에는 있지만 픽셀에 없는 material에 대한 thread가 낭비된다
+	- binning해서 할수도있음, 하지만 이경우 thread간의 화면에서의 좌표가 지역성이 떨어짐(버퍼접근, 텍스쳐 샘플링등 문제)
+	- loose tiling: 128x128쯤 타일로 나누고 타일 안에서만 모아서 실행, 전체가 아닌 타일 안에서만 모으므로 지역성이 좋아진다
+
+기타 확장 방향
+- mesh shader / GPU driven culling/draw 와 궁합이 좋다.
+
+
+
+실제 사례들을 소개하면 다음과 같다
+nanite는
+- 주로 광범위한 geometry의 visibility 해결 자체에 초점을 뒀고, 2번장점 부각
+horizon은
+- 여러 수목을 렌더링, 1번 장점을 부각.
+doom은
+- forward+ 와 visbuf 통합. 3번을 얻는다. 단 일부 gbuffer를 쓴다.
+
+
+
+Visibility Buffer 를 쓸 수 있게 된 배경에는 GPU-driven rendering기반이 갖춰졌기도 하다
+- indirect draw / compaction, mesh shader / material 픽셀 분류 등과 잘 맞는다.
+- D3D10, 2006, SV_PrimitiveID / SV_VertexID
+- D3D11, 2009, compute shader, UAV, atomics, structured/raw buffer, indirect draw (GPU driven culling, material compaction, attribute reconstruction)
+- D3D12, 2015, ExecuteIndirect, descriptor heap
+- HLSL SM 6.0, 2017, wave operation, ballot, prefix sum, active count (compation 가능)
+- HLSL SM 6.1, 2017, SV_Barycentrics
+- Nvidia mesh shader, 2018, meshlet culling (Dx12 mesh shader:2020)
+- SM 6.6, 2021, compute derivative, direct descriptor heap indexing, 64bit atomic
+
+정리하면 2009 처음 가능, 2015 GPU-driven 가능, 2021 sw raster가능
+
+
+
+
+1. deferred lighting 쓰면 진짜 어떻게 되나? deferred와 비교.
+- 작은 삼각형이 많은 씬에서 추가적 비교. (예를 들면 나무 여러개..)
+- 전체적으로 그래프만 주지 말고, 데이터와 영상을 같이 추출한 뒤에 js로 interactive하게 만들기 (시연 컴에서 돌아갈지는 모르겠지만은)
+
+2. shader 문제
+위는 같은 셰이더에서 다른 텍스쳐를 샘플링할 수 있는 상황에 대해 다뤘다
+그래서 같은 셰이더에서 분기 없이 descriptor 들을 non uniform indexing 할 수 있었다
+하지만 셰이더가 다르면 dispatch를 여러 번 해야 함!
+이것은 실제로 셰이더를 구할 수가 없어서
+- synthetic scene에서 공간 지역성 / 셰이더 개수에 따른 차이를 분석한다
+- real world scene에서는 몇 개의 변수로 고정해 사용한다 (상황 가정)
+
+3. visibility buffer variation
+특히 barycentric 부분에서 여러 variation이 많다
+그런 것들 테스트하기.
+
+4. jungle scene
+6주차부터는 정글 씬을 어떻게 불러오고 어떻게 컬링하고 성능 향상이 얼마나 있었는지 보여주기.
+
+
+
+____________________________________________________________________________
+
+
+1번은 이미 함, 추가적으로 씬 더 넣어서 실험 가능하지만 draw call 부분 약간 손본 뒤에 씬 더 구해서 실험하자.
+- tree model 가져와서 인공 씬 만들어도 괜찮을듯.
+- 뭔가 오픈월드 컨셉으로 먼가 해도 괜찮을지도
+
+2번같은 경우 월요일에 주로 해야 할 것들임.
+- 매개변수를 추가하고, synthetic scene을 만들고 실험 돌리면 된다
+- 단 visbuf가 non uniform이거 문제가 있어서 이거 먼저 수정 후 진행. -> 수정 완료
+
+3번도 2번과 같이 진행.
+
+일단 공통적으로 benchmark에서 먼저 진행하자..? 가 아닌가
+그렇다 (donut은 너무 복잡하다)
+라기엔 뒷단을 고정하는게 낫지 않나?
+이젠 벤치마크가 쓸데없는거 아닌가?
+
+donut 에서 하자.
+
+4는 후순위.
+
+
+
