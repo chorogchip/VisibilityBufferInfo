@@ -250,6 +250,8 @@ Donut CPU/GPU scene 계약의 핵심:
 6. Renderer/pass 변경: pass name, timestamp slot, resource transition, descriptor heap size 확인
 7. 실제 scene 변경: scene asset 부재 가능성을 분리해서 보고하고, asset이 있을 때 camera playback으로 최소 실행 확인
 
+렌더러나 실제 scene 경로의 검증이 정말 필요한 큰 작업에서는 단순 빌드, 단일 프레임 smoke, validator 통과만으로 성공으로 보지 않는다. 여러 관련 renderer를 Bistro와 Sponza 모두에서 실행하고, `to_load_texture=true`를 포함해 실험/시각 품질에 영향을 주는 옵션을 전부 켠 상태로 풀스크린에서 검증한다. 기존에 존재하는 camera playback은 반드시 마지막 프레임까지 끝까지 실행해야 하며, 중간 프레임, 첫 화면, 첫 CSV 생성만으로 완료했다고 판단하지 않는다. 보통 Sponza는 약 1분, Bistro는 약 2분 정도 걸릴 수 있으므로 이 시간을 고려해 조기 중단하지 않는다. 실행 CSV, sidecar/profile 데이터, 로그/stderr, 화면 또는 캡처 결과에 이상이 없을 때만 렌더러 검증 성공으로 간주한다. 반대로 작업 규모가 작거나 렌더러/실제 scene 경로와 직접 관련이 없으면 이 무거운 검증을 적극적으로 시도하지 말고, 필요한 최소 검증만 수행한다.
+
 검증을 실행하지 못했으면 최종 응답에 이유를 짧게 남긴다.
 
 ## AI 작업 원칙
