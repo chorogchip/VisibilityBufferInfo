@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "dx_util/ShaderUtils.h"
+#include "dx_util/ResourceUtils.h"
 #include "engine/GPUResource.h"
 #include "engine/ResourceManagerFrame.h"
 #include "engine/ResourceManagerSampler.h"
@@ -39,6 +40,12 @@ namespace rndr {
 
         static constexpr UINT VERTEX_LAYOUT_DWORD_COUNT =
             sizeof(VertexLayoutConstants) / sizeof(uint32_t);
+
+        struct DispatchCommand {
+            uint32_t pixel_list_offset;
+            D3D12_DISPATCH_ARGUMENTS args;
+        };
+        static_assert(sizeof(DispatchCommand) == 16);
     }
 
     void PassDonutVisGBuffer::init(
@@ -96,6 +103,19 @@ namespace rndr {
         resources_.frame_manager->create_rtv(
             eng::ResourceManagerFrame::EnumRTV::DONUT_GBUFFER_3,
             resources_.gbuffers[3]->get());
+
+
+        D3D12_INDIRECT_ARGUMENT_DESC argument_descs[2]{};
+        argument_descs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+        argument_descs[0].Constant.RootParameterIndex = 0; // TODO
+        argument_descs[0].Constant.DestOffsetIn32BitValues = 0;
+        argument_descs[0].Constant.Num32BitValuesToSet = 1;
+        argument_descs[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+
+        dispatch_sig_ = dxutl::create_dispatch_command_signature(
+            device,
+            _countof(argument_descs),
+            argument_descs);
 
         const UINT material_texture_descriptor_count =
             static_cast<UINT>(resources_.scene->material_data.size()) *
@@ -224,5 +244,21 @@ namespace rndr {
         command_list->OMSetRenderTargets(4, rtvs, FALSE, nullptr);
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->DrawInstanced(3, 1, 0, 0);
+
+        /*
+        const int shader_cnt = 256;
+        for (int i = 0; i < shader_cnt; ++i) {
+
+            // todo switch to compute pipeline...
+
+            command_list->ExecuteIndirect(
+                dispatch_sig_.Get(),
+                1,
+                resources_.indirect_dispatch_list->get(),
+                i * sizeof(DispatchCommand),
+                nullptr,
+                0);
+        }
+        */
     }
 }

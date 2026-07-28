@@ -5,6 +5,7 @@ cbuffer nums : register(b0)
 
 StructuredBuffer<uint> src : register(t0);
 RWStructuredBuffer<uint> dst : register(u0);
+RWByteAddressBuffer indirects : register(u1);
 
 static const uint THREAD_CNT = 256;
 
@@ -31,6 +32,12 @@ void kernel_prefix_block(uint3 gid : SV_GroupID, uint3 tid : SV_GroupThreadID)
 
     if (idx < total_cnt)
     {
-        dst[idx] = shared_mem[tid.x];
+        uint sum = shared_mem[tid.x];
+        dst[idx] = sum;
+        indirects.Store4(idx * 4, uint4(sum - src[idx], src[idx], 1, 1));
+    }
+    else
+    {
+        indirects.Store4(idx * 4, uint4(0, 0, 0, 0));
     }
 }

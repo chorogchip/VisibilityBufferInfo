@@ -38,6 +38,7 @@ namespace rndr {
 
         eng::GPUResource visibility_buffer_;
         eng::GPUResource visutil_pixel_list_;
+        eng::GPUResource indirect_dispatch_list_;
         std::array<eng::GPUResource, GBUFFER_COUNT> gbuffers_;
         eng::GPUResource exposure_buffer_;
         eng::GPUResource hdr_color_buffer_;

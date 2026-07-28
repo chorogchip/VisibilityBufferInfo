@@ -12,31 +12,6 @@
 
 namespace rndr {
 
-    namespace {
-
-        Microsoft::WRL::ComPtr<ID3D12Resource> create_uav_buffer(
-            ID3D12Device* device,
-            UINT64 size_in_bytes,
-            D3D12_RESOURCE_STATES initial_state) {
-
-            D3D12_RESOURCE_DESC desc{};
-            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-            desc.Width = size_in_bytes;
-            desc.Height = 1;
-            desc.DepthOrArraySize = 1;
-            desc.MipLevels = 1;
-            desc.SampleDesc.Count = 1;
-            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-            desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-            return dxutl::create_committed_resource(
-                device,
-                desc,
-                D3D12_HEAP_TYPE_DEFAULT,
-                initial_state);
-        }
-    }
-
     void RendererDonutVisGBuffer::init2_() {
         program_result_.renderer_name = "DonutVisGBuffer";
         program_result_.pass_names[1] = "visibility";
@@ -137,10 +112,22 @@ namespace rndr {
         util::Logger::g_logger.assert_with_log(
             pixel_count <= UINT32_MAX,
             "Donut visibility util pixel list exceeds 32-bit indexing");
+
         visutil_pixel_list_.init(
-            create_uav_buffer(
+            dxutl::create_uav_buffer(
                 device_.Get(),
                 pixel_count * sizeof(std::uint32_t) * 2,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+
+        const UINT bin_byte_size =
+            PassDonutVisUtil::MAX_SHADER_COUNT * sizeof(std::uint32_t);
+
+        indirect_dispatch_list_.init(
+            dxutl::create_uav_buffer(
+                device_.Get(),
+                bin_byte_size,
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -161,6 +148,7 @@ namespace rndr {
         visutil.visibility_buf = &visibility_buffer_;
         visutil.scene = scene_gpu_.get();
         visutil.pixel_list = &visutil_pixel_list_;
+        visutil.indirect_dispatch_list = &indirect_dispatch_list_;
         pass_visutil_.init(device_.Get(), program_argument_, visutil);
 
         PassDonutVisGBufferResources gbuffer{};
@@ -168,6 +156,8 @@ namespace rndr {
         gbuffer.sampler_manager = &resource_manager_sampler_;
         gbuffer.shader_manager = &resource_manager_shader_;
         gbuffer.visibility = &visibility_buffer_;
+        gbuffer.pixel_list = &visutil_pixel_list_;
+        gbuffer.indirect_dispatch_list = &indirect_dispatch_list_;
         gbuffer.depth = &depth_stencil_buffer_;
         for (UINT i = 0; i < GBUFFER_COUNT; ++i)
             gbuffer.gbuffers[i] = &gbuffers_[i];

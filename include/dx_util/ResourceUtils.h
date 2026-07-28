@@ -52,6 +52,11 @@ namespace dxutl {
         ID3D12Device* device,
         DXGI_FORMAT format);
 
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_uav_buffer(
+        ID3D12Device* device,
+        UINT64 size_in_bytes,
+        D3D12_RESOURCE_STATES initial_state);
+
     Microsoft::WRL::ComPtr<ID3D12Resource> create_depth_stencil_buffer(
         ID3D12Device* device,
         UINT64 width,
@@ -83,4 +88,8 @@ namespace dxutl {
         D3D12_RESOURCE_STATES after,
         UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
+    Microsoft::WRL::ComPtr<ID3D12CommandSignature> create_dispatch_command_signature(
+        ID3D12Device* device,
+        UINT desc_count = 1,
+        const D3D12_INDIRECT_ARGUMENT_DESC* descs = nullptr);
 }

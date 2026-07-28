@@ -17,6 +17,7 @@ namespace rndr {
         eng::GPUResource* visibility_buf = nullptr;
         const scene::DonutSceneGPUData* scene = nullptr;
         eng::GPUResource* pixel_list = nullptr;
+        eng::GPUResource* indirect_dispatch_list = nullptr;
     };
 
     class PassDonutVisUtil {
@@ -31,17 +32,10 @@ namespace rndr {
             ID3D12GraphicsCommandList* command_list,
             UINT width, UINT height);
 
-        [[nodiscard]] const eng::GPUResource& bin_counts() const {
-            return bin_counts_;
-        }
-        [[nodiscard]] const eng::GPUResource& bin_prefix() const {
-            return bin_prefix_;
-        }
-
-    private:
         static constexpr inline uint32_t MAX_SHADER_COUNT = 256;
         static constexpr inline uint32_t MAX_REAL_SHADER_ID =
             MAX_SHADER_COUNT - 2;
+    private:
 
         PassDonutVisUtilResources resources_{};
         eng::GraphicsPipeline pso_clear_counts_;

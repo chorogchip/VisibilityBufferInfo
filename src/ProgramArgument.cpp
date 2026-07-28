@@ -15,7 +15,7 @@ namespace util {
         : run_id(0),
         run_name("no-run-name"),
         output_filepath("out_result.csv"),
-        renderer_variant(6),
+        renderer_variant(9),
         variable(0),
         to_use_scene(true),
         to_load_texture(true),

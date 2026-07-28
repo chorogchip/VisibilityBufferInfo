@@ -159,6 +159,28 @@ namespace dxutl {
             D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
     }
 
+    Microsoft::WRL::ComPtr<ID3D12Resource> create_uav_buffer(
+        ID3D12Device* device,
+        UINT64 size_in_bytes,
+        D3D12_RESOURCE_STATES initial_state) {
+
+        D3D12_RESOURCE_DESC desc{};
+        desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        desc.Width = size_in_bytes;
+        desc.Height = 1;
+        desc.DepthOrArraySize = 1;
+        desc.MipLevels = 1;
+        desc.SampleDesc.Count = 1;
+        desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+        return dxutl::create_committed_resource(
+            device,
+            desc,
+            D3D12_HEAP_TYPE_DEFAULT,
+            initial_state);
+    }
+
     Microsoft::WRL::ComPtr<ID3D12Resource> create_depth_stencil_buffer(
         ID3D12Device* device,
         UINT64 width,
@@ -247,5 +269,35 @@ namespace dxutl {
         barrier.Transition.StateAfter = after;
 
         command_list->ResourceBarrier(1, &barrier);
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12CommandSignature> create_dispatch_command_signature(
+        ID3D12Device* device,
+        UINT desc_count,
+        const D3D12_INDIRECT_ARGUMENT_DESC* descs) {
+
+        D3D12_INDIRECT_ARGUMENT_DESC argument_desc{};
+        argument_desc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+
+        D3D12_COMMAND_SIGNATURE_DESC signature_desc{};
+        signature_desc.ByteStride = sizeof(D3D12_DISPATCH_ARGUMENTS);
+        signature_desc.NumArgumentDescs = desc_count;
+        signature_desc.pArgumentDescs = descs;
+        signature_desc.NodeMask = 0;
+
+        if (descs == nullptr) {
+            signature_desc.NumArgumentDescs = 1;
+            signature_desc.pArgumentDescs = &argument_desc;
+        }
+
+        Microsoft::WRL::ComPtr<ID3D12CommandSignature> signature;
+
+        util::Utils::throw_if_failed(device->CreateCommandSignature(
+            &signature_desc,
+            nullptr,
+            IID_PPV_ARGS(signature.GetAddressOf())),
+            "create indirect dispatch signature");
+
+        return signature;
     }
 }

@@ -19,6 +19,8 @@ namespace rndr {
         eng::ResourceManagerSampler* sampler_manager = nullptr;
         eng::ResourceManagerShader* shader_manager = nullptr;
         eng::GPUResource* visibility = nullptr;
+        eng::GPUResource* pixel_list = nullptr;
+        eng::GPUResource* indirect_dispatch_list = nullptr;
         eng::GPUResource* depth = nullptr;
         eng::GPUResource* gbuffers[4]{};
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
@@ -43,9 +45,9 @@ namespace rndr {
             const D3D12_RECT& scissor_rect);
 
     private:
-
         PassDonutVisGBufferResources resources_{};
         eng::GraphicsPipeline pso_;
         bool use_motion_vectors_ = false;
+        Microsoft::WRL::ComPtr<ID3D12CommandSignature> dispatch_sig_{};
     };
 }

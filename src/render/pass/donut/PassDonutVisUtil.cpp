@@ -30,6 +30,7 @@ namespace rndr {
             DISPATCH_CONSTANTS,
             SOURCE,
             DESTINATION,
+            DISPATCH,
         };
 
         enum class ClearRootParam : UINT {
@@ -40,28 +41,6 @@ namespace rndr {
             std::uint32_t width = 0;
             std::uint32_t height = 0;
         };
-
-        Microsoft::WRL::ComPtr<ID3D12Resource> create_uav_buffer(
-            ID3D12Device* device,
-            UINT64 size_in_bytes,
-            D3D12_RESOURCE_STATES initial_state) {
-
-            D3D12_RESOURCE_DESC desc{};
-            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-            desc.Width = size_in_bytes;
-            desc.Height = 1;
-            desc.DepthOrArraySize = 1;
-            desc.MipLevels = 1;
-            desc.SampleDesc.Count = 1;
-            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-            desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-            return dxutl::create_committed_resource(
-                device,
-                desc,
-                D3D12_HEAP_TYPE_DEFAULT,
-                initial_state);
-        }
     }
 
     void PassDonutVisUtil::init(
@@ -76,7 +55,8 @@ namespace rndr {
             resources_.shader_manager != nullptr &&
             resources_.visibility_buf != nullptr &&
             resources_.scene != nullptr &&
-            resources_.pixel_list != nullptr,
+            resources_.pixel_list != nullptr &&
+            resources_.indirect_dispatch_list != nullptr,
             "Donut visibility util pass requires complete resources");
 
         for (const scene::DonutSceneGPUData::MaterialData& material :
@@ -90,13 +70,13 @@ namespace rndr {
         const UINT bin_byte_size =
             MAX_SHADER_COUNT * sizeof(std::uint32_t);
         bin_counts_.init(
-            create_uav_buffer(
+            dxutl::create_uav_buffer(
                 device,
                 bin_byte_size,
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         bin_prefix_.init(
-            create_uav_buffer(
+            dxutl::create_uav_buffer(
                 device,
                 bin_byte_size,
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
@@ -132,24 +112,25 @@ namespace rndr {
             arguments);
 
         auto clear_root_signature = eng::RootSignatureBuilder{}
-            .root_uav().reg(0).add()
+            .root_uav().reg(0).add()  // BIN_COUNTS
             .build(device);
 
         auto bin_root_signature = eng::RootSignatureBuilder{}
-            .constant().reg(0).cnt(2).add()
-            .srv_tabl().reg(0).cnt(1).add()
-            .root_srv().reg(1).add()
-            .root_srv().reg(2).add()
-            .root_srv().reg(3).add()
-            .root_srv().reg(4).add()
-            .root_uav().reg(0).add()
-            .root_uav().reg(1).add()
+            .constant().reg(0).cnt(2).add()  // DISPATCH_CONSTANTS
+            .srv_tabl().reg(0).cnt(1).add()  // VISIBILITY
+            .root_srv().reg(1).add()         // GEOMETRY_INSTANCE_BUFFER
+            .root_srv().reg(2).add()         // SUBMESH_BUFFER
+            .root_srv().reg(3).add()         // MATERIAL_BUFFER
+            .root_srv().reg(4).add()         // BIN_PREFIX
+            .root_uav().reg(0).add()         // BIN_COUNTS
+            .root_uav().reg(1).add()         // PIXEL_LIST
+            .root_uav().reg(2).add()         // DISPATCH
             .build(device);
 
         auto prefix_root_signature = eng::RootSignatureBuilder{}
-            .constant().reg(0).cnt(1).add()
-            .root_srv().reg(0).add()
-            .root_uav().reg(0).add()
+            .constant().reg(0).cnt(1).add()  // DISPATCH_CONSTANTS
+            .root_srv().reg(0).add()         // SOURCE
+            .root_uav().reg(0).add()         // DESTINATION
             .build(device);
 
         pso_clear_counts_.init(device);
@@ -248,6 +229,9 @@ namespace rndr {
         bin_prefix_.transition(
             command_list,
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        resources_.indirect_dispatch_list->transition(
+            command_list,
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         const std::uint32_t bin_count = MAX_SHADER_COUNT;
         command_list->SetPipelineState(pso_prefixscan_.get());
@@ -264,8 +248,12 @@ namespace rndr {
         command_list->SetComputeRootUnorderedAccessView(
             static_cast<UINT>(PrefixRootParam::DESTINATION),
             bin_prefix_.get()->GetGPUVirtualAddress());
+        command_list->SetComputeRootUnorderedAccessView(
+            static_cast<UINT>(PrefixRootParam::DISPATCH),
+            resources_.indirect_dispatch_list->get()->GetGPUVirtualAddress());
         command_list->Dispatch(1, 1, 1);
         bin_prefix_.uav_barrier(command_list);
+        resources_.indirect_dispatch_list->uav_barrier(command_list);
 
         bin_counts_.transition(
             command_list,

@@ -54,6 +54,7 @@ void kernel_material_flatten(
     {
         sBinCounts[i] = 0;
         sBinOffset[i] = i == 0 ? 0 : gBinCountsPrefix[i - 1];
+
     }
     GroupMemoryBarrierWithGroupSync();
 
