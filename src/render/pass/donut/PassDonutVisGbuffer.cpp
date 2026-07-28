@@ -256,6 +256,11 @@ namespace rndr {
                 nullptr);
         }
 
+        // Sparse bin writes leave pixels without visibility data at their cleared values.
+        for (eng::GPUResource* gbuffer : resources_.gbuffers) {
+            gbuffer->uav_barrier(command_list);
+        }
+
         for (int i = 0; i < shader_count_; ++i) {
 
             command_list->SetPipelineState(pso_.get(i));
@@ -267,10 +272,12 @@ namespace rndr {
                 i * sizeof(DispatchCommand),
                 nullptr,
                 0);
+        }
 
-            for (int i = 0; i < 4; ++i) {
-                resources_.gbuffers[i]->uav_barrier(command_list);
-            }
+        // Each visible pixel belongs to one material bin and bins do not read G-buffer UAVs.
+        // Order the complete G-buffer write phase before deferred lighting reads it as SRVs.
+        for (eng::GPUResource* gbuffer : resources_.gbuffers) {
+            gbuffer->uav_barrier(command_list);
         }
     }
 }
