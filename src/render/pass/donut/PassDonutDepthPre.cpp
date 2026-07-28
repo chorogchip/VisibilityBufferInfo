@@ -91,7 +91,7 @@ namespace rndr {
             eng::ResourceManagerSampler::EnumSamplerType::LINEAR_WRAP);
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/donut/donut_depth_VS.hlsl",
+            L"assets/shaders/mydonut/donut_depth_pre_VS.hlsl",
             L"vs_6_5", L"buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/mydonut/donut_depth_pre_PS.hlsl",
