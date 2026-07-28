@@ -1,6 +1,7 @@
 #include "render/capture/FrameCapture.h"
 
 #include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <limits>
@@ -282,22 +283,30 @@ namespace rndr {
             frame->SetSize(width_, height_),
             "set WIC PNG frame size");
 
-        WICPixelFormatGUID pixel_format = GUID_WICPixelFormat32bppRGBA;
+        WICPixelFormatGUID pixel_format = GUID_WICPixelFormat32bppBGRA;
         util::Utils::throw_if_failed(
             frame->SetPixelFormat(&pixel_format),
             "set WIC PNG pixel format");
         util::Logger::g_logger.assert_with_log(
-            IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppRGBA),
-            "WIC PNG encoder changed the requested frame capture pixel format");
+            IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppBGRA),
+            "WIC PNG encoder does not support 32bpp BGRA frame capture");
 
         const UINT buffer_size = static_cast<UINT>(
             static_cast<std::uint64_t>(row_pitch) * height_);
+        std::vector<std::byte> bgra_pixels(buffer_size);
+        std::memcpy(bgra_pixels.data(), pixels, buffer_size);
+        for (UINT y = 0; y < height_; ++y) {
+            std::byte* row = bgra_pixels.data() + static_cast<size_t>(y) * row_pitch;
+            for (UINT x = 0; x < width_; ++x)
+                std::swap(row[x * 4], row[x * 4 + 2]);
+        }
+
         util::Utils::throw_if_failed(
             frame->WritePixels(
                 height_,
                 row_pitch,
                 buffer_size,
-                reinterpret_cast<BYTE*>(const_cast<std::byte*>(pixels))),
+                reinterpret_cast<BYTE*>(bgra_pixels.data())),
             "write WIC PNG pixels");
         util::Utils::throw_if_failed(frame->Commit(), "commit WIC PNG frame");
         util::Utils::throw_if_failed(encoder->Commit(), "commit WIC PNG encoder");
