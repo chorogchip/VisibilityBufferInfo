@@ -45,13 +45,6 @@ namespace rndr {
 		}
 
 		for (UINT i = 0; i < GBUFFER_COUNT; ++i) {
-			D3D12_CLEAR_VALUE clear{};
-			clear.Format = util::RenderConstants::DONUT_GBUFFER_FORMATS[i];
-			clear.Color[0] = 0.0f;
-			clear.Color[1] = 0.0f;
-			clear.Color[2] = 0.0f;
-			clear.Color[3] = 0.0f;
-
 			gbuffers_[i].init(dxutl::create_texture2d(
 				device_.Get(),
 				width_,
@@ -60,7 +53,7 @@ namespace rndr {
 				D3D12_HEAP_TYPE_DEFAULT,
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 				D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-				&clear).Get(),
+				nullptr).Get(),
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		}
 

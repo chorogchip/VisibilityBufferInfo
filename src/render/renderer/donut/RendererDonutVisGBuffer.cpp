@@ -51,22 +51,15 @@ namespace rndr {
         }
 
         for (UINT i = 0; i < GBUFFER_COUNT; ++i) {
-            D3D12_CLEAR_VALUE clear{};
-            clear.Format = util::RenderConstants::DONUT_GBUFFER_FORMATS[i];
-            clear.Color[0] = 0.0f;
-            clear.Color[1] = 0.0f;
-            clear.Color[2] = 0.0f;
-            clear.Color[3] = 0.0f;
-
             gbuffers_[i].init(dxutl::create_texture2d(
                 device_.Get(),
                 width_,
                 height_,
                 util::RenderConstants::DONUT_GBUFFER_RAW_FORMATS[i],
                 D3D12_HEAP_TYPE_DEFAULT,
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
                 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-                &clear).Get(),
+                nullptr).Get(),
                 D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         }
 
@@ -117,8 +110,8 @@ namespace rndr {
             dxutl::create_uav_buffer(
                 device_.Get(),
                 pixel_count * sizeof(std::uint32_t) * 2,
-                D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
-            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                D3D12_RESOURCE_STATE_COMMON).Get(),
+            D3D12_RESOURCE_STATE_COMMON);
 
         const UINT bin_byte_size =
             PassDonutVisUtil::MAX_SHADER_COUNT * sizeof(PassDonutVisGBuffer::DispatchCommand);
@@ -127,8 +120,8 @@ namespace rndr {
             dxutl::create_uav_buffer(
                 device_.Get(),
                 bin_byte_size,
-                D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
-            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                D3D12_RESOURCE_STATE_COMMON).Get(),
+            D3D12_RESOURCE_STATE_COMMON);
 
         PassDonutVisibilityResources visibility{};
         visibility.frame_manager = &resource_manager_frame_;

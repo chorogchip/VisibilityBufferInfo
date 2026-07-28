@@ -98,6 +98,14 @@ namespace rndr {
                     util::RenderConstants::DONUT_GBUFFER_NON_SRGB_FORMATS[i]),
                 eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
                 i);
+            resources_.shader_manager->create_uav_at_cpu(  // this is for clear uav that needs not shader visible heap
+                resources_.gbuffers[i]->get(),
+                eng::ResourceViewBuilder::build_uav(
+                    resources_.gbuffers[i]->get(),
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
+                    util::RenderConstants::DONUT_GBUFFER_NON_SRGB_FORMATS[i]),
+                eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
+                i);
         }
 
         const UINT material_tex_desc_cnt =
@@ -176,7 +184,7 @@ namespace rndr {
         resources_.indirect_dispatch_list->transition(
             command_list, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
-        command_list->SetGraphicsRootSignature(pso_.get_root_signature());
+        command_list->SetComputeRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = {
             resources_.shader_manager->get(),
             resources_.sampler_manager->get() };
@@ -239,7 +247,7 @@ namespace rndr {
                 resources_.shader_manager->get_gpu_adr(
                     eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
                     i),
-                resources_.shader_manager->get_cpu_adr(
+                resources_.shader_manager->get_cpu_notshader_adr(
                     eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
                     i),
                 resources_.gbuffers[i]->get(),

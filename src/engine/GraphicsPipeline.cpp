@@ -181,7 +181,7 @@ namespace eng {
                 }
 
                 const HRESULT result = device_->CreateComputePipelineState(
-                    &desc, IID_PPV_ARGS(&pso_.back()));
+                    &desc, IID_PPV_ARGS(pso_.back().ReleaseAndGetAddressOf()));
                 if (FAILED(result)) {
                     std::ostringstream stream;
                     stream << "CreateComputePipelineState HRESULT=0x"

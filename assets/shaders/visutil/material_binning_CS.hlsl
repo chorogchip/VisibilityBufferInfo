@@ -39,12 +39,6 @@ uint ResolveShaderID(uint2 visibility)
         : MATERIAL_OVERFLOW_BIN;
 }
 
-[numthreads(MATERIAL_BIN_COUNT, 1, 1)]
-void kernel_clear_counts(uint3 tid : SV_GroupThreadID)
-{
-    gBinCounts[tid.x] = 0;
-}
-
 [numthreads(BLOCK_WID, BLOCK_WID, 1)]
 void kernel_material_binning(
     uint3 pos : SV_DispatchThreadID,

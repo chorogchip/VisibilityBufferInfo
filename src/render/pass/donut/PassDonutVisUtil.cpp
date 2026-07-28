@@ -91,7 +91,7 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::DONUT_VISIBILITY_BUFFER);
 
         auto cs_clear = dxutl::compile_shader(
-            L"assets/shaders/visutil/material_binning_CS.hlsl",
+            L"assets/shaders/visutil/material_clear_count_CS.hlsl",
             L"cs_6_5",
             L"kernel_clear_counts",
             arguments);
@@ -124,13 +124,13 @@ namespace rndr {
             .root_srv().reg(4).add()         // BIN_PREFIX
             .root_uav().reg(0).add()         // BIN_COUNTS
             .root_uav().reg(1).add()         // PIXEL_LIST
-            .root_uav().reg(2).add()         // DISPATCH
             .build(device);
 
         auto prefix_root_signature = eng::RootSignatureBuilder{}
             .constant().reg(0).cnt(1).add()  // DISPATCH_CONSTANTS
             .root_srv().reg(0).add()         // SOURCE
             .root_uav().reg(0).add()         // DESTINATION
+            .root_uav().reg(1).add()         // DISPATCH
             .build(device);
 
         pso_clear_counts_.init(device);

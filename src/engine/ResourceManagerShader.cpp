@@ -13,6 +13,7 @@ namespace eng {
         descriptor_count_ = descriptor_count;
         descriptor_records_.assign(descriptor_count_, {});
         heap_.Reset();
+        heap_cpu_.Reset();
 
         util::Logger::g_logger.assert_with_log(
             device_ != nullptr && descriptor_count_ > 0,
@@ -28,6 +29,11 @@ namespace eng {
 
         util::Utils::throw_if_failed(device_->CreateDescriptorHeap(
             &heap_desc, IID_PPV_ARGS(heap_.ReleaseAndGetAddressOf())));
+
+        heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+        util::Utils::throw_if_failed(device_->CreateDescriptorHeap(
+            &heap_desc, IID_PPV_ARGS(heap_cpu_.ReleaseAndGetAddressOf())));
     }
 
     void ResourceManagerShader::create_srv(
@@ -86,5 +92,15 @@ namespace eng {
         record.is_uav = true;
         record.resource = resource;
         record.uav_desc = desc;
+    }
+
+    void ResourceManagerShader::create_uav_at_cpu(
+        ID3D12Resource* resource,
+        const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
+        EnumDescPos position,
+        UINT offset) {
+
+        const UINT index = static_cast<UINT>(position) + offset;
+        device_->CreateUnorderedAccessView(resource, nullptr, &desc, get_cpu_notshader_adr(position, offset));
     }
 }

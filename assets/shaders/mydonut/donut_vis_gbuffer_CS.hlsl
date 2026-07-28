@@ -58,6 +58,8 @@ Texture2D t_MaterialTextures[MaxMaterialTextureDescriptorCount] :
 SamplerState s_MaterialSampler :
     register(GBUFFER_MATERIAL_SAMPLER_REGISTER, GBUFFER_VIEW_SPACE);
 
+#define THREADS_PER_GROUP 256
+
 uint MaterialTextureDescriptorIndex(uint materialID, uint slot)
 {
     return materialID * MaterialTextureDescriptorCount + slot;

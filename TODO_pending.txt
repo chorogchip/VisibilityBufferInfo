@@ -1,11 +1,2 @@
-programargument 초기값 분리해서 컴파일 속도 개선
 
-현재 상태: benchmark쪽은 실험을 위해 visbuf가 텍스쳐 바인딩을 안 한 상태,
-- bindless + nonuniformaccess로 만들어 주자.
-- 하지만 이건 이미 실험이 어느정도 끝났기에 (deferred lighting이 권위가 없어 ALU용으로 쓴 거였기에) 우선순위가 낮음
-
-jungle은 지금 상태가 불안정하므로 이거는 집에서 좀 더 작업하면 된다. blender와 같이 작업하고 glb 뜯으면서 해야 한다.
-
-그리고 donut쪽은 완료된 상태이므로 visbuf variant를 바꿔가면서 실험할 수 있다.
-
-
+셰이더 컴파일시 에러 로깅이 부족하다

@@ -79,6 +79,13 @@ namespace eng {
             EnumDescPos position,
             UINT offset = 0);
 
+        void create_uav_at_cpu(
+            ID3D12Resource* resource,
+            const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc,
+            EnumDescPos position,
+            UINT offset = 0);
+
+
         [[nodiscard]] ID3D12DescriptorHeap* get() const { return heap_.Get(); }
         [[nodiscard]] UINT get_size() const { return descriptor_size_; }
         [[nodiscard]] UINT get_count() const { return descriptor_count_; }
@@ -95,6 +102,12 @@ namespace eng {
             return handle;
         }
 
+        [[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE get_cpu_notshader_adr(EnumDescPos position, UINT offset = 0) const {
+            D3D12_CPU_DESCRIPTOR_HANDLE handle = heap_cpu_->GetCPUDescriptorHandleForHeapStart();
+            handle.ptr += static_cast<SIZE_T>(static_cast<UINT>(position) + offset) * descriptor_size_;
+            return handle;
+        }
+
     private:
         struct DescriptorRecord {
             bool is_initialized = false;
@@ -106,6 +119,7 @@ namespace eng {
 
         ID3D12Device* device_ = nullptr;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_;
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap_cpu_;
         UINT descriptor_size_ = 0;
         UINT descriptor_count_ = 0;
 
