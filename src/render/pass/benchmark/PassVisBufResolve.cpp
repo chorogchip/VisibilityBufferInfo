@@ -115,10 +115,10 @@ namespace rndr {
             eng::ResourceManagerShader::EnumDescPos::BENCH_MATERIAL_BUFFER>();
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/visbuf_lighting_VS.hlsl",
+            L"assets/shaders/benchmark/visbuf_lighting_VS.hlsl",
             L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/visbuf_lighting_PS.hlsl",
+            L"assets/shaders/benchmark/visbuf_lighting_PS.hlsl",
             L"ps_6_5", L"main", arguments);
 
         pso_.init(device);

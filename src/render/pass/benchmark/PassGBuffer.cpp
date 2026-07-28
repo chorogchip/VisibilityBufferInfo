@@ -66,10 +66,10 @@ namespace rndr {
         }
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/deferred_geometry_VS.hlsl",
+            L"assets/shaders/benchmark/deferred_geometry_VS.hlsl",
             L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/deferred_geometry_PS.hlsl",
+            L"assets/shaders/benchmark/deferred_geometry_PS.hlsl",
             L"ps_6_5", L"main", arguments);
 
         pso_.init(device);

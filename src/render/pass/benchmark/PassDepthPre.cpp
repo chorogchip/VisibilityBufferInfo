@@ -38,7 +38,7 @@ namespace rndr {
             resources_.depth->get());
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/depth_prepass_VS.hlsl",
+            L"assets/shaders/benchmark/depth_prepass_VS.hlsl",
             L"vs_6_5", L"main", arguments);
 
         pso_.init(device);

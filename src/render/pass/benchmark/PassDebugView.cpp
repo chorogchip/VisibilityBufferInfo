@@ -46,10 +46,10 @@ namespace rndr {
             resources_.depth->get());
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/debug_view_VS.hlsl",
+            L"assets/shaders/benchmark/debug_view_VS.hlsl",
             L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/debug_view_PS.hlsl",
+            L"assets/shaders/benchmark/debug_view_PS.hlsl",
             L"ps_6_5", L"main", arguments);
 
         pso_.init(device);

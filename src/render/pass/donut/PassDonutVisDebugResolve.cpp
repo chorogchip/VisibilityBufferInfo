@@ -61,7 +61,7 @@ namespace rndr {
             std::to_wstring(static_cast<std::uint32_t>(mode))
         };
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/visbuf_lighting_VS.hlsl",
+            L"assets/shaders/benchmark/visbuf_lighting_VS.hlsl",
             L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
             L"assets/shaders/mydonut/donut_vis_debug_PS.hlsl",
