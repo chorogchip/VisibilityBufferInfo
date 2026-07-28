@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.26)
 
 project(TVBPerf LANGUAGES CXX RC)
 
+include(ExternalProject)
 include(FetchContent)
 
 # Visual Studio 멀티 구성 generator용 구성 명시
@@ -24,6 +25,8 @@ set(TVBPERF_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
 set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
 set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
+set(TVBPERF_OPENUSD_DIR ${TVBPERF_EXTERNAL_DIR}/OpenUSD)
+set(TVBPERF_ONE_TBB_DIR ${TVBPERF_EXTERNAL_DIR}/oneTBB)
 
 # static third-party libraries
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -123,6 +126,71 @@ endif()
 
 if(TARGET UpdateAssimpLibsDebugSymbolsAndDLLs)
     set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "External/assimp")
+endif()
+
+# ------------------------------------------------------------
+# OpenUSD
+# ------------------------------------------------------------
+# OpenUSD is prepared as a standalone installed SDK for a future USD scene
+# importer. It is intentionally not linked to TVBPerf until that importer exists.
+option(TVBPERF_BUILD_OPENUSD "Build the OpenUSD core SDK for future USD scene import" ON)
+
+if(TVBPERF_BUILD_OPENUSD)
+    set(TVBPERF_OPENUSD_BUILD_DIR ${CMAKE_BINARY_DIR}/external/OpenUSD-build)
+    set(TVBPERF_OPENUSD_INSTALL_DIR ${CMAKE_BINARY_DIR}/external/OpenUSD-install)
+    set(TVBPERF_ONE_TBB_BUILD_DIR ${CMAKE_BINARY_DIR}/external/oneTBB-build)
+    set(TVBPERF_ONE_TBB_INSTALL_DIR ${CMAKE_BINARY_DIR}/external/oneTBB-install)
+
+    # OpenUSD's direct CMake build requires an installed TBB package. Keep both
+    # source trees in external/ so a local checkout is reused when present.
+    ExternalProject_Add(OpenUSD_oneTBB
+        PREFIX ${CMAKE_BINARY_DIR}/external/OpenUSD_oneTBB-prefix
+        SOURCE_DIR ${TVBPERF_ONE_TBB_DIR}
+        BINARY_DIR ${TVBPERF_ONE_TBB_BUILD_DIR}
+        INSTALL_DIR ${TVBPERF_ONE_TBB_INSTALL_DIR}
+        GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
+        GIT_TAG v2021.9.0
+        GIT_SHALLOW TRUE
+        UPDATE_DISCONNECTED TRUE
+        CMAKE_ARGS
+            -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+            -DBUILD_SHARED_LIBS:BOOL=OFF
+            -DTBB_TEST:BOOL=OFF
+            -DTBB_EXAMPLES:BOOL=OFF
+            -DTBB_STRICT:BOOL=OFF
+    )
+
+    ExternalProject_Add(OpenUSD
+        DEPENDS OpenUSD_oneTBB
+        PREFIX ${CMAKE_BINARY_DIR}/external/OpenUSD-prefix
+        SOURCE_DIR ${TVBPERF_OPENUSD_DIR}
+        BINARY_DIR ${TVBPERF_OPENUSD_BUILD_DIR}
+        INSTALL_DIR ${TVBPERF_OPENUSD_INSTALL_DIR}
+        GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenUSD.git
+        GIT_TAG v26.05
+        GIT_SHALLOW TRUE
+        UPDATE_DISCONNECTED TRUE
+        CMAKE_ARGS
+            -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+            -DTBB_ROOT_DIR:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
+            -DCMAKE_PREFIX_PATH:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
+            -DBUILD_SHARED_LIBS:BOOL=OFF
+            -DPXR_BUILD_MONOLITHIC:BOOL=ON
+            -DPXR_BUILD_TESTS:BOOL=OFF
+            -DPXR_BUILD_EXAMPLES:BOOL=OFF
+            -DPXR_BUILD_TUTORIALS:BOOL=OFF
+            -DPXR_BUILD_USD_TOOLS:BOOL=OFF
+            -DPXR_BUILD_IMAGING:BOOL=OFF
+            -DPXR_BUILD_USD_IMAGING:BOOL=OFF
+            -DPXR_BUILD_USD_VALIDATION:BOOL=OFF
+            -DPXR_BUILD_EXEC:BOOL=OFF
+            -DPXR_BUILD_USDVIEW:BOOL=OFF
+            -DPXR_ENABLE_PYTHON_SUPPORT:BOOL=OFF
+            -DPXR_ENABLE_GL_SUPPORT:BOOL=OFF
+            -DPXR_ENABLE_PRECOMPILED_HEADERS:BOOL=OFF
+    )
+
+    set_target_properties(OpenUSD_oneTBB OpenUSD PROPERTIES FOLDER "External/OpenUSD")
 endif()
 
 # ------------------------------------------------------------
