@@ -274,6 +274,14 @@ namespace scene {
             material.occlusion_texture = add_texture(registry, read_texture(
                 input,
                 { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP }));
+
+
+
+
+            // TEMP CODE
+            static int i = 0;
+            material.virtual_shader_id = i++ % 255;
+
             return material;
         }
 

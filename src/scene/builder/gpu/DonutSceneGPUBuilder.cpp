@@ -695,6 +695,7 @@ namespace scene {
             material.occlusion_strength =
                 source_material.occlusion_strength;
             material.alpha_cutoff = source_material.alpha_cutoff;
+            material.virtual_shader_id = source_material.virtual_shader_id;
             if (source_material.double_sided) {
                 material.flags |=
                     DonutSceneGPUData::

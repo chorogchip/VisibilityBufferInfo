@@ -68,12 +68,6 @@ namespace scene {
                 converted.occlusion_texture =
                     texture_path(source, material.occlusion_texture);
                 destination.materials.emplace_back(std::move(converted));
-
-
-
-                // TEMP CODE
-                static int i = 0;
-                converted.virtual_shader_id = i++ % 255;
             }
 
             if (destination.materials.empty()) {
