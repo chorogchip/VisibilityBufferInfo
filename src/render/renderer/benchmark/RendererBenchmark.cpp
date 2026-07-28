@@ -13,10 +13,9 @@
 #include "dx_util/ResourceUtils.h"
 #include "engine/ResourceManagerShader.h"
 #include "scene/SceneFingerprint.h"
-#include "scene/builder/cpu/SceneCPUBuilder.h"
 #include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
+#include "scene/cache/SceneCPUCache.h"
 #include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
-#include "scene/builder/source/SceneSourceFactory.h"
 
 namespace rndr {
 
@@ -39,9 +38,7 @@ namespace rndr {
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             buf_constant_[i].init(device_.Get());
 
-        auto scene_source = scene::SceneSourceFactory::create_scene(program_argument_);
-        scene_cpu_ = std::make_unique<scene::SceneCPUData>(
-            scene::SceneCPUBuilder::build(*scene_source));
+        scene_cpu_ = scene::load_or_build_scene_cpu(program_argument_);
         scene::SceneCPUDrawStreamBuilder::build_all(
             *scene_cpu_,
             draw_stream_);

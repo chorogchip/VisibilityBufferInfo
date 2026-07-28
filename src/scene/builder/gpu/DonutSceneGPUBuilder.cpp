@@ -33,6 +33,8 @@ namespace scene {
         constexpr size_t OCCLUSION_TEXTURE = 4;
         constexpr size_t TRANSMISSION_TEXTURE = 5;
         constexpr size_t OPACITY_TEXTURE = 6;
+        constexpr std::uint64_t TEXTURE_UPLOAD_BATCH_BYTES =
+            256ull * 1024ull * 1024ull;
 
         size_t align_16(size_t value) {
             return (value + 15u) & ~size_t(15u);
@@ -253,6 +255,7 @@ namespace scene {
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
                 used_upload_heaps,
             const std::function<void()>& flush_uploads,
+            std::uint64_t& pending_texture_upload_bytes,
             bool load_textures) {
 
             if (!load_textures || !path) return std::nullopt;
@@ -406,8 +409,11 @@ namespace scene {
                 static_cast<uint32_t>(destination.textures.size());
             destination.textures.emplace_back(std::move(gpu_texture));
             used_upload_heaps.emplace_back(std::move(upload));
-            if (flush_uploads) {
+            pending_texture_upload_bytes += upload_size;
+            if (flush_uploads &&
+                pending_texture_upload_bytes >= TEXTURE_UPLOAD_BATCH_BYTES) {
                 flush_uploads();
+                pending_texture_upload_bytes = 0;
             }
             cache.emplace(cache_key, texture_id);
             return texture_id;
@@ -677,6 +683,7 @@ namespace scene {
                 used_upload_heaps);
 
         std::unordered_map<std::string, uint32_t> texture_cache;
+        std::uint64_t pending_texture_upload_bytes = 0;
         destination.material_data.reserve(source.materials.size());
         for (const SceneCPUData::Material& source_material : source.materials) {
             DonutSceneGPUData::MaterialData material{};
@@ -755,6 +762,7 @@ namespace scene {
                         texture_cache,
                         used_upload_heaps,
                         flush_uploads,
+                        pending_texture_upload_bytes,
                         load_textures);
                 material.texture_indices[slot] =
                     texture_id

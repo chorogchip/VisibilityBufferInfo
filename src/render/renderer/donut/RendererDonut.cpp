@@ -9,10 +9,9 @@
 
 #include "dx_util/ResourceUtils.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
-#include "scene/builder/cpu/SceneCPUBuilder.h"
+#include "scene/cache/SceneCPUCache.h"
 #include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
 #include "scene/builder/gpu/DonutSceneGPUBuilder.h"
-#include "scene/builder/source/SceneSourceFactory.h"
 #include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
@@ -39,9 +38,7 @@ namespace rndr {
         resource_manager_frame_.init(device_.Get());
         resource_manager_sampler_.init(device_.Get());
 
-        auto scene_source = scene::SceneSourceFactory::create_scene(program_argument_);
-        scene_cpu_ = std::make_unique<scene::SceneCPUData>(
-            scene::SceneCPUBuilder::build(*scene_source));
+        scene_cpu_ = scene::load_or_build_scene_cpu(program_argument_);
         scene::SceneCPUDrawStreamBuilder::build_all(
             *scene_cpu_,
             draw_stream_);

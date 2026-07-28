@@ -1,5 +1,6 @@
 # Build
 out/
+tvb_scene_cache_*.bin
 
 #libs
 external/
