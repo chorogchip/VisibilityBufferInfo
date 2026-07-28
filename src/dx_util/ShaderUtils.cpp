@@ -56,7 +56,7 @@ namespace {
         const wchar_t* target,
         const wchar_t* entry_point,
         const std::vector<std::wstring>& defines,
-        const IDxcBlobUtf8* diagnostics = nullptr) {
+        IDxcBlobUtf8* diagnostics = nullptr) {
 
         util::Logger::g_logger
             << "Shader " << operation << " failed.\n"
