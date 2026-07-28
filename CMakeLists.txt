@@ -148,12 +148,21 @@ if(TVBPERF_BUILD_OPENUSD)
         SOURCE_DIR ${TVBPERF_ONE_TBB_DIR}
         BINARY_DIR ${TVBPERF_ONE_TBB_BUILD_DIR}
         INSTALL_DIR ${TVBPERF_ONE_TBB_INSTALL_DIR}
+        BUILD_BYPRODUCTS
+            "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12.lib"
+            "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12_debug.lib"
         GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
         GIT_TAG v2021.9.0
         GIT_SHALLOW TRUE
         UPDATE_DISCONNECTED TRUE
         CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+            -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
+            -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+            # oneTBB v2021.9.0 declares CMake 3.1 compatibility. Newer CMake
+            # releases require this explicit compatibility floor.
+            -DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5
             -DBUILD_SHARED_LIBS:BOOL=OFF
             -DTBB_TEST:BOOL=OFF
             -DTBB_EXAMPLES:BOOL=OFF
@@ -166,12 +175,16 @@ if(TVBPERF_BUILD_OPENUSD)
         SOURCE_DIR ${TVBPERF_OPENUSD_DIR}
         BINARY_DIR ${TVBPERF_OPENUSD_BUILD_DIR}
         INSTALL_DIR ${TVBPERF_OPENUSD_INSTALL_DIR}
+        BUILD_BYPRODUCTS "${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib"
         GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenUSD.git
         GIT_TAG v26.05
         GIT_SHALLOW TRUE
         UPDATE_DISCONNECTED TRUE
         CMAKE_ARGS
             -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+            -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
+            -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
             -DTBB_ROOT_DIR:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
             -DCMAKE_PREFIX_PATH:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
             -DBUILD_SHARED_LIBS:BOOL=OFF
@@ -212,6 +225,13 @@ file(GLOB_RECURSE TVBPERF_RC_FILES
     ${TVBPERF_SRC_DIR}/*.rc
 )
 
+if(TVBPERF_BUILD_OPENUSD)
+    set(TVBPERF_SCENE_RAW_JUNGLE_CPP
+        ${TVBPERF_SRC_DIR}/scene/raw/SceneRawJungle.cpp
+    )
+    list(REMOVE_ITEM TVBPERF_CPP_FILES ${TVBPERF_SCENE_RAW_JUNGLE_CPP})
+endif()
+
 # ------------------------------------------------------------
 # trashes 디렉터리 제외
 # ------------------------------------------------------------
@@ -246,6 +266,49 @@ add_executable(TVBPerf WIN32
 )
 
 target_compile_features(TVBPerf PRIVATE cxx_std_20)
+
+if(TVBPERF_BUILD_OPENUSD)
+    # ExternalProject installs these after generation. CMake validates imported
+    # include directories during generation, so ensure their install roots exist.
+    file(MAKE_DIRECTORY
+        "${TVBPERF_OPENUSD_INSTALL_DIR}/include"
+        "${TVBPERF_ONE_TBB_INSTALL_DIR}/include"
+    )
+
+    add_library(TVBPerfOpenUSD STATIC IMPORTED GLOBAL)
+    set_target_properties(TVBPerfOpenUSD PROPERTIES
+        IMPORTED_LOCATION "${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib"
+        INTERFACE_INCLUDE_DIRECTORIES
+            "${TVBPERF_OPENUSD_INSTALL_DIR}/include;${TVBPERF_ONE_TBB_INSTALL_DIR}/include"
+    )
+    target_compile_definitions(TVBPerfOpenUSD INTERFACE
+        PXR_STATIC
+        NOMINMAX
+        "$<$<CONFIG:Debug>:TBB_USE_DEBUG>"
+    )
+    target_link_libraries(TVBPerfOpenUSD INTERFACE
+        debug "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12_debug.lib"
+        optimized "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12.lib"
+        Shlwapi
+        Dbghelp
+        Ws2_32
+    )
+
+    add_library(SceneRawJungle STATIC ${TVBPERF_SCENE_RAW_JUNGLE_CPP})
+    target_compile_features(SceneRawJungle PUBLIC cxx_std_20)
+    target_include_directories(SceneRawJungle PUBLIC ${TVBPERF_INCLUDE_DIR})
+    target_link_libraries(SceneRawJungle PUBLIC TVBPerfOpenUSD)
+    add_dependencies(SceneRawJungle OpenUSD)
+
+    add_executable(SceneRawJungleInspect
+        tools/SceneRawJungleInspect.cpp
+    )
+    target_compile_features(SceneRawJungleInspect PRIVATE cxx_std_20)
+    target_link_libraries(SceneRawJungleInspect PRIVATE SceneRawJungle)
+    add_dependencies(SceneRawJungleInspect OpenUSD)
+
+    target_link_libraries(TVBPerf PRIVATE SceneRawJungle)
+endif()
 
 # include 경로
 target_include_directories(TVBPerf
