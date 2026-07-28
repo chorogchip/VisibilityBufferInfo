@@ -3,10 +3,12 @@
 #include "render/renderer/benchmark/RendererForward.h"
 #include "render/renderer/benchmark/RendererDeferred.h"
 #include "render/renderer/benchmark/RendererVisBuf.h"
+#include "render/renderer/benchmark/RendererVisBufDebug.h"
 #include "render/renderer/benchmark/RendererVisBufGBuffer.h"
 #include "render/renderer/benchmark/RendererRasterStats.h"
 #include "render/renderer/benchmark/RendererDebugView.h"
 #include "render/renderer/donut/RendererDonutDeferred.h"
+#include "render/renderer/donut/RendererDonutVisDebug.h"
 #include "render/renderer/donut/RendererDonutVisGBuffer.h"
 
 namespace rndr {
@@ -24,6 +26,10 @@ namespace rndr {
         case  9: return std::make_unique<RendererDonutVisGBuffer>();
         case 10: return std::make_unique<RendererRasterStats>();
         case 11: return std::make_unique<RendererDebugView>();
+        case 12: return std::make_unique<RendererVisBufDebug>(
+            VisibilityDebugMode::GeometryPrimitiveHash);
+        case 13: return std::make_unique<RendererDonutVisDebug>(
+            VisibilityDebugMode::GeometryPrimitiveHash);
         default:
             util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
             return nullptr;
