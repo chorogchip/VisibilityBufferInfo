@@ -8,6 +8,7 @@
 #include "scene/data/source/SceneSourceGeometry.h"
 #include "scene/data/source/SceneSourceHierarchy.h"
 #include "scene/data/source/SceneSourceMaterial.h"
+#include "scene/data/source/SceneSourceSemantic.h"
 #include "scene/data/source/SceneSourceTexture.h"
 
 namespace scene {
@@ -27,6 +28,19 @@ namespace scene {
         std::vector<source::Sampler> samplers;
         std::vector<source::Texture> textures;
         std::vector<source::InstanceTransform> instances;
+
+        source::SceneMetadata metadata;
+        std::vector<source::PolygonMesh> polygon_meshes;
+        std::vector<source::NativePrototype> native_prototypes;
+        std::vector<source::NativeInstance> native_instances;
+        std::vector<source::PointInstancer> point_instancers;
+        std::vector<source::MaterialGraph> material_graphs;
+        std::vector<source::ShaderNode> shader_nodes;
+        std::vector<source::MaterialBinding> material_bindings;
+        std::vector<source::SourceCamera> source_cameras;
+        std::vector<source::SourceLight> source_lights;
+        std::vector<source::SourceAsset> source_assets;
+        std::vector<source::ConversionDiagnostic> conversion_diagnostics;
 
     };
 }

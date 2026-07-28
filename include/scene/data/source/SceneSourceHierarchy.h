@@ -8,6 +8,7 @@
 
 #include "math/AABB.h"
 #include "scene/data/source/SceneConstants.h"
+#include "scene/data/source/SceneSourceSemantic.h"
 
 namespace scene::source {
 
@@ -84,6 +85,7 @@ namespace scene::source {
             0.0f, 0.0f, 0.0f, 1.0f
         };
         uint32_t mesh_id = SceneConstants::INVALID_INDEX;
+        uint32_t polygon_mesh_id = SceneConstants::INVALID_INDEX;
         uint32_t camera_id = SceneConstants::INVALID_INDEX;
         uint32_t first_instance = 0;
         uint32_t instance_count = 0;
@@ -93,6 +95,25 @@ namespace scene::source {
         math::AABB world_bounds{};
         std::string stable_id;
         JungleNodeMetadata jungle;
+
+        SourceReference source;
+        uint32_t parent_node_id = SceneConstants::INVALID_INDEX;
+        DirectX::XMFLOAT4X4 world_transform = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        std::string prim_type;
+        std::vector<std::string> applied_schemas;
+        std::string purpose;
+        bool visible = true;
+        bool active = true;
+        bool loaded = true;
+        bool defined = true;
+        bool abstract = false;
+        bool reset_xform_stack = false;
+        bool native_instance = false;
 
     };
 }

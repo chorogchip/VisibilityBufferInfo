@@ -7,7 +7,6 @@
 #include "util/MyPath.h"
 #include "scene/builder/source/BuilderQuads.h"
 #include "scene/builder/source/BuilderAssimp.h"
-#include "scene/builder/source/JungleSceneSourceBuilder.h"
 
 namespace scene {
 
@@ -24,10 +23,9 @@ namespace scene {
         const auto path = util::MyPath(argument.scene_path).get_absolute();
         util::Logger::g_logger.assert_with_log(path.is_regular(), "scene source not exist");
 
-        if (argument.scene_importer == "jungle" ||
-            (argument.scene_importer == "auto" && path.is_lower_contain("jungle"))) {
-            return JungleSceneSourceBuilder::build(path.get());
-        }
+        util::Logger::g_logger.assert_with_log(
+            argument.scene_importer != "jungle",
+            "Jungle USD currently stops at SceneSource; SceneDataCPU conversion is not implemented.");
 
         return BuilderAssimp::build(path.get());
     }

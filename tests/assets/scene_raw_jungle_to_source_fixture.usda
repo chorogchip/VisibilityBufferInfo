@@ -1,0 +1,89 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    startTimeCode = 0
+    endTimeCode = 1
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    def Material "Material"
+    {
+        token outputs:surface.connect = </World/Material/Preview.outputs:surface>
+
+        def Shader "Preview"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.25, 0.5, 0.75)
+            token outputs:surface
+        }
+    }
+
+    def Xform "Prototype"
+    {
+        def Mesh "Quad" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            uniform token subdivisionScheme = "none"
+            uniform token orientation = "rightHanded"
+            int[] faceVertexCounts = [4]
+            int[] faceVertexIndices = [0, 1, 2, 3]
+            point3f[] points = [(-1, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1)]
+            normal3f[] normals = [(0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0)] (
+                interpolation = "vertex"
+            )
+            texCoord2f[] primvars:st = [(0, 0), (1, 0), (1, 1), (0, 1)] (
+                interpolation = "faceVarying"
+            )
+            int[] primvars:indexed = [0, 1, 1, 0] (
+                interpolation = "faceVarying"
+            )
+            int[] primvars:indexed:indices = [0, 1, 2, 3]
+            rel material:binding = </World/Material>
+        }
+    }
+
+    def Xform "NativeInstance" (
+        instanceable = true
+        references = </World/Prototype>
+    )
+    {
+        double3 xformOp:translate = (4, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def PointInstancer "PointInstancer" (
+        inactiveIds = [10]
+    )
+    {
+        rel prototypes = [ <Prototypes/PointPrototype> ]
+        int[] protoIndices = [0, 0]
+        point3f[] positions = [(0, 0, 0), (0, 0, 4)]
+        quath[] orientations = [(1, 0, 0, 0), (1, 0, 0, 0)]
+        float3[] scales = [(1, 1, 1), (2, 2, 2)]
+        int64[] ids = [10, 11]
+        int64[] invisibleIds = [11]
+
+        def Xform "Prototypes"
+        {
+            def Xform "PointPrototype"
+            {
+            }
+        }
+    }
+
+    def Camera "Camera"
+    {
+        float focalLength = 50
+    }
+
+    def DomeLight "Dome"
+    {
+        float inputs:intensity = 2
+        color3f inputs:color = (1, 0.8, 0.6)
+    }
+}

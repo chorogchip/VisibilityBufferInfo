@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstdio>
 #include <fstream>
 #include <set>
 #include <stdexcept>
@@ -13,7 +14,10 @@
 #include "util/minmax_remover.h"
 
 #include <pxr/base/js/json.h>
+#include <pxr/base/arch/fileSystem.h>
+#include <pxr/base/plug/registry.h>
 #include <pxr/base/tf/diagnosticMgr.h>
+#include <pxr/base/tf/getenv.h>
 #include <pxr/base/tf/stringUtils.h>
 #include <pxr/usd/ar/resolver.h>
 #include <pxr/usd/ar/resolverContext.h>
@@ -70,6 +74,13 @@ namespace scene::raw {
             void IssueFatalError(
                 const pxr::TfCallContext& context,
                 const std::string& message) override {
+                std::fprintf(
+                    stderr,
+                    "OpenUSD fatal: %s (%s:%zu)\n",
+                    message.c_str(),
+                    context.GetFile() ? context.GetFile() : "",
+                    static_cast<size_t>(context.GetLine()));
+                std::fflush(stderr);
                 diagnostics_.push_back({
                     "fatal",
                     message,
@@ -95,6 +106,31 @@ namespace scene::raw {
 
         std::string path_string_(const std::filesystem::path& path) {
             return path.generic_string();
+        }
+
+        void register_openusd_plugins_() {
+            std::vector<std::string> paths;
+            const auto configured_paths = pxr::TfGetenv("PXR_PLUGINPATH_NAME");
+            if (!configured_paths.empty()) {
+                const auto environment_paths = pxr::TfStringSplit(
+                    configured_paths,
+                    ARCH_PATH_LIST_SEP);
+                paths.insert(paths.end(), environment_paths.begin(), environment_paths.end());
+            }
+
+            // Monolithic static OpenUSD does not necessarily pull in its plugin
+            // bootstrap constructor. Register the SDK's manifests explicitly.
+            paths.emplace_back(TVBPERF_OPENUSD_PLUGIN_ROOT);
+            paths.emplace_back(TVBPERF_OPENUSD_SHADER_PLUGIN_ROOT);
+
+            std::set<std::string> registered_paths;
+            auto& registry = pxr::PlugRegistry::GetInstance();
+            for (const auto& path : paths) {
+                if (path.empty() || !registered_paths.insert(path).second) {
+                    continue;
+                }
+                registry.RegisterPlugins(path);
+            }
         }
 
         std::string absolute_path_key_(const std::filesystem::path& path) {
@@ -191,7 +227,9 @@ namespace scene::raw {
             const auto stack = prim.GetPrimStack();
             layers.reserve(stack.size());
             for (const auto& spec : stack) {
-                layers.push_back(spec->GetLayer()->GetIdentifier());
+                if (spec && spec->GetLayer()) {
+                    layers.push_back(spec->GetLayer()->GetIdentifier());
+                }
             }
             return layers;
         }
@@ -201,7 +239,9 @@ namespace scene::raw {
             const auto stack = property.GetPropertyStack();
             layers.reserve(stack.size());
             for (const auto& spec : stack) {
-                layers.push_back(spec->GetLayer()->GetIdentifier());
+                if (spec && spec->GetLayer()) {
+                    layers.push_back(spec->GetLayer()->GetIdentifier());
+                }
             }
             return layers;
         }
@@ -588,10 +628,19 @@ namespace scene::raw {
                 stage_info.load_rules.push_back(path.GetString() + ":" + load_rule_name_(rule));
             }
             const auto pseudo_root = root_layer->GetPseudoRoot();
-            for (const auto& key : pseudo_root->ListFields()) {
-                stage_info.root_layer_metadata.emplace(
-                    key.GetString(),
-                    pxr::TfStringify(pseudo_root->GetField(key)));
+            if (pseudo_root) {
+                for (const auto& key : pseudo_root->ListFields()) {
+                    stage_info.root_layer_metadata.emplace(
+                        key.GetString(),
+                        pxr::TfStringify(pseudo_root->GetField(key)));
+                }
+            } else {
+                diagnostics.push_back({
+                    "warning",
+                    "Root layer pseudo-root SdfSpec is unavailable; root authored metadata was not indexed.",
+                    root_layer->GetIdentifier(),
+                    0,
+                });
             }
 
             std::set<std::string> seen_layers;
@@ -621,6 +670,10 @@ namespace scene::raw {
                 diagnostics.push_back({"error", "UsdUtilsComputeAllDependencies failed", {}, 0});
             }
             for (const auto& layer : dependency_layers) {
+                if (!layer) {
+                    diagnostics.push_back({"warning", "Dependency traversal returned an invalid SdfLayer.", {}, 0});
+                    continue;
+                }
                 const auto real_path = layer->GetRealPath();
                 if (seen_layers.insert(layer->GetIdentifier()).second) {
                     layers.push_back({
@@ -720,6 +773,7 @@ namespace scene::raw {
         DiagnosticCollector diagnostics(impl->diagnostics);
         auto& diagnostic_manager = pxr::TfDiagnosticMgr::GetInstance();
         diagnostic_manager.AddDelegate(&diagnostics);
+        register_openusd_plugins_();
         impl->stage = pxr::UsdStage::Open(path_string_(absolute_root), pxr::UsdStage::LoadAll);
 
         if (!impl->stage) {

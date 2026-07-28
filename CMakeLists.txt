@@ -229,7 +229,13 @@ if(TVBPERF_BUILD_OPENUSD)
     set(TVBPERF_SCENE_RAW_JUNGLE_CPP
         ${TVBPERF_SRC_DIR}/scene/raw/SceneRawJungle.cpp
     )
-    list(REMOVE_ITEM TVBPERF_CPP_FILES ${TVBPERF_SCENE_RAW_JUNGLE_CPP})
+    set(TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP
+        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneRawJungleToSource.cpp
+    )
+    list(REMOVE_ITEM TVBPERF_CPP_FILES
+        ${TVBPERF_SCENE_RAW_JUNGLE_CPP}
+        ${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}
+    )
 endif()
 
 # ------------------------------------------------------------
@@ -293,12 +299,34 @@ if(TVBPERF_BUILD_OPENUSD)
         Dbghelp
         Ws2_32
     )
+    # usd_m is a static monolith. Keep plugin/schema registration translation
+    # units that have no ordinary symbol reference from being discarded.
+    target_link_options(TVBPerfOpenUSD INTERFACE
+        "$<$<CXX_COMPILER_ID:MSVC>:/WHOLEARCHIVE:${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib>"
+    )
 
     add_library(SceneRawJungle STATIC ${TVBPERF_SCENE_RAW_JUNGLE_CPP})
     target_compile_features(SceneRawJungle PUBLIC cxx_std_20)
     target_include_directories(SceneRawJungle PUBLIC ${TVBPERF_INCLUDE_DIR})
+    target_compile_definitions(SceneRawJungle PRIVATE
+        "TVBPERF_OPENUSD_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd\""
+        "TVBPERF_OPENUSD_SHADER_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/plugin/usd\""
+    )
     target_link_libraries(SceneRawJungle PUBLIC TVBPerfOpenUSD)
     add_dependencies(SceneRawJungle OpenUSD)
+
+    # The standalone conversion tools do not link the renderer executable, so
+    # keep their semantic validation and bounds implementation self-contained.
+    add_library(SceneRawJungleToSource STATIC
+        ${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}
+        ${TVBPERF_SRC_DIR}/math/AABB.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceSemanticValidator.cpp
+        ${TVBPERF_SRC_DIR}/util/Logger.cpp
+    )
+    target_compile_features(SceneRawJungleToSource PUBLIC cxx_std_20)
+    target_include_directories(SceneRawJungleToSource PUBLIC ${TVBPERF_INCLUDE_DIR})
+    target_link_libraries(SceneRawJungleToSource PUBLIC SceneRawJungle)
+    add_dependencies(SceneRawJungleToSource OpenUSD)
 
     add_executable(SceneRawJungleInspect
         tools/SceneRawJungleInspect.cpp
@@ -306,6 +334,23 @@ if(TVBPERF_BUILD_OPENUSD)
     target_compile_features(SceneRawJungleInspect PRIVATE cxx_std_20)
     target_link_libraries(SceneRawJungleInspect PRIVATE SceneRawJungle)
     add_dependencies(SceneRawJungleInspect OpenUSD)
+
+    add_executable(SceneRawJungleToSourceInspect
+        tools/SceneRawJungleToSourceInspect.cpp
+    )
+    target_compile_features(SceneRawJungleToSourceInspect PRIVATE cxx_std_20)
+    target_link_libraries(SceneRawJungleToSourceInspect PRIVATE SceneRawJungleToSource)
+    add_dependencies(SceneRawJungleToSourceInspect OpenUSD)
+
+    add_executable(SceneRawJungleToSourceTest
+        tests/SceneRawJungleToSourceTest.cpp
+    )
+    target_compile_features(SceneRawJungleToSourceTest PRIVATE cxx_std_20)
+    target_compile_definitions(SceneRawJungleToSourceTest PRIVATE
+        "SCENE_RAW_JUNGLE_SOURCE_FIXTURE=\"${CMAKE_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
+    )
+    target_link_libraries(SceneRawJungleToSourceTest PRIVATE SceneRawJungleToSource)
+    add_dependencies(SceneRawJungleToSourceTest OpenUSD)
 
     target_link_libraries(TVBPerf PRIVATE SceneRawJungle)
 endif()
