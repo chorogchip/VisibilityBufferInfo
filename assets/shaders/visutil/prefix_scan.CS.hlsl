@@ -33,11 +33,14 @@ void kernel_prefix_block(uint3 gid : SV_GroupID, uint3 tid : SV_GroupThreadID)
     if (idx < total_cnt)
     {
         uint sum = shared_mem[tid.x];
+        uint org = src[idx];
         dst[idx] = sum;
-        indirects.Store4(idx * 4, uint4(sum - src[idx], src[idx], 1, 1));
+        indirects.Store2(idx * 4, uint2(sum - org, org));
+        indirects.Store3(idx * 4 + 2, uint3(org, 1, 1));
     }
     else
     {
-        indirects.Store4(idx * 4, uint4(0, 0, 0, 0));
+        indirects.Store2(idx * 4, uint2(0, 0));
+        indirects.Store3(idx * 4 + 2, uint3(0, 0, 0));
     }
 }

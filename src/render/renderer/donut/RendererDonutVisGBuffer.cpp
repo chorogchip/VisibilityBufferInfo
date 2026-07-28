@@ -122,7 +122,7 @@ namespace rndr {
 
 
         const UINT bin_byte_size =
-            PassDonutVisUtil::MAX_SHADER_COUNT * sizeof(std::uint32_t);
+            PassDonutVisUtil::MAX_SHADER_COUNT * sizeof(PassDonutVisGBuffer::DispatchCommand);
 
         indirect_dispatch_list_.init(
             dxutl::create_uav_buffer(

@@ -33,6 +33,13 @@ namespace rndr {
         static constexpr UINT MATERIAL_TEXTURE_DESCRIPTOR_COUNT =
             scene::DonutSceneGPUData::MATERIAL_TEXTURE_DESCRIPTOR_COUNT;
 
+        struct DispatchCommand {
+            uint32_t pixel_list_offset;
+            uint32_t pixel_count;
+            D3D12_DISPATCH_ARGUMENTS args;
+        };
+        static_assert(sizeof(DispatchCommand) == 20);
+
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,
@@ -49,5 +56,6 @@ namespace rndr {
         eng::GraphicsPipeline pso_;
         bool use_motion_vectors_ = false;
         Microsoft::WRL::ComPtr<ID3D12CommandSignature> dispatch_sig_{};
+        uint32_t shader_count_;
     };
 }
