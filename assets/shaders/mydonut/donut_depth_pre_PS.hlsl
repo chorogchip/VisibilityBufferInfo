@@ -1,24 +1,33 @@
-#include "..\common\donut_gbuffer_common.hlsli"
+#include "..\common\mydonut_scene_abi.hlsli"
+
+cbuffer c_Material : register(b0, space0)
+{
+    MaterialConstants g_Material;
+};
 
 Texture2D t_BaseOrDiffuse :
-    register(MATERIAL_BASE_COLOR_REGISTER, MATERIAL_SPACE);
+    register(t0, space0);
 Texture2D t_Opacity :
-    register(MATERIAL_OPACITY_REGISTER, MATERIAL_SPACE);
+    register(t6, space0);
 
 SamplerState s_MaterialSampler :
-    register(GBUFFER_MATERIAL_SAMPLER_REGISTER, GBUFFER_VIEW_SPACE);
+    register(s0, space2);
 
 void main(float4 clipPosition : SV_Position, float2 texCoord : TEXCOORD)
 {
-    if (!IsAlphaTestedDomain())
+    if (!IsAlphaTestedDomain(g_Material))
         return;
 
     float opacity = g_Material.opacity;
-    if (HasMaterialFlag(MaterialFlags_UseOpacityTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseOpacityTexture))
     {
         opacity *= t_Opacity.Sample(s_MaterialSampler, texCoord).r;
     }
-    else if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+    else if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseBaseOrDiffuseTexture))
     {
         opacity *= t_BaseOrDiffuse.Sample(s_MaterialSampler, texCoord).a;
     }

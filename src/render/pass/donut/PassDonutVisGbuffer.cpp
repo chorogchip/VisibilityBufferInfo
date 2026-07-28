@@ -118,7 +118,7 @@ namespace rndr {
             "Donut visibility G-buffer material texture descriptor count exceeds shader limit");
 
         const std::vector<std::wstring> cs_defines = {
-            std::wstring(L"DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
+            std::wstring(L"MYDONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
                 std::to_wstring(material_tex_desc_cnt)
         };
 

@@ -1,19 +1,24 @@
-#include "..\common\donut_gbuffer_common.hlsli"
+#include "..\common\mydonut_scene_abi.hlsli"
 
 StructuredBuffer<InstanceData> t_Instances :
-    register(GBUFFER_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t10, space1);
 ByteAddressBuffer t_Vertices :
-    register(GBUFFER_VERTEX_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t11, space1);
 StructuredBuffer<DrawInstanceData> t_DrawInstances :
-    register(GBUFFER_DRAW_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t12, space1);
 StructuredBuffer<uint> t_DrawInstanceIDs :
-    register(GBUFFER_DRAW_INSTANCE_ID_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t13, space1);
 
-cbuffer c_Push : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
+cbuffer c_Push : register(b1, space1)
 {
     uint g_StartInstanceLocation;
     uint g_PositionOffset;
     uint g_TexCoordOffset;
+};
+
+cbuffer c_GBuffer : register(b2, space2)
+{
+    GBufferFillConstants g_GBuffer;
 };
 
 struct VSOutput

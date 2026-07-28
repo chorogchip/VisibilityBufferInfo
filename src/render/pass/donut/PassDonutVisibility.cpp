@@ -80,10 +80,10 @@ namespace rndr {
             eng::ResourceManagerSampler::EnumSamplerType::LINEAR_WRAP);
 
         auto vs = dxutl::compile_shader(
-            L"assets/shaders/donut_visibility_VS.hlsl",
+            L"assets/shaders/mydonut/donut_visibility_VS.hlsl",
             L"vs_6_5", L"main", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/donut_visibility_PS.hlsl",
+            L"assets/shaders/mydonut/donut_visibility_PS.hlsl",
             L"ps_6_5", L"main", arguments);
 
         pso_.init(device);

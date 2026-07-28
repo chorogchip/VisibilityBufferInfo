@@ -1,22 +1,27 @@
-#include "..\common\donut_gbuffer_common.hlsli"
+#include "..\common\mydonut_scene_abi.hlsli"
+
+cbuffer c_Material : register(b0, space0)
+{
+    MaterialConstants g_Material;
+};
 
 Texture2D t_BaseOrDiffuse :
-    register(MATERIAL_BASE_COLOR_REGISTER, MATERIAL_SPACE);
+    register(t0, space0);
 Texture2D t_MetalRoughOrSpecular :
-    register(MATERIAL_METAL_ROUGHNESS_REGISTER, MATERIAL_SPACE);
+    register(t1, space0);
 Texture2D t_Normal :
-    register(MATERIAL_NORMAL_REGISTER, MATERIAL_SPACE);
+    register(t2, space0);
 Texture2D t_Emissive :
-    register(MATERIAL_EMISSIVE_REGISTER, MATERIAL_SPACE);
+    register(t3, space0);
 Texture2D t_Occlusion :
-    register(MATERIAL_OCCLUSION_REGISTER, MATERIAL_SPACE);
+    register(t4, space0);
 Texture2D t_Transmission :
-    register(MATERIAL_TRANSMISSION_REGISTER, MATERIAL_SPACE);
+    register(t5, space0);
 Texture2D t_Opacity :
-    register(MATERIAL_OPACITY_REGISTER, MATERIAL_SPACE);
+    register(t6, space0);
 
 SamplerState s_MaterialSampler :
-    register(GBUFFER_MATERIAL_SAMPLER_REGISTER, GBUFFER_VIEW_SPACE);
+    register(s0, space2);
 
 struct PSInput
 {
@@ -70,28 +75,38 @@ float3 ApplyNormalMap(float3 normal, float4 tangent, float4 normalTexture)
 PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
 {
     float4 baseTexture = float4(1.0, 1.0, 1.0, 1.0);
-    if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseBaseOrDiffuseTexture))
         baseTexture = t_BaseOrDiffuse.Sample(s_MaterialSampler, input.texCoord);
 
     float opacity = g_Material.opacity;
-    if (HasMaterialFlag(MaterialFlags_UseOpacityTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseOpacityTexture))
         opacity *= t_Opacity.Sample(s_MaterialSampler, input.texCoord).r;
-    else if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+    else if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseBaseOrDiffuseTexture))
         opacity *= baseTexture.a;
     opacity = saturate(opacity);
 
-    if (IsAlphaTestedDomain())
+    if (IsAlphaTestedDomain(g_Material))
         clip(opacity - g_Material.alphaCutoff);
 
     float4 metalRoughnessTexture = float4(1.0, 1.0, 1.0, 1.0);
-    if (HasMaterialFlag(MaterialFlags_UseMetalRoughOrSpecularTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseMetalRoughOrSpecularTexture))
     {
         metalRoughnessTexture =
             t_MetalRoughOrSpecular.Sample(s_MaterialSampler, input.texCoord);
     }
 
     float occlusion = 1.0;
-    if (HasMaterialFlag(MaterialFlags_UseOcclusionTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseOcclusionTexture))
     {
         const float textureOcclusion =
             t_Occlusion.Sample(s_MaterialSampler, input.texCoord).r;
@@ -100,7 +115,9 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
 
     float3 normal = normalize(input.normal);
     float4 tangent = input.tangent;
-    if (HasMaterialFlag(MaterialFlags_UseNormalTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseNormalTexture))
     {
         const float2 normalTexCoord =
             input.texCoord * g_Material.normalTextureTransformScale;
@@ -115,7 +132,9 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
 
     const float3 baseColor = g_Material.baseOrDiffuseColor * baseTexture.rgb;
     const float roughness = saturate(g_Material.roughness * metalRoughnessTexture.g);
-    const float metalnessFactor = HasMaterialFlag(MaterialFlags_MetalnessInRedChannel)
+    const float metalnessFactor = HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_MetalnessInRedChannel)
         ? metalRoughnessTexture.r
         : metalRoughnessTexture.b;
     const float metalness = saturate(g_Material.metalness * metalnessFactor);
@@ -126,7 +145,9 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
         lerp(DielectricSpecular.xxx, baseColor, metalness);
 
     float3 emissive = g_Material.emissiveColor;
-    if (HasMaterialFlag(MaterialFlags_UseEmissiveTexture))
+    if (HasMaterialFlag(
+        g_Material.flags,
+        MaterialFlags_UseEmissiveTexture))
         emissive *= t_Emissive.Sample(s_MaterialSampler, input.texCoord).rgb;
 
     PSOutput output;

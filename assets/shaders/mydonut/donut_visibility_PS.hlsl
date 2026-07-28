@@ -1,12 +1,17 @@
-#include "..\common\donut_gbuffer_common.hlsli"
+#include "..\common\mydonut_scene_abi.hlsli"
+
+cbuffer c_Material : register(b0, space0)
+{
+    MaterialConstants g_Material;
+};
 
 Texture2D t_BaseOrDiffuse :
-    register(MATERIAL_BASE_COLOR_REGISTER, MATERIAL_SPACE);
+    register(t0, space0);
 Texture2D t_Opacity :
-    register(MATERIAL_OPACITY_REGISTER, MATERIAL_SPACE);
+    register(t6, space0);
 
 SamplerState s_MaterialSampler :
-    register(GBUFFER_MATERIAL_SAMPLER_REGISTER, GBUFFER_VIEW_SPACE);
+    register(s0, space2);
 
 struct PSInput
 {
@@ -22,21 +27,27 @@ struct PSOutput
 
 PSOutput main(PSInput input, uint primitiveID : SV_PrimitiveID)
 {
-    if (IsAlphaTestedDomain())
+    if (IsAlphaTestedDomain(g_Material))
     {
         float4 baseTexture = float4(1.0, 1.0, 1.0, 1.0);
-        if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+        if (HasMaterialFlag(
+            g_Material.flags,
+            MaterialFlags_UseBaseOrDiffuseTexture))
         {
             baseTexture = t_BaseOrDiffuse.Sample(
                 s_MaterialSampler, input.texCoord);
         }
 
         float opacity = g_Material.opacity;
-        if (HasMaterialFlag(MaterialFlags_UseOpacityTexture))
+        if (HasMaterialFlag(
+            g_Material.flags,
+            MaterialFlags_UseOpacityTexture))
         {
             opacity *= t_Opacity.Sample(s_MaterialSampler, input.texCoord).r;
         }
-        else if (HasMaterialFlag(MaterialFlags_UseBaseOrDiffuseTexture))
+        else if (HasMaterialFlag(
+            g_Material.flags,
+            MaterialFlags_UseBaseOrDiffuseTexture))
         {
             opacity *= baseTexture.a;
         }

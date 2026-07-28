@@ -1,5 +1,5 @@
 #include "..\common\common_barycentric.hlsli"
-#include "..\common\donut_gbuffer_common.hlsli"
+#include "..\common\mydonut_scene_abi.hlsli"
 
 RWTexture2D<float4> gBufferChannel0 : register(u0);
 RWTexture2D<float4> gBufferChannel1 : register(u1);
@@ -29,7 +29,7 @@ cbuffer c_IndirectConstants : register(b3, space2)
     uint g_pixel_count;
 };
 
-cbuffer c_VertexLayout : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
+cbuffer c_VertexLayout : register(b1, space1)
 {
     uint g_PositionOffset;
     uint g_TexCoordOffset;
@@ -37,28 +37,31 @@ cbuffer c_VertexLayout : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
     uint g_TangentOffset;
 };
 
+cbuffer c_GBuffer : register(b2, space2)
+{
+    GBufferFillConstants g_GBuffer;
+};
+
 Texture2D<uint2> t_Visibility :
-    register(VISGBUFFER_VISIBILITY_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t20, space1);
 ByteAddressBuffer t_Indices :
-    register(VISGBUFFER_INDEX_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t21, space1);
 ByteAddressBuffer t_Vertices :
-    register(VISGBUFFER_VERTEX_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t22, space1);
 StructuredBuffer<InstanceData> t_Instances :
-    register(VISGBUFFER_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t23, space1);
 StructuredBuffer<SubmeshData> t_Submeshes :
-    register(VISGBUFFER_SUBMESH_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t24, space1);
 StructuredBuffer<GeometryInstanceData> t_GeometryInstances :
-    register(VISGBUFFER_GEOMETRY_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t25, space1);
 StructuredBuffer<MaterialData> t_Materials :
-    register(VISGBUFFER_MATERIAL_REGISTER, GBUFFER_INPUT_SPACE);
+    register(t26, space1);
 
 Texture2D t_MaterialTextures[MaxMaterialTextureDescriptorCount] :
-    register(MATERIAL_BASE_COLOR_REGISTER, MATERIAL_SPACE);
+    register(t0, space0);
 
 SamplerState s_MaterialSampler :
-    register(GBUFFER_MATERIAL_SAMPLER_REGISTER, GBUFFER_VIEW_SPACE);
-
-#define THREADS_PER_GROUP 256
+    register(s0, space2);
 
 uint MaterialTextureDescriptorIndex(uint materialID, uint slot)
 {
@@ -122,7 +125,7 @@ void FetchVertex(
         g_TangentOffset + vertexIndex * SizeOfPackedNormal));
 }
 
-[numthreads(THREADS_PER_GROUP, 1, 1)]
+[numthreads(256, 1, 1)]
 void main(uint3 tid : SV_DispatchThreadID)
 {
     const uint ind = tid.x;

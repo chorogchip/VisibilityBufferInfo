@@ -22,39 +22,22 @@
 
 #pragma pack_matrix(row_major)
 
-#include "..\\donut\\donut_depth_cb.h"
-#include "..\\donut\\donut_bindless.h"
-#include "..\\donut\\donut_binding_helpers.hlsli"
+#include "..\\common\\mydonut_scene_abi.hlsli"
 
-DECLARE_CBUFFER(DepthPassConstants, g_Depth, DEPTH_BINDING_VIEW_CONSTANTS, DEPTH_SPACE_VIEW);
-
-#ifdef TARGET_D3D11
-ByteAddressBuffer t_Instances : REGISTER_SRV(DEPTH_BINDING_INSTANCE_BUFFER, DEPTH_SPACE_INPUT);
-#else
-StructuredBuffer<InstanceData> t_Instances : REGISTER_SRV(DEPTH_BINDING_INSTANCE_BUFFER, DEPTH_SPACE_INPUT);
-#endif
-ByteAddressBuffer t_Vertices : REGISTER_SRV(DEPTH_BINDING_VERTEX_BUFFER, DEPTH_SPACE_INPUT);
-
-struct DrawInstanceData
+cbuffer c_Depth : register(b2, space2)
 {
-    uint instanceID;
-    uint submeshID;
+    DepthPassConstants g_Depth;
 };
 
-StructuredBuffer<DrawInstanceData> t_DrawInstances :
-    REGISTER_SRV(DEPTH_BINDING_DRAW_INSTANCE_BUFFER, DEPTH_SPACE_INPUT);
-StructuredBuffer<uint> t_DrawInstanceIDs :
-    REGISTER_SRV(DEPTH_BINDING_DRAW_INSTANCE_ID_BUFFER, DEPTH_SPACE_INPUT);
+StructuredBuffer<InstanceData> t_Instances : register(t10, space1);
+ByteAddressBuffer t_Vertices : register(t11, space1);
+StructuredBuffer<DrawInstanceData> t_DrawInstances : register(t12, space1);
+StructuredBuffer<uint> t_DrawInstanceIDs : register(t13, space1);
 
-DECLARE_PUSH_CONSTANTS(
-    DepthPushConstants,
-    g_Push,
-    DEPTH_BINDING_PUSH_CONSTANTS,
-    DEPTH_SPACE_INPUT);
-
-// This is the D3D12 manual-vertex-fetch entry point copied from Donut's
-// donut_depth_VS.hlsl. Its headers are intentionally retained for now; the
-// define-flattening plan moves this ABI into mydonut-owned headers.
+cbuffer c_Push : register(b1, space1)
+{
+    DepthPushConstants g_Push;
+};
 void buffer_loads(
     in uint i_vertex : SV_VertexID,
     in uint i_instance : SV_InstanceID,
@@ -66,18 +49,12 @@ void buffer_loads(
     const DrawInstanceData drawInstance = t_DrawInstances[drawInstanceID];
     i_vertex += g_Push.startVertexLocation;
 
-#ifdef TARGET_D3D11
-    const InstanceData instance = LoadInstanceData(
-        t_Instances,
-        drawInstance.instanceID * c_SizeOfInstanceData);
-#else
     const InstanceData instance = t_Instances[drawInstance.instanceID];
-#endif
 
     float3 pos = asfloat(t_Vertices.Load3(
-        g_Push.positionOffset + i_vertex * c_SizeOfPosition));
+        g_Push.positionOffset + i_vertex * SizeOfPosition));
     float2 texCoord = asfloat(t_Vertices.Load2(
-        g_Push.texCoordOffset + i_vertex * c_SizeOfTexcoord));
+        g_Push.texCoordOffset + i_vertex * SizeOfTexcoord));
 
     float3 worldPos = mul(instance.transform, float4(pos, 1.0));
     o_texCoord = texCoord;
