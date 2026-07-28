@@ -78,7 +78,7 @@ namespace rndr {
 			eng::ResourceManagerSampler::EnumSamplerType::LINEAR_CLAMP);
 
 		auto vs = dxutl::compile_shader(
-			L"assets/shaders/deferred_lighting_VS2.hlsl",
+			L"assets/shaders/benchmark/deferred_lighting_VS2.hlsl",
 			L"vs_6_5", L"main", arguments);
 		auto ps = dxutl::compile_shader(
 			L"assets/shaders/donut/donut_tonemapping_PS.hlsl",
