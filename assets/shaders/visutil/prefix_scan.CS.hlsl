@@ -8,7 +8,7 @@ RWStructuredBuffer<uint> dst : register(u0);
 RWByteAddressBuffer indirects : register(u1);
 
 static const uint THREAD_CNT = 256;
-static const uint GBUFFER_THREADS_PER_GROUP = 128;
+static const uint GBUFFER_THREADS_PER_GROUP = 256;
 
 groupshared uint shared_mem[THREAD_CNT];
 
