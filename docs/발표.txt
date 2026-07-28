@@ -153,3 +153,59 @@ jungle ruins 씬이 렌더링하기 어렵다.
 
 
 
+
+____________________________________________________________________________
+
+
+수요일 할거
+- 더 다양한 씬 구하고 불러오기
+- 인공 씬에서 material entropy 관련 실험 진행할수도..? ㅁㄹ
+- 스레드 그룹 잘 만지기
+- shader_class_id 관련해서 인자로 작업
+- donut deferred vs visbuf shader수 달리해가면서 비교
+- visbuf가 느릴텐데 HW 프로파일링 해보기
+- 프레임 캡쳐 결과 뽑고 시각화
+- 최종 그래프 그리기
+
+- Loose tiled material binning의 근거 확보 (locality의 영향)
+- 가능하면 jungle 작업
+- 이후 AB 시각화 js 작업
+
+발표 목차
+
+- 중간 정리하는 시간.
+- visbuf의 장점 (prepass에비해 geometry처리 두번안함, quad낭비 줄임, gbuffer 대역폭 줄임(이건제외) 에 대한 실험 진행함)
+- visbuf의 단점 (barycentric derivative, material 처리, indirect access) 에 대한 구현하고
+	실제 donut렌더러 가져와 얼마나 안좋은지 실험하고 결과를 분석(cache locality등, 수요일할거) 함
+- 실제 donut 렌더러 부하에서 어케되는지 설명
+	- 근데 조명과 shader개수는 여전히 임의이다.
+
+어려웠던 것
+- alpha test
+- visbuf 포맷
+- barycentric 계산
+- derivative 복원
+- material binning
+
+이제 고도화를 할 것이다!
+- jungle scene 소개, 계획
+
++ 여러 variant를 실제 정보에 맞춰 스케줄링하는..?
++ GPU driven culling(frustum, meshlet, indirect, Hi-Z, draw compaction..)
++ sw raster
++ material graph ddx propagation
+
+________
+
++ 실패나 시행착오, 결정 사례를 설명하자.
+	block 크기, 알파테스트, derivative검증, binning이유 등
++ 시각적으로 더 신경쓰자.
+실험이 정교함, 실제 씬의 권위, 가장 넓은 시스템을 다룬다는걸 생각하자
+
+material binning은 PSO 수를 제외하면 씬의 복잡도에 무관하다고 주장,
+	만약 전체에서 실행시간의 비율이 크지 않다면 별도의 성능 모델이나 복잡한 실험 없이 진행
+	해당 커널은 비교적 성능적 특성을 파악하기 쉽다고 주정
+	+ SM 6.6 이야기도 한다
+
++ appendix에 variant 관련 고봉밥
++ 고봉밥에서 내가 선택한 것 설명

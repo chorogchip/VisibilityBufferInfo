@@ -59,7 +59,7 @@ namespace scene {
         }
 
         std::filesystem::path path_from_utf8(const std::string& value) {
-            return std::filesystem::u8path(value);
+            return std::filesystem::path(value);
         }
 
         bool make_identity(
@@ -425,6 +425,7 @@ namespace scene {
     std::unique_ptr<SceneCPUData> load_or_build_scene_cpu(
         const util::ProgramArgument& argument) {
 
+#if 0 // Scene CPU cache is disabled while renderer scene conversion is validated.
         CacheIdentity identity{};
         if (!make_identity(argument, identity))
             return build_scene_cpu(argument);
@@ -445,6 +446,10 @@ namespace scene {
                 << identity.cache_path.string() << '\n';
         }
         return scene;
+#else
+        util::Logger::g_logger << "Scene CPU cache disabled; rebuilding source scene.\n";
+        return build_scene_cpu(argument);
+#endif
     }
 
 }
