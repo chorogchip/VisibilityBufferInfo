@@ -28,7 +28,13 @@ namespace rndr {
             const util::ProgramArgument& arguments,
             const PassDonutVisUtilResources& resources);
 
-        void render(
+        void render_histogram(
+            ID3D12GraphicsCommandList* command_list,
+            UINT width, UINT height);
+
+        void render_prefix(ID3D12GraphicsCommandList* command_list);
+
+        void render_flatten(
             ID3D12GraphicsCommandList* command_list,
             UINT width, UINT height);
 

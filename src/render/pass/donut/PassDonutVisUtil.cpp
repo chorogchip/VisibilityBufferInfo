@@ -158,7 +158,7 @@ namespace rndr {
         pso_flatten_.build();
     }
 
-    void PassDonutVisUtil::render(
+    void PassDonutVisUtil::render_histogram(
         ID3D12GraphicsCommandList* command_list,
         UINT width,
         UINT height) {
@@ -222,6 +222,10 @@ namespace rndr {
             bin_counts_.get()->GetGPUVirtualAddress());
         command_list->Dispatch(group_x, group_y, 1);
         bin_counts_.uav_barrier(command_list);
+    }
+
+    void PassDonutVisUtil::render_prefix(
+        ID3D12GraphicsCommandList* command_list) {
 
         bin_counts_.transition(
             command_list,
@@ -254,6 +258,16 @@ namespace rndr {
         command_list->Dispatch(1, 1, 1);
         bin_prefix_.uav_barrier(command_list);
         resources_.indirect_dispatch_list->uav_barrier(command_list);
+    }
+
+    void PassDonutVisUtil::render_flatten(
+        ID3D12GraphicsCommandList* command_list,
+        UINT width,
+        UINT height) {
+
+        const DispatchConstants constants{ width, height };
+        const UINT group_x = (width + 15) / 16;
+        const UINT group_y = (height + 15) / 16;
 
         bin_counts_.transition(
             command_list,
@@ -273,6 +287,9 @@ namespace rndr {
         resources_.pixel_list->transition(
             command_list,
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        ID3D12DescriptorHeap* heaps[] = { resources_.shader_manager->get() };
+        command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
         command_list->SetPipelineState(pso_flatten_.get());
         command_list->SetComputeRootSignature(

@@ -15,10 +15,12 @@ namespace rndr {
     void RendererDonutVisGBuffer::init2_() {
         program_result_.renderer_name = "DonutVisGBuffer";
         program_result_.pass_names[1] = "visibility";
-        program_result_.pass_names[2] = "visutil";
-        program_result_.pass_names[3] = "gbuffer";
-        program_result_.pass_names[4] = "lighting";
-        program_result_.pass_names[5] = "tonemap";
+        program_result_.pass_names[2] = "visutil_histogram";
+        program_result_.pass_names[3] = "visutil_prefix";
+        program_result_.pass_names[4] = "visutil_flatten";
+        program_result_.pass_names[5] = "gbuffer";
+        program_result_.pass_names[6] = "lighting";
+        program_result_.pass_names[7] = "tonemap";
 
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i) {
             gbuffer_constants_[i].init(device_.Get());
@@ -222,20 +224,28 @@ namespace rndr {
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 1);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 2);
-        pass_visutil_.render(command_list_.Get(), width_, height_);
+        pass_visutil_.render_histogram(command_list_.Get(), width_, height_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 3);
-        pass_gbuffer_.render(command_list_.Get(), frame_index_);
+        pass_visutil_.render_prefix(command_list_.Get());
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 3);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 4);
-        pass_lighting_.render(command_list_.Get(), frame_index_, width_, height_);
+        pass_visutil_.render_flatten(command_list_.Get(), width_, height_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 4);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 5);
+        pass_gbuffer_.render(command_list_.Get(), frame_index_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 5);
+
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 6);
+        pass_lighting_.render(command_list_.Get(), frame_index_, width_, height_);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 6);
+
+        frame_time_.start_timestamp(command_list_.Get(), frame_index_, 7);
         pass_tonemap_.render(
             command_list_.Get(), frame_index_, viewport_, scissor_rect_);
-        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 5);
+        frame_time_.end_timestamp(command_list_.Get(), frame_index_, 7);
     }
 }
