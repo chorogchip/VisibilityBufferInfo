@@ -1,6 +1,5 @@
-#ifndef COMMON_GBUFFER_HLSLI
-#define COMMON_GBUFFER_HLSLI
-
+#ifndef COMMON_BENCH_GBUFFER_HLSLI
+#define COMMON_BENCH_GBUFFER_HLSLI
 
 #ifndef GBUFFER_COUNT
 #define GBUFFER_COUNT 1
@@ -65,5 +64,4 @@ GBufferOutput make_gbuffer_output(float4 value)
     return output;
 }
 
-
-#endif  // COMMON_GBUFFER_HLSLI
+#endif  // COMMON_BENCH_GBUFFER_HLSLI

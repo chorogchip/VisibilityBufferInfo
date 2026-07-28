@@ -90,6 +90,8 @@ namespace dxutl {
 
     Microsoft::WRL::ComPtr<ID3D12CommandSignature> create_dispatch_command_signature(
         ID3D12Device* device,
-        UINT desc_count = 1,
-        const D3D12_INDIRECT_ARGUMENT_DESC* descs = nullptr);
+        const D3D12_INDIRECT_ARGUMENT_DESC* descs,
+        UINT desc_count,
+        UINT stride,
+        ID3D12RootSignature* root_signature);
 }

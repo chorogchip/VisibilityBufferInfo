@@ -1,4 +1,4 @@
-#include "../donut_gbuffer_common.hlsli"
+#include "..\common\donut_gbuffer_common.hlsli"
 
 cbuffer nums : register(b0)
 {

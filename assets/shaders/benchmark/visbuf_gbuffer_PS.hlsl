@@ -1,7 +1,7 @@
-#include "common_barycentric.hlsli"
-#include "common_material.hlsli"
-#include "common_material_data.hlsli"
-#include "common_gbuffer.hlsli"
+#include "..\common\common_barycentric.hlsli"
+#include "..\common\bench_tex_sample.hlsli"
+#include "..\common\bench_gbuffer.hlsli"
+#include "..\common\common_material_data.hlsli"
 
 struct PSInput
 {
@@ -131,7 +131,7 @@ GBufferOutput main(PSInput input)
     
         float4 base_color = gMaterials[materialID].base_color;
         uint index = gMaterials[materialID].texture_indices[0];
-        gbuffer_value = float4(apply_workload_visbuf(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
+        gbuffer_value = float4(apply_workload_nonuniform(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
     }
     
     return make_gbuffer_output(gbuffer_value);

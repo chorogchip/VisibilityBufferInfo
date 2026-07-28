@@ -1,6 +1,6 @@
-#include "common_material.hlsli"
-#include "common_material_data.hlsli"
-#include "common_barycentric.hlsli"
+#include "..\common\bench_tex_sample.hlsli"
+#include "..\common\common_material_data.hlsli"
+#include "..\common\common_barycentric.hlsli"
 
 struct PSInput
 {
@@ -128,5 +128,5 @@ float4 main(PSInput input) : SV_Target
     
     float4 base_color = gMaterials[materialID].base_color;
     uint index = gMaterials[materialID].texture_indices[0];
-    return float4(apply_workload_visbuf(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
+    return float4(apply_workload_nonuniform(index, uv, d_uv_dx, d_uv_dy, normal), base_color.a);
 }

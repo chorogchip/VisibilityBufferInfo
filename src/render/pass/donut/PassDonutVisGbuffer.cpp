@@ -95,29 +95,10 @@ namespace rndr {
                 eng::ResourceViewBuilder::build_uav(
                     resources_.gbuffers[i]->get(),
                     eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
-                    util::RenderConstants::DONUT_GBUFFER_FORMATS[i]),
+                    util::RenderConstants::DONUT_GBUFFER_NON_SRGB_FORMATS[i]),
                 eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
                 i);
         }
-
-        resources_.shader_manager->create_srv(
-            resources_.pixel_list->get(),
-            eng::ResourceViewBuilder::build_srv(
-                resources_.pixel_list->get()),
-            eng::ResourceManagerShader::EnumDescPos::DONUT_PIXEL_LIST);
-
-        D3D12_INDIRECT_ARGUMENT_DESC argument_descs[2]{};
-        argument_descs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-        argument_descs[0].Constant.RootParameterIndex =
-            static_cast<UINT>(RootParam::INDIRECT_CONSTANT);
-        argument_descs[0].Constant.DestOffsetIn32BitValues = 0;
-        argument_descs[0].Constant.Num32BitValuesToSet = 2;
-        argument_descs[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
-
-        dispatch_sig_ = dxutl::create_dispatch_command_signature(
-            device,
-            _countof(argument_descs),
-            argument_descs);
 
         const UINT material_tex_desc_cnt =
             static_cast<UINT>(resources_.scene->material_data.size()) *
@@ -128,14 +109,14 @@ namespace rndr {
             scene::DonutSceneGPUData::MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT,
             "Donut visibility G-buffer material texture descriptor count exceeds shader limit");
 
-        const std::vector<std::wstring> ps_defines = {
+        const std::vector<std::wstring> cs_defines = {
             std::wstring(L"DONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
                 std::to_wstring(material_tex_desc_cnt)
         };
 
         auto cs = dxutl::compile_shader(
             L"assets/shaders/mydonut/donut_vis_gbuffer_CS.hlsl",
-            L"ps_6_5", L"main", ps_defines);
+            L"cs_6_5", L"main", cs_defines);
 
         shader_count_ = 256;
         pso_.init(device);
@@ -157,33 +138,49 @@ namespace rndr {
             .spl_tabl().reg(0).cnt(1).spc(2).add()   // MATERIAL_SAMPLER
             .uav_tabl().reg(0).cnt(4).add()          // GBUFFER
             .root_srv().reg(27).spc(1).add()         // PIXEL_LIST TODO
-            .constant().reg(3).spc(2).add()          // INDIRECT_CONSTANT
+            .constant().reg(3).spc(2).cnt(2).add()   // INDIRECT_CONSTANT
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_compute(cs.Get());
-        pso_.set_fullscreen();
         pso_.build();
+
+        D3D12_INDIRECT_ARGUMENT_DESC argument_descs[2]{};
+        argument_descs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+        argument_descs[0].Constant.RootParameterIndex =
+            static_cast<UINT>(RootParam::INDIRECT_CONSTANT);
+        argument_descs[0].Constant.DestOffsetIn32BitValues = 0;
+        argument_descs[0].Constant.Num32BitValuesToSet = 2;
+        argument_descs[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+
+        dispatch_sig_ = dxutl::create_dispatch_command_signature(
+            device,
+            argument_descs,
+            _countof(argument_descs),
+            sizeof(DispatchCommand),
+            root_signature.Get());
     }
 
     void PassDonutVisGBuffer::render(
         ID3D12GraphicsCommandList* command_list,
-        UINT frame_index,
-        const D3D12_VIEWPORT& viewport,
-        const D3D12_RECT& scissor_rect) {
+        UINT frame_index) {
 
         resources_.visibility->transition(
-            command_list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            command_list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         for (eng::GPUResource* gbuffer : resources_.gbuffers) {
-            gbuffer->transition(command_list, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            gbuffer->transition(
+                command_list,
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         }
+        resources_.pixel_list->transition(
+            command_list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        resources_.indirect_dispatch_list->transition(
+            command_list, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = {
             resources_.shader_manager->get(),
             resources_.sampler_manager->get() };
         command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-        command_list->RSSetViewports(1, &viewport);
-        command_list->RSSetScissorRects(1, &scissor_rect);
 
         const VertexLayoutConstants vertex_layout{
             resources_.scene->vertex_layout.position_offset,
@@ -232,13 +229,24 @@ namespace rndr {
             static_cast<UINT>(RootParam::GBUFFER),
             resources_.shader_manager->get_gpu_adr(
                 eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0));
-        command_list->SetComputeRootDescriptorTable(
+        command_list->SetComputeRootShaderResourceView(
             static_cast<UINT>(RootParam::PIXEL_LIST),
-            resources_.shader_manager->get_gpu_adr(
-                eng::ResourceManagerShader::EnumDescPos::DONUT_PIXEL_LIST));
-        command_list->SetComputeRoot32BitConstants(
-            static_cast<UINT>(RootParam::INDIRECT_CONSTANT),
-            2, nullptr, 0);
+            resources_.pixel_list->get()->GetGPUVirtualAddress());
+
+        constexpr float clear_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        for (int i = 0; i < 4; ++i) {
+            command_list->ClearUnorderedAccessViewFloat(
+                resources_.shader_manager->get_gpu_adr(
+                    eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
+                    i),
+                resources_.shader_manager->get_cpu_adr(
+                    eng::ResourceManagerShader::EnumDescPos::DONUT_GBUFFER_UAV_0,
+                    i),
+                resources_.gbuffers[i]->get(),
+                clear_color,
+                0,
+                nullptr);
+        }
 
         for (int i = 0; i < shader_count_; ++i) {
 
@@ -251,6 +259,10 @@ namespace rndr {
                 i * sizeof(DispatchCommand),
                 nullptr,
                 0);
+
+            for (int i = 0; i < 4; ++i) {
+                resources_.gbuffers[i]->uav_barrier(command_list);
+            }
         }
     }
 }

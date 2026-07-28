@@ -53,10 +53,8 @@ namespace rndr {
         };
     }
 
-
     static constexpr UINT PUSH_CONSTANT_DWORD_COUNT =
         sizeof(PushConstants) / sizeof(uint32_t);
-
 
     void PassDonutGBuffer::init(
         ID3D12Device* device,

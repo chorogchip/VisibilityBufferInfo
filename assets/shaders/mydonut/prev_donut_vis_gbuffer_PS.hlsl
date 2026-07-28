@@ -1,5 +1,5 @@
-#include "common_barycentric.hlsli"
-#include "donut_gbuffer_common.hlsli"
+#include "..\common\common_barycentric.hlsli"
+#include "..\common\donut_gbuffer_common.hlsli"
 
 struct PSInput
 {

@@ -1,4 +1,4 @@
-#include "donut_gbuffer_common.hlsli"
+#include "..\common\donut_gbuffer_common.hlsli"
 
 StructuredBuffer<InstanceData> t_Instances :
     register(GBUFFER_INSTANCE_REGISTER, GBUFFER_INPUT_SPACE);
@@ -11,44 +11,38 @@ StructuredBuffer<uint> t_DrawInstanceIDs :
 
 cbuffer c_Push : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
 {
-    GBufferPushConstants g_Push;
+    uint g_StartInstanceLocation;
+    uint g_PositionOffset;
+    uint g_TexCoordOffset;
 };
 
 struct VSOutput
 {
     float4 clipPosition : SV_Position;
     float2 texCoord : TEXCOORD0;
-    float3 normal : NORMAL0;
-    float4 tangent : TANGENT0;
+    nointerpolation uint geometryInstanceID : TEXCOORD1;
 };
 
-VSOutput main(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID)
+VSOutput main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
-    const uint compactedSlot = instanceId + g_Push.startInstanceLocation;
+    const uint compactedSlot = instanceID + g_StartInstanceLocation;
     const uint drawInstanceID = t_DrawInstanceIDs[compactedSlot];
     const DrawInstanceData drawInstance = t_DrawInstances[drawInstanceID];
     const InstanceData instance = t_Instances[drawInstance.instanceID];
-    const uint vertexIndex = vertexId + g_Push.startVertexLocation;
 
     const float3 position = asfloat(t_Vertices.Load3(
-        g_Push.positionOffset + vertexIndex * SizeOfPosition));
+        g_PositionOffset + vertexID * SizeOfPosition));
     const float2 texCoord = asfloat(t_Vertices.Load2(
-        g_Push.texCoordOffset + vertexIndex * SizeOfTexcoord));
-    const uint packedNormal = t_Vertices.Load(
-        g_Push.normalOffset + vertexIndex * SizeOfPackedNormal);
-    const uint packedTangent = t_Vertices.Load(
-        g_Push.tangentOffset + vertexIndex * SizeOfPackedNormal);
-
+        g_TexCoordOffset + vertexID * SizeOfTexcoord));
     const float3 worldPosition = TransformPoint(instance.transform, position);
-    const float3 worldNormal = TransformVector(
-        instance.transform, UnpackRgb8Snorm(packedNormal));
-    const float4 tangent = UnpackRgba8Snorm(packedTangent);
-    const float3 worldTangent = TransformVector(instance.transform, tangent.xyz);
 
     VSOutput output;
     output.clipPosition = mul(float4(worldPosition, 1.0), g_GBuffer.view.matWorldToClip);
     output.texCoord = texCoord;
-    output.normal = worldNormal;
-    output.tangent = float4(worldTangent, tangent.w);
+    const uint geometryOffset =
+        drawInstance.submeshID - instance.firstGeometryIndex;
+    output.geometryInstanceID =
+        instance.firstGeometryInstanceIndex + geometryOffset + 1;
+
     return output;
 }

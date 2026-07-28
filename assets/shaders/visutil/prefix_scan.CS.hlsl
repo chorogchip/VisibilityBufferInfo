@@ -8,6 +8,7 @@ RWStructuredBuffer<uint> dst : register(u0);
 RWByteAddressBuffer indirects : register(u1);
 
 static const uint THREAD_CNT = 256;
+static const uint GBUFFER_THREADS_PER_GROUP = 128;
 
 groupshared uint shared_mem[THREAD_CNT];
 
@@ -29,18 +30,26 @@ void kernel_prefix_block(uint3 gid : SV_GroupID, uint3 tid : SV_GroupThreadID)
         }
         GroupMemoryBarrierWithGroupSync();
     }
-
+    
+    uint command_offset = idx * 20;
     if (idx < total_cnt)
     {
         uint sum = shared_mem[tid.x];
         uint org = src[idx];
         dst[idx] = sum;
-        indirects.Store2(idx * 4, uint2(sum - org, org));
-        indirects.Store3(idx * 4 + 2, uint3(org, 1, 1));
+        
+        uint pixel_offset = sum - org;
+        uint pixel_count = org;
+        
+        uint dispatch_count =
+            (pixel_count + GBUFFER_THREADS_PER_GROUP - 1) / GBUFFER_THREADS_PER_GROUP;
+        
+        indirects.Store2(command_offset, uint2(pixel_offset, pixel_count));
+        indirects.Store3(command_offset + 8, uint3(dispatch_count, 1, 1));
     }
     else
     {
-        indirects.Store2(idx * 4, uint2(0, 0));
-        indirects.Store3(idx * 4 + 2, uint3(0, 0, 0));
+        indirects.Store2(command_offset, uint2(0, 0));
+        indirects.Store3(command_offset + 8, uint3(0, 0, 0));
     }
 }

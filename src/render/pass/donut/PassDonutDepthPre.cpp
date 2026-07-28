@@ -94,7 +94,7 @@ namespace rndr {
             L"assets/shaders/donut/donut_depth_VS.hlsl",
             L"vs_6_5", L"buffer_loads", arguments);
         auto ps = dxutl::compile_shader(
-            L"assets/shaders/donut_depth_pre_PS.hlsl",
+            L"assets/shaders/mydonut/donut_depth_pre_PS.hlsl",
             L"ps_6_5", L"main", arguments);
 
         pso_.init(device);

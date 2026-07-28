@@ -1,7 +1,6 @@
 #ifndef COMMON_BARYCENTRIC_HLSLI
 #define COMMON_BARYCENTRIC_HLSLI
 
-
 float2 clip_to_pixel(float4 clip_pos, float2 viewport_size)
 {
 	float2 ndc = clip_pos.xy / clip_pos.w;

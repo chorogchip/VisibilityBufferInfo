@@ -41,7 +41,6 @@ namespace eng {
             DONUT_GBUFFER_UAV_1 = 33,
             DONUT_GBUFFER_UAV_2 = 34,
             DONUT_GBUFFER_UAV_3 = 35,
-            DONUT_PIXEL_LIST = 36,
             DONUT_MATERIAL_TEXTURE_BEGIN = 64,
 
             BENCH_VISIBILITY_BUFFER = 48,

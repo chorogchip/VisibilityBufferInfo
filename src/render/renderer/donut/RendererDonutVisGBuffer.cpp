@@ -62,12 +62,12 @@ namespace rndr {
                 device_.Get(),
                 width_,
                 height_,
-                util::RenderConstants::DONUT_GBUFFER_FORMATS[i],
+                util::RenderConstants::DONUT_GBUFFER_RAW_FORMATS[i],
                 D3D12_HEAP_TYPE_DEFAULT,
                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+                D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
                 &clear).Get(),
-                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         }
 
         {
@@ -119,7 +119,6 @@ namespace rndr {
                 pixel_count * sizeof(std::uint32_t) * 2,
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS).Get(),
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
 
         const UINT bin_byte_size =
             PassDonutVisUtil::MAX_SHADER_COUNT * sizeof(PassDonutVisGBuffer::DispatchCommand);
@@ -234,8 +233,7 @@ namespace rndr {
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 2);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 3);
-        pass_gbuffer_.render(
-            command_list_.Get(), frame_index_, viewport_, scissor_rect_);
+        pass_gbuffer_.render(command_list_.Get(), frame_index_);
         frame_time_.end_timestamp(command_list_.Get(), frame_index_, 3);
 
         frame_time_.start_timestamp(command_list_.Get(), frame_index_, 4);

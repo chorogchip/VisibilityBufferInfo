@@ -1,10 +1,33 @@
-#include "..\common_barycentric.hlsli"
-#include "..\donut_gbuffer_common.hlsli"
+#include "..\common\common_barycentric.hlsli"
+#include "..\common\donut_gbuffer_common.hlsli"
 
 RWTexture2D<float4> gBufferChannel0 : register(u0);
 RWTexture2D<float4> gBufferChannel1 : register(u1);
 RWTexture2D<float4> gBufferChannel2 : register(u2);
 RWTexture2D<float4> gBufferChannel3 : register(u3);
+
+float3 LinearToSrgb(float3 value)
+{
+    value = max(value, 0.0);
+
+    const float3 low = value * 12.92;
+    const float3 high =
+        1.055 * pow(value, 1.0 / 2.4) - 0.055;
+
+    const float3 useHigh = step(
+        float3(0.0031308, 0.0031308, 0.0031308),
+        value);
+
+    return lerp(low, high, useHigh);
+}
+
+StructuredBuffer<uint2> gPixels : register(t27, space1);
+
+cbuffer c_IndirectConstants : register(b3, space2)
+{
+    uint g_pixel_offset;
+    uint g_pixel_count;
+};
 
 cbuffer c_VertexLayout : register(GBUFFER_PUSH_REGISTER, GBUFFER_INPUT_SPACE)
 {
@@ -97,19 +120,19 @@ void FetchVertex(
         g_TangentOffset + vertexIndex * SizeOfPackedNormal));
 }
 
-PSOutput main(PSInput input)
+[numthreads(THREADS_PER_GROUP, 1, 1)]
+void main(uint3 tid : SV_DispatchThreadID)
 {
-    const uint2 pixel = uint2(input.position.xy);
+    const uint ind = tid.x;
+    
+    if (ind >= g_pixel_count)
+        return;
+    
+    const uint2 pixel = gPixels.Load(ind + g_pixel_offset);
     const uint2 visibility = t_Visibility.Load(int3(pixel.xy, 0));
+    
     if (visibility.x == 0)
-    {
-        PSOutput backgroundOutput;
-        backgroundOutput.channel0 = 0.0;
-        backgroundOutput.channel1 = 0.0;
-        backgroundOutput.channel2 = 0.0;
-        backgroundOutput.channel3 = 0.0;
-        return backgroundOutput;
-    }
+        return;
 
     const uint geometryInstanceID = visibility.x - 1;
     const uint primitiveID = visibility.y;
@@ -142,8 +165,11 @@ PSOutput main(PSInput input)
     const float2 pixel0 = clip_to_pixel(clip0, g_GBuffer.view.viewportSize);
     const float2 pixel1 = clip_to_pixel(clip1, g_GBuffer.view.viewportSize);
     const float2 pixel2 = clip_to_pixel(clip2, g_GBuffer.view.viewportSize);
+    
+    const float2 sample_position = float2(pixel) + float2(0.5f, 0.5f);
+    
     const BarycentricGradient baryGrad =
-        calc_barycentric_with_grad(input.position.xy, pixel0, pixel1, pixel2);
+        calc_barycentric_with_grad(sample_position, pixel0, pixel1, pixel2);
 
     const float3 bary = baryGrad.value;
     const float3 invW = rcp(float3(clip0.w, clip1.w, clip2.w));
@@ -204,9 +230,9 @@ PSOutput main(PSInput input)
     }
     opacity = saturate(opacity);
 
-    if (IsAlphaTestedDomainValue(material.domain))
+    if (IsAlphaTestedDomainValue(material.domain) && opacity < material.alphaCutoff)
     {
-        clip(opacity - material.alphaCutoff);
+       return;
     }
 
     float4 metalRoughnessTexture = float4(1.0, 1.0, 1.0, 1.0);
@@ -265,11 +291,9 @@ PSOutput main(PSInput input)
             texCoordDx,
             texCoordDy).rgb;
     }
-
-    PSOutput output;
-    output.channel0 = float4(diffuseAlbedo, opacity);
-    output.channel1 = float4(specularF0, occlusion);
-    output.channel2 = float4(normalize(normal), roughness);
-    output.channel3 = float4(emissive, 0.0);
-    return output;
+    
+    gBufferChannel0[pixel] = float4(LinearToSrgb(diffuseAlbedo), opacity);
+    gBufferChannel1[pixel] = float4(LinearToSrgb(specularF0), occlusion);
+    gBufferChannel2[pixel] = float4(normalize(normal), roughness);
+    gBufferChannel3[pixel] = float4(emissive, 0.0);
 }

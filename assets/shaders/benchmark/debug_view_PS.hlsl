@@ -1,5 +1,5 @@
-#include "common_material_data.hlsli"
-#include "common_input_struct.hlsli"
+#include "..\common\common_material_data.hlsli"
+#include "..\common\common_input_struct.hlsli"
 
 StructuredBuffer<MaterialData> gMaterials : register(t1);
 

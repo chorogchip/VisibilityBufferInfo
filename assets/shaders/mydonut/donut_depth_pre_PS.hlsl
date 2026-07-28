@@ -1,4 +1,4 @@
-#include "donut_gbuffer_common.hlsli"
+#include "..\common\donut_gbuffer_common.hlsli"
 
 Texture2D t_BaseOrDiffuse :
     register(MATERIAL_BASE_COLOR_REGISTER, MATERIAL_SPACE);

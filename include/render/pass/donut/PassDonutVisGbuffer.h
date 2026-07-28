@@ -47,9 +47,7 @@ namespace rndr {
 
         void render(
             ID3D12GraphicsCommandList* command_list,
-            UINT frame_index,
-            const D3D12_VIEWPORT& viewport,
-            const D3D12_RECT& scissor_rect);
+            UINT frame_index);
 
     private:
         PassDonutVisGBufferResources resources_{};

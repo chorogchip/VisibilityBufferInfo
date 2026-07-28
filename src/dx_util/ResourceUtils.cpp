@@ -273,14 +273,16 @@ namespace dxutl {
 
     Microsoft::WRL::ComPtr<ID3D12CommandSignature> create_dispatch_command_signature(
         ID3D12Device* device,
+        const D3D12_INDIRECT_ARGUMENT_DESC* descs,
         UINT desc_count,
-        const D3D12_INDIRECT_ARGUMENT_DESC* descs) {
+        UINT stride,
+        ID3D12RootSignature* root_signature) {
 
         D3D12_INDIRECT_ARGUMENT_DESC argument_desc{};
         argument_desc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
 
         D3D12_COMMAND_SIGNATURE_DESC signature_desc{};
-        signature_desc.ByteStride = sizeof(D3D12_DISPATCH_ARGUMENTS);
+        signature_desc.ByteStride = stride;
         signature_desc.NumArgumentDescs = desc_count;
         signature_desc.pArgumentDescs = descs;
         signature_desc.NodeMask = 0;
@@ -294,7 +296,7 @@ namespace dxutl {
 
         util::Utils::throw_if_failed(device->CreateCommandSignature(
             &signature_desc,
-            nullptr,
+            root_signature,
             IID_PPV_ARGS(signature.GetAddressOf())),
             "create indirect dispatch signature");
 

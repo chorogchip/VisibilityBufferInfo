@@ -113,7 +113,8 @@ namespace rndr {
                 resource,
                 eng::ResourceViewBuilder::build_srv(
                     resource,
-                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D),
+                    eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
+                    util::RenderConstants::DONUT_GBUFFER_FORMATS[i]),
                 SRVDescPos::DONUT_GBUFFER_0,
                 i);
         }

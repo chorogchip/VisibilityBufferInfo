@@ -14,12 +14,28 @@ namespace util {
 		static inline constexpr DXGI_FORMAT DONUT_DEPTH_RESOURCE_FORMAT = DXGI_FORMAT_R32_TYPELESS;
 		static inline constexpr DXGI_FORMAT DONUT_DEPTH_DSV_FORMAT = DXGI_FORMAT_D32_FLOAT;
 		static inline constexpr DXGI_FORMAT DONUT_DEPTH_SRV_FORMAT = DXGI_FORMAT_R32_FLOAT;
+
 		// Donut G-buffer ABI. Shaders must preserve the channel contract:
 		// RT0 diffuseAlbedo.rgb + opacity, RT1 specularF0.rgb + occlusion,
 		// RT2 worldNormal.xyz + roughness, RT3 emissive.rgb + unused.
-		static inline constexpr std::array<DXGI_FORMAT, 4> DONUT_GBUFFER_FORMATS = {
+		static inline constexpr std::array<DXGI_FORMAT, 4>
+			DONUT_GBUFFER_FORMATS = {
 			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			DXGI_FORMAT_R16G16B16A16_SNORM,
+			DXGI_FORMAT_R16G16B16A16_FLOAT,
+		};
+		static inline constexpr std::array<DXGI_FORMAT, 4>
+			DONUT_GBUFFER_RAW_FORMATS = {
+			DXGI_FORMAT_R8G8B8A8_TYPELESS,
+			DXGI_FORMAT_R8G8B8A8_TYPELESS,
+			DXGI_FORMAT_R16G16B16A16_TYPELESS,
+			DXGI_FORMAT_R16G16B16A16_TYPELESS,
+		};
+		static inline constexpr std::array<DXGI_FORMAT, 4>
+			DONUT_GBUFFER_NON_SRGB_FORMATS = {
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
 			DXGI_FORMAT_R16G16B16A16_SNORM,
 			DXGI_FORMAT_R16G16B16A16_FLOAT,
 		};

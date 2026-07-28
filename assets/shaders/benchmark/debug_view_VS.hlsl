@@ -1,4 +1,4 @@
-#include "common_input_struct.hlsli"
+#include "..\common\common_input_struct.hlsli"
 
 struct DebugPSInput
 {
