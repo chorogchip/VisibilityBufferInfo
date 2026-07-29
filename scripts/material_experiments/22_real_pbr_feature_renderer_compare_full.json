@@ -118,6 +118,36 @@
                         "material_assign_strategy":  1,
                         "material_assign_max_open":  255,
                         "seed":  0
+                    },
+                    {
+                        "variable":  6,
+                        "renderer_variant":  7,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "measure_frames":  2500,
+                        "material_assign_strategy":  1,
+                        "material_assign_max_open":  255,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  7,
+                        "renderer_variant":  8,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "measure_frames":  2500,
+                        "material_assign_strategy":  1,
+                        "material_assign_max_open":  255,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  8,
+                        "renderer_variant":  9,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "measure_frames":  2500,
+                        "material_assign_strategy":  1,
+                        "material_assign_max_open":  255,
+                        "seed":  0
                     }
                 ]
 }

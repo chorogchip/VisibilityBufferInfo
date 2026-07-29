@@ -152,6 +152,38 @@
                         "material_assign_max_open":  255,
                         "measure_frames":  600,
                         "capture_stride":  120
+                    },
+                    {
+                        "variable":  6,
+                        "to_use_scene":  true,
+                        "scene_variant":  0,
+                        "renderer_variant":  8,
+                        "scene_importer":  "assimp",
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_mode":  2,
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "use_vfc":  true,
+                        "to_load_texture":  true,
+                        "material_assign_strategy":  1,
+                        "material_assign_max_open":  255,
+                        "measure_frames":  600,
+                        "capture_stride":  120
+                    },
+                    {
+                        "variable":  7,
+                        "to_use_scene":  true,
+                        "scene_variant":  0,
+                        "renderer_variant":  9,
+                        "scene_importer":  "assimp",
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_mode":  2,
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "use_vfc":  true,
+                        "to_load_texture":  true,
+                        "material_assign_strategy":  1,
+                        "material_assign_max_open":  255,
+                        "measure_frames":  600,
+                        "capture_stride":  120
                     }
                 ]
 }

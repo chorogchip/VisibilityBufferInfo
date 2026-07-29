@@ -329,6 +329,141 @@
                         "material_assign_max_open":  255,
                         "material_assign_diversity":  1.0,
                         "seed":  2
+                    },
+                    {
+                        "variable":  30,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  1,
+                        "material_assign_diversity":  1.0,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  31,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  1,
+                        "material_assign_diversity":  1.0,
+                        "seed":  1
+                    },
+                    {
+                        "variable":  32,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  1,
+                        "material_assign_diversity":  1.0,
+                        "seed":  2
+                    },
+                    {
+                        "variable":  33,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  4,
+                        "material_assign_diversity":  1.0,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  34,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  4,
+                        "material_assign_diversity":  1.0,
+                        "seed":  1
+                    },
+                    {
+                        "variable":  35,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  4,
+                        "material_assign_diversity":  1.0,
+                        "seed":  2
+                    },
+                    {
+                        "variable":  36,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  16,
+                        "material_assign_diversity":  1.0,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  37,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  16,
+                        "material_assign_diversity":  1.0,
+                        "seed":  1
+                    },
+                    {
+                        "variable":  38,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  16,
+                        "material_assign_diversity":  1.0,
+                        "seed":  2
+                    },
+                    {
+                        "variable":  39,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  64,
+                        "material_assign_diversity":  1.0,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  40,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  64,
+                        "material_assign_diversity":  1.0,
+                        "seed":  1
+                    },
+                    {
+                        "variable":  41,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  64,
+                        "material_assign_diversity":  1.0,
+                        "seed":  2
+                    },
+                    {
+                        "variable":  42,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  255,
+                        "material_assign_diversity":  1.0,
+                        "seed":  0
+                    },
+                    {
+                        "variable":  43,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  255,
+                        "material_assign_diversity":  1.0,
+                        "seed":  1
+                    },
+                    {
+                        "variable":  44,
+                        "scene_path":  "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+                        "camera_filepath":  "../../../../../scripts/standard_camera.csv",
+                        "material_assign_strategy":  0,
+                        "material_assign_max_open":  255,
+                        "material_assign_diversity":  1.0,
+                        "seed":  2
                     }
                 ]
 }

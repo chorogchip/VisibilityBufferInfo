@@ -72,6 +72,13 @@
       "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
       "material_assign_strategy": 1,
       "material_assign_max_open": 255
+    },
+    {
+      "variable": 2,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza_ivy/NewSponza_Main_Ivy_glTF.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "material_assign_strategy": 1,
+      "material_assign_max_open": 255
     }
   ]
 }
