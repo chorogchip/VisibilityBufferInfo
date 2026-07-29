@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import re
@@ -77,22 +78,49 @@ def sanitize_csv(path: Path) -> bool:
     return True
 
 
-def remaining_local_path_files() -> list[str]:
+def remaining_local_path_files(results_dir: Path) -> list[str]:
     remaining: list[str] = []
-    for path in sorted(RESULTS_DIR.rglob("*")):
+    for path in sorted(results_dir.rglob("*")):
         if path.suffix.lower() not in {".json", ".csv"} or not path.is_file():
             continue
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         if ABSOLUTE_USER_PATH_PATTERN.search(text):
-            remaining.append(path.relative_to(SCRIPT_DIR).as_posix())
+            remaining.append(path.relative_to(results_dir.parent).as_posix())
     return remaining
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=RESULTS_DIR,
+        help=(
+            "Result tree to sanitize. The directory must be named 'results' "
+            "and remain under the repository's scripts directory."
+        ),
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    if RESULTS_DIR.resolve().parent != SCRIPT_DIR.resolve():
-        raise RuntimeError(f"Unexpected results path: {RESULTS_DIR}")
+    args = parse_args()
+    results_dir = args.results_dir
+    if not results_dir.is_absolute():
+        results_dir = REPOSITORY_ROOT / results_dir
+    results_dir = results_dir.resolve()
+    scripts_root = (REPOSITORY_ROOT / "scripts").resolve()
+    try:
+        results_dir.relative_to(scripts_root)
+    except ValueError as error:
+        raise RuntimeError(
+            f"Result path is outside repository scripts: {results_dir}"
+        ) from error
+    if results_dir.name != "results":
+        raise RuntimeError(f"Result directory must be named results: {results_dir}")
+
     changed: list[str] = []
-    for path in sorted(RESULTS_DIR.rglob("*")):
+    for path in sorted(results_dir.rglob("*")):
         if not path.is_file():
             continue
         did_change = False
@@ -101,8 +129,8 @@ def main() -> int:
         elif path.suffix.lower() == ".csv":
             did_change = sanitize_csv(path)
         if did_change:
-            changed.append(path.relative_to(SCRIPT_DIR).as_posix())
-    remaining = remaining_local_path_files()
+            changed.append(path.relative_to(results_dir.parent).as_posix())
+    remaining = remaining_local_path_files(results_dir)
     print(f"Portable result files updated: {len(changed)}")
     print(f"Files with remaining absolute user paths: {len(remaining)}")
     for path in remaining:

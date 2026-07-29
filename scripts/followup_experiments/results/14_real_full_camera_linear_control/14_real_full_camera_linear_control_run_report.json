@@ -3,10 +3,10 @@
   "started_at": "2026-07-30T02:26:28+09:00",
   "last_updated_at": "2026-07-30T02:30:32+09:00",
   "finished_at": "2026-07-30T02:30:32+09:00",
-  "spec_path": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\14_real_full_camera_linear_control.json",
-  "spec_copy": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control.json",
-  "output_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control.csv",
-  "report_json": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_run_report.json",
+  "spec_path": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\14_real_full_camera_linear_control.json",
+  "spec_copy": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control.json",
+  "output_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control.csv",
+  "report_json": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_run_report.json",
   "completed_runs": 12,
   "successful_runs": 12,
   "salvaged_runs": 0,
@@ -21,7 +21,7 @@
       "finished_at": "2026-07-30T02:26:50+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -133,7 +133,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00000.csv",
+        "${RUN_TEMP}\\run_00000.csv",
         "--auto-terminate",
         "1"
       ],
@@ -192,16 +192,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00000.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00000.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00000.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00000.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00000.csv_0_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00000.csv_0_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00000.csv_0_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-26-50.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00000.csv_0_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-26-50.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -217,7 +217,7 @@
       "finished_at": "2026-07-30T02:27:14+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -329,7 +329,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00001.csv",
+        "${RUN_TEMP}\\run_00001.csv",
         "--auto-terminate",
         "1"
       ],
@@ -388,16 +388,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00001.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00001.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00001.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00001.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00001.csv_1_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00001.csv_1_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00001.csv_1_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-27-14.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00001.csv_1_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-27-14.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -413,7 +413,7 @@
       "finished_at": "2026-07-30T02:27:36+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -525,7 +525,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00002.csv",
+        "${RUN_TEMP}\\run_00002.csv",
         "--auto-terminate",
         "1"
       ],
@@ -584,16 +584,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00002.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00002.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00002.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00002.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00002.csv_2_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00002.csv_2_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00002.csv_2_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-27-36.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00002.csv_2_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-27-36.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -609,7 +609,7 @@
       "finished_at": "2026-07-30T02:28:00+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -721,7 +721,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00003.csv",
+        "${RUN_TEMP}\\run_00003.csv",
         "--auto-terminate",
         "1"
       ],
@@ -780,16 +780,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00003.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00003.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00003.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00003.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00003.csv_3_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00003.csv_3_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00003.csv_3_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-00.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00003.csv_3_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-00.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -805,7 +805,7 @@
       "finished_at": "2026-07-30T02:28:27+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -917,7 +917,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00004.csv",
+        "${RUN_TEMP}\\run_00004.csv",
         "--auto-terminate",
         "1"
       ],
@@ -976,16 +976,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00004.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00004.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00004.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00004.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00004.csv_4_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00004.csv_4_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00004.csv_4_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-27.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00004.csv_4_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-27.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1001,7 +1001,7 @@
       "finished_at": "2026-07-30T02:28:56+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -1113,7 +1113,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00005.csv",
+        "${RUN_TEMP}\\run_00005.csv",
         "--auto-terminate",
         "1"
       ],
@@ -1172,16 +1172,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00005.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00005.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00005.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00005.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00005.csv_5_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00005.csv_5_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00005.csv_5_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-56.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00005.csv_5_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-28-56.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1197,7 +1197,7 @@
       "finished_at": "2026-07-30T02:29:23+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -1309,7 +1309,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00006.csv",
+        "${RUN_TEMP}\\run_00006.csv",
         "--auto-terminate",
         "1"
       ],
@@ -1368,16 +1368,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00006.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00006.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00006.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00006.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00006.csv_6_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00006.csv_6_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00006.csv_6_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-29-23.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00006.csv_6_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-29-23.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1393,7 +1393,7 @@
       "finished_at": "2026-07-30T02:29:52+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -1505,7 +1505,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00007.csv",
+        "${RUN_TEMP}\\run_00007.csv",
         "--auto-terminate",
         "1"
       ],
@@ -1564,16 +1564,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00007.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00007.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00007.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00007.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00007.csv_7_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00007.csv_7_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00007.csv_7_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-29-51.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00007.csv_7_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-29-51.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1589,7 +1589,7 @@
       "finished_at": "2026-07-30T02:30:01+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -1701,7 +1701,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00008.csv",
+        "${RUN_TEMP}\\run_00008.csv",
         "--auto-terminate",
         "1"
       ],
@@ -1760,16 +1760,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00008.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00008.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00008.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00008.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00008.csv_8_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00008.csv_8_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00008.csv_8_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-01.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00008.csv_8_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-01.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1785,7 +1785,7 @@
       "finished_at": "2026-07-30T02:30:12+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -1897,7 +1897,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00009.csv",
+        "${RUN_TEMP}\\run_00009.csv",
         "--auto-terminate",
         "1"
       ],
@@ -1956,16 +1956,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00009.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00009.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00009.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00009.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00009.csv_9_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00009.csv_9_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00009.csv_9_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-12.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00009.csv_9_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-12.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -1981,7 +1981,7 @@
       "finished_at": "2026-07-30T02:30:21+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -2093,7 +2093,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00010.csv",
+        "${RUN_TEMP}\\run_00010.csv",
         "--auto-terminate",
         "1"
       ],
@@ -2152,16 +2152,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00010.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00010.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00010.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00010.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00010.csv_10_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00010.csv_10_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00010.csv_10_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-21.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00010.csv_10_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-21.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -2177,7 +2177,7 @@
       "finished_at": "2026-07-30T02:30:32+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -2289,7 +2289,7 @@
         "--run-name",
         "14_real_full_camera_linear_control",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00011.csv",
+        "${RUN_TEMP}\\run_00011.csv",
         "--auto-terminate",
         "1"
       ],
@@ -2348,16 +2348,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00011.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00011.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00011.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00011.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00011.csv_11_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\14_real_full_camera_linear_control\\14_real_full_camera_linear_control_runs\\run_00011.csv_11_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_6tulw2y8\\run_00011.csv_11_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-32.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00011.csv_11_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-30-32.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -2369,7 +2369,7 @@
   "fatal_error": null,
   "spec_copy_error": null,
   "experiment": "14_real_full_camera_linear_control",
-  "executable": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+  "executable": "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
   "parameter_source": "samples",
   "parameter_set_count": 12,
   "total_runs": 12

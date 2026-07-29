@@ -3,10 +3,10 @@
   "started_at": "2026-07-30T02:35:29+09:00",
   "last_updated_at": "2026-07-30T03:41:05+09:00",
   "finished_at": "2026-07-30T03:41:05+09:00",
-  "spec_path": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\16_real_software_raster_reference.json",
-  "spec_copy": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference.json",
-  "output_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference.csv",
-  "report_json": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_run_report.json",
+  "spec_path": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\16_real_software_raster_reference.json",
+  "spec_copy": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference.json",
+  "output_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference.csv",
+  "report_json": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_run_report.json",
   "completed_runs": 3,
   "successful_runs": 3,
   "salvaged_runs": 0,
@@ -21,7 +21,7 @@
       "finished_at": "2026-07-30T02:45:36+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "10",
         "--visibility-debug-mode",
@@ -133,7 +133,7 @@
         "--run-name",
         "16_real_software_raster_reference",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00000.csv",
+        "${RUN_TEMP}\\run_00000.csv",
         "--auto-terminate",
         "1"
       ],
@@ -192,18 +192,18 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00000.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00000.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000.csv_0_result.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000_0_raster_stats.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000_scene_fingerprint.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000.csv_0_result.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000_0_raster_stats.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00000_scene_fingerprint.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00000.csv_0_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-45-36.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00000.csv_0_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-45-36.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -219,7 +219,7 @@
       "finished_at": "2026-07-30T02:58:28+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "10",
         "--visibility-debug-mode",
@@ -331,7 +331,7 @@
         "--run-name",
         "16_real_software_raster_reference",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00001.csv",
+        "${RUN_TEMP}\\run_00001.csv",
         "--auto-terminate",
         "1"
       ],
@@ -390,18 +390,18 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00001.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00001.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001.csv_1_result.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001_1_raster_stats.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001_scene_fingerprint.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001.csv_1_result.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001_1_raster_stats.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00001_scene_fingerprint.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00001.csv_1_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-58-28.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{2620} measure_start{60} measure_end{2560} sample_count{2500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00001.csv_1_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_02-58-28.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -417,7 +417,7 @@
       "finished_at": "2026-07-30T03:41:05+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "10",
         "--visibility-debug-mode",
@@ -529,7 +529,7 @@
         "--run-name",
         "16_real_software_raster_reference",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00002.csv",
+        "${RUN_TEMP}\\run_00002.csv",
         "--auto-terminate",
         "1"
       ],
@@ -588,18 +588,18 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00002.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00002.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002.csv_2_result.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002_2_raster_stats.csv",
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002_scene_fingerprint.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002.csv_2_result.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002_2_raster_stats.csv",
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\16_real_software_raster_reference\\16_real_software_raster_reference_runs\\run_00002_scene_fingerprint.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_w3978ghy\\run_00002.csv_2_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_03-41-05.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{5620} measure_start{60} measure_end{5560} sample_count{5500} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00002.csv_2_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_03-41-05.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -611,7 +611,7 @@
   "fatal_error": null,
   "spec_copy_error": null,
   "experiment": "16_real_software_raster_reference",
-  "executable": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+  "executable": "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
   "parameter_source": "samples",
   "parameter_set_count": 3,
   "total_runs": 3

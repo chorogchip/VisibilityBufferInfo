@@ -3,10 +3,10 @@
   "started_at": "2026-07-30T00:40:50+09:00",
   "last_updated_at": "2026-07-30T00:42:08+09:00",
   "finished_at": "2026-07-30T00:42:08+09:00",
-  "spec_path": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\00_renderer_fairness_smoke.json",
-  "spec_copy": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke.json",
-  "output_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke.csv",
-  "report_json": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_run_report.json",
+  "spec_path": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\00_renderer_fairness_smoke.json",
+  "spec_copy": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke.json",
+  "output_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke.csv",
+  "report_json": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_run_report.json",
   "completed_runs": 4,
   "successful_runs": 4,
   "salvaged_runs": 0,
@@ -21,7 +21,7 @@
       "finished_at": "2026-07-30T00:41:10+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -133,7 +133,7 @@
         "--run-name",
         "00_renderer_fairness_smoke",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00000.csv",
+        "${RUN_TEMP}\\run_00000.csv",
         "--auto-terminate",
         "1"
       ],
@@ -192,16 +192,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00000.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00000.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00000.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00000.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00000.csv_0_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00000.csv_0_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00000.csv_0_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-10.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00000.csv_0_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-10.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -217,7 +217,7 @@
       "finished_at": "2026-07-30T00:41:29+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -329,7 +329,7 @@
         "--run-name",
         "00_renderer_fairness_smoke",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00001.csv",
+        "${RUN_TEMP}\\run_00001.csv",
         "--auto-terminate",
         "1"
       ],
@@ -388,16 +388,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00001.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00001.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00001.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00001.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00001.csv_1_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00001.csv_1_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00001.csv_1_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-29.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00001.csv_1_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-29.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -413,7 +413,7 @@
       "finished_at": "2026-07-30T00:41:48+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "8",
         "--visibility-debug-mode",
@@ -525,7 +525,7 @@
         "--run-name",
         "00_renderer_fairness_smoke",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00002.csv",
+        "${RUN_TEMP}\\run_00002.csv",
         "--auto-terminate",
         "1"
       ],
@@ -584,16 +584,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00002.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00002.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00002.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00002.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00002.csv_2_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00002.csv_2_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00002.csv_2_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-48.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00002.csv_2_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-41-48.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -609,7 +609,7 @@
       "finished_at": "2026-07-30T00:42:08+09:00",
       "return_code": 0,
       "command": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+        "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
         "--renderer-variant",
         "9",
         "--visibility-debug-mode",
@@ -721,7 +721,7 @@
         "--run-name",
         "00_renderer_fairness_smoke",
         "--output-filepath",
-        "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00003.csv",
+        "${RUN_TEMP}\\run_00003.csv",
         "--auto-terminate",
         "1"
       ],
@@ -780,16 +780,16 @@
         "texture_sampling_count": 1,
         "alu_calc_count": 100
       },
-      "raw_csv": "C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00003.csv",
-      "individual_csv": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00003.csv",
+      "raw_csv": "${RUN_TEMP}\\run_00003.csv",
+      "individual_csv": "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00003.csv",
       "artifact_csvs": [
-        "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00003.csv_3_result.csv"
+        "${REPOSITORY_ROOT}\\scripts\\followup_experiments\\results\\00_renderer_fairness_smoke\\00_renderer_fairness_smoke_runs\\run_00003.csv_3_result.csv"
       ],
       "artifact_dirs": [],
       "capture_output_dir": null,
       "raw_row_count": 1,
       "error": null,
-      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: C:\\Users\\mkkim\\AppData\\Local\\Temp\\tvbperf_25pzhe0w\\run_00003.csv_3_result.csv\nLog saved to: C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-42-08.txt",
+      "stderr": "Scene CPU cache disabled; rebuilding source scene.\n[FrameCounter] frames{420} measure_start{60} measure_end{360} sample_count{300} window_frames{60}\nSaved CSV: ${RUN_TEMP}\\run_00003.csv_3_result.csv\nLog saved to: ${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\logs\\log_2026-07-30_00-42-08.txt",
       "failure_kind": null,
       "skip_reason": null,
       "missing_assets": [],
@@ -801,7 +801,7 @@
   "fatal_error": null,
   "spec_copy_error": null,
   "experiment": "00_renderer_fairness_smoke",
-  "executable": "C:\\Users\\mkkim\\myfolder\\mydev1\\VisibilityBufferInfo\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+  "executable": "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
   "parameter_source": "samples",
   "parameter_set_count": 4,
   "total_runs": 4

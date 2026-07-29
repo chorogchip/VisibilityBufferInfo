@@ -99,7 +99,7 @@ def initialize_campaign() -> dict[str, Any]:
         "started_at": campaign.now_iso(),
         "finished_at": None,
         "last_updated_at": campaign.now_iso(),
-        "repository_root": str(campaign.REPO_ROOT),
+        "repository_root": "${REPOSITORY_ROOT}",
         "results_dir": campaign.relative_to_repo(campaign.RESULTS_DIR),
         "results_backup": None,
         "hardware": "NVIDIA GeForce RTX 5060 Ti 16GB",
