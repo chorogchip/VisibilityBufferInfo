@@ -100,6 +100,9 @@ namespace scene {
         uint32_t draw_instance_count = 0;
         uint32_t draw_instance_id_capacity = 0;
 
+
+
+        uint32_t active_material_class_count = 0;
     };
 
     static_assert(sizeof(BenchmarkSceneGPUData::MeshData) == 16);

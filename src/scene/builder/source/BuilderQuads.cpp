@@ -16,6 +16,7 @@ namespace scene {
 
         scene->root_node_id = 0;
         scene->materials.emplace_back();
+        scene->active_material_class_count = 1;
 
         source::Mesh mesh{};
         mesh.primitives.emplace_back(build_primitive_(config));

@@ -162,6 +162,10 @@ namespace scene {
         std::vector<GeometryInstanceData> geometry_instance_data;
         std::vector<MaterialData> material_data;
 
+
+
+
+        uint32_t active_material_class_count = 0;
     };
 
     static_assert(sizeof(DonutSceneGPUData::InstanceData) == 112);

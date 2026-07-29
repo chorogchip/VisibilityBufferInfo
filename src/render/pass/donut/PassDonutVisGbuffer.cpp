@@ -122,11 +122,17 @@ namespace rndr {
                 std::to_wstring(material_tex_desc_cnt)
         };
 
-        auto cs = dxutl::compile_shader(
-            L"assets/shaders/mydonut/donut_vis_gbuffer_CS.hlsl",
-            L"cs_6_5", L"main", cs_defines);
 
-        shader_count_ = 256;
+        shader_count_ = resources_.scene->active_material_class_count;
+        std::vector<Microsoft::WRL::ComPtr<IDxcBlob>> cs;
+        cs.reserve(shader_count_);
+
+        for (uint32_t i = 0; i < shader_count_; ++i) {
+            cs.emplace_back(dxutl::compile_shader(
+                L"assets/shaders/mydonut/donut_vis_gbuffer_CS.hlsl",
+                L"cs_6_5", L"main", cs_defines));
+        }
+
         pso_.init(device);
         pso_.set_shader_count(shader_count_);
         pso_.set_compute();
@@ -149,7 +155,7 @@ namespace rndr {
             .constant().reg(3).spc(2).cnt(2).add()   // INDIRECT_CONSTANT
             .build(device);
         pso_.set_root_signature(root_signature.Get());
-        pso_.set_shader_compute(cs.Get());
+        pso_.set_shader_compute(cs);
         pso_.build();
 
         D3D12_INDIRECT_ARGUMENT_DESC argument_descs[2]{};
@@ -256,7 +262,6 @@ namespace rndr {
                 nullptr);
         }
 
-        // Sparse bin writes leave pixels without visibility data at their cleared values.
         for (eng::GPUResource* gbuffer : resources_.gbuffers) {
             gbuffer->uav_barrier(command_list);
         }
@@ -274,8 +279,6 @@ namespace rndr {
                 0);
         }
 
-        // Each visible pixel belongs to one material bin and bins do not read G-buffer UAVs.
-        // Order the complete G-buffer write phase before deferred lighting reads it as SRVs.
         for (eng::GPUResource* gbuffer : resources_.gbuffers) {
             gbuffer->uav_barrier(command_list);
         }

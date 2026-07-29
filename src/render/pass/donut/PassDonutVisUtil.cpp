@@ -237,7 +237,7 @@ namespace rndr {
             command_list,
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        const std::uint32_t bin_count = MAX_SHADER_COUNT;
+        const std::uint32_t bin_count = resources_.scene->active_material_class_count;
         command_list->SetPipelineState(pso_prefixscan_.get());
         command_list->SetComputeRootSignature(
             pso_prefixscan_.get_root_signature());

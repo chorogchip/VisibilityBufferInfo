@@ -583,6 +583,10 @@ namespace scene {
             static_cast<uint32_t>(draw_instances.size());
         destination.draw_instance_id_capacity =
             static_cast<uint32_t>(draw_instance_ids.size());
+
+
+        destination.active_material_class_count = source.active_material_class_count;
+
         BenchmarkSceneGPUValidator::validate(destination);
         return destination;
     }

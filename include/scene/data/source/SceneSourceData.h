@@ -42,5 +42,7 @@ namespace scene {
         std::vector<source::SourceAsset> source_assets;
         std::vector<source::ConversionDiagnostic> conversion_diagnostics;
 
+
+        uint32_t active_material_class_count = 0;
     };
 }

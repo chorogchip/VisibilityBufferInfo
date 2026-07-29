@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <vector>
+#include <limits>
 
 #include "util/Logger.h"
 #include "math/MyRNG.h"
@@ -39,6 +40,8 @@ namespace scene {
                 material.virtual_shader_id =
                     bin_permutation[logical_bin];
             }
+
+            scene.active_material_class_count = active_bin_count;
         }
 
         void assign_pbr_features(
@@ -86,6 +89,8 @@ namespace scene {
             util::Logger::g_logger.assert_with_log(
                 mat_bin <= params.max_material_real_open,
                 "virtual material based on pbr exceeds real limit");
+
+            scene.active_material_class_count = mat_bin;
         }
     }
 

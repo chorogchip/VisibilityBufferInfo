@@ -329,6 +329,7 @@ namespace scene {
             DirectX::XMMatrixIdentity(),
             destination);
         append_draw_calls(destination);
+        destination.active_material_class_count = source.active_material_class_count;
         SceneCPUValidator::validate(destination);
         return destination;
     }

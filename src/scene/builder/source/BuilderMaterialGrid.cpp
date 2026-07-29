@@ -55,6 +55,7 @@ namespace scene {
             if (material_count == 0) return ret;
 
             scene.materials.resize(material_count);
+            scene.active_material_class_count = material_count;
 
             for (uint32_t i = 0; i < material_count; ++i) {
                 scene.materials[i].virtual_shader_id = i;

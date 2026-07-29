@@ -20,6 +20,7 @@ namespace eng {
         void set_shader_vertex(IDxcBlob* shader);
         void set_shader_pixel(IDxcBlob* shader);
         void set_shader_compute(IDxcBlob* shader);
+        void set_shader_compute(const std::vector<Microsoft::WRL::ComPtr<IDxcBlob>>& shaders);
         void set_manual_vertex_fetch();
         void set_depth_only();
         void set_depth_equal();
@@ -45,7 +46,7 @@ namespace eng {
         PipelineType pipeline_type_ = PipelineType::Undefined;
         Microsoft::WRL::ComPtr<IDxcBlob> vertex_shader_;
         Microsoft::WRL::ComPtr<IDxcBlob> pixel_shader_;
-        Microsoft::WRL::ComPtr<IDxcBlob> compute_shader_;
+        std::vector<IDxcBlob*> compute_shaders_;
         bool depth_only_ = false;
         bool depth_equal_ = false;
         bool fullscreen_ = false;

@@ -101,6 +101,9 @@ namespace scene {
         std::vector<DrawCall> draw_calls;
         math::AABB world_aabb{};
 
+
+
+        uint32_t active_material_class_count = 0;
     };
 
     static_assert(sizeof(SceneCPUData::Vertex) == 48);

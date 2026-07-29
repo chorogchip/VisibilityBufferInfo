@@ -20,10 +20,7 @@ namespace math {
         }
     }
 
-    double MyOrdering::z_order(
-        uint32_t x,
-        uint32_t y,
-        uint32_t width) {
+    double MyOrdering::z_order(uint32_t x, uint32_t y, uint32_t width) {
 
         if (width == 0) return 0.0f;
 

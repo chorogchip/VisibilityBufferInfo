@@ -77,7 +77,7 @@ namespace eng {
         pipeline_type_ = PipelineType::Undefined;
         vertex_shader_.Reset();
         pixel_shader_.Reset();
-        compute_shader_.Reset();
+        compute_shaders_.clear();
         root_signature_.Reset();
         pso_.clear();
         depth_only_ = false;
@@ -109,7 +109,11 @@ namespace eng {
         pixel_shader_ = shader;
     }
     void GraphicsPipeline::set_shader_compute(IDxcBlob* shader) {
-        compute_shader_ = shader;
+        compute_shaders_.push_back(shader);
+    }
+    void GraphicsPipeline::set_shader_compute(const std::vector<Microsoft::WRL::ComPtr<IDxcBlob>>& shaders) {
+        for (auto& o : shaders)
+            compute_shaders_.push_back(o.Get());
     }
 
     void GraphicsPipeline::set_manual_vertex_fetch() {
@@ -161,18 +165,21 @@ namespace eng {
 
         if (pipeline_type_ == PipelineType::Compute) {
             util::Logger::g_logger.assert_with_log(
-                compute_shader_ != nullptr,
+                !compute_shaders_.empty(),
                 "compute pipeline requires a compute shader");
 
             D3D12_COMPUTE_PIPELINE_STATE_DESC desc{};
             desc.pRootSignature = root_signature_.Get();
-            desc.CS = {
-                compute_shader_->GetBufferPointer(),
-                compute_shader_->GetBufferSize()
-            };
 
+            util::Logger::g_logger.assert_with_log(
+                compute_shaders_.size() == virtually_duplicate_count,
+                "compute shader size mismatch");
 
             for (uint32_t i = 0; i < virtually_duplicate_count; ++i) {
+                desc.CS = {
+                    compute_shaders_[i]->GetBufferPointer(),
+                    compute_shaders_[i]->GetBufferSize()
+                };
                 pso_.emplace_back();
                 Microsoft::WRL::ComPtr<ID3D12InfoQueue> info_queue =
                     get_info_queue(device_);

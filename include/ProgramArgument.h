@@ -18,7 +18,7 @@ namespace util {
     X(bool, to_use_scene, to-use-scene) \
     X(bool, to_load_texture, to-load-texture) \
     X(bool, use_vfc, use-vfc) \
-    X(uint32_t scene_variant, scene-variant) \
+    X(uint32_t, scene_variant, scene-variant) \
     X(std::string, scene_importer, scene-importer) \
     X(std::string, scene_path, scene-path) \
     X(uint32_t, warmup_frames, warmup-frames) \

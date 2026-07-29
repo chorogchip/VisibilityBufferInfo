@@ -20,6 +20,7 @@ namespace util {
         to_use_scene(true),
         to_load_texture(true),
         use_vfc(true),
+        scene_variant(0),
         scene_importer("auto"),
         scene_path("assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx"),
         warmup_frames(60),
@@ -66,8 +67,7 @@ namespace util {
         texture_count(1),
         texture_size(256),
         texture_sampling_count(1),
-        alu_calc_count(100) {
-    }
+        alu_calc_count(100) {}
 
 namespace {
 
