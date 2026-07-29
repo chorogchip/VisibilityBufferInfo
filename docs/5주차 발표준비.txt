@@ -5,13 +5,13 @@
 일단은 지금 깃에서 남은 게 있어서 프로젝트를 작업하기보단 ppt를 작업하는게 좋다.
 
 - 더 다양한 씬 구하고 불러오기 - gpt 말함 -> 씬 받음 -> CMake 완료되면 진행
-- 인공 씬 material 관련 파라미터 부여하기 - pending
-- 스레드 그룹 잘 만지기작업 - pending
-- shader_class_id 관련해서 인자로 작업작업 - pending
-- donut deferred vs visbuf shader수 달리해가면서 비교작업 - pending
-- visbuf가 느릴텐데 HW 프로파일링 해보기작업 - pending
-- 프레임 캡쳐 결과 뽑고 시각화작업 - pending
-- 최종 그래프 그리기작업 - pending
+- 인공 씬 material 관련 파라미터 부여하기 - pending -> 완료
+- 스레드 그룹 잘 만지기작업 - pending -> 완료
+- shader_class_id 관련해서 인자로 작업작업 - pending -> 완료
+- donut deferred vs visbuf shader수 달리해가면서 비교작업 - pending -> 진행중
+- visbuf가 느릴텐데 HW 프로파일링 해보기작업 - pending -> 안함
+- 프레임 캡쳐 결과 뽑고 시각화작업 - pending -> 안함
+- 최종 그래프 그리기작업 - pending -> 나중에
 - Loose tiled material binning의 근거 확보 (locality의 영향)작업 - pending
 - 가능하면 jungle 작업 - pending
 - 이후 AB 시각화 js 작업 - 내일
@@ -185,16 +185,37 @@ appendix에서 visbuf의 format / barycentric / derivative / material 관련 다
 > 이거 위에 녹임
 
 [TODO]
-- 씬 구하기
-- 스레드 그룹 만지기
-- shader class 만지기
+- 씬 구하기 -> 완료, fbx는 바로 실행 가능
 
-material 실험
+d-----      2026-07-06  오전 10:20                Bistro_v5_2
+d-----      2026-07-06  오전 10:22                breakfast_room
+d-----      2026-07-06  오전 10:22                CornellBox
+d-----      2026-07-06  오전 10:39                EmeraldSquare_v4_1
+d-----      2026-07-06  오전 10:23                hairball
+d-----      2026-07-29  오전 11:57                hidden_alley
+d-----      2026-07-06  오전 10:38                JungleRuins_1_0_1b
+d-----      2026-07-06  오전 10:39                main_sponza
+d-----      2026-07-29  오전 11:53                moon
+d-----      2026-07-29  오전 11:55                namaqualand
+d-----      2026-07-29  오전 11:54                pawn_shop
+d-----      2026-07-29  오전 11:54                pine_forest
+d-----      2026-07-06  오전 10:38                pkg_b_ivy1
+d-----      2026-07-06  오전 10:39                pkg_d_10k_candles
+d-----      2026-07-06  오전 10:27                San_Miguel
+d-----      2026-07-06  오전 10:37                SunTemple_v4
+d-----      2026-07-29  오전 11:56                the_shed
+d-----      2026-07-29  오전 11:56                verdant_trail
+d-----      2026-07-29  오전 11:54                ZeroDay_v1
+
+- 스레드 그룹 만지기 -> 완료
+- shader class 만지기 -> 완료
+
+material 실험 -> 거의다 함
 sponza, bistro 실험
-- 실험들엔 HW 프로파일링 동반
-- 프레임 캡쳐 결과 뽑고 시각화
+- 실험들엔 HW 프로파일링 동반 -> 못함
+- 프레임 캡쳐 결과 뽑고 시각화 -> 못함
 
-barycentric 측정
+barycentric 측정 -> 진행중
 
 [다음주로 Pending]
 alpha test
