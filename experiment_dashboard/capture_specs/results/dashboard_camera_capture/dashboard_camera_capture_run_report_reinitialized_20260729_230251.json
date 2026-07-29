@@ -1,0 +1,23 @@
+{
+  "status": "running",
+  "started_at": "2026-07-29T23:02:51+09:00",
+  "last_updated_at": "2026-07-29T23:02:51+09:00",
+  "finished_at": null,
+  "spec_path": "${REPOSITORY_ROOT}\\experiment_dashboard\\capture_specs\\dashboard_camera_capture.json",
+  "spec_copy": "${REPOSITORY_ROOT}\\experiment_dashboard\\capture_specs\\results\\dashboard_camera_capture\\dashboard_camera_capture.json",
+  "output_csv": "${REPOSITORY_ROOT}\\experiment_dashboard\\capture_specs\\results\\dashboard_camera_capture\\dashboard_camera_capture.csv",
+  "report_json": "${REPOSITORY_ROOT}\\experiment_dashboard\\capture_specs\\results\\dashboard_camera_capture\\dashboard_camera_capture_run_report.json",
+  "completed_runs": 0,
+  "successful_runs": 0,
+  "salvaged_runs": 0,
+  "failed_runs": 0,
+  "skipped_runs": 0,
+  "runs": [],
+  "fatal_error": null,
+  "spec_copy_error": null,
+  "experiment": "dashboard_camera_capture",
+  "executable": "${REPOSITORY_ROOT}\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+  "parameter_source": "samples",
+  "parameter_set_count": 7,
+  "total_runs": 7
+}
