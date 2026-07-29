@@ -83,6 +83,7 @@ namespace util {
         logger.assert_with_log(arg.xy_minmax > 0.0f, "xy_minmax must be greater than 0");
         logger.assert_with_log(arg.radius > 0.0f, "radius must be greater than 0");
 
+
         const uint64_t division_plus_one = static_cast<uint64_t>(arg.geometry_div) + 1;
         logger.assert_with_log(division_plus_one <=
             std::numeric_limits<uint64_t>::max() / division_plus_one,
@@ -91,5 +92,21 @@ namespace util {
         logger.assert_with_log(static_cast<uint64_t>(arg.object_count) <=
             std::numeric_limits<uint32_t>::max() / vertices_per_object,
             "object_count and geometry_div produce too much geometry");
+
+        logger.assert_with_log(
+            arg.material_assign_strategy == 0 || arg.material_assign_strategy == 1,
+            "Unknown virtual material assignment strategy.");
+
+        logger.assert_with_log(
+            arg.material_assign_max_open <= 255,
+            "Virtual material class count exceeds bin capacity.");
+
+        logger.assert_with_log(
+            0.0f <= arg.material_assign_locality && arg.material_assign_locality <= 1.0f,
+            "Virtual material locality must be in [0, 1].");
+
+        logger.assert_with_log(
+            0.0f <= arg.material_assign_diversity && arg.material_assign_diversity <= 1.0f,
+            "Virtual material diversity must be in [0, 1].");
 	}
 }

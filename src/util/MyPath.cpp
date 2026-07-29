@@ -17,6 +17,12 @@ namespace util {
 		return value.find(str) != std::string::npos;
 	}
 
+	bool MyPath::is_extention_lower_contain(const char* str) const {
+		std::string extension = path_.extension().string();
+		for (auto& ch : extension) ch = std::tolower(ch);
+		return extension.find(str) != std::string::npos;
+	}
+
 	bool MyPath::is_regular() const {
 		return std::filesystem::is_regular_file(path_);
 	}

@@ -14,16 +14,6 @@ namespace scene {
     std::unique_ptr<SceneSourceData> BuilderQuads::build(const BuilderQuadsConfig& config) {
         auto scene = std::make_unique<SceneSourceData>();
 
-        util::Logger::g_logger.assert_with_log(
-            config.object_count > 0,
-            "Synthetic plane object count must be greater than zero.");
-        util::Logger::g_logger.assert_with_log(
-            config.division > 0,
-            "Synthetic plane division must be greater than zero.");
-        util::Logger::g_logger.assert_with_log(
-            config.overdraw_count < config.object_count,
-            "Synthetic plane overdraw count must be less than object count.");
-
         scene->root_node_id = 0;
         scene->materials.emplace_back();
 
@@ -65,7 +55,7 @@ namespace scene {
         node.instance_count = config.object_count;
 
         SceneSourceDataValidator::validate(*scene);
-        return std::move(scene);
+        return scene;
     }
 
     namespace {

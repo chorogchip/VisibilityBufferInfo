@@ -1,0 +1,213 @@
+
+5주차에서 승부를 봐야 한다.
+반드시!!
+
+일단은 지금 깃에서 남은 게 있어서 프로젝트를 작업하기보단 ppt를 작업하는게 좋다.
+
+- 더 다양한 씬 구하고 불러오기 - gpt 말함 -> 씬 받음 -> CMake 완료되면 진행
+- 인공 씬 material 관련 파라미터 부여하기 - pending
+- 스레드 그룹 잘 만지기작업 - pending
+- shader_class_id 관련해서 인자로 작업작업 - pending
+- donut deferred vs visbuf shader수 달리해가면서 비교작업 - pending
+- visbuf가 느릴텐데 HW 프로파일링 해보기작업 - pending
+- 프레임 캡쳐 결과 뽑고 시각화작업 - pending
+- 최종 그래프 그리기작업 - pending
+- Loose tiled material binning의 근거 확보 (locality의 영향)작업 - pending
+- 가능하면 jungle 작업 - pending
+- 이후 AB 시각화 js 작업 - 내일
+
+[발표 흐름]
+
+> 슬라이드 1: 제목
+
+지난 5주간 visibility Buffer가 이득을 얻는 조건을 여러 변수 하에서 측정했습니다.
+이번 발표에서는 그 실험을 마무리해 세 가지 결론을 제시합니다.
+- visibility Buffer가 유리한 조건
+- 실제 PBR 렌더러에 적용 시 병목이나 문제되는 지점
+- 그 결과 Jungle Ruins 렌더러를 어떤 구조로 만들 것인가
+
+> 슬라이드 2: 오늘 한 것과 내린 결론을 항목화해 요약 (결론 중심)
+
+Nanite, Doom dark ages, Horizon forbidden west 등에서 visibility buffer 알고리즘을 차용했습니다.
+visibility buffer의 옵션들을 요약하면 다음 그림과 같습니다.
+visibility buffer 알고리즘의 핵심은 삼각형의 id를 저장하는 visibility buffer를 구성한 후 
+prepass처럼 overdraw를 막는 효과를 가지면서, 보이지 않는 정점의 중복된 geometry 처리가 줄고,
+셰이딩을 지연시켜 2x2 quad lane으로 인해 낭비되는 프래그먼트의 비용을 줄일 수 있는 것이 장점입니다.
+여기서 어떤 선택사항이 있다 설명
+고민들 - gbuffer 쓸것인가? dericvatiev / amtewria;sdad.as.da sd 그런것들
+
+* 발표 전체를 하나로 묶을 중심식이 필요함.
+- 순이익(prepass deferred에 비해) = 피한 중복 geometry + 피한 quad shading - visibility record
+	- attribute복원(indirect, barycentric, derivative) - material scheduling - shading locality 떨어짐
+
+
+> 슬라이드 3: visibility의 선택 사항 경로 그림을 띄워놓고 visbuf의 핵심과 이득을 설명함.
+다른 게임이나 엔진들은 마커로만 심플하게 달아놓고 말로 언급함.
+visibility 표현 / attribute 복원 / detivative / material 실행 / 기타 gbuffer+alpha testing 등
+내가 선택한 사항을 강조해 표시함, 결정한 이유를 말함, 성능적 특성을 약간 설명
+
+> 슬라이드 4: 중심식을 띄워놓고 간단한 설명, 각 항별로 한 실험의 이름과 대표 이미지를 첨부함.
+중심식은 deferred + prepass 와 비교한 결과를 기준으로 함.
+각 항별로 실험의 상태 (전주에 실행 / 이번주에 실행 / 고도화 단계에서 실행 / 범위 밖) 표기
+
+여기서 장점 항은 다 측정했고
+단점 항은 아래에서 측정할 것임.
+마치 렌더링 논문에서 rendering equation 쓰듯이 쓰면 됨.
+
+nanite에서는 ~ doom에서는 ~ horizon에서는 ~ 이런 목적으로 사용했습니다.
+
+이 프로젝트는 visibiltiy buffer 의 성능적인 특성을 분석하고 다른 기법과 비교해 유불리한 지점을 실험적으로 탐색,
+해당 기법의 적용 시에 유의미하게 고려할 수 있는 결론을 만들어내고자 하는 취지를 가지고 있습니다.
+파트는 실험과 고도화 두 부분으로 나눠집니다. 실험은 인공 씬과 실제 씬을 모두 사용, 렌더러는 점차 발전시키며
+donut의 deferred lighting / tome mapping 셰이더를 그대로 가져오고 버퍼나 상수는 가장 영향이 적은 값을 사용하는 형태로 진행합니다.
+비교 알고리즘은 forward (+prepass), deferred (+prepass), visbuf (+gbuffer) 의 여섯 개이고,
+추가로 debug view / frame statistics / visbuf view 용 렌더러가 있으며
+카메라 녹화/보간/재생, timestamp query readback, csv write 등의 기능을 사용해 측정하고 기록합니다.
+
+> 이거 그냥 넘어가자 다 아는거니까
+
+visbuf가 이득을 볼 수 있는 세 지점에 대한 실험을 인공 씬을 사용해 전 주차에 진행했고, ~한 결론이 나왔습니다.
+(geometry 처리, overdraw, quad 에 관한 전 주차 실험 내용 요약)
+이를 통해 성능 모델을 세우고 검증할 수 있었습니다.
+
+gbuffer의 경우 많은 상황에서 gbuffer가 필요하고, gbuffer를 구성하지 않을 경우 렌더러의 다른 부분이 visbuf에 많은 영향을 받으므로
+gbuffer는 구성한다고 가정했습니다. 따라서 이후 고도화엔 gbuffer를 구축하며 deferred와 비교하게 됩니다.
+(하지만 논문에서는 gbuffer를 오늘 실험을 진행해 나온 부분을 발표 - 이거 하자 이미 알고리즘 다 구성돼서 실험만 하면 된다
+	-> gbuffer 대역폭으로 인한 장점도 이번 주차에 실험을 진행해, 이번 주 첫 번쨰 활동으로 후술하겠습니다)
+
+
+반만 주 단점으로는 indirect access 증가와 barycentric/derivative 복원 비용, material 관련 스케줄링 비용,
+알파 테스팅/모션벡터 문제 등이 있습니다.
+
+barycentric/derivative 복원 비용의 상한은 씬 지오메트리의 월드 공간 복잡도에 무관하다고 판단해
+하나의 구현을 만든 후 이번 주 측정/검증만 거쳤습니다.
+이후 jungle에서도 개선을 할 수 있기 때문입니다.
+이는 이번 주 두 번째 활동으로 후술합니다.
+
+ material역시 PSO의 개수를 제외하면 씬 지오메트리의 월드 공간 복잡도와 무관하다고 판단해
+하나의 구현을 한 후 측정/검증을 진행했습니다.
+이후 jungle에서도 개선을 할 수 있기 때문입니다.
+다만 PSO 수나 material 분포의 locality와의 연관성이 있기에 이번 주 실험을 진행했습니다.
+이는 이번 주 세 번쨰 활동으로 후술합니다.
+
+indirect access는 (가능하면 간단한 실험 진행)
+-> 넘어감.
+넘어간 이유: 나중에 HW counter로 다룰 수 있어서. (영향을 받는 게 명확하고 나중에도 관측 가능하므로)
+
+기타 alpha test / motion vector / MSAA 등에서 일어나는 문제는 추후 고도화와 함께 진행할 예정입니다.
+
+> 위 내용들은 슬라이드 3, 4에서 나눠 설명함
+
+이제 최종적으로 한 실험 목록을 요약하겠습니다.
+- 실험 목록 : 사용한 씬 / 알고리즘 / 렌더러 / 결론 이 들어간 표
+-> 단 geometry / overdraw / quad는 표에는 있지만 후술은 없음
+
+> 슬라이드 5: 실험 요약 표
+질문, 환경(씬,렌더러) 데이터(그래프), 결론, 설계에 반영한 결정사항
+
+> 슬라이드 6: 실험 셋 1 - geometry / overdraw / quad 실험과 결과 재조명 (한 장만, 결론 중심)
+
+- gbuffer 실험 설명, 분석, 결론
+	이론적 bandwidth, HW 수치에 집중
+사실 이건 약하다. 그냥 빼는것도 고려해볼 수 있다 (gbuffer 어차피 쓰고 앞으로도 계속 쓸거임!)
+-> 뺴자. 제외. 넘어감.
+
+- barycentric 측정 설명, 분석, 결론
+	deferred와 ddx ddy LOD레벨 이미지로 시각화 후 검증
+이건 correcness 검증에 집중, 5주차에서 세 번째로 강조
+두 이미지 시각적 비교, 차이 heatmap, 통계 수집
+
+> 슬라이드 7+: 실험 셋 2 (여러 슬라이드 가능, 방법과 검증만 요약하면 됨)
+결론은 analytic derivative로 raster LOD를 재현하기 충분하다 뭐 이런 느낌의 결론
+이 실험은 성능 관계없으니 집에서 하면 될듯.
+
+- material 실험 설명, 결론
+	시행착오: SM 6.6, prefix scan의 wave관련, 0 thread indirectaccess, PSO 수 상한 등
+	성능적 특성 잘 분석
+사실 material이 이번 5주차의 가장 강한 결론 두개중 하나이다. 이걸 강조해야 한다.
+shader diversity, GPU work compaction, prefix scan, indirect dispatch, divergence, 화면공간 locality, texture/vertex cache / active shader class 수 등
+이걸 좀 집중적으로 실험해서 잘 결론을 내자.
+shader class 수와 공간적 locality(entropy)가 입력 변수이므로
+winning map을 만든다던지 그런 것 (저번에 했던것처럼)
++ HW 프로파일
+
+> 슬라이드 8+: 실험 셋 3 (여러 슬라이드 가능)
+이 실험 오늘 안에 해야함
+여기를 강조.
+
+이제 인공 씬에서 했으니 실제를 보겠습니다
+실제 장면에도 이 결과가 유지되는가? 를 본 실험이라고 보면 됩니다.
+- sponza, bistro에서 카메라 워크 하며 deferred vs visbuf 실험 내용 자세, 결론
+- 5주차의 가장 강한 두 결론 중 나머지 하나.
+
+> 슬라이드 9+: 실험 셋 4 (여러 슬라이드 가능)
+최대한 다양한 씬을 쓰는걸 목표로 함.
+그리고 HW분석.
+
+이제 실험을 통해 얻은 최종 결론을 내리겠습니다.
+(다시 한 번 요약 정리)
+
+> 슬라이드 10:
+머시기는 문제가 됐고 머시기는 문제가 안됐다
+수치가 어떻고 뭐 그런거
+그래서 나는 고도화할때 어케 할거다
+
+마지막으로, 이제 프로젝트 방향을 완전히 고도화 쪽으로 틀겠습니다.
+이후 3주간 진행할 Intel Jungle Scene 고도화 계획에 대해 말씀드리겠습니다.
+
+Intel Jungle Scene은 인스턴스가 엄청 많고.. 청크단위고.. 개인이 만든 렌더러가 잘 없고.. 뭐 이런얘기
+0. visbuf의 기본 옵션은 어떻고, 알파는 어케 처리할거고, material은 어떻고 뭐 이런거 
+> 이건 전에 언급했으니 빼도 된다.
+1. culling에 집중하겠다(GPU driven 가능, frustum, meshlet, indirect, Hi-Z, draw compaction 등)
+2. alpha test를 진행하고 shader permutation 등을 하면서 실제 품질로 뽑아내겠다
+3. 이 과정에서 barycentric / material binning 등에서 병목이 발견된다면 개선해나가겠다
+4. 시간이 남으면 SW raster 등 고급 기법을 시도해보겠다.
+목표: Intel Scene을 받아서 visbuf를 이용해 좋은 성능으로 렌더링하는 것.
+
+> 슬라이드 11:
+씬 선정 이유 다시 명확히 (visbuf의 장단점이 동시에 나타나고 양적으로 다루기 까다롭고 그런거)
+instance많음 -> GPUdriven / triangle 작음 -> quad waste / foiulage -> alpha test / material -> binning / working set 넓음 -> indirect access
+
+이번주차 요약은
+1. visbuf 전체 수식 세움
+2. 실험 및 진행 - gbuffer, material, derivativer 검증, 전체 씬별
+3. 데이터를 바탕으로 결론을 내림
+4. Jungle Scene을 불러오기 시작함
+
+> 슬라이드 12: 머머 했다. 끝.
+
+감사합니다.
+
+[PPT 시간남으면 추가할 후순위]
+appendix에서 클래스 다이어그램
+appendix에서 visbuf의 format / barycentric / derivative / material 관련 다양한 선택지 후보들 분석
+
+> 이거 위에 녹임
+
+[TODO]
+- 씬 구하기
+- 스레드 그룹 만지기
+- shader class 만지기
+
+material 실험
+sponza, bistro 실험
+- 실험들엔 HW 프로파일링 동반
+- 프레임 캡쳐 결과 뽑고 시각화
+
+barycentric 측정
+
+[다음주로 Pending]
+alpha test
+loose tiled material binning
+jungle 작업
+
+
+_______________________________
+
+오늘은 스레드 그룹 만지고 shader class 만져서
+material 실험 뽑고 가능하면 여러 씬 실험 뽑으면 된다!
+
+
+
+
+

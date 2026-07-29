@@ -18,6 +18,7 @@ namespace util {
     X(bool, to_use_scene, to-use-scene) \
     X(bool, to_load_texture, to-load-texture) \
     X(bool, use_vfc, use-vfc) \
+    X(uint32_t scene_variant, scene-variant) \
     X(std::string, scene_importer, scene-importer) \
     X(std::string, scene_path, scene-path) \
     X(uint32_t, warmup_frames, warmup-frames) \
@@ -37,6 +38,10 @@ namespace util {
     X(uint32_t, window_width, window-width) \
     X(uint32_t, window_height, window-height) \
     X(uint32_t, seed, seed) \
+    X(uint32_t, material_assign_strategy, material-assign-strategy) \
+    X(uint32_t, material_assign_max_open, material-assign-max-open) \
+    X(float, material_assign_locality, material-assign-locality) \
+    X(float, material_assign_diversity, material-assign-diversity) \
     X(float, camera_pos_x, camera-pos-x) \
     X(float, camera_pos_y, camera-pos-y) \
     X(float, camera_pos_z, camera-pos-z) \

@@ -275,13 +275,6 @@ namespace scene {
                 input,
                 { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP }));
 
-
-
-
-            // TEMP CODE
-            static int i = 0;
-            material.virtual_shader_id = i++ % 255;
-
             return material;
         }
 
