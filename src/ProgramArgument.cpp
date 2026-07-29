@@ -17,6 +17,7 @@ namespace util {
         output_filepath("out_result.csv"),
         renderer_variant(9),
         visibility_debug_mode(2),
+        donut_linear_gbuffer(false),
         variable(0),
         to_use_scene(true),
         to_load_texture(true),

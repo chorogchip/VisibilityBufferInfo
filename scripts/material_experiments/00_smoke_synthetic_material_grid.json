@@ -44,7 +44,7 @@
                  "camera_far_z":  1000,
                  "camera_fov":  0.785,
                  "object_count":  1,
-                 "material_count":  1,
+                 "material_count":  255,
                  "geometry_count":  1,
                  "overdraw_count":  0,
                  "to_remain_only_in_camera":  false,
@@ -61,36 +61,42 @@
     "samples":  [
                     {
                         "variable":  0,
+                        "material_count":  1,
                         "material_assign_max_open":  1,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0
                     },
                     {
                         "variable":  1,
+                        "material_count":  8,
                         "material_assign_max_open":  8,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0
                     },
                     {
                         "variable":  2,
+                        "material_count":  8,
                         "material_assign_max_open":  8,
                         "material_assign_locality":  0.0,
                         "material_assign_diversity":  1.0
                     },
                     {
                         "variable":  3,
+                        "material_count":  64,
                         "material_assign_max_open":  64,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0
                     },
                     {
                         "variable":  4,
+                        "material_count":  64,
                         "material_assign_max_open":  64,
                         "material_assign_locality":  0.0,
                         "material_assign_diversity":  1.0
                     },
                     {
                         "variable":  5,
+                        "material_count":  255,
                         "material_assign_max_open":  255,
                         "material_assign_locality":  0.0,
                         "material_assign_diversity":  1.0

@@ -89,7 +89,6 @@ struct DepthPushConstants
     uint startInstanceLocation;
     uint startVertexLocation;
     uint positionOffset;
-    uint texCoordOffset;
 };
 
 struct GBufferPushConstants

@@ -41,8 +41,7 @@ cbuffer c_Push : register(b1, space1)
 void buffer_loads(
     in uint i_vertex : SV_VertexID,
     in uint i_instance : SV_InstanceID,
-    out float4 o_position : SV_Position,
-    out float2 o_texCoord : TEXCOORD)
+    out float4 o_position : SV_Position)
 {
     const uint compactedSlot = i_instance + g_Push.startInstanceLocation;
     const uint drawInstanceID = t_DrawInstanceIDs[compactedSlot];
@@ -53,10 +52,6 @@ void buffer_loads(
 
     float3 pos = asfloat(t_Vertices.Load3(
         g_Push.positionOffset + i_vertex * SizeOfPosition));
-    float2 texCoord = asfloat(t_Vertices.Load2(
-        g_Push.texCoordOffset + i_vertex * SizeOfTexcoord));
-
     float3 worldPos = mul(instance.transform, float4(pos, 1.0));
-    o_texCoord = texCoord;
     o_position = mul(float4(worldPos, 1.0), g_Depth.matWorldToClip);
 }

@@ -44,7 +44,7 @@
                  "camera_far_z":  1000,
                  "camera_fov":  0.785,
                  "object_count":  1,
-                 "material_count":  1,
+                 "material_count":  64,
                  "geometry_count":  1,
                  "overdraw_count":  0,
                  "to_remain_only_in_camera":  false,

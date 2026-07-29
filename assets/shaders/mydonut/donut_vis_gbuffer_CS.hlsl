@@ -235,11 +235,6 @@ void main(uint3 tid : SV_DispatchThreadID)
     }
     opacity = saturate(opacity);
 
-    if (IsAlphaTestedDomainValue(material.domain) && opacity < material.alphaCutoff)
-    {
-       return;
-    }
-
     float4 metalRoughnessTexture = float4(1.0, 1.0, 1.0, 1.0);
     if (HasMaterialDataFlag(material, MaterialDataFlags_MetalRoughnessTexture))
     {
@@ -297,8 +292,13 @@ void main(uint3 tid : SV_DispatchThreadID)
             texCoordDy).rgb;
     }
     
+#if DONUT_LINEAR_GBUFFER
+    gBufferChannel0[pixel] = float4(diffuseAlbedo, opacity);
+    gBufferChannel1[pixel] = float4(specularF0, occlusion);
+#else
     gBufferChannel0[pixel] = float4(LinearToSrgb(diffuseAlbedo), opacity);
     gBufferChannel1[pixel] = float4(LinearToSrgb(specularF0), occlusion);
+#endif
     gBufferChannel2[pixel] = float4(normalize(normal), roughness);
     gBufferChannel3[pixel] = float4(emissive, 0.0);
 }

@@ -14,7 +14,6 @@ struct JungleDepthPushConstants
     uint startInstanceLocation;
     uint prototypeID;
     uint positionOffset;
-    uint texCoordOffset;
 };
 
 cbuffer c_Push : register(b1, space1)
@@ -30,8 +29,7 @@ cbuffer c_Depth : register(b2, space2)
 void main(
     uint vertexId : SV_VertexID,
     uint instanceId : SV_InstanceID,
-    out float4 position : SV_Position,
-    out float2 texCoord : TEXCOORD)
+    out float4 position : SV_Position)
 {
     const uint pointInstanceID =
         t_PointInstanceIDs[
@@ -43,8 +41,6 @@ void main(
 
     const float3 localPosition = asfloat(t_Vertices.Load3(
         g_Push.positionOffset + vertexId * SizeOfPosition));
-    texCoord = asfloat(t_Vertices.Load2(
-        g_Push.texCoordOffset + vertexId * SizeOfTexcoord));
     const float3 worldPosition = JungleTransformPoint(
         pointInstance,
         prototype,

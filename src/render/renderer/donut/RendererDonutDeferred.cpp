@@ -45,11 +45,17 @@ namespace rndr {
 		}
 
 		for (UINT i = 0; i < GBUFFER_COUNT; ++i) {
+			const DXGI_FORMAT format =
+				program_argument_.donut_linear_gbuffer
+					? util::RenderConstants::
+						DONUT_GBUFFER_NON_SRGB_FORMATS[i]
+					: util::RenderConstants::
+						DONUT_GBUFFER_FORMATS[i];
 			gbuffers_[i].init(dxutl::create_texture2d(
 				device_.Get(),
 				width_,
 				height_,
-				util::RenderConstants::DONUT_GBUFFER_FORMATS[i],
+				format,
 				D3D12_HEAP_TYPE_DEFAULT,
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 				D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,

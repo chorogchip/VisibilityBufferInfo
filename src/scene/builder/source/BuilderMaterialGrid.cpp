@@ -49,16 +49,22 @@ namespace scene {
             source::Mesh ret{};
 
             const uint32_t material_count = (std::min)(
-                config.material_limit_open,
+                config.material_count,
                 config.triangle_division * config.triangle_division);
+            const uint32_t material_class_count = (std::min)(
+                config.material_class_count,
+                material_count);
 
-            if (material_count == 0) return ret;
+            if (material_count == 0 || material_class_count == 0) {
+                return ret;
+            }
 
             scene.materials.resize(material_count);
-            scene.active_material_class_count = material_count;
+            scene.active_material_class_count = material_class_count;
 
             for (uint32_t i = 0; i < material_count; ++i) {
-                scene.materials[i].virtual_shader_id = i;
+                scene.materials[i].virtual_shader_id =
+                    i % material_class_count;
             }
 
             math::MyRNG rng(config.seed);

@@ -91,9 +91,6 @@ PSOutput main(PSInput input, bool isFrontFace : SV_IsFrontFace)
         opacity *= baseTexture.a;
     opacity = saturate(opacity);
 
-    if (IsAlphaTestedDomain(g_Material))
-        clip(opacity - g_Material.alphaCutoff);
-
     float4 metalRoughnessTexture = float4(1.0, 1.0, 1.0, 1.0);
     if (HasMaterialFlag(
         g_Material.flags,

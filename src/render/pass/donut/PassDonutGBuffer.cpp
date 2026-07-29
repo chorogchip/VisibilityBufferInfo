@@ -75,10 +75,14 @@ namespace rndr {
         resources_ = resources;
         use_prepass_depth_ = use_prepass_depth;
         use_motion_vectors_ = false;
+        shader_count_ = resources_.scene->active_material_class_count;
         util::Logger::g_logger.assert_with_log(
             (resources_.jungle_scene == nullptr) ==
                 (resources_.jungle_draw_stream == nullptr),
             "Donut G-buffer Jungle point resources are incomplete.");
+        util::Logger::g_logger.assert_with_log(
+            shader_count_ > 0,
+            "Donut G-buffer requires at least one material class.");
 
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
@@ -164,11 +168,15 @@ namespace rndr {
         pso_.set_shader_vertex(vs.Get());
         pso_.set_shader_pixel(ps.Get());
         pso_.set_manual_vertex_fetch();
+        const auto& gbuffer_formats = arguments.donut_linear_gbuffer
+            ? util::RenderConstants::DONUT_GBUFFER_NON_SRGB_FORMATS
+            : util::RenderConstants::DONUT_GBUFFER_FORMATS;
         pso_.set_render_targets(
-            static_cast<UINT>(util::RenderConstants::DONUT_GBUFFER_FORMATS.size()),
-            util::RenderConstants::DONUT_GBUFFER_FORMATS.data());
+            static_cast<UINT>(gbuffer_formats.size()),
+            gbuffer_formats.data());
         if (use_prepass_depth_)
             pso_.set_depth_equal();
+        pso_.set_shader_count(shader_count_);
         pso_.build();
 
         if (resources_.jungle_scene != nullptr) {
@@ -202,14 +210,12 @@ namespace rndr {
             jungle_point_pso_.set_shader_pixel(ps.Get());
             jungle_point_pso_.set_manual_vertex_fetch();
             jungle_point_pso_.set_render_targets(
-                static_cast<UINT>(
-                    util::RenderConstants::
-                        DONUT_GBUFFER_FORMATS.size()),
-                util::RenderConstants::
-                    DONUT_GBUFFER_FORMATS.data());
+                static_cast<UINT>(gbuffer_formats.size()),
+                gbuffer_formats.data());
             if (use_prepass_depth_) {
                 jungle_point_pso_.set_depth_equal();
             }
+            jungle_point_pso_.set_shader_count(shader_count_);
             jungle_point_pso_.build();
         }
     }
@@ -236,7 +242,6 @@ namespace rndr {
             resources_.depth->transition(
                 command_list, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-        command_list->SetPipelineState(pso_.get());
         command_list->SetGraphicsRootSignature(pso_.get_root_signature());
         ID3D12DescriptorHeap* heaps[] = {
             resources_.shader_manager->get(),
@@ -296,8 +301,23 @@ namespace rndr {
         command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         command_list->IASetIndexBuffer(&resources_.scene->index_buffer_view);
 
+        std::uint32_t current_shader_id = UINT32_MAX;
         for (const auto& draw :
             resources_.draw_stream->draw_calls_compacted) {
+            util::Logger::g_logger.assert_with_log(
+                draw.material_id < resources_.scene->material_data.size(),
+                "Donut G-buffer draw material ID is invalid.");
+            const std::uint32_t shader_id =
+                resources_.scene->material_data[
+                    draw.material_id].virtual_shader_id;
+            util::Logger::g_logger.assert_with_log(
+                shader_id < shader_count_,
+                "Donut G-buffer material class ID is invalid.");
+            if (shader_id != current_shader_id) {
+                command_list->SetPipelineState(pso_.get(shader_id));
+                current_shader_id = shader_id;
+            }
+
             const PushConstants push_constants{
                 draw.first_instance,
                 0,
@@ -334,8 +354,6 @@ namespace rndr {
             return;
         }
 
-        command_list->SetPipelineState(
-            jungle_point_pso_.get());
         command_list->SetGraphicsRootSignature(
             jungle_point_pso_.get_root_signature());
         command_list->SetGraphicsRootConstantBufferView(
@@ -370,9 +388,25 @@ namespace rndr {
                 eng::ResourceManagerSampler::EnumDescPos::
                     DONUT_MATERIAL));
 
+        current_shader_id = UINT32_MAX;
         for (const auto& draw :
             resources_.jungle_draw_stream->
                 point_draw_calls_compacted) {
+            util::Logger::g_logger.assert_with_log(
+                draw.material_id < resources_.scene->material_data.size(),
+                "Donut Jungle G-buffer draw material ID is invalid.");
+            const std::uint32_t shader_id =
+                resources_.scene->material_data[
+                    draw.material_id].virtual_shader_id;
+            util::Logger::g_logger.assert_with_log(
+                shader_id < shader_count_,
+                "Donut Jungle G-buffer material class ID is invalid.");
+            if (shader_id != current_shader_id) {
+                command_list->SetPipelineState(
+                    jungle_point_pso_.get(shader_id));
+                current_shader_id = shader_id;
+            }
+
             const JunglePointPushConstants push_constants{
                 draw.first_instance,
                 draw.prototype_id,

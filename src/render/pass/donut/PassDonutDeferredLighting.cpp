@@ -109,12 +109,18 @@ namespace rndr {
 
         for (UINT i = 0; i < _countof(resources_.gbuffers); ++i) {
             ID3D12Resource* resource = resources_.gbuffers[i]->get();
+            const DXGI_FORMAT format =
+                arguments.donut_linear_gbuffer
+                    ? util::RenderConstants::
+                        DONUT_GBUFFER_NON_SRGB_FORMATS[i]
+                    : util::RenderConstants::
+                        DONUT_GBUFFER_FORMATS[i];
             resources_.shader_manager->create_srv(
                 resource,
                 eng::ResourceViewBuilder::build_srv(
                     resource,
                     eng::ResourceViewBuilder::EnumResourceType::TEXTURE_2D,
-                    util::RenderConstants::DONUT_GBUFFER_FORMATS[i]),
+                    format),
                 SRVDescPos::DONUT_GBUFFER_0,
                 i);
         }

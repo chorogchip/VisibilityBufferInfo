@@ -119,7 +119,10 @@ namespace rndr {
 
         const std::vector<std::wstring> cs_defines = {
             std::wstring(L"MYDONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
-                std::to_wstring(material_tex_desc_cnt)
+                std::to_wstring(material_tex_desc_cnt),
+            std::wstring(L"DONUT_LINEAR_GBUFFER=") +
+                std::to_wstring(
+                    arguments.donut_linear_gbuffer ? 1 : 0)
         };
 
 

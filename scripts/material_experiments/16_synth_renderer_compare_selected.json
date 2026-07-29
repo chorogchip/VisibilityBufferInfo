@@ -44,7 +44,7 @@
                  "camera_far_z":  1000,
                  "camera_fov":  0.785,
                  "object_count":  1,
-                 "material_count":  1,
+                 "material_count":  64,
                  "geometry_count":  1,
                  "overdraw_count":  0,
                  "to_remain_only_in_camera":  false,
@@ -62,6 +62,7 @@
                     {
                         "variable":  0,
                         "renderer_variant":  7,
+                        "material_count":  1,
                         "material_assign_max_open":  1,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0
@@ -69,6 +70,7 @@
                     {
                         "variable":  1,
                         "renderer_variant":  8,
+                        "material_count":  1,
                         "material_assign_max_open":  1,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0
@@ -76,6 +78,7 @@
                     {
                         "variable":  2,
                         "renderer_variant":  9,
+                        "material_count":  1,
                         "material_assign_max_open":  1,
                         "material_assign_locality":  1.0,
                         "material_assign_diversity":  1.0

@@ -56,5 +56,6 @@ namespace rndr {
         eng::GraphicsPipeline jungle_point_pso_;
         bool use_prepass_depth_ = false;
         bool use_motion_vectors_ = false;
+        std::uint32_t shader_count_ = 0;
     };
 }

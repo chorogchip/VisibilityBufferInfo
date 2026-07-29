@@ -47,7 +47,9 @@ namespace scene {
                 BuilderMaterialGrid::BuilderMaterialGridConfig config{};
                 config.seed = argument.seed;
                 config.triangle_division = argument.geometry_div;
-                config.material_limit_open = argument.material_assign_max_open;
+                config.material_count = argument.material_count;
+                config.material_class_count =
+                    argument.material_assign_max_open;
                 config.material_locality = argument.material_assign_locality;
                 config.material_diversity = argument.material_assign_diversity;
                 return BuilderMaterialGrid::build(config);
