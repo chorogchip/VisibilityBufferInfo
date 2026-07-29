@@ -1,4 +1,4 @@
-﻿{
+{
     "_description":  "발표용으로 PBR feature baseline과 RANDOM 64-class 균형/편향 조건만 전체 camera path에서 재측정한다.",
     "_status":  "runnable_now",
     "executable":  "../../out/build/x64-Release/bin/Release/TVBPerf.exe",

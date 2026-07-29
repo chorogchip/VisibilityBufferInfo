@@ -1,4 +1,4 @@
-﻿{
+{
     "_description":  "실제 장면에서 고정 64 open class의 material-to-class 점유 편향을 바꾼다.",
     "_status":  "runnable_now",
     "executable":  "../../out/build/x64-Release/bin/Release/TVBPerf.exe",

@@ -90,7 +90,7 @@ def trim_error(value: Any) -> str:
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as file:
+    with path.open("r", encoding="utf-8-sig") as file:
         spec = json.load(file)
     if not isinstance(spec, dict):
         fail("Experiment spec root must be an object.")
@@ -813,3 +813,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -1,4 +1,4 @@
-﻿{
+{
     "_description":  "실제 geometry/material 수를 고정한 채 RANDOM virtual class 상한을 바꾸는 빠른 실험이다.",
     "_status":  "runnable_now",
     "executable":  "../../out/build/x64-Release/bin/Release/TVBPerf.exe",

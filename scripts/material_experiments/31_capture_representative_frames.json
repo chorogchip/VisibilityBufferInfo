@@ -1,4 +1,4 @@
-﻿{
+{
     "_description":  "Synthetic locality 극단과 실제 장면 Deferred/VisBuf의 발표용 프레임을 캡처한다.",
     "_status":  "runnable_now",
     "executable":  "../../out/build/x64-Release/bin/Release/TVBPerf.exe",

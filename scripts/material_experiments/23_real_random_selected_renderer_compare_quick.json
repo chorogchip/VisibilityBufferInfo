@@ -1,4 +1,4 @@
-﻿{
+{
     "_description":  "선택한 RANDOM class 조건에서 Deferred+Prepass와 binned VisBuf를 빠르게 비교한다.",
     "_status":  "runnable_now",
     "executable":  "../../out/build/x64-Release/bin/Release/TVBPerf.exe",
