@@ -1,0 +1,3 @@
+# Raw run reports, sidecars, and full-resolution captures remain local.
+results/
+analysis/local_heatmaps/
