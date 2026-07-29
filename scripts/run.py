@@ -551,7 +551,7 @@ def run_experiment(
 
                 combined_error = " | ".join(
                     part
-                    for part in (process_error, read_error, stderr_text)
+                    for part in (process_error, read_error)
                     if part
                 )
                 run_status, csv_rows = build_csv_rows(
