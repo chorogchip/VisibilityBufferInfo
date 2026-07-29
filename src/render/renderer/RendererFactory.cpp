@@ -13,7 +13,12 @@
 
 namespace rndr {
 
-    std::unique_ptr<RendererBase> create_renderer(uint32_t renderer_variant) {
+    std::unique_ptr<RendererBase> create_renderer(
+        uint32_t renderer_variant,
+        uint32_t visibility_debug_mode) {
+
+        const auto debug_mode =
+            static_cast<VisibilityDebugMode>(visibility_debug_mode);
         switch (renderer_variant) {
         case  1: return std::make_unique<RendererForward>(false);
         case  2: return std::make_unique<RendererForward>(true);
@@ -26,10 +31,8 @@ namespace rndr {
         case  9: return std::make_unique<RendererDonutVisGBuffer>();
         case 10: return std::make_unique<RendererRasterStats>();
         case 11: return std::make_unique<RendererDebugView>();
-        case 12: return std::make_unique<RendererVisBufDebug>(
-            VisibilityDebugMode::GeometryPrimitiveHash);
-        case 13: return std::make_unique<RendererDonutVisDebug>(
-            VisibilityDebugMode::GeometryPrimitiveHash);
+        case 12: return std::make_unique<RendererVisBufDebug>(debug_mode);
+        case 13: return std::make_unique<RendererDonutVisDebug>(debug_mode);
         default:
             util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
             return nullptr;

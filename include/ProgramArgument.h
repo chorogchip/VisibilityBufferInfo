@@ -14,6 +14,7 @@ namespace util {
     X(std::string, run_name, run-name) \
     X(std::string, output_filepath, output-filepath) \
     X(uint32_t, renderer_variant, renderer-variant) \
+    X(uint32_t, visibility_debug_mode, visibility-debug-mode) \
     X(uint32_t, variable, variable) \
     X(bool, to_use_scene, to-use-scene) \
     X(bool, to_load_texture, to-load-texture) \
