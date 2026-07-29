@@ -236,7 +236,7 @@ public static class RunAllSleepControl
     }
 
     # ES_CONTINUOUS | ES_SYSTEM_REQUIRED. The display may turn off; the PC should not sleep.
-    [RunAllSleepControl]::SetThreadExecutionState([uint32]0x80000001) | Out-Null
+    [RunAllSleepControl]::SetThreadExecutionState([Convert]::ToUInt32("80000001", 16)) | Out-Null
     $sleepPreventionEnabled = $true
 
     Write-Host "[PRECHECK] Creating isolated automation branch: $automationBranch"
@@ -424,7 +424,7 @@ public static class RunAllSleepControl
 finally {
     if ($sleepPreventionEnabled -and ("RunAllSleepControl" -as [type])) {
         # ES_CONTINUOUS: release the keep-awake request.
-        [RunAllSleepControl]::SetThreadExecutionState([uint32]0x80000000) | Out-Null
+        [RunAllSleepControl]::SetThreadExecutionState([Convert]::ToUInt32("80000000", 16)) | Out-Null
     }
 
     if ($null -ne $lockStream) {
@@ -435,3 +435,4 @@ finally {
         Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
     }
 }
+
