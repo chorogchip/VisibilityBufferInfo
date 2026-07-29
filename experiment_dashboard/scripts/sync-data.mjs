@@ -8,7 +8,7 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parse } from "csv-parse/sync";
@@ -1302,13 +1302,73 @@ async function verifyBundle() {
     throw new Error("dashboard.json does not exist; run npm run data:sync first.");
   }
   const committed = await readJson(DASHBOARD_JSON);
-  const source = await buildBundle({ write: false });
-  const committedShape = JSON.stringify(committed);
-  const sourceShape = JSON.stringify(source);
-  if (committedShape !== sourceShape) {
-    throw new Error("Deployable dashboard data is stale relative to its sources.");
+
+  const sourceDataset = join(CAMPAIGN_DATA, "all_results_normalized.csv");
+  if (await exists(sourceDataset)) {
+    const source = await buildBundle({ write: false });
+    const committedShape = JSON.stringify(committed);
+    const sourceShape = JSON.stringify(source);
+    if (committedShape !== sourceShape) {
+      throw new Error("Deployable dashboard data is stale relative to its sources.");
+    }
+  } else {
+    await verifyDeployableBundle(committed);
   }
   return committed;
+}
+
+function deployablePath(src) {
+  const publicRoot = resolve(PROJECT_ROOT, "public");
+  const path = resolve(publicRoot, src.replace(/^\/+/, ""));
+  const childPath = relative(publicRoot, path);
+  if (childPath.startsWith("..") || isAbsolute(childPath)) {
+    throw new Error(`Deployable path escapes public/: ${src}`);
+  }
+  return path;
+}
+
+async function verifyDeployableBundle(bundle) {
+  if (
+    bundle.schemaVersion !== 3 ||
+    bundle.provenance?.campaignStatus !== "completed" ||
+    bundle.provenance?.campaignExpectedRuns !==
+      bundle.provenance?.campaignSuccessfulRuns ||
+    bundle.provenance?.campaignSalvagedRuns !== 0 ||
+    bundle.provenance?.campaignFailedRuns !== 0 ||
+    bundle.provenance?.campaignSkippedRuns !== 0
+  ) {
+    throw new Error("Deployable dashboard campaign provenance is invalid.");
+  }
+  if (
+    bundle.results?.length !== bundle.summary?.resultRows ||
+    bundle.sequences?.length !== bundle.summary?.captureSequences ||
+    bundle.validationSequences?.length !==
+      bundle.summary?.validationSequences ||
+    bundle.rasterTimeline?.length !== 176
+  ) {
+    throw new Error("Deployable dashboard summary does not match its data.");
+  }
+
+  const frameChecks = [
+    ...bundle.sequences.flatMap((sequence) =>
+      sequence.frames.map((frame) => [frame.src, frame.sha256]),
+    ),
+    ...bundle.validationSequences.flatMap((sequence) =>
+      sequence.frames.flatMap((frame) => [
+        [frame.comparisonSrc, frame.comparisonSha256],
+        [frame.differenceSrc, frame.differenceSha256],
+      ]),
+    ),
+  ];
+  for (const [src, expectedHash] of frameChecks) {
+    const path = deployablePath(src);
+    if (!(await exists(path))) {
+      throw new Error(`Deployable frame is missing: ${src}`);
+    }
+    if ((await sha256(path)) !== expectedHash) {
+      throw new Error(`Deployable frame hash mismatch: ${src}`);
+    }
+  }
 }
 
 const verifyOnly = process.argv.includes("--verify");
