@@ -1,0 +1,1687 @@
+{
+  "_description": "Separate material/draw count from generic PSO class count over a two-dimensional matrix.",
+  "_status": "runnable_now",
+  "_hardware": "NVIDIA GeForce RTX 5060 Ti 16GB",
+  "_archive_hardware_note": "Earlier archived results under datas/: NVIDIA GeForce RTX 5070",
+  "executable": "../../out/build/x64-Release/bin/Release/TVBPerf.exe",
+  "repeat": 1,
+  "timeout_seconds": 5400,
+  "keep_individual_csv": false,
+  "base": {
+    "renderer_variant": 8,
+    "visibility_debug_mode": 2,
+    "donut_linear_gbuffer": false,
+    "variable": 0,
+    "to_use_scene": false,
+    "to_load_texture": false,
+    "use_vfc": false,
+    "scene_variant": 1,
+    "scene_importer": "auto",
+    "scene_path": "unused",
+    "warmup_frames": 120,
+    "measure_frames": 480,
+    "vsync": false,
+    "camera_mode": 0,
+    "camera_filepath": "../../../../../scripts/standard_camera.csv",
+    "camera_keyframe_interval": 10,
+    "to_set_start_frame": false,
+    "key_frame": 0,
+    "profile_window_frames": 60,
+    "capture_frames": false,
+    "capture_stride": 1,
+    "capture_fps": 60,
+    "window_width": 1920,
+    "window_height": 1080,
+    "seed": 0,
+    "material_assign_strategy": 0,
+    "material_assign_max_open": 64,
+    "material_assign_locality": 1.0,
+    "material_assign_diversity": 1.0,
+    "geometry_div": 128,
+    "camera_pos_x": 0.0,
+    "camera_pos_y": 0.0,
+    "camera_pos_z": -3.0,
+    "camera_lookat_x": 0.0,
+    "camera_lookat_y": 0.0,
+    "camera_lookat_z": 0.0,
+    "camera_near_z": 0.1,
+    "camera_far_z": 1000.0,
+    "camera_fov": 0.785,
+    "object_count": 1,
+    "material_count": 255,
+    "geometry_count": 1,
+    "overdraw_count": 0,
+    "to_remain_only_in_camera": false,
+    "z_min": -1.0,
+    "z_max": 1.0,
+    "xy_minmax": 1.0,
+    "radius": 0.5,
+    "gbuffer_cnt": 1,
+    "texture_count": 1,
+    "texture_size": 256,
+    "texture_sampling_count": 1,
+    "alu_calc_count": 100
+  },
+  "samples": [
+    {
+      "material_count": 16,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 0,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 1,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 2,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 3,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 4,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 5,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 6,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 7,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 8,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 9,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 10,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 11,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 12,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 13,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 14,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 15,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 16,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 17,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 18,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 16,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 19,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 20,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 21,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 22,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 23,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 24,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 25,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 26,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 27,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 28,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 29,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 30,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 31,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 32,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 33,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 34,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 35,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 36,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 37,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 38,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 39,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 40,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 41,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 42,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 43,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 44,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 45,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 46,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 32,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 47,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 48,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 49,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 50,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 51,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 52,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 53,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 54,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 55,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 56,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 57,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 58,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 59,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 60,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 61,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 62,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 63,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 64,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 65,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 66,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 67,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 68,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 69,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 70,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 71,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 72,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 73,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 74,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 75,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 76,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 77,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 78,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 79,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 80,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 81,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 82,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 64,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 83,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 84,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 85,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 86,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 87,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 88,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 89,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 90,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 91,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 92,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 93,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 94,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 95,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 96,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 97,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 98,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 99,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 100,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 101,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 102,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 103,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 104,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 105,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 106,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 107,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 108,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 109,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 110,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 111,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 112,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 113,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 114,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 115,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 116,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 117,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 118,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 119,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 120,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 121,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 122,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 123,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 124,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 125,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 126,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 128,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 127,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 128,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 129,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 130,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 1,
+      "material_assign_locality": 0.5,
+      "variable": 131,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 132,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 133,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 134,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 2,
+      "material_assign_locality": 0.5,
+      "variable": 135,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 136,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 137,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 138,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 4,
+      "material_assign_locality": 0.5,
+      "variable": 139,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 140,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 141,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 142,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.5,
+      "variable": 143,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 144,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 145,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 146,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 16,
+      "material_assign_locality": 0.5,
+      "variable": 147,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 148,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 149,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 150,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 24,
+      "material_assign_locality": 0.5,
+      "variable": 151,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 152,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 153,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 154,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 32,
+      "material_assign_locality": 0.5,
+      "variable": 155,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 156,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 157,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 158,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 48,
+      "material_assign_locality": 0.5,
+      "variable": 159,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 160,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 161,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 162,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.5,
+      "variable": 163,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 164,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 165,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 166,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 96,
+      "material_assign_locality": 0.5,
+      "variable": 167,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 168,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 169,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 170,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 128,
+      "material_assign_locality": 0.5,
+      "variable": 171,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 192,
+      "material_assign_locality": 0.5,
+      "variable": 172,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 192,
+      "material_assign_locality": 0.5,
+      "variable": 173,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 192,
+      "material_assign_locality": 0.5,
+      "variable": 174,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 192,
+      "material_assign_locality": 0.5,
+      "variable": 175,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 255,
+      "material_assign_locality": 0.5,
+      "variable": 176,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 255,
+      "material_assign_locality": 0.5,
+      "variable": 177,
+      "seed": 0,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 255,
+      "material_assign_locality": 0.5,
+      "variable": 178,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 8
+    },
+    {
+      "material_count": 255,
+      "material_assign_max_open": 255,
+      "material_assign_locality": 0.5,
+      "variable": 179,
+      "seed": 1,
+      "donut_linear_gbuffer": false,
+      "renderer_variant": 9
+    }
+  ]
+}
