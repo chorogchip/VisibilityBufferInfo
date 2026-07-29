@@ -1,23 +1,21 @@
 {
-  "_description": "Sponza/Bistro/Sponza-Ivy에서 PBR feature compact class 생성과 VisBuf 경로를 짧게 검증한다.",
-  "_status": "runnable_now",
   "executable": "../../out/build/x64-Release/bin/Release/TVBPerf.exe",
   "repeat": 1,
-  "timeout_seconds": 1800,
-  "keep_individual_csv": true,
+  "timeout_seconds": 2400,
+  "keep_individual_csv": false,
   "base": {
     "renderer_variant": 9,
     "variable": 0,
-    "to_use_scene": true,
-    "to_load_texture": true,
-    "use_vfc": true,
-    "scene_variant": 0,
-    "scene_importer": "assimp",
-    "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
-    "warmup_frames": 60,
-    "measure_frames": 300,
+    "to_use_scene": false,
+    "to_load_texture": false,
+    "use_vfc": false,
+    "scene_variant": 1,
+    "scene_importer": "auto",
+    "scene_path": "unused",
+    "warmup_frames": 120,
+    "measure_frames": 600,
     "vsync": false,
-    "camera_mode": 2,
+    "camera_mode": 0,
     "camera_filepath": "../../../../../scripts/standard_camera.csv",
     "camera_keyframe_interval": 10,
     "to_set_start_frame": false,
@@ -26,14 +24,14 @@
     "capture_frames": false,
     "capture_stride": 1,
     "capture_fps": 60,
-    "window_width": 1280,
-    "window_height": 720,
+    "window_width": 1920,
+    "window_height": 1080,
     "seed": 0,
     "material_assign_strategy": 0,
     "material_assign_max_open": 64,
     "material_assign_locality": 1.0,
     "material_assign_diversity": 1.0,
-    "geometry_div": 1,
+    "geometry_div": 64,
     "camera_pos_x": 0.0,
     "camera_pos_y": 0.0,
     "camera_pos_z": -10.0,
@@ -58,20 +56,29 @@
     "texture_sampling_count": 1,
     "alu_calc_count": 100
   },
-  "samples": [
-    {
-      "variable": 0,
-      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
-      "camera_filepath": "../../../../../scripts/standard_camera.csv",
-      "material_assign_strategy": 1,
-      "material_assign_max_open": 255
-    },
-    {
-      "variable": 1,
-      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
-      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
-      "material_assign_strategy": 1,
-      "material_assign_max_open": 255
-    }
-  ]
+  "sweep": {
+    "renderer_variant": [
+      "__GLOBAL_BINNED_VARIANT__",
+      "__LOOSE_TILED_VARIANT__"
+    ],
+    "material_tile_size": [
+      16,
+      32,
+      64,
+      128,
+      256
+    ],
+    "material_assign_locality": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "seed": [
+      0,
+      1,
+      2
+    ]
+  },
+  "_description": "global binning과 loose tiled binning을 tile size별로 비교한다. material_tile_size 인자 구현 후 사용한다.",
+  "_status": "template_requires_code"
 }

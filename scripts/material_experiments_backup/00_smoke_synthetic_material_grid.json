@@ -1,23 +1,23 @@
 {
-  "_description": "Sponza/Bistro/Sponza-Ivy에서 PBR feature compact class 생성과 VisBuf 경로를 짧게 검증한다.",
+  "_description": "MaterialGrid와 active class/PSO/prefix 연결을 빠르게 검증한다.",
   "_status": "runnable_now",
   "executable": "../../out/build/x64-Release/bin/Release/TVBPerf.exe",
   "repeat": 1,
-  "timeout_seconds": 1800,
+  "timeout_seconds": 900,
   "keep_individual_csv": true,
   "base": {
     "renderer_variant": 9,
     "variable": 0,
-    "to_use_scene": true,
-    "to_load_texture": true,
-    "use_vfc": true,
-    "scene_variant": 0,
-    "scene_importer": "assimp",
-    "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+    "to_use_scene": false,
+    "to_load_texture": false,
+    "use_vfc": false,
+    "scene_variant": 1,
+    "scene_importer": "auto",
+    "scene_path": "unused",
     "warmup_frames": 60,
-    "measure_frames": 300,
+    "measure_frames": 180,
     "vsync": false,
-    "camera_mode": 2,
+    "camera_mode": 0,
     "camera_filepath": "../../../../../scripts/standard_camera.csv",
     "camera_keyframe_interval": 10,
     "to_set_start_frame": false,
@@ -33,7 +33,7 @@
     "material_assign_max_open": 64,
     "material_assign_locality": 1.0,
     "material_assign_diversity": 1.0,
-    "geometry_div": 1,
+    "geometry_div": 64,
     "camera_pos_x": 0.0,
     "camera_pos_y": 0.0,
     "camera_pos_z": -10.0,
@@ -61,17 +61,39 @@
   "samples": [
     {
       "variable": 0,
-      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
-      "camera_filepath": "../../../../../scripts/standard_camera.csv",
-      "material_assign_strategy": 1,
-      "material_assign_max_open": 255
+      "material_assign_max_open": 1,
+      "material_assign_locality": 1.0,
+      "material_assign_diversity": 1.0
     },
     {
       "variable": 1,
-      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
-      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
-      "material_assign_strategy": 1,
-      "material_assign_max_open": 255
+      "material_assign_max_open": 8,
+      "material_assign_locality": 1.0,
+      "material_assign_diversity": 1.0
+    },
+    {
+      "variable": 2,
+      "material_assign_max_open": 8,
+      "material_assign_locality": 0.0,
+      "material_assign_diversity": 1.0
+    },
+    {
+      "variable": 3,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 1.0,
+      "material_assign_diversity": 1.0
+    },
+    {
+      "variable": 4,
+      "material_assign_max_open": 64,
+      "material_assign_locality": 0.0,
+      "material_assign_diversity": 1.0
+    },
+    {
+      "variable": 5,
+      "material_assign_max_open": 255,
+      "material_assign_locality": 0.0,
+      "material_assign_diversity": 1.0
     }
   ]
 }
