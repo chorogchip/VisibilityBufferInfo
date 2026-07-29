@@ -283,7 +283,6 @@ def main() -> None:
     )
 
     phase_base = synthetic_base()
-    phase_base["measure_frames"] = 360
     write(
         "06_synth_locality_diversity_phase_dense.json",
         spec(
@@ -315,7 +314,6 @@ def main() -> None:
                     }
                 )
     matrix_base = synthetic_base()
-    matrix_base["measure_frames"] = 480
     write(
         "07_synth_material_class_matrix.json",
         spec(
@@ -327,7 +325,6 @@ def main() -> None:
     )
 
     workload_base = synthetic_base()
-    workload_base["measure_frames"] = 480
     write(
         "08_synth_workload_scaling_dense.json",
         spec(
@@ -350,7 +347,6 @@ def main() -> None:
     )
 
     resolution_base = synthetic_base()
-    resolution_base["measure_frames"] = 480
     resolutions = (
         (960, 540),
         (1280, 720),
