@@ -1,0 +1,79 @@
+scene,param_material_assign_diversity,renderer,mean,std,count,sem
+Bistro,0.0,DeferredPrepass,0.51729,,1,0.0
+Bistro,0.0,VisBuf,0.72346,,1,0.0
+Bistro,0.05,DeferredPrepass,0.5286,,1,0.0
+Bistro,0.05,VisBuf,0.6863,,1,0.0
+Bistro,0.1,DeferredPrepass,0.55443,,1,0.0
+Bistro,0.1,VisBuf,0.73376,,1,0.0
+Bistro,0.2,DeferredPrepass,0.53736,,1,0.0
+Bistro,0.2,VisBuf,0.75017,,1,0.0
+Bistro,0.3,DeferredPrepass,0.53573,,1,0.0
+Bistro,0.3,VisBuf,0.71607,,1,0.0
+Bistro,0.4,DeferredPrepass,0.54724,,1,0.0
+Bistro,0.4,VisBuf,0.75884,,1,0.0
+Bistro,0.5,DeferredPrepass,0.57314,,1,0.0
+Bistro,0.5,VisBuf,0.73993,,1,0.0
+Bistro,0.6,DeferredPrepass,0.51329,,1,0.0
+Bistro,0.6,VisBuf,0.74321,,1,0.0
+Bistro,0.7,DeferredPrepass,0.57212,,1,0.0
+Bistro,0.7,VisBuf,0.77533,,1,0.0
+Bistro,0.8,DeferredPrepass,0.52498,,1,0.0
+Bistro,0.8,VisBuf,0.72036,,1,0.0
+Bistro,0.9,DeferredPrepass,0.57334,,1,0.0
+Bistro,0.9,VisBuf,0.72436,,1,0.0
+Bistro,0.95,DeferredPrepass,0.55101,,1,0.0
+Bistro,0.95,VisBuf,0.76312,,1,0.0
+Bistro,1.0,DeferredPrepass,0.5719,,1,0.0
+Bistro,1.0,VisBuf,0.73503,,1,0.0
+Sponza,0.0,DeferredPrepass,1.21115,,1,0.0
+Sponza,0.0,VisBuf,1.52945,,1,0.0
+Sponza,0.05,DeferredPrepass,1.20471,,1,0.0
+Sponza,0.05,VisBuf,1.55505,,1,0.0
+Sponza,0.1,DeferredPrepass,1.15634,,1,0.0
+Sponza,0.1,VisBuf,1.54703,,1,0.0
+Sponza,0.2,DeferredPrepass,1.16441,,1,0.0
+Sponza,0.2,VisBuf,1.44649,,1,0.0
+Sponza,0.3,DeferredPrepass,1.24008,,1,0.0
+Sponza,0.3,VisBuf,1.32625,,1,0.0
+Sponza,0.4,DeferredPrepass,1.19006,,1,0.0
+Sponza,0.4,VisBuf,1.2588,,1,0.0
+Sponza,0.5,DeferredPrepass,1.18225,,1,0.0
+Sponza,0.5,VisBuf,1.35588,,1,0.0
+Sponza,0.6,DeferredPrepass,1.21181,,1,0.0
+Sponza,0.6,VisBuf,1.23289,,1,0.0
+Sponza,0.7,DeferredPrepass,1.16278,,1,0.0
+Sponza,0.7,VisBuf,1.27779,,1,0.0
+Sponza,0.8,DeferredPrepass,1.18078,,1,0.0
+Sponza,0.8,VisBuf,1.28551,,1,0.0
+Sponza,0.9,DeferredPrepass,1.17332,,1,0.0
+Sponza,0.9,VisBuf,1.2278,,1,0.0
+Sponza,0.95,DeferredPrepass,1.16074,,1,0.0
+Sponza,0.95,VisBuf,1.21175,,1,0.0
+Sponza,1.0,DeferredPrepass,1.13996,,1,0.0
+Sponza,1.0,VisBuf,1.26749,,1,0.0
+Sponza Ivy,0.0,DeferredPrepass,1.29134,,1,0.0
+Sponza Ivy,0.0,VisBuf,1.6466,,1,0.0
+Sponza Ivy,0.05,DeferredPrepass,1.30643,,1,0.0
+Sponza Ivy,0.05,VisBuf,1.67908,,1,0.0
+Sponza Ivy,0.1,DeferredPrepass,1.35657,,1,0.0
+Sponza Ivy,0.1,VisBuf,1.68703,,1,0.0
+Sponza Ivy,0.2,DeferredPrepass,1.29567,,1,0.0
+Sponza Ivy,0.2,VisBuf,1.66596,,1,0.0
+Sponza Ivy,0.3,DeferredPrepass,1.27584,,1,0.0
+Sponza Ivy,0.3,VisBuf,1.48381,,1,0.0
+Sponza Ivy,0.4,DeferredPrepass,1.29318,,1,0.0
+Sponza Ivy,0.4,VisBuf,1.46317,,1,0.0
+Sponza Ivy,0.5,DeferredPrepass,1.29511,,1,0.0
+Sponza Ivy,0.5,VisBuf,1.44646,,1,0.0
+Sponza Ivy,0.6,DeferredPrepass,1.34151,,1,0.0
+Sponza Ivy,0.6,VisBuf,1.46895,,1,0.0
+Sponza Ivy,0.7,DeferredPrepass,1.29049,,1,0.0
+Sponza Ivy,0.7,VisBuf,1.39932,,1,0.0
+Sponza Ivy,0.8,DeferredPrepass,1.27641,,1,0.0
+Sponza Ivy,0.8,VisBuf,1.39695,,1,0.0
+Sponza Ivy,0.9,DeferredPrepass,1.29969,,1,0.0
+Sponza Ivy,0.9,VisBuf,1.45546,,1,0.0
+Sponza Ivy,0.95,DeferredPrepass,1.36249,,1,0.0
+Sponza Ivy,0.95,VisBuf,1.37514,,1,0.0
+Sponza Ivy,1.0,DeferredPrepass,1.29379,,1,0.0
+Sponza Ivy,1.0,VisBuf,1.401,,1,0.0

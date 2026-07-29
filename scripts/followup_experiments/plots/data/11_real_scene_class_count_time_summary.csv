@@ -1,0 +1,43 @@
+scene,param_material_assign_max_open,renderer,mean,std,count,sem
+Bistro,1,DeferredPrepass,0.5525,,1,0.0
+Bistro,1,VisBuf,0.66682,,1,0.0
+Bistro,2,DeferredPrepass,0.53898,,1,0.0
+Bistro,2,VisBuf,0.68032,,1,0.0
+Bistro,4,DeferredPrepass,0.57236,,1,0.0
+Bistro,4,VisBuf,0.68456,,1,0.0
+Bistro,8,DeferredPrepass,0.5241,,1,0.0
+Bistro,8,VisBuf,0.75187,,1,0.0
+Bistro,16,DeferredPrepass,0.56007,,1,0.0
+Bistro,16,VisBuf,0.71573,,1,0.0
+Bistro,32,DeferredPrepass,0.57382,,1,0.0
+Bistro,32,VisBuf,0.70675,,1,0.0
+Bistro,64,DeferredPrepass,0.55733,,1,0.0
+Bistro,64,VisBuf,0.7439,,1,0.0
+Sponza,1,DeferredPrepass,1.23611,,1,0.0
+Sponza,1,VisBuf,1.52953,,1,0.0
+Sponza,2,DeferredPrepass,1.25391,,1,0.0
+Sponza,2,VisBuf,1.42745,,1,0.0
+Sponza,4,DeferredPrepass,1.17062,,1,0.0
+Sponza,4,VisBuf,1.30647,,1,0.0
+Sponza,8,DeferredPrepass,1.18582,,1,0.0
+Sponza,8,VisBuf,1.28013,,1,0.0
+Sponza,16,DeferredPrepass,1.17196,,1,0.0
+Sponza,16,VisBuf,1.21713,,1,0.0
+Sponza,32,DeferredPrepass,1.17698,,1,0.0
+Sponza,32,VisBuf,1.20937,,1,0.0
+Sponza,64,DeferredPrepass,1.19333,,1,0.0
+Sponza,64,VisBuf,1.21804,,1,0.0
+Sponza Ivy,1,DeferredPrepass,1.29693,,1,0.0
+Sponza Ivy,1,VisBuf,1.64778,,1,0.0
+Sponza Ivy,2,DeferredPrepass,1.28144,,1,0.0
+Sponza Ivy,2,VisBuf,1.52896,,1,0.0
+Sponza Ivy,4,DeferredPrepass,1.30468,,1,0.0
+Sponza Ivy,4,VisBuf,1.3876,,1,0.0
+Sponza Ivy,8,DeferredPrepass,1.28986,,1,0.0
+Sponza Ivy,8,VisBuf,1.38873,,1,0.0
+Sponza Ivy,16,DeferredPrepass,1.29488,,1,0.0
+Sponza Ivy,16,VisBuf,1.33059,,1,0.0
+Sponza Ivy,32,DeferredPrepass,1.27796,,1,0.0
+Sponza Ivy,32,VisBuf,1.38514,,1,0.0
+Sponza Ivy,64,DeferredPrepass,1.2989,,1,0.0
+Sponza Ivy,64,VisBuf,1.38034,,1,0.0

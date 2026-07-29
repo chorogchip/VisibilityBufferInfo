@@ -1,0 +1,10 @@
+{
+  "status": "reproducible",
+  "generation_count": 2,
+  "compared_file_count": 86,
+  "hash_algorithm": "sha256",
+  "missing_after_second_run": [],
+  "added_after_second_run": [],
+  "changed_after_second_run": [],
+  "generator": "plot_results.py"
+}

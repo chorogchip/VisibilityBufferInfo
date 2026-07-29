@@ -1,0 +1,13 @@
+scene,renderer,linear_gbuffer,total_time_avg_ms,total_time_median_ms,total_time_p90_ms,total_time_p99_ms
+Sponza,DeferredPrepass,False,1.17241,1.23386,1.8071,2.15568
+Sponza,VisBuf,False,1.76071,1.88803,2.7232,3.30032
+Sponza,DeferredPrepass,True,1.17132,1.22637,1.79878,2.25299
+Sponza,VisBuf,True,1.75501,1.87824,2.70861,3.30138
+Sponza Ivy,DeferredPrepass,False,1.68781,1.70106,2.78534,3.09603
+Sponza Ivy,VisBuf,False,2.07718,2.22669,3.23114,3.83654
+Sponza Ivy,DeferredPrepass,True,1.6744,1.68429,2.76118,3.06269
+Sponza Ivy,VisBuf,True,2.07115,2.22371,3.21914,3.84832
+Bistro,DeferredPrepass,False,0.53941,0.52307,0.74685,0.85286
+Bistro,VisBuf,False,0.66268,0.66848,0.78541,0.88
+Bistro,DeferredPrepass,True,0.53575,0.51725,0.74483,0.84816
+Bistro,VisBuf,True,0.66024,0.66522,0.78333,0.88394

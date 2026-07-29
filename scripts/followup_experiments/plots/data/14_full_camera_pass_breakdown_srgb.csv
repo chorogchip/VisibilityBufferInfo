@@ -1,0 +1,34 @@
+scene,renderer,pass_name,pass_time_avg_ms
+Bistro,DeferredPrepass,depth_prepass,0.14158
+Bistro,DeferredPrepass,geometry,0.25038
+Bistro,DeferredPrepass,lighting,0.09528
+Bistro,DeferredPrepass,tonemap,0.03816
+Bistro,VisBuf,gbuffer,0.21666
+Bistro,VisBuf,lighting,0.09813
+Bistro,VisBuf,tonemap,0.03599
+Bistro,VisBuf,visibility,0.21425
+Bistro,VisBuf,visutil_flatten,0.0393
+Bistro,VisBuf,visutil_histogram,0.02894
+Bistro,VisBuf,visutil_prefix,0.0027
+Sponza,DeferredPrepass,depth_prepass,0.15794
+Sponza,DeferredPrepass,geometry,0.8705
+Sponza,DeferredPrepass,lighting,0.09114
+Sponza,DeferredPrepass,tonemap,0.03627
+Sponza,VisBuf,gbuffer,1.31895
+Sponza,VisBuf,lighting,0.09053
+Sponza,VisBuf,tonemap,0.03588
+Sponza,VisBuf,visibility,0.2215
+Sponza,VisBuf,visutil_flatten,0.03704
+Sponza,VisBuf,visutil_histogram,0.0273
+Sponza,VisBuf,visutil_prefix,0.00279
+Sponza Ivy,DeferredPrepass,depth_prepass,0.40773
+Sponza Ivy,DeferredPrepass,geometry,1.13281
+Sponza Ivy,DeferredPrepass,lighting,0.08878
+Sponza Ivy,DeferredPrepass,tonemap,0.03561
+Sponza Ivy,VisBuf,gbuffer,1.31592
+Sponza Ivy,VisBuf,lighting,0.08921
+Sponza Ivy,VisBuf,tonemap,0.03594
+Sponza Ivy,VisBuf,visibility,0.53925
+Sponza Ivy,VisBuf,visutil_flatten,0.03755
+Sponza Ivy,VisBuf,visutil_histogram,0.02964
+Sponza Ivy,VisBuf,visutil_prefix,0.00271

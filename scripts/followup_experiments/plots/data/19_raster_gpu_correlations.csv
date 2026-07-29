@@ -1,0 +1,271 @@
+scene,renderer,raster_metric,gpu_metric,pearson_r,window_count
+Sponza,DeferredPrepass,triangle_count,total,0.774152407492903,42
+Sponza,DeferredPrepass,triangle_count,depth_prepass,0.9939376595231731,42
+Sponza,DeferredPrepass,triangle_count,geometry,0.6545881388093385,42
+Sponza,DeferredPrepass,triangle_count,lighting,-0.4617811825780312,42
+Sponza,DeferredPrepass,triangle_count,tonemap,0.1361636198451624,42
+Sponza,DeferredPrepass,triangle_count,index_count,0.9999999999999999,42
+Sponza,DeferredPrepass,total_fragments,total,0.4047448919845407,42
+Sponza,DeferredPrepass,total_fragments,depth_prepass,0.2834016464626587,42
+Sponza,DeferredPrepass,total_fragments,geometry,0.3997947543789798,42
+Sponza,DeferredPrepass,total_fragments,lighting,0.06544347647703966,42
+Sponza,DeferredPrepass,total_fragments,tonemap,0.735274810302813,42
+Sponza,DeferredPrepass,total_fragments,index_count,0.33617040510448987,42
+Sponza,DeferredPrepass,covered_pixels,total,0.4223363673747585,42
+Sponza,DeferredPrepass,covered_pixels,depth_prepass,0.02794651718836096,42
+Sponza,DeferredPrepass,covered_pixels,geometry,0.49129135616915404,42
+Sponza,DeferredPrepass,covered_pixels,lighting,0.4127612120414058,42
+Sponza,DeferredPrepass,covered_pixels,tonemap,0.8398608423408699,42
+Sponza,DeferredPrepass,covered_pixels,index_count,0.0604440364714586,42
+Sponza,DeferredPrepass,avg_overdraw,total,0.6030748378141685,42
+Sponza,DeferredPrepass,avg_overdraw,depth_prepass,0.6042350235076616,42
+Sponza,DeferredPrepass,avg_overdraw,geometry,0.5500797033154615,42
+Sponza,DeferredPrepass,avg_overdraw,lighting,-0.1076133898409444,42
+Sponza,DeferredPrepass,avg_overdraw,tonemap,0.654878779898221,42
+Sponza,DeferredPrepass,avg_overdraw,index_count,0.641425019380377,42
+Sponza,DeferredPrepass,quad_efficiency,total,0.43953941143983527,42
+Sponza,DeferredPrepass,quad_efficiency,depth_prepass,0.08295656576858183,42
+Sponza,DeferredPrepass,quad_efficiency,geometry,0.49622824601345283,42
+Sponza,DeferredPrepass,quad_efficiency,lighting,0.4161637439298322,42
+Sponza,DeferredPrepass,quad_efficiency,tonemap,0.7966871937113487,42
+Sponza,DeferredPrepass,quad_efficiency,index_count,0.08941510946609647,42
+Sponza,DeferredPrepass,quad_waste_lanes,total,0.6854397230029508,42
+Sponza,DeferredPrepass,quad_waste_lanes,depth_prepass,0.7118264042834038,42
+Sponza,DeferredPrepass,quad_waste_lanes,geometry,0.6226650048770662,42
+Sponza,DeferredPrepass,quad_waste_lanes,lighting,-0.2198016446479371,42
+Sponza,DeferredPrepass,quad_waste_lanes,tonemap,0.49684322903481626,42
+Sponza,DeferredPrepass,quad_waste_lanes,index_count,0.7608581686497187,42
+Sponza,VisBuf,triangle_count,total,0.75868224994785,42
+Sponza,VisBuf,triangle_count,visibility,0.9933801597035814,42
+Sponza,VisBuf,triangle_count,visutil_histogram,0.4570140421279159,42
+Sponza,VisBuf,triangle_count,visutil_prefix,0.5913870182853098,42
+Sponza,VisBuf,triangle_count,visutil_flatten,0.1193832841054636,42
+Sponza,VisBuf,triangle_count,gbuffer,0.6685412316282211,42
+Sponza,VisBuf,triangle_count,lighting,-0.48588389243730873,42
+Sponza,VisBuf,triangle_count,tonemap,0.12401681767770273,42
+Sponza,VisBuf,triangle_count,index_count,0.9999999999999999,42
+Sponza,VisBuf,total_fragments,total,0.5737939896782215,42
+Sponza,VisBuf,total_fragments,visibility,0.4044027828102203,42
+Sponza,VisBuf,total_fragments,visutil_histogram,0.8424646689937626,42
+Sponza,VisBuf,total_fragments,visutil_prefix,0.7277862266030481,42
+Sponza,VisBuf,total_fragments,visutil_flatten,0.8544622715188446,42
+Sponza,VisBuf,total_fragments,gbuffer,0.5658451639620468,42
+Sponza,VisBuf,total_fragments,lighting,0.39881523796066914,42
+Sponza,VisBuf,total_fragments,tonemap,0.835337765835624,42
+Sponza,VisBuf,total_fragments,index_count,0.33617040510448987,42
+Sponza,VisBuf,covered_pixels,total,0.5154302131857128,42
+Sponza,VisBuf,covered_pixels,visibility,0.1410328951810282,42
+Sponza,VisBuf,covered_pixels,visutil_histogram,0.8709474350749149,42
+Sponza,VisBuf,covered_pixels,visutil_prefix,0.6514161852904824,42
+Sponza,VisBuf,covered_pixels,visutil_flatten,0.9928024408500308,42
+Sponza,VisBuf,covered_pixels,gbuffer,0.5534844747844769,42
+Sponza,VisBuf,covered_pixels,lighting,0.6420832136806497,42
+Sponza,VisBuf,covered_pixels,tonemap,0.9550271943815574,42
+Sponza,VisBuf,covered_pixels,index_count,0.0604440364714586,42
+Sponza,VisBuf,avg_overdraw,total,0.6920596355129185,42
+Sponza,VisBuf,avg_overdraw,visibility,0.6961993386491568,42
+Sponza,VisBuf,avg_overdraw,visutil_histogram,0.7867582840125281,42
+Sponza,VisBuf,avg_overdraw,visutil_prefix,0.7979914153431991,42
+Sponza,VisBuf,avg_overdraw,visutil_flatten,0.6853936694075667,42
+Sponza,VisBuf,avg_overdraw,gbuffer,0.6435981497340276,42
+Sponza,VisBuf,avg_overdraw,lighting,0.09748730127382992,42
+Sponza,VisBuf,avg_overdraw,tonemap,0.6922637033392398,42
+Sponza,VisBuf,avg_overdraw,index_count,0.641425019380377,42
+Sponza,VisBuf,quad_efficiency,total,0.4255303658615329,42
+Sponza,VisBuf,quad_efficiency,visibility,0.16913840984540576,42
+Sponza,VisBuf,quad_efficiency,visutil_histogram,0.744376047879483,42
+Sponza,VisBuf,quad_efficiency,visutil_prefix,0.6235867828609237,42
+Sponza,VisBuf,quad_efficiency,visutil_flatten,0.8665205976062245,42
+Sponza,VisBuf,quad_efficiency,gbuffer,0.4446468774558711,42
+Sponza,VisBuf,quad_efficiency,lighting,0.5017324361251821,42
+Sponza,VisBuf,quad_efficiency,tonemap,0.8521851788376067,42
+Sponza,VisBuf,quad_efficiency,index_count,0.08941510946609647,42
+Sponza,VisBuf,quad_waste_lanes,total,0.8315299603379016,42
+Sponza,VisBuf,quad_waste_lanes,visibility,0.787905770071669,42
+Sponza,VisBuf,quad_waste_lanes,visutil_histogram,0.7420617019247041,42
+Sponza,VisBuf,quad_waste_lanes,visutil_prefix,0.699979926258838,42
+Sponza,VisBuf,quad_waste_lanes,visutil_flatten,0.5292476570903845,42
+Sponza,VisBuf,quad_waste_lanes,gbuffer,0.789721011966795,42
+Sponza,VisBuf,quad_waste_lanes,lighting,-0.024515920811823976,42
+Sponza,VisBuf,quad_waste_lanes,tonemap,0.5573790932293704,42
+Sponza,VisBuf,quad_waste_lanes,index_count,0.7608581686497187,42
+Sponza Ivy,DeferredPrepass,triangle_count,total,0.9031135827598419,42
+Sponza Ivy,DeferredPrepass,triangle_count,depth_prepass,0.9399783610934829,42
+Sponza Ivy,DeferredPrepass,triangle_count,geometry,0.8349202004282488,42
+Sponza Ivy,DeferredPrepass,triangle_count,lighting,-0.5615467162208528,42
+Sponza Ivy,DeferredPrepass,triangle_count,tonemap,0.3340998784242172,42
+Sponza Ivy,DeferredPrepass,triangle_count,index_count,0.9999999999999998,42
+Sponza Ivy,DeferredPrepass,total_fragments,total,0.46559960309721604,42
+Sponza Ivy,DeferredPrepass,total_fragments,depth_prepass,0.3800548271936829,42
+Sponza Ivy,DeferredPrepass,total_fragments,geometry,0.4829139551921785,42
+Sponza Ivy,DeferredPrepass,total_fragments,lighting,0.05851000096617613,42
+Sponza Ivy,DeferredPrepass,total_fragments,tonemap,0.8335459048775495,42
+Sponza Ivy,DeferredPrepass,total_fragments,index_count,0.5795858285879729,42
+Sponza Ivy,DeferredPrepass,covered_pixels,total,0.34203726839240817,42
+Sponza Ivy,DeferredPrepass,covered_pixels,depth_prepass,0.09850630766834394,42
+Sponza Ivy,DeferredPrepass,covered_pixels,geometry,0.4527718969705353,42
+Sponza Ivy,DeferredPrepass,covered_pixels,lighting,0.4639151674016486,42
+Sponza Ivy,DeferredPrepass,covered_pixels,tonemap,0.9673306541988572,42
+Sponza Ivy,DeferredPrepass,covered_pixels,index_count,0.257488911911708,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,total,0.6953255457082079,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,depth_prepass,0.6653735636718563,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,geometry,0.6712072718059044,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,lighting,-0.19988210067365544,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,tonemap,0.7096414394929769,42
+Sponza Ivy,DeferredPrepass,avg_overdraw,index_count,0.7973707810995648,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,total,0.32710431282261365,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,depth_prepass,0.09205232814274718,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,geometry,0.43482609778293113,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,lighting,0.43044813249359837,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,tonemap,0.8739785205850794,42
+Sponza Ivy,DeferredPrepass,quad_efficiency,index_count,0.1936643613044891,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,total,0.7676522932403579,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,depth_prepass,0.762363398870442,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,geometry,0.726764837941464,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,lighting,-0.2949862232968025,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,tonemap,0.5725760963985108,42
+Sponza Ivy,DeferredPrepass,quad_waste_lanes,index_count,0.8441309509559005,42
+Sponza Ivy,VisBuf,triangle_count,total,0.8513933038738444,42
+Sponza Ivy,VisBuf,triangle_count,visibility,0.9859305497412543,42
+Sponza Ivy,VisBuf,triangle_count,visutil_histogram,0.6759291367270228,42
+Sponza Ivy,VisBuf,triangle_count,visutil_prefix,0.7023173480609631,42
+Sponza Ivy,VisBuf,triangle_count,visutil_flatten,0.3570428484743709,42
+Sponza Ivy,VisBuf,triangle_count,gbuffer,0.6921613452867464,42
+Sponza Ivy,VisBuf,triangle_count,lighting,-0.4255797268971583,42
+Sponza Ivy,VisBuf,triangle_count,tonemap,0.3226645397033302,42
+Sponza Ivy,VisBuf,triangle_count,index_count,0.9999999999999998,42
+Sponza Ivy,VisBuf,total_fragments,total,0.5858851144757581,42
+Sponza Ivy,VisBuf,total_fragments,visibility,0.5250659374898949,42
+Sponza Ivy,VisBuf,total_fragments,visutil_histogram,0.9303955636012096,42
+Sponza Ivy,VisBuf,total_fragments,visutil_prefix,0.6228504663417369,42
+Sponza Ivy,VisBuf,total_fragments,visutil_flatten,0.8648612319700377,42
+Sponza Ivy,VisBuf,total_fragments,gbuffer,0.5444094610334282,42
+Sponza Ivy,VisBuf,total_fragments,lighting,0.20360068573072038,42
+Sponza Ivy,VisBuf,total_fragments,tonemap,0.8564230060156294,42
+Sponza Ivy,VisBuf,total_fragments,index_count,0.5795858285879729,42
+Sponza Ivy,VisBuf,covered_pixels,total,0.47497762064913335,42
+Sponza Ivy,VisBuf,covered_pixels,visibility,0.21852302308831598,42
+Sponza Ivy,VisBuf,covered_pixels,visutil_histogram,0.8404498505313057,42
+Sponza Ivy,VisBuf,covered_pixels,visutil_prefix,0.44805462786320477,42
+Sponza Ivy,VisBuf,covered_pixels,visutil_flatten,0.9881085104048489,42
+Sponza Ivy,VisBuf,covered_pixels,gbuffer,0.5468958206790103,42
+Sponza Ivy,VisBuf,covered_pixels,lighting,0.5047309109813,42
+Sponza Ivy,VisBuf,covered_pixels,tonemap,0.9505028578620297,42
+Sponza Ivy,VisBuf,covered_pixels,index_count,0.257488911911708,42
+Sponza Ivy,VisBuf,avg_overdraw,total,0.7316693149783275,42
+Sponza Ivy,VisBuf,avg_overdraw,visibility,0.7699841502726495,42
+Sponza Ivy,VisBuf,avg_overdraw,visutil_histogram,0.8576778582892841,42
+Sponza Ivy,VisBuf,avg_overdraw,visutil_prefix,0.7376645449990681,42
+Sponza Ivy,VisBuf,avg_overdraw,visutil_flatten,0.7047843083471881,42
+Sponza Ivy,VisBuf,avg_overdraw,gbuffer,0.6272168355426782,42
+Sponza Ivy,VisBuf,avg_overdraw,lighting,-0.04727508389966385,42
+Sponza Ivy,VisBuf,avg_overdraw,tonemap,0.7117907843031331,42
+Sponza Ivy,VisBuf,avg_overdraw,index_count,0.7973707810995648,42
+Sponza Ivy,VisBuf,quad_efficiency,total,0.3866142742960297,42
+Sponza Ivy,VisBuf,quad_efficiency,visibility,0.17402931654761328,42
+Sponza Ivy,VisBuf,quad_efficiency,visutil_histogram,0.6571388601783269,42
+Sponza Ivy,VisBuf,quad_efficiency,visutil_prefix,0.39562894015652406,42
+Sponza Ivy,VisBuf,quad_efficiency,visutil_flatten,0.8406321821079207,42
+Sponza Ivy,VisBuf,quad_efficiency,gbuffer,0.4465825244533255,42
+Sponza Ivy,VisBuf,quad_efficiency,lighting,0.4630209353571711,42
+Sponza Ivy,VisBuf,quad_efficiency,tonemap,0.8219461397095079,42
+Sponza Ivy,VisBuf,quad_efficiency,index_count,0.1936643613044891,42
+Sponza Ivy,VisBuf,quad_waste_lanes,total,0.8301195255179684,42
+Sponza Ivy,VisBuf,quad_waste_lanes,visibility,0.8402697579122291,42
+Sponza Ivy,VisBuf,quad_waste_lanes,visutil_histogram,0.7998163080317379,42
+Sponza Ivy,VisBuf,quad_waste_lanes,visutil_prefix,0.7182540271553087,42
+Sponza Ivy,VisBuf,quad_waste_lanes,visutil_flatten,0.5863269847240671,42
+Sponza Ivy,VisBuf,quad_waste_lanes,gbuffer,0.7344426071235473,42
+Sponza Ivy,VisBuf,quad_waste_lanes,lighting,-0.20594666128200018,42
+Sponza Ivy,VisBuf,quad_waste_lanes,tonemap,0.6072794078995566,42
+Sponza Ivy,VisBuf,quad_waste_lanes,index_count,0.8441309509559005,42
+Bistro,DeferredPrepass,triangle_count,total,0.8824281227782783,92
+Bistro,DeferredPrepass,triangle_count,depth_prepass,0.9579441668846431,92
+Bistro,DeferredPrepass,triangle_count,geometry,0.8262603372739553,92
+Bistro,DeferredPrepass,triangle_count,lighting,-0.20042390245380604,92
+Bistro,DeferredPrepass,triangle_count,tonemap,-0.3294086222549124,92
+Bistro,DeferredPrepass,triangle_count,index_count,0.9999999999999998,92
+Bistro,DeferredPrepass,total_fragments,total,0.16804652151250624,92
+Bistro,DeferredPrepass,total_fragments,depth_prepass,0.09972324858395762,92
+Bistro,DeferredPrepass,total_fragments,geometry,0.1637060366286804,92
+Bistro,DeferredPrepass,total_fragments,lighting,0.31513238377650693,92
+Bistro,DeferredPrepass,total_fragments,tonemap,0.33557212833162753,92
+Bistro,DeferredPrepass,total_fragments,index_count,-0.1164887341903966,92
+Bistro,DeferredPrepass,covered_pixels,total,0.04431478058699443,92
+Bistro,DeferredPrepass,covered_pixels,depth_prepass,-0.14909662535674023,92
+Bistro,DeferredPrepass,covered_pixels,geometry,0.12859816836984897,92
+Bistro,DeferredPrepass,covered_pixels,lighting,0.46018077888974074,92
+Bistro,DeferredPrepass,covered_pixels,tonemap,0.5336262125687917,92
+Bistro,DeferredPrepass,covered_pixels,index_count,-0.2938743990941248,92
+Bistro,DeferredPrepass,avg_overdraw,total,0.32786453033654467,92
+Bistro,DeferredPrepass,avg_overdraw,depth_prepass,0.298410698827846,92
+Bistro,DeferredPrepass,avg_overdraw,geometry,0.30240536664734574,92
+Bistro,DeferredPrepass,avg_overdraw,lighting,0.21766206587465606,92
+Bistro,DeferredPrepass,avg_overdraw,tonemap,0.21388364024077464,92
+Bistro,DeferredPrepass,avg_overdraw,index_count,0.08817260571476428,92
+Bistro,DeferredPrepass,quad_efficiency,total,-0.09192413494014041,92
+Bistro,DeferredPrepass,quad_efficiency,depth_prepass,-0.2539567474385309,92
+Bistro,DeferredPrepass,quad_efficiency,geometry,-0.012095942717029918,92
+Bistro,DeferredPrepass,quad_efficiency,lighting,0.3620466139380914,92
+Bistro,DeferredPrepass,quad_efficiency,tonemap,0.44041488245672933,92
+Bistro,DeferredPrepass,quad_efficiency,index_count,-0.3720511219832258,92
+Bistro,DeferredPrepass,quad_waste_lanes,total,0.6522543405095471,92
+Bistro,DeferredPrepass,quad_waste_lanes,depth_prepass,0.6035080416845185,92
+Bistro,DeferredPrepass,quad_waste_lanes,geometry,0.6474570787385475,92
+Bistro,DeferredPrepass,quad_waste_lanes,lighting,0.1457759304431549,92
+Bistro,DeferredPrepass,quad_waste_lanes,tonemap,0.11651726454038744,92
+Bistro,DeferredPrepass,quad_waste_lanes,index_count,0.42966095787453473,92
+Bistro,VisBuf,triangle_count,total,0.6928161784698919,92
+Bistro,VisBuf,triangle_count,visibility,0.9654665598212233,92
+Bistro,VisBuf,triangle_count,visutil_histogram,0.4141393863365255,92
+Bistro,VisBuf,triangle_count,visutil_prefix,0.3096379140994659,92
+Bistro,VisBuf,triangle_count,visutil_flatten,-0.17247370430863,92
+Bistro,VisBuf,triangle_count,gbuffer,-0.18313844165074006,92
+Bistro,VisBuf,triangle_count,lighting,-0.5424476480676307,92
+Bistro,VisBuf,triangle_count,tonemap,-0.3810553921073992,92
+Bistro,VisBuf,triangle_count,index_count,0.9999999999999998,92
+Bistro,VisBuf,total_fragments,total,0.4474125765525079,92
+Bistro,VisBuf,total_fragments,visibility,0.09354519276233571,92
+Bistro,VisBuf,total_fragments,visutil_histogram,0.5235627147722325,92
+Bistro,VisBuf,total_fragments,visutil_prefix,0.267274145699906,92
+Bistro,VisBuf,total_fragments,visutil_flatten,0.6285758057979749,92
+Bistro,VisBuf,total_fragments,gbuffer,0.6509012920513854,92
+Bistro,VisBuf,total_fragments,lighting,0.46485152360846477,92
+Bistro,VisBuf,total_fragments,tonemap,0.6493596952878998,92
+Bistro,VisBuf,total_fragments,index_count,-0.1164887341903966,92
+Bistro,VisBuf,covered_pixels,total,0.4515409817215054,92
+Bistro,VisBuf,covered_pixels,visibility,-0.11849366941532921,92
+Bistro,VisBuf,covered_pixels,visutil_histogram,0.678326129248392,92
+Bistro,VisBuf,covered_pixels,visutil_prefix,0.33381623305488417,92
+Bistro,VisBuf,covered_pixels,visutil_flatten,0.9760431168337015,92
+Bistro,VisBuf,covered_pixels,gbuffer,0.9676321805704083,92
+Bistro,VisBuf,covered_pixels,lighting,0.7942331473444393,92
+Bistro,VisBuf,covered_pixels,tonemap,0.8559537439708185,92
+Bistro,VisBuf,covered_pixels,index_count,-0.2938743990941248,92
+Bistro,VisBuf,avg_overdraw,total,0.4506326024732731,92
+Bistro,VisBuf,avg_overdraw,visibility,0.2818665079073129,92
+Bistro,VisBuf,avg_overdraw,visutil_histogram,0.39238713620934595,92
+Bistro,VisBuf,avg_overdraw,visutil_prefix,0.19801509492599212,92
+Bistro,VisBuf,avg_overdraw,visutil_flatten,0.34134377299231655,92
+Bistro,VisBuf,avg_overdraw,gbuffer,0.37349468904624317,92
+Bistro,VisBuf,avg_overdraw,lighting,0.21591850420733327,92
+Bistro,VisBuf,avg_overdraw,tonemap,0.44959481278019964,92
+Bistro,VisBuf,avg_overdraw,index_count,0.08817260571476428,92
+Bistro,VisBuf,quad_efficiency,total,0.20062823253939285,92
+Bistro,VisBuf,quad_efficiency,visibility,-0.22203488188791493,92
+Bistro,VisBuf,quad_efficiency,visutil_histogram,0.3444747353419471,92
+Bistro,VisBuf,quad_efficiency,visutil_prefix,0.11927924012067889,92
+Bistro,VisBuf,quad_efficiency,visutil_flatten,0.7012384511905669,92
+Bistro,VisBuf,quad_efficiency,gbuffer,0.6605994072053749,92
+Bistro,VisBuf,quad_efficiency,lighting,0.6872714079083246,92
+Bistro,VisBuf,quad_efficiency,tonemap,0.6726287152157746,92
+Bistro,VisBuf,quad_efficiency,index_count,-0.3720511219832258,92
+Bistro,VisBuf,quad_waste_lanes,total,0.7843813887280633,92
+Bistro,VisBuf,quad_waste_lanes,visibility,0.5961151734262298,92
+Bistro,VisBuf,quad_waste_lanes,visutil_histogram,0.741514561804039,92
+Bistro,VisBuf,quad_waste_lanes,visutil_prefix,0.42297888278110807,92
+Bistro,VisBuf,quad_waste_lanes,visutil_flatten,0.4870414621922565,92
+Bistro,VisBuf,quad_waste_lanes,gbuffer,0.5216174193067888,92
+Bistro,VisBuf,quad_waste_lanes,lighting,0.10201818698409279,92
+Bistro,VisBuf,quad_waste_lanes,tonemap,0.3752348269206547,92
+Bistro,VisBuf,quad_waste_lanes,index_count,0.42966095787453473,92

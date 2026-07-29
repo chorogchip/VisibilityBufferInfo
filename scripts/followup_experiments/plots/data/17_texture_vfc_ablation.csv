@@ -1,0 +1,25 @@
+scene,condition,renderer,total_time_avg_ms
+Sponza,Texture off / VFC off,DeferredPrepass,0.66088
+Sponza,Texture off / VFC on,DeferredPrepass,0.33329
+Sponza,Texture on / VFC off,DeferredPrepass,1.42027
+Sponza,Texture on / VFC on,DeferredPrepass,1.15846
+Sponza,Texture off / VFC off,VisBuf,0.77061
+Sponza,Texture off / VFC on,VisBuf,0.50043
+Sponza,Texture on / VFC off,VisBuf,1.89906
+Sponza,Texture on / VFC on,VisBuf,1.62599
+Sponza Ivy,Texture off / VFC off,DeferredPrepass,1.22126
+Sponza Ivy,Texture off / VFC on,DeferredPrepass,0.59962
+Sponza Ivy,Texture on / VFC off,DeferredPrepass,1.95632
+Sponza Ivy,Texture on / VFC on,DeferredPrepass,1.28593
+Sponza Ivy,Texture off / VFC off,VisBuf,1.16845
+Sponza Ivy,Texture off / VFC on,VisBuf,0.64227
+Sponza Ivy,Texture on / VFC off,VisBuf,2.2773
+Sponza Ivy,Texture on / VFC on,VisBuf,1.68663
+Bistro,Texture off / VFC off,DeferredPrepass,0.75077
+Bistro,Texture off / VFC on,DeferredPrepass,0.5286
+Bistro,Texture on / VFC off,DeferredPrepass,0.85914
+Bistro,Texture on / VFC on,DeferredPrepass,0.52558
+Bistro,Texture off / VFC off,VisBuf,0.87969
+Bistro,Texture off / VFC on,VisBuf,0.62853
+Bistro,Texture on / VFC off,VisBuf,0.92844
+Bistro,Texture on / VFC on,VisBuf,0.70544
