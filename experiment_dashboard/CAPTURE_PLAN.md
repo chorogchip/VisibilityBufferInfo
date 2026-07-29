@@ -53,10 +53,11 @@ Raw PNGs remain under `capture_specs/results` and are excluded from Git. The
 derived WebP files are committed so a clone can build and deploy without local
 scene assets or Direct3D 12.
 
-Four terminal beauty frames are fully black after their camera paths have
-finished (three Sponza, one Bistro). They remain in the raw capture evidence but
-are explicitly listed in each deployable manifest and omitted from autoplay.
-No measured timing row is removed.
+Frames with no meaningful RGB variation remain in the raw capture evidence.
+They are explicitly listed in each deployable manifest and omitted from
+autoplay, for both beauty and debug views. This includes terminal frames after
+the path finishes and one mid-path geometry-instance frame that is a single
+flat ID color. No measured timing row is removed.
 
 ## Viewer behavior
 

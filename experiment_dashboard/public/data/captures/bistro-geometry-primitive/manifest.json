@@ -1,0 +1,396 @@
+{
+  "id": "bistro-geometry-primitive",
+  "label": "Bistro · Combined IDs",
+  "scene": "Bistro",
+  "view": "geometry-primitive",
+  "viewLabel": "Geometry + primitive ID",
+  "viewKind": "debug",
+  "renderer": "DonutVisDebug",
+  "rendererVariant": 13,
+  "debugMode": 2,
+  "description": "Combined visibility identity across the longer Bistro path.",
+  "profileId": "bistro-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "runIndex": 6,
+    "width": 1280,
+    "height": 720,
+    "warmupFrames": 60,
+    "measureFrames": 5500,
+    "captureStride": 120,
+    "captureFps": 12,
+    "capturedFrames": 46
+  },
+  "excludedBlankFrames": [],
+  "frameCount": 46,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "renderFrame": 60,
+      "measurementFrame": 0,
+      "src": "/data/captures/bistro-geometry-primitive/0000.webp",
+      "bytes": 113838,
+      "sha256": "bd05a2a810a3e863e2034134190cb0edb8bb73f7c68e9d585b6be15e957268cd"
+    },
+    {
+      "imageIndex": 1,
+      "renderFrame": 180,
+      "measurementFrame": 120,
+      "src": "/data/captures/bistro-geometry-primitive/0001.webp",
+      "bytes": 232106,
+      "sha256": "85db56264cf281e0a1f3cbed8b762d6be80cda76830333bf6426906aa1f691f8"
+    },
+    {
+      "imageIndex": 2,
+      "renderFrame": 300,
+      "measurementFrame": 240,
+      "src": "/data/captures/bistro-geometry-primitive/0002.webp",
+      "bytes": 203012,
+      "sha256": "09775885e9a03b3d1137513d460194db28d35655616a34083c759d7e72b32f58"
+    },
+    {
+      "imageIndex": 3,
+      "renderFrame": 420,
+      "measurementFrame": 360,
+      "src": "/data/captures/bistro-geometry-primitive/0003.webp",
+      "bytes": 279676,
+      "sha256": "5c391134b891d2d29869a50419b5390b9e55f7765def13ca29d54b17049ffa23"
+    },
+    {
+      "imageIndex": 4,
+      "renderFrame": 540,
+      "measurementFrame": 480,
+      "src": "/data/captures/bistro-geometry-primitive/0004.webp",
+      "bytes": 267120,
+      "sha256": "5e4d51b88bed06c8b9ad57828f58e4845c67cd10fafcf6e85b62a051fb99cab1"
+    },
+    {
+      "imageIndex": 5,
+      "renderFrame": 660,
+      "measurementFrame": 600,
+      "src": "/data/captures/bistro-geometry-primitive/0005.webp",
+      "bytes": 248152,
+      "sha256": "f510f956b053577ae3c6dbab403862af16b0bdaf1e2093ec60703d744896f571"
+    },
+    {
+      "imageIndex": 6,
+      "renderFrame": 780,
+      "measurementFrame": 720,
+      "src": "/data/captures/bistro-geometry-primitive/0006.webp",
+      "bytes": 170934,
+      "sha256": "de8d04d97ac3b7d1677998538a69a0b53804bd62be71ee02bb19cc0f9ded4c32"
+    },
+    {
+      "imageIndex": 7,
+      "renderFrame": 900,
+      "measurementFrame": 840,
+      "src": "/data/captures/bistro-geometry-primitive/0007.webp",
+      "bytes": 89784,
+      "sha256": "2f053c8fcf09057caf1ed3923fbdb35739fa28507c4981b92b32ebc5aeea0b76"
+    },
+    {
+      "imageIndex": 8,
+      "renderFrame": 1020,
+      "measurementFrame": 960,
+      "src": "/data/captures/bistro-geometry-primitive/0008.webp",
+      "bytes": 181194,
+      "sha256": "54d85824dd3384766cd9148e709627319cf8387d3b0a25993ce2905ed6a0c963"
+    },
+    {
+      "imageIndex": 9,
+      "renderFrame": 1140,
+      "measurementFrame": 1080,
+      "src": "/data/captures/bistro-geometry-primitive/0009.webp",
+      "bytes": 227456,
+      "sha256": "b19c53586facfce0fa1110a4800eb6d03d3d50cc4f4790d55be6425d59e02d08"
+    },
+    {
+      "imageIndex": 10,
+      "renderFrame": 1260,
+      "measurementFrame": 1200,
+      "src": "/data/captures/bistro-geometry-primitive/0010.webp",
+      "bytes": 304742,
+      "sha256": "8fbe5ef9ebdc240f7c298c04be4dbf3bfc91e1d4c238b5a94d116749b3f60fe6"
+    },
+    {
+      "imageIndex": 11,
+      "renderFrame": 1380,
+      "measurementFrame": 1320,
+      "src": "/data/captures/bistro-geometry-primitive/0011.webp",
+      "bytes": 280342,
+      "sha256": "58bfd12b805103c8876bc48040c5dbdf7acd9ea2c88f5c34663c32d798c752da"
+    },
+    {
+      "imageIndex": 12,
+      "renderFrame": 1500,
+      "measurementFrame": 1440,
+      "src": "/data/captures/bistro-geometry-primitive/0012.webp",
+      "bytes": 321598,
+      "sha256": "03175e65fa81e86a4ada3e1ae0ab5607c7b4d28a4f1b59b8e790e4cbe084fb25"
+    },
+    {
+      "imageIndex": 13,
+      "renderFrame": 1620,
+      "measurementFrame": 1560,
+      "src": "/data/captures/bistro-geometry-primitive/0013.webp",
+      "bytes": 343972,
+      "sha256": "04e425b06897f945ebec505fb293321bcb1cf4f209094d2b93a0edbbff946ad6"
+    },
+    {
+      "imageIndex": 14,
+      "renderFrame": 1740,
+      "measurementFrame": 1680,
+      "src": "/data/captures/bistro-geometry-primitive/0014.webp",
+      "bytes": 309770,
+      "sha256": "a1451cb94118bd69c18d7b490cb471383f3a1dee7ca50b007888802adedb1b72"
+    },
+    {
+      "imageIndex": 15,
+      "renderFrame": 1860,
+      "measurementFrame": 1800,
+      "src": "/data/captures/bistro-geometry-primitive/0015.webp",
+      "bytes": 234578,
+      "sha256": "2bf248f37b6ae92efedf567415129fb65c7ab7aa550f1a9fb29869c534191b6d"
+    },
+    {
+      "imageIndex": 16,
+      "renderFrame": 1980,
+      "measurementFrame": 1920,
+      "src": "/data/captures/bistro-geometry-primitive/0016.webp",
+      "bytes": 268462,
+      "sha256": "f5ae5216ce5c3295469b5433aab72f6d9a993898e1781629797b28248887cc5b"
+    },
+    {
+      "imageIndex": 17,
+      "renderFrame": 2100,
+      "measurementFrame": 2040,
+      "src": "/data/captures/bistro-geometry-primitive/0017.webp",
+      "bytes": 254460,
+      "sha256": "ed9649fdde384db69573ba1afa40bb5bc6dd3b34b9385d08a7e227549e640509"
+    },
+    {
+      "imageIndex": 18,
+      "renderFrame": 2220,
+      "measurementFrame": 2160,
+      "src": "/data/captures/bistro-geometry-primitive/0018.webp",
+      "bytes": 226302,
+      "sha256": "cab1836e5aff35a0904d1c96f77ed06e54473d95fa57f81ad064dab7048befcb"
+    },
+    {
+      "imageIndex": 19,
+      "renderFrame": 2340,
+      "measurementFrame": 2280,
+      "src": "/data/captures/bistro-geometry-primitive/0019.webp",
+      "bytes": 190320,
+      "sha256": "b5ce9d8af9bca5d026e23d107a408667e8863110bd42607ccd57dce01b576c4f"
+    },
+    {
+      "imageIndex": 20,
+      "renderFrame": 2460,
+      "measurementFrame": 2400,
+      "src": "/data/captures/bistro-geometry-primitive/0020.webp",
+      "bytes": 199586,
+      "sha256": "5480c3cadeba3ba5f60eba74128ae9b8a456682c1c459a58870d00d4646cf9f4"
+    },
+    {
+      "imageIndex": 21,
+      "renderFrame": 2580,
+      "measurementFrame": 2520,
+      "src": "/data/captures/bistro-geometry-primitive/0021.webp",
+      "bytes": 278668,
+      "sha256": "4388d037503f2ab652850f79e2492c753b00fd545bd18643c59f0cda524bb525"
+    },
+    {
+      "imageIndex": 22,
+      "renderFrame": 2700,
+      "measurementFrame": 2640,
+      "src": "/data/captures/bistro-geometry-primitive/0022.webp",
+      "bytes": 245210,
+      "sha256": "5086aa0fb40abe0020ed99d97f5a4d00b598f7ed2e2ee515baea7c6279a02a55"
+    },
+    {
+      "imageIndex": 23,
+      "renderFrame": 2820,
+      "measurementFrame": 2760,
+      "src": "/data/captures/bistro-geometry-primitive/0023.webp",
+      "bytes": 284108,
+      "sha256": "5f0a987ae27b371efe92e1a6d761508a4c0bbed808e8fa62b47d1607aa6a47fb"
+    },
+    {
+      "imageIndex": 24,
+      "renderFrame": 2940,
+      "measurementFrame": 2880,
+      "src": "/data/captures/bistro-geometry-primitive/0024.webp",
+      "bytes": 283248,
+      "sha256": "a54e335d0c4ad0f08f417a03a3d0a373b17d32f4b25ae1b02c192bc005967281"
+    },
+    {
+      "imageIndex": 25,
+      "renderFrame": 3060,
+      "measurementFrame": 3000,
+      "src": "/data/captures/bistro-geometry-primitive/0025.webp",
+      "bytes": 211504,
+      "sha256": "e641392a58e1e0a10c7f77b292b1f6455503cbecc46d1753fb37832deda440b1"
+    },
+    {
+      "imageIndex": 26,
+      "renderFrame": 3180,
+      "measurementFrame": 3120,
+      "src": "/data/captures/bistro-geometry-primitive/0026.webp",
+      "bytes": 290016,
+      "sha256": "3234769b672f315028f6aa0a973b6061582065a2e817a6f22721af702bf402db"
+    },
+    {
+      "imageIndex": 27,
+      "renderFrame": 3300,
+      "measurementFrame": 3240,
+      "src": "/data/captures/bistro-geometry-primitive/0027.webp",
+      "bytes": 294516,
+      "sha256": "42be15759703196bf81c148ad553cd4565d33eeeccc99ddcaf60df29c4538f33"
+    },
+    {
+      "imageIndex": 28,
+      "renderFrame": 3420,
+      "measurementFrame": 3360,
+      "src": "/data/captures/bistro-geometry-primitive/0028.webp",
+      "bytes": 289832,
+      "sha256": "7224339928d2e7bc3a70170336bfbd459ce4210c31e582c7a3cb193f52ce9c9c"
+    },
+    {
+      "imageIndex": 29,
+      "renderFrame": 3540,
+      "measurementFrame": 3480,
+      "src": "/data/captures/bistro-geometry-primitive/0029.webp",
+      "bytes": 258320,
+      "sha256": "8ec17c4e16aa8f84c1f5aff29bcb894907f17caa29e077640d91c0df75aadf85"
+    },
+    {
+      "imageIndex": 30,
+      "renderFrame": 3660,
+      "measurementFrame": 3600,
+      "src": "/data/captures/bistro-geometry-primitive/0030.webp",
+      "bytes": 205748,
+      "sha256": "4fb3505453c9c52f5c6f2db9b4bda6f29cfb1ab73b6eb38d1274673d52958ee6"
+    },
+    {
+      "imageIndex": 31,
+      "renderFrame": 3780,
+      "measurementFrame": 3720,
+      "src": "/data/captures/bistro-geometry-primitive/0031.webp",
+      "bytes": 239188,
+      "sha256": "cbf054eb80034a361dd0f8675379cad9d5ef32cd0d5d05bb3870298476bb479f"
+    },
+    {
+      "imageIndex": 32,
+      "renderFrame": 3900,
+      "measurementFrame": 3840,
+      "src": "/data/captures/bistro-geometry-primitive/0032.webp",
+      "bytes": 251468,
+      "sha256": "fc0c1c4a8a55af54bf59a5de2be214e0c71933a6ce14956ab2905e689afa3490"
+    },
+    {
+      "imageIndex": 33,
+      "renderFrame": 4020,
+      "measurementFrame": 3960,
+      "src": "/data/captures/bistro-geometry-primitive/0033.webp",
+      "bytes": 276494,
+      "sha256": "0074c250aa76bfce50f27e81451e90973de9ea2e0584fc46b4d061e6027c55f1"
+    },
+    {
+      "imageIndex": 34,
+      "renderFrame": 4140,
+      "measurementFrame": 4080,
+      "src": "/data/captures/bistro-geometry-primitive/0034.webp",
+      "bytes": 306156,
+      "sha256": "f6d62513ab9057689f553d4dc0193ffdbb1a5e21d2a5c1d11535f7bba6a5f58b"
+    },
+    {
+      "imageIndex": 35,
+      "renderFrame": 4260,
+      "measurementFrame": 4200,
+      "src": "/data/captures/bistro-geometry-primitive/0035.webp",
+      "bytes": 283028,
+      "sha256": "718aedcb8dc3f18be76d6c850aaf262a075962b33cf5fe9ecb294953b9ed66dc"
+    },
+    {
+      "imageIndex": 36,
+      "renderFrame": 4380,
+      "measurementFrame": 4320,
+      "src": "/data/captures/bistro-geometry-primitive/0036.webp",
+      "bytes": 261226,
+      "sha256": "83b83b29017439a7e3bb29cadaef18532c8be7ba8854e2d5c142ca7cc971fb33"
+    },
+    {
+      "imageIndex": 37,
+      "renderFrame": 4500,
+      "measurementFrame": 4440,
+      "src": "/data/captures/bistro-geometry-primitive/0037.webp",
+      "bytes": 182090,
+      "sha256": "d77738b9e5c5222932c171ac8c9a95574df8db1efdc428bea506251935d2a14e"
+    },
+    {
+      "imageIndex": 38,
+      "renderFrame": 4620,
+      "measurementFrame": 4560,
+      "src": "/data/captures/bistro-geometry-primitive/0038.webp",
+      "bytes": 219674,
+      "sha256": "b10a39605f1b5bfe2c176ab1f601b83f192e0e939e067dd0414a8f87568f40b7"
+    },
+    {
+      "imageIndex": 39,
+      "renderFrame": 4740,
+      "measurementFrame": 4680,
+      "src": "/data/captures/bistro-geometry-primitive/0039.webp",
+      "bytes": 232778,
+      "sha256": "00623826a9dfc3dedbcbd4a33634a6d6719e4245c941d9f7cbe66e3177222efa"
+    },
+    {
+      "imageIndex": 40,
+      "renderFrame": 4860,
+      "measurementFrame": 4800,
+      "src": "/data/captures/bistro-geometry-primitive/0040.webp",
+      "bytes": 180590,
+      "sha256": "900ee7e5af496d098ff28006f459f73b882d11e25fabe04f8e930822ef8f046d"
+    },
+    {
+      "imageIndex": 41,
+      "renderFrame": 4980,
+      "measurementFrame": 4920,
+      "src": "/data/captures/bistro-geometry-primitive/0041.webp",
+      "bytes": 138076,
+      "sha256": "ada1e62cea2f20db144707557c461ec3c88e8f111b6633c59fe0d50baedad1c1"
+    },
+    {
+      "imageIndex": 42,
+      "renderFrame": 5100,
+      "measurementFrame": 5040,
+      "src": "/data/captures/bistro-geometry-primitive/0042.webp",
+      "bytes": 166242,
+      "sha256": "0f3c8ac48fa32b4b3e9ca56c461b25f78ebb072bd578f250e47eaea8ceb88800"
+    },
+    {
+      "imageIndex": 43,
+      "renderFrame": 5220,
+      "measurementFrame": 5160,
+      "src": "/data/captures/bistro-geometry-primitive/0043.webp",
+      "bytes": 145910,
+      "sha256": "5d8e4af68003981268d8299e6f17aac54ed99a529e8c566402bcb28b40e0e206"
+    },
+    {
+      "imageIndex": 44,
+      "renderFrame": 5340,
+      "measurementFrame": 5280,
+      "src": "/data/captures/bistro-geometry-primitive/0044.webp",
+      "bytes": 137934,
+      "sha256": "4aeda0282560c7421c457b2ad55fac12d67b6d36759b886db25827cc0b384d47"
+    },
+    {
+      "imageIndex": 45,
+      "renderFrame": 5460,
+      "measurementFrame": 5400,
+      "src": "/data/captures/bistro-geometry-primitive/0045.webp",
+      "bytes": 40062,
+      "sha256": "a156c92de950210139a8da604533a4a434c2dddcd1b9609e3741207f63f84290"
+    }
+  ]
+}

@@ -7,8 +7,8 @@
 - Runs: 7 expected, 7 success, 0 salvaged, 0 failed, 0 skipped
 - Raw frames: 348 PNG
 - Raw size: 265,817,186 bytes
-- Deployable frames: 344 WebP
-- Deployable frame size: 39,547,836 bytes
+- Deployable frames: 331 WebP from the non-blank subset of all 348 captures
+- Deployable frame size: 39,534,844 bytes
 - Capture resolution: 1280x720
 - Deployable resolution: 960x540
 - Capture hardware: NVIDIA GeForce RTX 5060 Ti 16GB
@@ -19,15 +19,16 @@
 |---:|---|---|---:|---:|---:|
 | 0 | Sponza PBR | DonutVisGBuffer | n/a | 42 | 39 |
 | 1 | Bistro PBR | DonutVisGBuffer | n/a | 92 | 91 |
-| 2 | Sponza geometry instances | DonutVisDebug | 0 | 42 | 42 |
-| 3 | Sponza primitives | DonutVisDebug | 1 | 42 | 42 |
-| 4 | Sponza geometry + primitives | DonutVisDebug | 2 | 42 | 42 |
-| 5 | Sponza barycentrics | DonutVisDebug | 3 | 42 | 42 |
+| 2 | Sponza geometry instances | DonutVisDebug | 0 | 42 | 38 |
+| 3 | Sponza primitives | DonutVisDebug | 1 | 42 | 39 |
+| 4 | Sponza geometry + primitives | DonutVisDebug | 2 | 42 | 39 |
+| 5 | Sponza barycentrics | DonutVisDebug | 3 | 42 | 39 |
 | 6 | Bistro geometry + primitives | DonutVisDebug | 2 | 46 | 46 |
 
-The three final Sponza beauty frames (image indexes 39–41) and the final
-Bistro beauty frame (image index 91) are completely black after the camera path
-finishes. They remain in raw capture evidence and are listed as
+The three final frames (image indexes 39–41) of each Sponza sequence and the
+final Bistro beauty frame (image index 91) have no meaningful RGB variation
+after the camera path finishes. Geometry-instance frame 15 is also a single
+flat ID color. They remain in raw capture evidence and are listed as
 `excludedBlankFrames` in deployable manifests, but are not presented as useful
 viewer frames.
 

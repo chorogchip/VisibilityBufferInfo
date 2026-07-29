@@ -1,0 +1,344 @@
+{
+  "id": "sponza-primitive",
+  "label": "Sponza · Primitives",
+  "scene": "Sponza",
+  "view": "primitive",
+  "viewLabel": "Primitive ID",
+  "viewKind": "debug",
+  "renderer": "DonutVisDebug",
+  "rendererVariant": 13,
+  "debugMode": 1,
+  "description": "A hashed color per primitive exposes triangle density.",
+  "profileId": "sponza-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "runIndex": 3,
+    "width": 1280,
+    "height": 720,
+    "warmupFrames": 60,
+    "measureFrames": 2500,
+    "captureStride": 60,
+    "captureFps": 12,
+    "capturedFrames": 42
+  },
+  "excludedBlankFrames": [
+    39,
+    40,
+    41
+  ],
+  "frameCount": 39,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "renderFrame": 60,
+      "measurementFrame": 0,
+      "src": "/data/captures/sponza-primitive/0000.webp",
+      "bytes": 111870,
+      "sha256": "0c51a71a52e5b5ed2b81b9c6e321e996c93807b9d7a5954eba8efc3d9fe27176"
+    },
+    {
+      "imageIndex": 1,
+      "renderFrame": 120,
+      "measurementFrame": 60,
+      "src": "/data/captures/sponza-primitive/0001.webp",
+      "bytes": 153026,
+      "sha256": "623ddfabc9aabf685a8141801c3bbb2b24a261bdae76ba81963d4019b61897f1"
+    },
+    {
+      "imageIndex": 2,
+      "renderFrame": 180,
+      "measurementFrame": 120,
+      "src": "/data/captures/sponza-primitive/0002.webp",
+      "bytes": 168076,
+      "sha256": "cb67680f4a02f1d71f13b15c6644ea1b682179f17e06ba0c6ea9cb9ec5578f6e"
+    },
+    {
+      "imageIndex": 3,
+      "renderFrame": 240,
+      "measurementFrame": 180,
+      "src": "/data/captures/sponza-primitive/0003.webp",
+      "bytes": 181324,
+      "sha256": "66e539deb655e2ce732d49cf4193cc10a67f9a9d3ddf48307d00096d4ccaf955"
+    },
+    {
+      "imageIndex": 4,
+      "renderFrame": 300,
+      "measurementFrame": 240,
+      "src": "/data/captures/sponza-primitive/0004.webp",
+      "bytes": 100666,
+      "sha256": "c511e29f67df80af8657d444eeb78fdc856f3707541d1fce6c046f11f5dabbb0"
+    },
+    {
+      "imageIndex": 5,
+      "renderFrame": 360,
+      "measurementFrame": 300,
+      "src": "/data/captures/sponza-primitive/0005.webp",
+      "bytes": 109052,
+      "sha256": "d9e6d1a7f03b61f77e013aec254d2f6b581950d10ee6f9320faf09c6858252ee"
+    },
+    {
+      "imageIndex": 6,
+      "renderFrame": 420,
+      "measurementFrame": 360,
+      "src": "/data/captures/sponza-primitive/0006.webp",
+      "bytes": 101794,
+      "sha256": "02da304d45d22f5fd6c1d85767b83c85ec3a6b1ce5a8d7b97999a163351cf81d"
+    },
+    {
+      "imageIndex": 7,
+      "renderFrame": 480,
+      "measurementFrame": 420,
+      "src": "/data/captures/sponza-primitive/0007.webp",
+      "bytes": 169368,
+      "sha256": "89a44fe5779e3d90c5b0bf766da4a9727f4e372e94f8ea2bed2e895388149df6"
+    },
+    {
+      "imageIndex": 8,
+      "renderFrame": 540,
+      "measurementFrame": 480,
+      "src": "/data/captures/sponza-primitive/0008.webp",
+      "bytes": 203818,
+      "sha256": "71a0ffc3d199f6eddee4573ef55706a07ac2f095216ed5d6dbda46ced5c98817"
+    },
+    {
+      "imageIndex": 9,
+      "renderFrame": 600,
+      "measurementFrame": 540,
+      "src": "/data/captures/sponza-primitive/0009.webp",
+      "bytes": 193164,
+      "sha256": "f8782e9c3ae0b206e00bad2ec140f0b3c1a6feef708fde2362318ea40a10184a"
+    },
+    {
+      "imageIndex": 10,
+      "renderFrame": 660,
+      "measurementFrame": 600,
+      "src": "/data/captures/sponza-primitive/0010.webp",
+      "bytes": 161476,
+      "sha256": "6f81c1e02a5ed2497d88d17758104a3d8a2d7a3ecd7daee9fb63c18e43cb6eae"
+    },
+    {
+      "imageIndex": 11,
+      "renderFrame": 720,
+      "measurementFrame": 660,
+      "src": "/data/captures/sponza-primitive/0011.webp",
+      "bytes": 275278,
+      "sha256": "5a6eb2db9d93a35b355acbc48a17f85e65aebc6961051fff7d299fd4e57aab0b"
+    },
+    {
+      "imageIndex": 12,
+      "renderFrame": 780,
+      "measurementFrame": 720,
+      "src": "/data/captures/sponza-primitive/0012.webp",
+      "bytes": 304688,
+      "sha256": "f347d9202a695d73b3d2da4732898f646594ad0dac56fdee453861c94dbb95aa"
+    },
+    {
+      "imageIndex": 13,
+      "renderFrame": 840,
+      "measurementFrame": 780,
+      "src": "/data/captures/sponza-primitive/0013.webp",
+      "bytes": 287300,
+      "sha256": "dfec945c522185cdc6f41688f25d8ece64748e2f078f33ee296ab56542de2f58"
+    },
+    {
+      "imageIndex": 14,
+      "renderFrame": 900,
+      "measurementFrame": 840,
+      "src": "/data/captures/sponza-primitive/0014.webp",
+      "bytes": 250020,
+      "sha256": "98e87db957f8b2bdde093a7d032d131c75b6c7e122d4f07df450798ca2beaf24"
+    },
+    {
+      "imageIndex": 15,
+      "renderFrame": 960,
+      "measurementFrame": 900,
+      "src": "/data/captures/sponza-primitive/0015.webp",
+      "bytes": 124118,
+      "sha256": "319bddc0242e9b8517dee861965e6427fc08284365b90c69deea58c99d03f807"
+    },
+    {
+      "imageIndex": 16,
+      "renderFrame": 1020,
+      "measurementFrame": 960,
+      "src": "/data/captures/sponza-primitive/0016.webp",
+      "bytes": 331772,
+      "sha256": "b6caac0bfd844416b14d185e2f2f09867fa08d68d77e94ef21da2bf71ccab430"
+    },
+    {
+      "imageIndex": 17,
+      "renderFrame": 1080,
+      "measurementFrame": 1020,
+      "src": "/data/captures/sponza-primitive/0017.webp",
+      "bytes": 183708,
+      "sha256": "5ef8ac65d9ddbaa7c08421f8028fb655e0da5d18e19f9cccc859d60246263fac"
+    },
+    {
+      "imageIndex": 18,
+      "renderFrame": 1140,
+      "measurementFrame": 1080,
+      "src": "/data/captures/sponza-primitive/0018.webp",
+      "bytes": 258070,
+      "sha256": "2fc751a224053aa36eeba96aa8329f403e104a9d934b6bae92ab4aa2d65fcea7"
+    },
+    {
+      "imageIndex": 19,
+      "renderFrame": 1200,
+      "measurementFrame": 1140,
+      "src": "/data/captures/sponza-primitive/0019.webp",
+      "bytes": 229098,
+      "sha256": "8d42a9030cdee48f6340385a8d29f88a02634a7d602d084baafbb7aecef99255"
+    },
+    {
+      "imageIndex": 20,
+      "renderFrame": 1260,
+      "measurementFrame": 1200,
+      "src": "/data/captures/sponza-primitive/0020.webp",
+      "bytes": 189148,
+      "sha256": "d2fd292fe6ad79a425f090ee8011cd8b3732d7940adc1bb4b6df7078e27e1aa8"
+    },
+    {
+      "imageIndex": 21,
+      "renderFrame": 1320,
+      "measurementFrame": 1260,
+      "src": "/data/captures/sponza-primitive/0021.webp",
+      "bytes": 203272,
+      "sha256": "912c02efddee1a50f1e9d18d8e58bcb148bf68850d42a402cd98c49ab6739dad"
+    },
+    {
+      "imageIndex": 22,
+      "renderFrame": 1380,
+      "measurementFrame": 1320,
+      "src": "/data/captures/sponza-primitive/0022.webp",
+      "bytes": 101414,
+      "sha256": "fbe265c78781e309bcd2131686a1aad764ab66bc665557715141b2a38dc478f7"
+    },
+    {
+      "imageIndex": 23,
+      "renderFrame": 1440,
+      "measurementFrame": 1380,
+      "src": "/data/captures/sponza-primitive/0023.webp",
+      "bytes": 193998,
+      "sha256": "9923770b55dd4703c79f09683aab7221924d46714517b67d5e7820fb953ea739"
+    },
+    {
+      "imageIndex": 24,
+      "renderFrame": 1500,
+      "measurementFrame": 1440,
+      "src": "/data/captures/sponza-primitive/0024.webp",
+      "bytes": 310142,
+      "sha256": "4ee0db8d0b7e68f44f0062c8ed574336769c403433bf881ef48d3d24be4cb00c"
+    },
+    {
+      "imageIndex": 25,
+      "renderFrame": 1560,
+      "measurementFrame": 1500,
+      "src": "/data/captures/sponza-primitive/0025.webp",
+      "bytes": 311160,
+      "sha256": "b760bdb752dc1aa256fbc0ffe8d6e996522a926e738f755256319066ea2b0589"
+    },
+    {
+      "imageIndex": 26,
+      "renderFrame": 1620,
+      "measurementFrame": 1560,
+      "src": "/data/captures/sponza-primitive/0026.webp",
+      "bytes": 240710,
+      "sha256": "a724f4c972d147427d88b1c992676e52eb76654f2de6df09a9b73fc01f595ed9"
+    },
+    {
+      "imageIndex": 27,
+      "renderFrame": 1680,
+      "measurementFrame": 1620,
+      "src": "/data/captures/sponza-primitive/0027.webp",
+      "bytes": 124512,
+      "sha256": "12c6e570d331834312002ef9d66916ea0a00b28db2013912bffc034d694173de"
+    },
+    {
+      "imageIndex": 28,
+      "renderFrame": 1740,
+      "measurementFrame": 1680,
+      "src": "/data/captures/sponza-primitive/0028.webp",
+      "bytes": 108488,
+      "sha256": "e6cedd1c68e8b4894fc2d9cc12ca537279a55be102490612b7f7e776f18f0525"
+    },
+    {
+      "imageIndex": 29,
+      "renderFrame": 1800,
+      "measurementFrame": 1740,
+      "src": "/data/captures/sponza-primitive/0029.webp",
+      "bytes": 87366,
+      "sha256": "5aec827511dd8565f63adf48e3f3feceaa9ec2ba7ab30247a98b210d56f5fdd9"
+    },
+    {
+      "imageIndex": 30,
+      "renderFrame": 1860,
+      "measurementFrame": 1800,
+      "src": "/data/captures/sponza-primitive/0030.webp",
+      "bytes": 72430,
+      "sha256": "9274bdb3d699e14aa64da5936b0c910d58a8a5e8ef2c64be79014c3eda4c781e"
+    },
+    {
+      "imageIndex": 31,
+      "renderFrame": 1920,
+      "measurementFrame": 1860,
+      "src": "/data/captures/sponza-primitive/0031.webp",
+      "bytes": 85840,
+      "sha256": "614459ebf4a5106368cf5ffd375b7348cbdc178595cc1266338387555afcc1f5"
+    },
+    {
+      "imageIndex": 32,
+      "renderFrame": 1980,
+      "measurementFrame": 1920,
+      "src": "/data/captures/sponza-primitive/0032.webp",
+      "bytes": 111922,
+      "sha256": "7d1f3ca7a2211452d6cd02a1968c409d531c1d074f5edd5b62bffe986eaa83be"
+    },
+    {
+      "imageIndex": 33,
+      "renderFrame": 2040,
+      "measurementFrame": 1980,
+      "src": "/data/captures/sponza-primitive/0033.webp",
+      "bytes": 139818,
+      "sha256": "5394a7d41536bbf5ca95fc223540d6c921d4163affb66fb0e78da858dd0e446c"
+    },
+    {
+      "imageIndex": 34,
+      "renderFrame": 2100,
+      "measurementFrame": 2040,
+      "src": "/data/captures/sponza-primitive/0034.webp",
+      "bytes": 220976,
+      "sha256": "4138117a144aeee5d33adb1a599952e3816aed4187eeaaf1346b703f63391184"
+    },
+    {
+      "imageIndex": 35,
+      "renderFrame": 2160,
+      "measurementFrame": 2100,
+      "src": "/data/captures/sponza-primitive/0035.webp",
+      "bytes": 209572,
+      "sha256": "4255c58f68aa7464bde69b3b3baeaf0698a17ee47fbafc9ef704c63cef1b6dfa"
+    },
+    {
+      "imageIndex": 36,
+      "renderFrame": 2220,
+      "measurementFrame": 2160,
+      "src": "/data/captures/sponza-primitive/0036.webp",
+      "bytes": 328954,
+      "sha256": "a90d5fc9bd1856ae6490a51c1528f8518846c8a2e2b3a9491239490e787010e8"
+    },
+    {
+      "imageIndex": 37,
+      "renderFrame": 2280,
+      "measurementFrame": 2220,
+      "src": "/data/captures/sponza-primitive/0037.webp",
+      "bytes": 29246,
+      "sha256": "f4ed23333ca9e52bc2468d1493a0d79f0929827e734d999e1a4d1dddff843e70"
+    },
+    {
+      "imageIndex": 38,
+      "renderFrame": 2340,
+      "measurementFrame": 2280,
+      "src": "/data/captures/sponza-primitive/0038.webp",
+      "bytes": 12384,
+      "sha256": "289cba1dff0c95f0836056ac383374f29d960dc8d138857ff8c799395e74cc4b"
+    }
+  ]
+}

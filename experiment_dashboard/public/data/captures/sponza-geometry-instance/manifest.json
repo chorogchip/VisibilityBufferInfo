@@ -1,0 +1,337 @@
+{
+  "id": "sponza-geometry-instance",
+  "label": "Sponza · Geometry instances",
+  "scene": "Sponza",
+  "view": "geometry-instance",
+  "viewLabel": "Geometry instance ID",
+  "viewKind": "debug",
+  "renderer": "DonutVisDebug",
+  "rendererVariant": 13,
+  "debugMode": 0,
+  "description": "Stable colors identify geometry-instance boundaries.",
+  "profileId": "sponza-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "runIndex": 2,
+    "width": 1280,
+    "height": 720,
+    "warmupFrames": 60,
+    "measureFrames": 2500,
+    "captureStride": 60,
+    "captureFps": 12,
+    "capturedFrames": 42
+  },
+  "excludedBlankFrames": [
+    15,
+    39,
+    40,
+    41
+  ],
+  "frameCount": 38,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "renderFrame": 60,
+      "measurementFrame": 0,
+      "src": "/data/captures/sponza-geometry-instance/0000.webp",
+      "bytes": 24776,
+      "sha256": "3f61cc1c7405e567657e47ea1d98a33cca5bae19beaa4c4d5b10959ec406156a"
+    },
+    {
+      "imageIndex": 1,
+      "renderFrame": 120,
+      "measurementFrame": 60,
+      "src": "/data/captures/sponza-geometry-instance/0001.webp",
+      "bytes": 30526,
+      "sha256": "dd2854a320be0b21daae42cc3ad153f95bd2fcf63434bb1bf70edecd3da11b18"
+    },
+    {
+      "imageIndex": 2,
+      "renderFrame": 180,
+      "measurementFrame": 120,
+      "src": "/data/captures/sponza-geometry-instance/0002.webp",
+      "bytes": 26536,
+      "sha256": "e0d7c4f855850cfd389de9abaeb05df86809398d30755d1d4fd5e2eb6c22e39b"
+    },
+    {
+      "imageIndex": 3,
+      "renderFrame": 240,
+      "measurementFrame": 180,
+      "src": "/data/captures/sponza-geometry-instance/0003.webp",
+      "bytes": 30942,
+      "sha256": "9b7470b367d517a23e78a21a01c6f59e894eee00a486b7645fc2f1e3fd6351e2"
+    },
+    {
+      "imageIndex": 4,
+      "renderFrame": 300,
+      "measurementFrame": 240,
+      "src": "/data/captures/sponza-geometry-instance/0004.webp",
+      "bytes": 10998,
+      "sha256": "b3943b444d01bdba77b6267dac378ba97e610ae9f8f4bbadb35a28c8c52abd6c"
+    },
+    {
+      "imageIndex": 5,
+      "renderFrame": 360,
+      "measurementFrame": 300,
+      "src": "/data/captures/sponza-geometry-instance/0005.webp",
+      "bytes": 8968,
+      "sha256": "2fd7186d7997ec5972c40f5427cd9d9bcbf3045de7f6d321a94ad2a843ea537b"
+    },
+    {
+      "imageIndex": 6,
+      "renderFrame": 420,
+      "measurementFrame": 360,
+      "src": "/data/captures/sponza-geometry-instance/0006.webp",
+      "bytes": 10964,
+      "sha256": "d84211793b2e6a011a57c54c6b5cdd2f5783e35b524f8bdda6cdbe4eadd70084"
+    },
+    {
+      "imageIndex": 7,
+      "renderFrame": 480,
+      "measurementFrame": 420,
+      "src": "/data/captures/sponza-geometry-instance/0007.webp",
+      "bytes": 26318,
+      "sha256": "4d854059a6beacd9dac54ec3fbac05981db8ace621ec53fe669d92104400002f"
+    },
+    {
+      "imageIndex": 8,
+      "renderFrame": 540,
+      "measurementFrame": 480,
+      "src": "/data/captures/sponza-geometry-instance/0008.webp",
+      "bytes": 17042,
+      "sha256": "5a70a5c55f7916468ba977615cd6df40f7a666fbb4898b560035e09c98dffe9a"
+    },
+    {
+      "imageIndex": 9,
+      "renderFrame": 600,
+      "measurementFrame": 540,
+      "src": "/data/captures/sponza-geometry-instance/0009.webp",
+      "bytes": 19062,
+      "sha256": "1379ca100e23cd6c05284cb5c88fc6f91fed6e839c90bc32914b8f5b6e1f896e"
+    },
+    {
+      "imageIndex": 10,
+      "renderFrame": 660,
+      "measurementFrame": 600,
+      "src": "/data/captures/sponza-geometry-instance/0010.webp",
+      "bytes": 14802,
+      "sha256": "80d5ca7c2cf087fcb7189daea95f1a991de9e62455b47e704773a59dd447ae19"
+    },
+    {
+      "imageIndex": 11,
+      "renderFrame": 720,
+      "measurementFrame": 660,
+      "src": "/data/captures/sponza-geometry-instance/0011.webp",
+      "bytes": 58870,
+      "sha256": "7f382daed7d874f0679b3a12cb736821ac3de782d5d168b384f4c6329f91d780"
+    },
+    {
+      "imageIndex": 12,
+      "renderFrame": 780,
+      "measurementFrame": 720,
+      "src": "/data/captures/sponza-geometry-instance/0012.webp",
+      "bytes": 65072,
+      "sha256": "1dbc685b9291d8389453a71b51d3d8db36d089c13bf42b854a162fd45e93da94"
+    },
+    {
+      "imageIndex": 13,
+      "renderFrame": 840,
+      "measurementFrame": 780,
+      "src": "/data/captures/sponza-geometry-instance/0013.webp",
+      "bytes": 58898,
+      "sha256": "aac28ae6eaca8e959dd5fbeee32472da7fa739bac3e4fcb9bc428997aa42ed6f"
+    },
+    {
+      "imageIndex": 14,
+      "renderFrame": 900,
+      "measurementFrame": 840,
+      "src": "/data/captures/sponza-geometry-instance/0014.webp",
+      "bytes": 59650,
+      "sha256": "e8d9567c0e010e953d8c57c3cd48a694b266e19e04167596ce3582e20f7c4e5f"
+    },
+    {
+      "imageIndex": 16,
+      "renderFrame": 1020,
+      "measurementFrame": 960,
+      "src": "/data/captures/sponza-geometry-instance/0016.webp",
+      "bytes": 51664,
+      "sha256": "6f5daa17d5f8102a84e0ee19efdb0285d19a7b954d1b499e07ee3f391b0ca360"
+    },
+    {
+      "imageIndex": 17,
+      "renderFrame": 1080,
+      "measurementFrame": 1020,
+      "src": "/data/captures/sponza-geometry-instance/0017.webp",
+      "bytes": 44626,
+      "sha256": "2bee97de9ad24ff2570920c6462da37b5f74ff4d7d78e50eae11644654409590"
+    },
+    {
+      "imageIndex": 18,
+      "renderFrame": 1140,
+      "measurementFrame": 1080,
+      "src": "/data/captures/sponza-geometry-instance/0018.webp",
+      "bytes": 51132,
+      "sha256": "64c40603a378702c55c10cea76c8568f4c6a2bef23f11fc091b119bf5a536620"
+    },
+    {
+      "imageIndex": 19,
+      "renderFrame": 1200,
+      "measurementFrame": 1140,
+      "src": "/data/captures/sponza-geometry-instance/0019.webp",
+      "bytes": 36506,
+      "sha256": "b5092eddbd3ec2d616f0bbe2374c2b9fc8984f05ad6fcc49c696a53533cb5a87"
+    },
+    {
+      "imageIndex": 20,
+      "renderFrame": 1260,
+      "measurementFrame": 1200,
+      "src": "/data/captures/sponza-geometry-instance/0020.webp",
+      "bytes": 32594,
+      "sha256": "c10d614e2cee89e4bce415133b48ead536b1a867e05d21f7f5d077e4bd417a52"
+    },
+    {
+      "imageIndex": 21,
+      "renderFrame": 1320,
+      "measurementFrame": 1260,
+      "src": "/data/captures/sponza-geometry-instance/0021.webp",
+      "bytes": 30412,
+      "sha256": "a836bf575518d4dd483f8358cae170661926d82598a9e6059f042c6257a4eacb"
+    },
+    {
+      "imageIndex": 22,
+      "renderFrame": 1380,
+      "measurementFrame": 1320,
+      "src": "/data/captures/sponza-geometry-instance/0022.webp",
+      "bytes": 9250,
+      "sha256": "c908d52b4468b3728ebc2508254411e38ad0ef827a25d5a634043b34ebc70597"
+    },
+    {
+      "imageIndex": 23,
+      "renderFrame": 1440,
+      "measurementFrame": 1380,
+      "src": "/data/captures/sponza-geometry-instance/0023.webp",
+      "bytes": 38248,
+      "sha256": "c06dcb8f6a1b1480316aba4ee5eaa794bc2b8805e9b413a57561a1199791212a"
+    },
+    {
+      "imageIndex": 24,
+      "renderFrame": 1500,
+      "measurementFrame": 1440,
+      "src": "/data/captures/sponza-geometry-instance/0024.webp",
+      "bytes": 43054,
+      "sha256": "1afe3e96f2dd6d3c264a58fff63e7a7ca8d4ddbb709a119828d067b1e110514d"
+    },
+    {
+      "imageIndex": 25,
+      "renderFrame": 1560,
+      "measurementFrame": 1500,
+      "src": "/data/captures/sponza-geometry-instance/0025.webp",
+      "bytes": 50302,
+      "sha256": "294e0b635e8b5ccceaa5b74ccc4a3e3ccd49219c24e3ee3662663d32d5adb497"
+    },
+    {
+      "imageIndex": 26,
+      "renderFrame": 1620,
+      "measurementFrame": 1560,
+      "src": "/data/captures/sponza-geometry-instance/0026.webp",
+      "bytes": 40594,
+      "sha256": "8f261cd41a0f2df10c40f4367aec326d3768630c1dc248558ef959dcd49bf874"
+    },
+    {
+      "imageIndex": 27,
+      "renderFrame": 1680,
+      "measurementFrame": 1620,
+      "src": "/data/captures/sponza-geometry-instance/0027.webp",
+      "bytes": 24796,
+      "sha256": "0cef5e63a02c2a2e0be2bb51a4adb79522c0ad237a0b3381e9ffdffdebda70f0"
+    },
+    {
+      "imageIndex": 28,
+      "renderFrame": 1740,
+      "measurementFrame": 1680,
+      "src": "/data/captures/sponza-geometry-instance/0028.webp",
+      "bytes": 28446,
+      "sha256": "21662113b31c61d673e3b9b018544c84db8e63379e996de923d6ea8b03de990d"
+    },
+    {
+      "imageIndex": 29,
+      "renderFrame": 1800,
+      "measurementFrame": 1740,
+      "src": "/data/captures/sponza-geometry-instance/0029.webp",
+      "bytes": 27078,
+      "sha256": "7f4466585e21555067008c34b8a8b4ae71fcac4709be0663b6296130ce8285ab"
+    },
+    {
+      "imageIndex": 30,
+      "renderFrame": 1860,
+      "measurementFrame": 1800,
+      "src": "/data/captures/sponza-geometry-instance/0030.webp",
+      "bytes": 25950,
+      "sha256": "acb4c0f294ab75043afdaee33163466c83bae6442db176bdeb271e45f369db58"
+    },
+    {
+      "imageIndex": 31,
+      "renderFrame": 1920,
+      "measurementFrame": 1860,
+      "src": "/data/captures/sponza-geometry-instance/0031.webp",
+      "bytes": 28900,
+      "sha256": "d48cc8290f8577dfb553f815058fcd9947b52ba68c18c4cceb2ddc28a717cbf6"
+    },
+    {
+      "imageIndex": 32,
+      "renderFrame": 1980,
+      "measurementFrame": 1920,
+      "src": "/data/captures/sponza-geometry-instance/0032.webp",
+      "bytes": 31846,
+      "sha256": "2d2f66995c704c56543142a867a17b820b8d5876c5c9b30ba66d18ef831ee19e"
+    },
+    {
+      "imageIndex": 33,
+      "renderFrame": 2040,
+      "measurementFrame": 1980,
+      "src": "/data/captures/sponza-geometry-instance/0033.webp",
+      "bytes": 29476,
+      "sha256": "53a76be4c1997d36b50577ce656241960da4f824a1d5f20a9aac985d83f04dcd"
+    },
+    {
+      "imageIndex": 34,
+      "renderFrame": 2100,
+      "measurementFrame": 2040,
+      "src": "/data/captures/sponza-geometry-instance/0034.webp",
+      "bytes": 32382,
+      "sha256": "2a1fc184681a5cb86ad3d67f9eb062014978d75481f9763170f07cd5b17992e5"
+    },
+    {
+      "imageIndex": 35,
+      "renderFrame": 2160,
+      "measurementFrame": 2100,
+      "src": "/data/captures/sponza-geometry-instance/0035.webp",
+      "bytes": 25170,
+      "sha256": "960509b6e0b826bf5b77ee8e478dd6ae35a738a82efc2be68f13775fbe055aa7"
+    },
+    {
+      "imageIndex": 36,
+      "renderFrame": 2220,
+      "measurementFrame": 2160,
+      "src": "/data/captures/sponza-geometry-instance/0036.webp",
+      "bytes": 36926,
+      "sha256": "c3bcfeb2811ec93fb011be16594d1d9adf8b0e4a645800f35eb3a537e8144c83"
+    },
+    {
+      "imageIndex": 37,
+      "renderFrame": 2280,
+      "measurementFrame": 2220,
+      "src": "/data/captures/sponza-geometry-instance/0037.webp",
+      "bytes": 8128,
+      "sha256": "385861bbecc38690ec00514fa9f75d993aa1c90557173c3454d184d85bbbb00c"
+    },
+    {
+      "imageIndex": 38,
+      "renderFrame": 2340,
+      "measurementFrame": 2280,
+      "src": "/data/captures/sponza-geometry-instance/0038.webp",
+      "bytes": 3128,
+      "sha256": "79366724e1aaf8eb6e29500cff2407bb28b615e19ce87534db895f017f1dc9e9"
+    }
+  ]
+}

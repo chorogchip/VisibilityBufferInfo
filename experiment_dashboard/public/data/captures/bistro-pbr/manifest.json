@@ -1,0 +1,758 @@
+{
+  "id": "bistro-pbr",
+  "label": "Bistro · PBR",
+  "scene": "Bistro",
+  "view": "pbr",
+  "viewLabel": "PBR shaded",
+  "viewKind": "beauty",
+  "renderer": "DonutVisGBuffer",
+  "rendererVariant": 9,
+  "debugMode": null,
+  "description": "Textured PBR output along the complete Bistro camera path.",
+  "profileId": "bistro-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "runIndex": 1,
+    "width": 1280,
+    "height": 720,
+    "warmupFrames": 60,
+    "measureFrames": 5500,
+    "captureStride": 60,
+    "captureFps": 12,
+    "capturedFrames": 92
+  },
+  "excludedBlankFrames": [
+    91
+  ],
+  "frameCount": 91,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "renderFrame": 60,
+      "measurementFrame": 0,
+      "src": "/data/captures/bistro-pbr/0000.webp",
+      "bytes": 14594,
+      "sha256": "b578a5fec164be0d3f8e1f7027f656806945e4bd2c20aa99117bf7c983dc03ad"
+    },
+    {
+      "imageIndex": 1,
+      "renderFrame": 120,
+      "measurementFrame": 60,
+      "src": "/data/captures/bistro-pbr/0001.webp",
+      "bytes": 14998,
+      "sha256": "fe3c5648474859e03361d3a169321ac1edcc7de3d2e016d4cbe19e4c8d1ba9aa"
+    },
+    {
+      "imageIndex": 2,
+      "renderFrame": 180,
+      "measurementFrame": 120,
+      "src": "/data/captures/bistro-pbr/0002.webp",
+      "bytes": 36932,
+      "sha256": "25562e4c96c5c12f27b2c1b2d79ecbb6cc2762b84e90507a0a019e5efbf14098"
+    },
+    {
+      "imageIndex": 3,
+      "renderFrame": 240,
+      "measurementFrame": 180,
+      "src": "/data/captures/bistro-pbr/0003.webp",
+      "bytes": 37130,
+      "sha256": "259869e9d5bc7546919d8933daa0455a6087ec33ad93122c3fa6d8a0f9ccf244"
+    },
+    {
+      "imageIndex": 4,
+      "renderFrame": 300,
+      "measurementFrame": 240,
+      "src": "/data/captures/bistro-pbr/0004.webp",
+      "bytes": 43040,
+      "sha256": "30131025a2e482fac704afb342a428b68bf3d44d6d654069e1c4ce0f0b2e5a54"
+    },
+    {
+      "imageIndex": 5,
+      "renderFrame": 360,
+      "measurementFrame": 300,
+      "src": "/data/captures/bistro-pbr/0005.webp",
+      "bytes": 43274,
+      "sha256": "cd9082c40ba7d7e271dbfb3473821770ed73e67b5a2d697116432a7d43a4d257"
+    },
+    {
+      "imageIndex": 6,
+      "renderFrame": 420,
+      "measurementFrame": 360,
+      "src": "/data/captures/bistro-pbr/0006.webp",
+      "bytes": 44244,
+      "sha256": "e0bea5eb60d81817c88912991a43466a073e5254c3e43e45899fdd1737d8b67b"
+    },
+    {
+      "imageIndex": 7,
+      "renderFrame": 480,
+      "measurementFrame": 420,
+      "src": "/data/captures/bistro-pbr/0007.webp",
+      "bytes": 47698,
+      "sha256": "c31c1b683a3e56c5830589290314c6f13971efa11ce89c780ba1580b0afe617d"
+    },
+    {
+      "imageIndex": 8,
+      "renderFrame": 540,
+      "measurementFrame": 480,
+      "src": "/data/captures/bistro-pbr/0008.webp",
+      "bytes": 45840,
+      "sha256": "9c3c95101b3a4e02ebdf53901b9198701b06ae21bc295bb11bdb9c9752ffa0c0"
+    },
+    {
+      "imageIndex": 9,
+      "renderFrame": 600,
+      "measurementFrame": 540,
+      "src": "/data/captures/bistro-pbr/0009.webp",
+      "bytes": 40976,
+      "sha256": "ce305a531bb9d1eabf3f9f7733740a0814fae5adff7ab55765bf4ec0fd03063a"
+    },
+    {
+      "imageIndex": 10,
+      "renderFrame": 660,
+      "measurementFrame": 600,
+      "src": "/data/captures/bistro-pbr/0010.webp",
+      "bytes": 35402,
+      "sha256": "0231fc24c23e2039e24676c9519f97c161d271da5c38dc49290432bd7f6de617"
+    },
+    {
+      "imageIndex": 11,
+      "renderFrame": 720,
+      "measurementFrame": 660,
+      "src": "/data/captures/bistro-pbr/0011.webp",
+      "bytes": 35482,
+      "sha256": "909155f4e7caa9b09fd99ff86f2ba4516cf2cd21fceb4d3bcd053de1aafbf786"
+    },
+    {
+      "imageIndex": 12,
+      "renderFrame": 780,
+      "measurementFrame": 720,
+      "src": "/data/captures/bistro-pbr/0012.webp",
+      "bytes": 36040,
+      "sha256": "d9c20ae8be3904e78363e8f081c4ce604c266e6c0cd0ef6582a64a663f6fd9ca"
+    },
+    {
+      "imageIndex": 13,
+      "renderFrame": 840,
+      "measurementFrame": 780,
+      "src": "/data/captures/bistro-pbr/0013.webp",
+      "bytes": 23732,
+      "sha256": "db8c2b6d572dc8a996868a3bd67f3dd6ac1bf488275c9f8c93b4879346130504"
+    },
+    {
+      "imageIndex": 14,
+      "renderFrame": 900,
+      "measurementFrame": 840,
+      "src": "/data/captures/bistro-pbr/0014.webp",
+      "bytes": 21342,
+      "sha256": "bb85753f0f1f50eb70f9c6c107a9cf71c9d3df2dff6d8472b860c1b110661720"
+    },
+    {
+      "imageIndex": 15,
+      "renderFrame": 960,
+      "measurementFrame": 900,
+      "src": "/data/captures/bistro-pbr/0015.webp",
+      "bytes": 17322,
+      "sha256": "31d50e50af3e58590e5f732f5eacf93d1fd689aeebc701b1aaeafbbb337f5887"
+    },
+    {
+      "imageIndex": 16,
+      "renderFrame": 1020,
+      "measurementFrame": 960,
+      "src": "/data/captures/bistro-pbr/0016.webp",
+      "bytes": 29840,
+      "sha256": "f720e10dc737f8ab8de50debb165af99645eec53dd7708bfe55bf5897569e9ad"
+    },
+    {
+      "imageIndex": 17,
+      "renderFrame": 1080,
+      "measurementFrame": 1020,
+      "src": "/data/captures/bistro-pbr/0017.webp",
+      "bytes": 37922,
+      "sha256": "00b3f9e468b348de316f63f83fc6a29d172e665474e81afe3433a047df700ec1"
+    },
+    {
+      "imageIndex": 18,
+      "renderFrame": 1140,
+      "measurementFrame": 1080,
+      "src": "/data/captures/bistro-pbr/0018.webp",
+      "bytes": 52504,
+      "sha256": "f1b240ecd7d4a23d3b2783c47bf29fc82e0d578b599ac2d2204e463eb77d711b"
+    },
+    {
+      "imageIndex": 19,
+      "renderFrame": 1200,
+      "measurementFrame": 1140,
+      "src": "/data/captures/bistro-pbr/0019.webp",
+      "bytes": 58720,
+      "sha256": "747581f89ec3dc5da202dac951b5867ad64a4394892b436da1fa4fae5e6969b6"
+    },
+    {
+      "imageIndex": 20,
+      "renderFrame": 1260,
+      "measurementFrame": 1200,
+      "src": "/data/captures/bistro-pbr/0020.webp",
+      "bytes": 65242,
+      "sha256": "62f768c1b48fc43fc6cf90b6c22ab78a53320607001a6d71da74778cf41ec8e2"
+    },
+    {
+      "imageIndex": 21,
+      "renderFrame": 1320,
+      "measurementFrame": 1260,
+      "src": "/data/captures/bistro-pbr/0021.webp",
+      "bytes": 54340,
+      "sha256": "cd027cd41df914566cf1606a1810b92b20fddbf52642e20dbb0848e3981713bb"
+    },
+    {
+      "imageIndex": 22,
+      "renderFrame": 1380,
+      "measurementFrame": 1320,
+      "src": "/data/captures/bistro-pbr/0022.webp",
+      "bytes": 57884,
+      "sha256": "b2a41c3792ec8053c59766b65681978bbb2be190bbbe7b992b14b5f372a70762"
+    },
+    {
+      "imageIndex": 23,
+      "renderFrame": 1440,
+      "measurementFrame": 1380,
+      "src": "/data/captures/bistro-pbr/0023.webp",
+      "bytes": 54666,
+      "sha256": "3d27aa874cf4a86985a5b0e2c69ca94c30afb45f6d321049f63ee966036dee1a"
+    },
+    {
+      "imageIndex": 24,
+      "renderFrame": 1500,
+      "measurementFrame": 1440,
+      "src": "/data/captures/bistro-pbr/0024.webp",
+      "bytes": 57136,
+      "sha256": "39cff590c8ad568848711250e5f9e10a0f36f4a60446a5c5be2a4f2037131267"
+    },
+    {
+      "imageIndex": 25,
+      "renderFrame": 1560,
+      "measurementFrame": 1500,
+      "src": "/data/captures/bistro-pbr/0025.webp",
+      "bytes": 60356,
+      "sha256": "f2bb28a7dd209e8a7bb7568f7663377f817ef7bb7eb3f305a9b718b519e5ecaa"
+    },
+    {
+      "imageIndex": 26,
+      "renderFrame": 1620,
+      "measurementFrame": 1560,
+      "src": "/data/captures/bistro-pbr/0026.webp",
+      "bytes": 58542,
+      "sha256": "bda4a0a8eaaa3b170dc3a31d09b1119672a65b9b7c259818f0662bb17fd56889"
+    },
+    {
+      "imageIndex": 27,
+      "renderFrame": 1680,
+      "measurementFrame": 1620,
+      "src": "/data/captures/bistro-pbr/0027.webp",
+      "bytes": 57638,
+      "sha256": "54572b8a5d2aa1e03871a1ec9a18c2dcebdae2148eea365845aa2ca376d6f127"
+    },
+    {
+      "imageIndex": 28,
+      "renderFrame": 1740,
+      "measurementFrame": 1680,
+      "src": "/data/captures/bistro-pbr/0028.webp",
+      "bytes": 56078,
+      "sha256": "928be0db962e8f7212210cdba6f517910fe557c66592f0242749ca3a20ff496a"
+    },
+    {
+      "imageIndex": 29,
+      "renderFrame": 1800,
+      "measurementFrame": 1740,
+      "src": "/data/captures/bistro-pbr/0029.webp",
+      "bytes": 43126,
+      "sha256": "d6a9b7e7232c1097bfecfd1bd7e421a9add546f7dc281398e51b191db332356a"
+    },
+    {
+      "imageIndex": 30,
+      "renderFrame": 1860,
+      "measurementFrame": 1800,
+      "src": "/data/captures/bistro-pbr/0030.webp",
+      "bytes": 43454,
+      "sha256": "2541751d50b9b6b96b36fc5e15a42a8e21fc6a390eddadb080a6f37b8e0afa45"
+    },
+    {
+      "imageIndex": 31,
+      "renderFrame": 1920,
+      "measurementFrame": 1860,
+      "src": "/data/captures/bistro-pbr/0031.webp",
+      "bytes": 52052,
+      "sha256": "c1c43c3c8bfd1e924da305d80fcec7b0c712108f45056f52a48590c90e856c6b"
+    },
+    {
+      "imageIndex": 32,
+      "renderFrame": 1980,
+      "measurementFrame": 1920,
+      "src": "/data/captures/bistro-pbr/0032.webp",
+      "bytes": 53108,
+      "sha256": "fa0a371585a0529127ea5734f12f3e037a4fef4fcea7d7505d076b6f8e416f86"
+    },
+    {
+      "imageIndex": 33,
+      "renderFrame": 2040,
+      "measurementFrame": 1980,
+      "src": "/data/captures/bistro-pbr/0033.webp",
+      "bytes": 52732,
+      "sha256": "17aa13ebc4adc13a6144bdb9074c2801dbcb9c1516ce2a917e86c1b98b25582f"
+    },
+    {
+      "imageIndex": 34,
+      "renderFrame": 2100,
+      "measurementFrame": 2040,
+      "src": "/data/captures/bistro-pbr/0034.webp",
+      "bytes": 43504,
+      "sha256": "b1d21a4b08c7993793563aa4940a48007b96dad760a6264dd7fc098becc3bdac"
+    },
+    {
+      "imageIndex": 35,
+      "renderFrame": 2160,
+      "measurementFrame": 2100,
+      "src": "/data/captures/bistro-pbr/0035.webp",
+      "bytes": 41682,
+      "sha256": "9de89a2dbdbf5e303279d6579e08b7b3af788401cedf7174d93e9ed74da9511a"
+    },
+    {
+      "imageIndex": 36,
+      "renderFrame": 2220,
+      "measurementFrame": 2160,
+      "src": "/data/captures/bistro-pbr/0036.webp",
+      "bytes": 38872,
+      "sha256": "2a001cc6d35a1d3708f3e59556f297ad9611e0b30f2486dee19c5304cd1e613c"
+    },
+    {
+      "imageIndex": 37,
+      "renderFrame": 2280,
+      "measurementFrame": 2220,
+      "src": "/data/captures/bistro-pbr/0037.webp",
+      "bytes": 37486,
+      "sha256": "9cb3bd961ec5dbf973ff4ed6799a44b3d9a29ad234d5fa6bbda51d3463d1847f"
+    },
+    {
+      "imageIndex": 38,
+      "renderFrame": 2340,
+      "measurementFrame": 2280,
+      "src": "/data/captures/bistro-pbr/0038.webp",
+      "bytes": 28912,
+      "sha256": "9b32aa8bd76c2712b147ecff254587402004450b68b44f189654a8a94cc8f529"
+    },
+    {
+      "imageIndex": 39,
+      "renderFrame": 2400,
+      "measurementFrame": 2340,
+      "src": "/data/captures/bistro-pbr/0039.webp",
+      "bytes": 9066,
+      "sha256": "9197e3f48f07b0f3153959ca597ddf163aaf1587d0c52e757e839e7bc1b7e567"
+    },
+    {
+      "imageIndex": 40,
+      "renderFrame": 2460,
+      "measurementFrame": 2400,
+      "src": "/data/captures/bistro-pbr/0040.webp",
+      "bytes": 41936,
+      "sha256": "52dfe795e7d7bdfea0e11ff7b32a44ebfb6d49b922c367984d3bd51924553195"
+    },
+    {
+      "imageIndex": 41,
+      "renderFrame": 2520,
+      "measurementFrame": 2460,
+      "src": "/data/captures/bistro-pbr/0041.webp",
+      "bytes": 60268,
+      "sha256": "49ccd6a087b02acaaa08f452df562ea3cc3f1c3ddd8a719eb961f137e2506173"
+    },
+    {
+      "imageIndex": 42,
+      "renderFrame": 2580,
+      "measurementFrame": 2520,
+      "src": "/data/captures/bistro-pbr/0042.webp",
+      "bytes": 57894,
+      "sha256": "0dad0562a85f8a558b8cbc5ec326a537b170088d645caff2373bffe9b89ff6ef"
+    },
+    {
+      "imageIndex": 43,
+      "renderFrame": 2640,
+      "measurementFrame": 2580,
+      "src": "/data/captures/bistro-pbr/0043.webp",
+      "bytes": 55050,
+      "sha256": "6807e61964389d5332d8c79d5d2415cfd7378f866c8d91cf612d481882e6b6fc"
+    },
+    {
+      "imageIndex": 44,
+      "renderFrame": 2700,
+      "measurementFrame": 2640,
+      "src": "/data/captures/bistro-pbr/0044.webp",
+      "bytes": 58888,
+      "sha256": "bba96dc5258b7dcf63a4399c76df61f30491573f9b17740a50b2e92e783f9f16"
+    },
+    {
+      "imageIndex": 45,
+      "renderFrame": 2760,
+      "measurementFrame": 2700,
+      "src": "/data/captures/bistro-pbr/0045.webp",
+      "bytes": 61514,
+      "sha256": "2ba0139f89c0117c2fc7eb6e624ce77ce8a7b30d627dc0c8db0acd3bca2c0a59"
+    },
+    {
+      "imageIndex": 46,
+      "renderFrame": 2820,
+      "measurementFrame": 2760,
+      "src": "/data/captures/bistro-pbr/0046.webp",
+      "bytes": 58822,
+      "sha256": "9aa109224d9a395fa7f1234d33c67a238697f5f55aa09b1606bf98bc83c3d7b3"
+    },
+    {
+      "imageIndex": 47,
+      "renderFrame": 2880,
+      "measurementFrame": 2820,
+      "src": "/data/captures/bistro-pbr/0047.webp",
+      "bytes": 55712,
+      "sha256": "872d8094f4cae9e97ef1f60326182aeff8e8c9875b049b055ff25e2ffcd61947"
+    },
+    {
+      "imageIndex": 48,
+      "renderFrame": 2940,
+      "measurementFrame": 2880,
+      "src": "/data/captures/bistro-pbr/0048.webp",
+      "bytes": 47636,
+      "sha256": "2aba66da7bd6aae8da80d510d23c8fb3c31f24e0c47676d809812d59b38f8261"
+    },
+    {
+      "imageIndex": 49,
+      "renderFrame": 3000,
+      "measurementFrame": 2940,
+      "src": "/data/captures/bistro-pbr/0049.webp",
+      "bytes": 40430,
+      "sha256": "75a3981b84328e05b460d6c31ac2ab9bfcff401c72215a479691670c92714609"
+    },
+    {
+      "imageIndex": 50,
+      "renderFrame": 3060,
+      "measurementFrame": 3000,
+      "src": "/data/captures/bistro-pbr/0050.webp",
+      "bytes": 38594,
+      "sha256": "44706d445bf17c9f5442473d6fbf9d80086cd0504b291d5f7c1c13359b7142d6"
+    },
+    {
+      "imageIndex": 51,
+      "renderFrame": 3120,
+      "measurementFrame": 3060,
+      "src": "/data/captures/bistro-pbr/0051.webp",
+      "bytes": 33070,
+      "sha256": "1305d328fffa084fb56f47f7c76354d6167bc4c1f4c8e9ffd9a0ea7b75e9881d"
+    },
+    {
+      "imageIndex": 52,
+      "renderFrame": 3180,
+      "measurementFrame": 3120,
+      "src": "/data/captures/bistro-pbr/0052.webp",
+      "bytes": 47326,
+      "sha256": "c0a97b68631ef72fd89e822b54af7d441ae339de14cb4c4c4f9743f28b3128d3"
+    },
+    {
+      "imageIndex": 53,
+      "renderFrame": 3240,
+      "measurementFrame": 3180,
+      "src": "/data/captures/bistro-pbr/0053.webp",
+      "bytes": 45590,
+      "sha256": "798b143fa0caa75d772b9385f6edbfd0204193c5ef09537bcb969bc929027362"
+    },
+    {
+      "imageIndex": 54,
+      "renderFrame": 3300,
+      "measurementFrame": 3240,
+      "src": "/data/captures/bistro-pbr/0054.webp",
+      "bytes": 48320,
+      "sha256": "8f977b859cc5d761f852cd9d4247d35872fea68c172b6e1712b3b999ef42fab1"
+    },
+    {
+      "imageIndex": 55,
+      "renderFrame": 3360,
+      "measurementFrame": 3300,
+      "src": "/data/captures/bistro-pbr/0055.webp",
+      "bytes": 50888,
+      "sha256": "da03c050829928fe7bb3f907e9bba91ed4255ef0ce2139b770eb6eaf58a0e9c8"
+    },
+    {
+      "imageIndex": 56,
+      "renderFrame": 3420,
+      "measurementFrame": 3360,
+      "src": "/data/captures/bistro-pbr/0056.webp",
+      "bytes": 49072,
+      "sha256": "4c3109d376749917efd20a2f83e011e546b681235162f06d787c0a53b7750878"
+    },
+    {
+      "imageIndex": 57,
+      "renderFrame": 3480,
+      "measurementFrame": 3420,
+      "src": "/data/captures/bistro-pbr/0057.webp",
+      "bytes": 43628,
+      "sha256": "c2c5c7024d93eab9284aa7a05607723d5a8efcb3c40a1d6983c4e7c09213a868"
+    },
+    {
+      "imageIndex": 58,
+      "renderFrame": 3540,
+      "measurementFrame": 3480,
+      "src": "/data/captures/bistro-pbr/0058.webp",
+      "bytes": 38996,
+      "sha256": "28d6ff3d2254ed70189b3c8150a7bfd535a9f0dc41472614aed425d4e12079d8"
+    },
+    {
+      "imageIndex": 59,
+      "renderFrame": 3600,
+      "measurementFrame": 3540,
+      "src": "/data/captures/bistro-pbr/0059.webp",
+      "bytes": 32282,
+      "sha256": "e66c4fb321689e2e5d35c7306a9bd8aa5c2fe2b92180b97f9ea2c9ed28b0af09"
+    },
+    {
+      "imageIndex": 60,
+      "renderFrame": 3660,
+      "measurementFrame": 3600,
+      "src": "/data/captures/bistro-pbr/0060.webp",
+      "bytes": 33254,
+      "sha256": "ac3b240ad0c5c294df3abe2bf942fa9a1c08334d1b48d068ca782a0add67a7c1"
+    },
+    {
+      "imageIndex": 61,
+      "renderFrame": 3720,
+      "measurementFrame": 3660,
+      "src": "/data/captures/bistro-pbr/0061.webp",
+      "bytes": 40482,
+      "sha256": "eae90ea2953efdc3975f6019dbd3f9fbbccc380eb8186920ab6e2521e2710d9d"
+    },
+    {
+      "imageIndex": 62,
+      "renderFrame": 3780,
+      "measurementFrame": 3720,
+      "src": "/data/captures/bistro-pbr/0062.webp",
+      "bytes": 45872,
+      "sha256": "1877140e22a4d224aabab947f282fdfafaabc89fa2681ef2fc3f458c5192e719"
+    },
+    {
+      "imageIndex": 63,
+      "renderFrame": 3840,
+      "measurementFrame": 3780,
+      "src": "/data/captures/bistro-pbr/0063.webp",
+      "bytes": 54032,
+      "sha256": "817e63162a5b52ca08f8b9fcebccaddd0537e0663cb0bb1f282888ffc81d89b3"
+    },
+    {
+      "imageIndex": 64,
+      "renderFrame": 3900,
+      "measurementFrame": 3840,
+      "src": "/data/captures/bistro-pbr/0064.webp",
+      "bytes": 53166,
+      "sha256": "c7e1c39dec91f7a4a3f52a42cabab2b1baf8df9b17ce6109ef8880cbe9c3ef96"
+    },
+    {
+      "imageIndex": 65,
+      "renderFrame": 3960,
+      "measurementFrame": 3900,
+      "src": "/data/captures/bistro-pbr/0065.webp",
+      "bytes": 53194,
+      "sha256": "be0a897f5a16cc1b9325b724112517941c2b68507b643f773818539b2d216504"
+    },
+    {
+      "imageIndex": 66,
+      "renderFrame": 4020,
+      "measurementFrame": 3960,
+      "src": "/data/captures/bistro-pbr/0066.webp",
+      "bytes": 62132,
+      "sha256": "9b51e448168fa0dce651ab73d51898703ffe510c2bf62a8f28bebf83047bfe12"
+    },
+    {
+      "imageIndex": 67,
+      "renderFrame": 4080,
+      "measurementFrame": 4020,
+      "src": "/data/captures/bistro-pbr/0067.webp",
+      "bytes": 72066,
+      "sha256": "aa2b0813b06ccead1aa31eaefeabfaa4af572d89284230d39bf0103b3423acfc"
+    },
+    {
+      "imageIndex": 68,
+      "renderFrame": 4140,
+      "measurementFrame": 4080,
+      "src": "/data/captures/bistro-pbr/0068.webp",
+      "bytes": 87824,
+      "sha256": "e5eda161decc1e8fd3b1dc32dcf1c9c57ee698e8126085aa289deb258fc7488c"
+    },
+    {
+      "imageIndex": 69,
+      "renderFrame": 4200,
+      "measurementFrame": 4140,
+      "src": "/data/captures/bistro-pbr/0069.webp",
+      "bytes": 76480,
+      "sha256": "fba4ee8121cc33c28a29c4229b3da13ba8b64885ea649d93889ca37e74565ee2"
+    },
+    {
+      "imageIndex": 70,
+      "renderFrame": 4260,
+      "measurementFrame": 4200,
+      "src": "/data/captures/bistro-pbr/0070.webp",
+      "bytes": 64052,
+      "sha256": "3f4e4230eab9b74f393bf1ce25d8139492b831762de84097abf6733752427761"
+    },
+    {
+      "imageIndex": 71,
+      "renderFrame": 4320,
+      "measurementFrame": 4260,
+      "src": "/data/captures/bistro-pbr/0071.webp",
+      "bytes": 45020,
+      "sha256": "f0f851af2c28dc535c11397f8509a75935d5c72d92e180351901ac8012412133"
+    },
+    {
+      "imageIndex": 72,
+      "renderFrame": 4380,
+      "measurementFrame": 4320,
+      "src": "/data/captures/bistro-pbr/0072.webp",
+      "bytes": 57532,
+      "sha256": "307685f1708f5fbfb34ea5370203bb20c8c23a41ab352e5574e461df2d710622"
+    },
+    {
+      "imageIndex": 73,
+      "renderFrame": 4440,
+      "measurementFrame": 4380,
+      "src": "/data/captures/bistro-pbr/0073.webp",
+      "bytes": 55086,
+      "sha256": "871948ce271652db4018bdda8ebe635ddd10d68ca7ec5f1cbcd9f509c10cf21f"
+    },
+    {
+      "imageIndex": 74,
+      "renderFrame": 4500,
+      "measurementFrame": 4440,
+      "src": "/data/captures/bistro-pbr/0074.webp",
+      "bytes": 33108,
+      "sha256": "93b27574fca7788635d3fed7dffc3d2fe4945d8cae8f73ac2d5620597cb614eb"
+    },
+    {
+      "imageIndex": 75,
+      "renderFrame": 4560,
+      "measurementFrame": 4500,
+      "src": "/data/captures/bistro-pbr/0075.webp",
+      "bytes": 39530,
+      "sha256": "1476b440a1b1eb97974f9ecb5d0c17216156186e560144086a348448a4e41ad3"
+    },
+    {
+      "imageIndex": 76,
+      "renderFrame": 4620,
+      "measurementFrame": 4560,
+      "src": "/data/captures/bistro-pbr/0076.webp",
+      "bytes": 52198,
+      "sha256": "0a00b4635d50a70382b2e0c0d39da3bc17d5e35c47d9f9462ab56e1c89199d08"
+    },
+    {
+      "imageIndex": 77,
+      "renderFrame": 4680,
+      "measurementFrame": 4620,
+      "src": "/data/captures/bistro-pbr/0077.webp",
+      "bytes": 45686,
+      "sha256": "1bb17b11735e57301de1329acbdb7df5012aa85ccc98ebdbfc992f48b1b9d8a9"
+    },
+    {
+      "imageIndex": 78,
+      "renderFrame": 4740,
+      "measurementFrame": 4680,
+      "src": "/data/captures/bistro-pbr/0078.webp",
+      "bytes": 56764,
+      "sha256": "d5ce33e43d5f14fc876f65282c66b2bbe63b9147d196e8ecf255ffbc1f7c36de"
+    },
+    {
+      "imageIndex": 79,
+      "renderFrame": 4800,
+      "measurementFrame": 4740,
+      "src": "/data/captures/bistro-pbr/0079.webp",
+      "bytes": 42486,
+      "sha256": "8742901ce75363b8aff007d9aca73c0f4024e5d93e3719963f21551885ca1cf3"
+    },
+    {
+      "imageIndex": 80,
+      "renderFrame": 4860,
+      "measurementFrame": 4800,
+      "src": "/data/captures/bistro-pbr/0080.webp",
+      "bytes": 29238,
+      "sha256": "82fcd4ead8452ea5b37ad3ec9d6d3cae6faea76fe9d2f4df110845aec4fc216e"
+    },
+    {
+      "imageIndex": 81,
+      "renderFrame": 4920,
+      "measurementFrame": 4860,
+      "src": "/data/captures/bistro-pbr/0081.webp",
+      "bytes": 27324,
+      "sha256": "79df8741ecfaebb794436dcee248c114b7899c624b56a3e9bf73c96fe76eecd9"
+    },
+    {
+      "imageIndex": 82,
+      "renderFrame": 4980,
+      "measurementFrame": 4920,
+      "src": "/data/captures/bistro-pbr/0082.webp",
+      "bytes": 23242,
+      "sha256": "4b98a61436df2b8e147b31c1bdfe494383b51ab8a348d1bedeea637f34b4d71c"
+    },
+    {
+      "imageIndex": 83,
+      "renderFrame": 5040,
+      "measurementFrame": 4980,
+      "src": "/data/captures/bistro-pbr/0083.webp",
+      "bytes": 26300,
+      "sha256": "00c05e65e139472a086d16e4c102f829479dec64ca1b700e8dd912363512e0a4"
+    },
+    {
+      "imageIndex": 84,
+      "renderFrame": 5100,
+      "measurementFrame": 5040,
+      "src": "/data/captures/bistro-pbr/0084.webp",
+      "bytes": 29402,
+      "sha256": "cb79b342e8322b97ad8c06ab12dd5150f9782338700820430fb82be72e206cdf"
+    },
+    {
+      "imageIndex": 85,
+      "renderFrame": 5160,
+      "measurementFrame": 5100,
+      "src": "/data/captures/bistro-pbr/0085.webp",
+      "bytes": 20532,
+      "sha256": "3e609c30d68823e81e0320c365993a071ff993d2e0ddedbb9b7258acb899c456"
+    },
+    {
+      "imageIndex": 86,
+      "renderFrame": 5220,
+      "measurementFrame": 5160,
+      "src": "/data/captures/bistro-pbr/0086.webp",
+      "bytes": 26132,
+      "sha256": "4c12ace7c8b518786764732b8c22827dd13a218c1883ff61d2397cae07915730"
+    },
+    {
+      "imageIndex": 87,
+      "renderFrame": 5280,
+      "measurementFrame": 5220,
+      "src": "/data/captures/bistro-pbr/0087.webp",
+      "bytes": 27600,
+      "sha256": "d54adfaca7fb040ffa49fc20ddb3aacf4302a6f03c6d09b753393ef005f14dad"
+    },
+    {
+      "imageIndex": 88,
+      "renderFrame": 5340,
+      "measurementFrame": 5280,
+      "src": "/data/captures/bistro-pbr/0088.webp",
+      "bytes": 25752,
+      "sha256": "f6549284f3c046d24e8896a83951d9a5cac9c892a1d2bc0ec83e2e0bc499de64"
+    },
+    {
+      "imageIndex": 89,
+      "renderFrame": 5400,
+      "measurementFrame": 5340,
+      "src": "/data/captures/bistro-pbr/0089.webp",
+      "bytes": 18678,
+      "sha256": "77f72f5c4cc9010015410a0455500f1ebd719f941a54801d8504a697a6958592"
+    },
+    {
+      "imageIndex": 90,
+      "renderFrame": 5460,
+      "measurementFrame": 5400,
+      "src": "/data/captures/bistro-pbr/0090.webp",
+      "bytes": 8152,
+      "sha256": "207b7fd0bdd434c8a94ba445f40a8c0e97f63e2610b2bd918213e23c8275c63f"
+    }
+  ]
+}

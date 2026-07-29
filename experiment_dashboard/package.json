@@ -1,0 +1,50 @@
+{
+  "name": "tvb-performance-atlas",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "capture:sanitize": "node scripts/sanitize-capture-results.mjs",
+    "capture:verify": "node scripts/sanitize-capture-results.mjs --verify",
+    "data:sync": "node scripts/sync-data.mjs",
+    "data:verify": "node scripts/sync-data.mjs --verify",
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "vinext start",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+  },
+  "dependencies": {
+    "lucide-react": "^1.27.0",
+    "next": "16.2.12",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.48.0",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "csv-parse": "^7.0.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.12",
+    "react-server-dom-webpack": "19.2.8",
+    "sharp": "^0.35.3",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "vinext": "0.0.50",
+    "vite": "8.1.5",
+    "wrangler": "4.115.0"
+  },
+  "overrides": {
+    "postcss": "8.5.25",
+    "sharp": "$sharp"
+  },
+  "type": "module"
+}
