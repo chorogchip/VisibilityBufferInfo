@@ -62,16 +62,24 @@ namespace scene::source {
         UnresolvedReason unresolved_reason = UnresolvedReason::None;
     };
 
-    // Compact glTF TRS plus the reversible source-array index used by the
-    // Jungle USD point-instancer pipeline.
+    // Compact TRS is the default representation. The optional affine matrix
+    // preserves composed transforms (including shear) that cannot be lowered
+    // losslessly to TRS. source_index remains reversible for source arrays.
     struct InstanceTransform {
         DirectX::XMFLOAT3 translation = { 0.0f, 0.0f, 0.0f };
         DirectX::XMFLOAT4 rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
         DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f };
         uint32_t source_index = SceneConstants::INVALID_INDEX;
+        DirectX::XMFLOAT4X4 matrix = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        bool has_matrix = false;
     };
 
-    static_assert(sizeof(InstanceTransform) == 44);
+    static_assert(sizeof(InstanceTransform) == 112);
 
     // Matrices use DirectX row-vector order and are not transposed for shaders.
     // An instance range belongs to this node and uses node-local transforms.

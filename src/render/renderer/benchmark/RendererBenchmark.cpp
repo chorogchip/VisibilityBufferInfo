@@ -16,6 +16,8 @@
 #include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
 #include "scene/cache/SceneCPUCache.h"
 #include "scene/builder/gpu/BenchmarkSceneGPUBuilder.h"
+#include "scene/builder/gpu/JungleSceneGPUBuilder.h"
+#include "scene/builder/source/SceneSourceFactory.h"
 
 namespace rndr {
 
@@ -57,14 +59,27 @@ namespace rndr {
             util::Utils::throw_if_failed(command_list_->Reset(
                 command_allocator_[frame_index_].Get(), nullptr));
 
-            scene_gpu_ =
-                std::make_unique<scene::BenchmarkSceneGPUData>(
+            if (scene::SceneSourceFactory::uses_jungle_builder(
+                program_argument_)) {
+                scene_gpu_ =
+                    std::make_unique<scene::BenchmarkSceneGPUData>(
+                        scene::JungleSceneGPUBuilder::build_benchmark(
+                            *scene_cpu_,
+                            device_.Get(),
+                            command_list_.Get(),
+                            used_upload_heaps,
+                            program_argument_.to_load_texture));
+            }
+            else {
+                scene_gpu_ =
+                    std::make_unique<scene::BenchmarkSceneGPUData>(
                     scene::BenchmarkSceneGPUBuilder::build(
                         *scene_cpu_,
                         device_.Get(),
                         command_list_.Get(),
                         used_upload_heaps,
                         program_argument_.to_load_texture));
+            }
 
             util::Utils::throw_if_failed(command_list_->Close(),
                 "close list on resource creation");

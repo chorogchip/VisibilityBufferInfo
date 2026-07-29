@@ -352,7 +352,31 @@ if(TVBPERF_BUILD_OPENUSD)
     target_link_libraries(SceneRawJungleToSourceTest PRIVATE SceneRawJungleToSource)
     add_dependencies(SceneRawJungleToSourceTest OpenUSD)
 
-    target_link_libraries(TVBPerf PRIVATE SceneRawJungle)
+    add_executable(JungleSceneCPUBuilderTest
+        tests/JungleSceneCPUBuilderTest.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/source/JungleSceneSourceBuilder.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/cpu/JungleSceneCPUBuilder.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUBuilder.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUValidator.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceDataValidator.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceGeometryValidator.cpp
+        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceHierarchyValidator.cpp
+    )
+    target_compile_features(JungleSceneCPUBuilderTest PRIVATE cxx_std_20)
+    target_compile_definitions(JungleSceneCPUBuilderTest PRIVATE
+        "JUNGLE_SCENE_CPU_SOURCE_FIXTURE=\"${CMAKE_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
+    )
+    target_include_directories(JungleSceneCPUBuilderTest PRIVATE
+        ${TVBPERF_INCLUDE_DIR}
+    )
+    target_link_libraries(JungleSceneCPUBuilderTest PRIVATE
+        SceneRawJungleToSource
+    )
+    add_dependencies(JungleSceneCPUBuilderTest OpenUSD)
+
+    # The runtime Jungle source builder calls the semantic converter, which
+    # already links the raw OpenUSD stage target transitively.
+    target_link_libraries(TVBPerf PRIVATE SceneRawJungleToSource)
 endif()
 
 # include 경로

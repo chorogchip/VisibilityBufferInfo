@@ -12,6 +12,8 @@
 #include "scene/cache/SceneCPUCache.h"
 #include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
 #include "scene/builder/gpu/DonutSceneGPUBuilder.h"
+#include "scene/builder/gpu/JungleSceneGPUBuilder.h"
+#include "scene/builder/source/SceneSourceFactory.h"
 #include "util/Logger.h"
 #include "util/RenderConstants.h"
 #include "util/Utils.h"
@@ -67,14 +69,27 @@ namespace rndr {
                 "reset command list on Donut scene upload flush");
         };
 
-        scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
-            scene::DonutSceneGPUBuilder::build(
-                *scene_cpu_,
-                device_.Get(),
-                command_list_.Get(),
-                used_upload_heaps,
-                flush_uploads,
-                program_argument_.to_load_texture));
+        if (scene::SceneSourceFactory::uses_jungle_builder(
+            program_argument_)) {
+            scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
+                scene::JungleSceneGPUBuilder::build_donut(
+                    *scene_cpu_,
+                    device_.Get(),
+                    command_list_.Get(),
+                    used_upload_heaps,
+                    flush_uploads,
+                    program_argument_.to_load_texture));
+        }
+        else {
+            scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
+                scene::DonutSceneGPUBuilder::build(
+                    *scene_cpu_,
+                    device_.Get(),
+                    command_list_.Get(),
+                    used_upload_heaps,
+                    flush_uploads,
+                    program_argument_.to_load_texture));
+        }
 
         to_profile_index_count_ = true;
         profile_index_count_ = static_cast<double>(

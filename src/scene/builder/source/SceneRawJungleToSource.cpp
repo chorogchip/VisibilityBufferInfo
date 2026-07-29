@@ -244,7 +244,8 @@ namespace scene {
                     result.numeric_component_count = 1;
                     result.integer_values.assign(values.begin(), values.end());
                 }
-            } else if (type == pxr::SdfValueTypeNames->Float2Array) {
+            } else if (type == pxr::SdfValueTypeNames->Float2Array ||
+                type == pxr::SdfValueTypeNames->TexCoord2fArray) {
                 pxr::VtVec2fArray values;
                 if (attribute.Get(&values, time)) {
                     result.numeric_component_count = 2;
@@ -396,6 +397,34 @@ namespace scene {
                 usd_mesh.GetFaceVertexCountsAttr().ValueMightBeTimeVarying() ||
                 usd_mesh.GetFaceVertexIndicesAttr().ValueMightBeTimeVarying();
 
+            // Mesh normals are a built-in UsdGeomMesh attribute rather than a
+            // namespaced primvar, but the Jungle materialization stage needs
+            // the same interpolation/indexing-neutral semantic representation.
+            const pxr::UsdAttribute normals_attribute =
+                usd_mesh.GetNormalsAttr();
+            if (normals_attribute && normals_attribute.HasValue()) {
+                source::Primvar normals;
+                normals.source =
+                    make_property_reference_(normals_attribute);
+                normals.name = "normals";
+                normals.value_type =
+                    normals_attribute.GetTypeName().
+                        GetAsToken().GetString();
+                normals.interpolation = interpolation_(
+                    usd_mesh.GetNormalsInterpolation());
+                normals.time_varying =
+                    normals_attribute.ValueMightBeTimeVarying();
+                pxr::VtValue value;
+                if (normals_attribute.Get(&value, time)) {
+                    normals.serialized_value =
+                        pxr::TfStringify(value);
+                }
+                copy_numeric_primvar_(
+                    normals_attribute,
+                    time,
+                    normals);
+                mesh.primvars.push_back(std::move(normals));
+            }
             for (const auto& primvar : pxr::UsdGeomPrimvarsAPI(usd_mesh).GetPrimvars()) {
                 mesh.primvars.push_back(convert_primvar_(primvar, time));
             }

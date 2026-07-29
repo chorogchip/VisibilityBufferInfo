@@ -1,7 +1,9 @@
 #include <Windows.h>
+#include <cstdlib>
+#include <exception>
 #include <stdexcept>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "util/Logger.h"
 #include "util/Utils.h"
@@ -16,9 +18,24 @@ int WINAPI WinMain(
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    Application app{};
-    app.run(hInstance, nShowCmd);
-    util::Logger::g_logger.flush();
+    try {
+        Application app{};
+        app.run(hInstance, nShowCmd);
+        util::Logger::g_logger.flush();
+    }
+    catch (const std::exception& exception) {
+        util::Logger::g_logger <<
+            "Unhandled application exception: " <<
+            exception.what() << '\n';
+        util::Logger::g_logger.flush();
+        return EXIT_FAILURE;
+    }
+    catch (...) {
+        util::Logger::g_logger <<
+            "Unhandled application exception: unknown exception\n";
+        util::Logger::g_logger.flush();
+        return EXIT_FAILURE;
+    }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

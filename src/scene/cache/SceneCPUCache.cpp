@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "scene/builder/cpu/JungleSceneCPUBuilder.h"
 #include "scene/builder/cpu/SceneCPUBuilder.h"
 #include "scene/builder/source/SceneSourceFactory.h"
 #include "util/Logger.h"
@@ -417,6 +418,10 @@ namespace scene {
             const util::ProgramArgument& argument) {
 
             auto source = SceneSourceFactory::create_scene(argument);
+            if (SceneSourceFactory::uses_jungle_builder(argument)) {
+                return std::make_unique<SceneCPUData>(
+                    JungleSceneCPUBuilder::build(*source));
+            }
             return std::make_unique<SceneCPUData>(
                 SceneCPUBuilder::build(*source));
         }

@@ -45,6 +45,23 @@ def Xform "World"
             int[] primvars:indexed:indices = [0, 1, 2, 3]
             rel material:binding = </World/Material>
         }
+
+        def Mesh "Triangle" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            uniform token subdivisionScheme = "none"
+            int[] faceVertexCounts = [3]
+            int[] faceVertexIndices = [0, 1, 2]
+            point3f[] points = [(0, 0, 0), (0, 1, 0), (1, 0, 0)]
+            normal3f[] normals = [(0, 0, 1)] (
+                interpolation = "constant"
+            )
+            texCoord2f[] primvars:st = [(0, 0), (0, 1), (1, 0)] (
+                interpolation = "faceVarying"
+            )
+            rel material:binding = </World/Material>
+        }
     }
 
     def Xform "NativeInstance" (
@@ -56,24 +73,50 @@ def Xform "World"
         uniform token[] xformOpOrder = ["xformOp:translate"]
     }
 
+    def Xform "NativeInstance2" (
+        instanceable = true
+        references = </World/Prototype>
+    )
+    {
+        double3 xformOp:translate = (8, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def Xform "PointPrototype" (
+        instanceable = true
+        references = </World/Prototype>
+    )
+    {
+        double3 xformOp:translate = (0, 2, 0)
+        float3 xformOp:scale = (0.5, 0.5, 0.5)
+        uniform token[] xformOpOrder = [
+            "xformOp:translate",
+            "xformOp:scale"
+        ]
+    }
+
+    def Xform "PointPrototypeIdentity" (
+        instanceable = true
+        references = </World/Prototype>
+    )
+    {
+    }
+
     def PointInstancer "PointInstancer" (
         inactiveIds = [10]
     )
     {
-        rel prototypes = [ <Prototypes/PointPrototype> ]
-        int[] protoIndices = [0, 0]
+        rel prototypes = [
+            </World/PointPrototype>,
+            </World/PointPrototypeIdentity>
+        ]
+        int[] protoIndices = [0, 1]
         point3f[] positions = [(0, 0, 0), (0, 0, 4)]
         quath[] orientations = [(1, 0, 0, 0), (1, 0, 0, 0)]
         float3[] scales = [(1, 1, 1), (2, 2, 2)]
         int64[] ids = [10, 11]
         int64[] invisibleIds = [11]
 
-        def Xform "Prototypes"
-        {
-            def Xform "PointPrototype"
-            {
-            }
-        }
     }
 
     def Camera "Camera"

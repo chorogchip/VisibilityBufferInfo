@@ -207,18 +207,19 @@ namespace scene {
                     for (uint32_t instance_id = node.first_instance; instance_id < instance_end; ++instance_id) {
                         const source::InstanceTransform& source_instance =
                             source.instances[instance_id];
-                        const DirectX::XMVECTOR rotation =
-                            DirectX::XMLoadFloat4(
-                                &source_instance.rotation);
                         const DirectX::XMMATRIX instance_transform =
-                            DirectX::XMMatrixMultiply(
+                            source_instance.has_matrix
+                            ? DirectX::XMLoadFloat4x4(
+                                &source_instance.matrix)
+                            : DirectX::XMMatrixMultiply(
                                 DirectX::XMMatrixScaling(
                                     source_instance.scale.x,
                                     source_instance.scale.y,
                                     source_instance.scale.z),
                                 DirectX::XMMatrixMultiply(
                                     DirectX::XMMatrixRotationQuaternion(
-                                        rotation),
+                                        DirectX::XMLoadFloat4(
+                                            &source_instance.rotation)),
                                     DirectX::XMMatrixTranslation(
                                         source_instance.translation.x,
                                         source_instance.translation.y,
