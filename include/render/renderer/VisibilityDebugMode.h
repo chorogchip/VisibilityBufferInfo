@@ -14,6 +14,7 @@ namespace rndr {
         BarycentricDy,
         UvDx,
         UvDy,
+        UvLodProxy,
     };
 
 }

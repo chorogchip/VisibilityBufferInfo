@@ -8,6 +8,7 @@
 #include "render/renderer/benchmark/RendererRasterStats.h"
 #include "render/renderer/benchmark/RendererDebugView.h"
 #include "render/renderer/donut/RendererDonutDeferred.h"
+#include "render/renderer/donut/RendererDonutRasterDebug.h"
 #include "render/renderer/donut/RendererDonutVisDebug.h"
 #include "render/renderer/donut/RendererDonutVisGBuffer.h"
 
@@ -33,6 +34,7 @@ namespace rndr {
         case 11: return std::make_unique<RendererDebugView>();
         case 12: return std::make_unique<RendererVisBufDebug>(debug_mode);
         case 13: return std::make_unique<RendererDonutVisDebug>(debug_mode);
+        case 14: return std::make_unique<RendererDonutRasterDebug>(debug_mode);
         default:
             util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
             return nullptr;

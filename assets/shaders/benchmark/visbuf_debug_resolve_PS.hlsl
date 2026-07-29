@@ -13,6 +13,7 @@
 #define DEBUG_BARYCENTRIC_DY         6
 #define DEBUG_UV_DX                  7
 #define DEBUG_UV_DY                  8
+#define DEBUG_UV_LOD_PROXY           9
 
 struct PSInput
 {
@@ -98,6 +99,15 @@ float4 encode_signed(float2 value)
         1.0f);
 }
 
+float encode_lod_proxy(float2 uv_dx, float2 uv_dy)
+{
+    const float reference_texture_size = 1024.0f;
+    const float rho = max(length(uv_dx), length(uv_dy)) *
+        reference_texture_size;
+    const float lod = log2(max(rho, 1e-8f));
+    return saturate((lod + 8.0f) / 24.0f);
+}
+
 float4 main(PSInput input) : SV_Target
 {
     const uint2 pixel = uint2(input.position.xy);
@@ -162,6 +172,10 @@ float4 main(PSInput input) : SV_Target
     return encode_signed(uv_grad.dx);
 #elif VISIBILITY_DEBUG_MODE == DEBUG_UV_DY
     return encode_signed(uv_grad.dy);
+#elif VISIBILITY_DEBUG_MODE == DEBUG_UV_LOD_PROXY
+    const float encoded_lod =
+        encode_lod_proxy(uv_grad.dx, uv_grad.dy);
+    return float4(encoded_lod, encoded_lod, encoded_lod, 1.0f);
 #else
     return float4(1.0f, 0.0f, 1.0f, 1.0f);
 #endif
