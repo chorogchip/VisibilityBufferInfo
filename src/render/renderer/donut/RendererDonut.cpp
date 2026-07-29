@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <DirectXCollision.h>
@@ -10,6 +11,8 @@
 #include "dx_util/ResourceUtils.h"
 #include "render/pass/donut/PassDonutGBuffer.h"
 #include "scene/cache/SceneCPUCache.h"
+#include "scene/builder/cpu/JungleSceneCPUBuilder.h"
+#include "scene/builder/cpu/JungleSceneCPUDrawStreamBuilder.h"
 #include "scene/builder/cpu/SceneCPUDrawStreamBuilder.h"
 #include "scene/builder/gpu/DonutSceneGPUBuilder.h"
 #include "scene/builder/gpu/JungleSceneGPUBuilder.h"
@@ -40,7 +43,28 @@ namespace rndr {
         resource_manager_frame_.init(device_.Get());
         resource_manager_sampler_.init(device_.Get());
 
-        scene_cpu_ = scene::load_or_build_scene_cpu(program_argument_);
+        const bool uses_jungle =
+            scene::SceneSourceFactory::uses_jungle_builder(
+                program_argument_);
+        if (uses_jungle) {
+            auto semantic =
+                scene::SceneSourceFactory::create_scene(
+                    program_argument_);
+            jungle_scene_cpu_ =
+                std::make_unique<scene::JungleSceneCPUData>(
+                    scene::JungleSceneCPUBuilder::build_compact(
+                        *semantic));
+            scene_cpu_ = &jungle_scene_cpu_->scene;
+            scene::JungleSceneCPUDrawStreamBuilder::build_all(
+                *jungle_scene_cpu_,
+                jungle_draw_stream_);
+        }
+        else {
+            scene_cpu_storage_ =
+                scene::load_or_build_scene_cpu(
+                    program_argument_);
+            scene_cpu_ = scene_cpu_storage_.get();
+        }
         scene::SceneCPUDrawStreamBuilder::build_all(
             *scene_cpu_,
             draw_stream_);
@@ -69,16 +93,21 @@ namespace rndr {
                 "reset command list on Donut scene upload flush");
         };
 
-        if (scene::SceneSourceFactory::uses_jungle_builder(
-            program_argument_)) {
-            scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
-                scene::JungleSceneGPUBuilder::build_donut(
-                    *scene_cpu_,
+        if (uses_jungle) {
+            scene::JungleDonutSceneGPUData uploaded =
+                scene::JungleSceneGPUBuilder::build_donut_compact(
+                    *jungle_scene_cpu_,
                     device_.Get(),
                     command_list_.Get(),
                     used_upload_heaps,
                     flush_uploads,
-                    program_argument_.to_load_texture));
+                    program_argument_.to_load_texture);
+            scene_gpu_ =
+                std::make_unique<scene::DonutSceneGPUData>(
+                    std::move(uploaded.scene));
+            jungle_scene_gpu_ =
+                std::make_unique<scene::JungleSceneGPUData>(
+                    std::move(uploaded.point_scene));
         }
         else {
             scene_gpu_ = std::make_unique<scene::DonutSceneGPUData>(
@@ -93,7 +122,10 @@ namespace rndr {
 
         to_profile_index_count_ = true;
         profile_index_count_ = static_cast<double>(
-            scene::SceneCPUDrawStreamBuilder::count_indices(draw_stream_));
+            scene::SceneCPUDrawStreamBuilder::count_indices(
+                draw_stream_) +
+            scene::JungleSceneCPUDrawStreamBuilder::count_indices(
+                jungle_draw_stream_));
 
         util::Utils::throw_if_failed(command_list_->Close(),
             "close command list on Donut scene resource creation");
@@ -101,6 +133,9 @@ namespace rndr {
         graphics_queue_.wait_idle();
 
         this->create_draw_instance_id_upload_buffers();
+        if (jungle_scene_gpu_ != nullptr) {
+            this->create_jungle_point_id_upload_buffers();
+        }
 
         const UINT donut_texture_begin = static_cast<UINT>(
             eng::ResourceManagerShader::EnumDescPos::DONUT_MATERIAL_TEXTURE_BEGIN);
@@ -132,10 +167,19 @@ namespace rndr {
                 draw_stream_,
                 world_frustum);
             draw_stream_dirty_ = true;
+            if (jungle_scene_cpu_ != nullptr) {
+                scene::JungleSceneCPUDrawStreamBuilder::build_visible(
+                    *jungle_scene_cpu_,
+                    jungle_draw_stream_,
+                    world_frustum);
+                jungle_draw_stream_dirty_ = true;
+            }
 
             profile_index_count_ = static_cast<double>(
                 scene::SceneCPUDrawStreamBuilder::count_indices(
-                    draw_stream_));
+                    draw_stream_) +
+                scene::JungleSceneCPUDrawStreamBuilder::count_indices(
+                    jungle_draw_stream_));
         }
 
         this->render_prepare_donut_();
@@ -143,6 +187,7 @@ namespace rndr {
 
     void RendererDonut::render_update_scene_resources_() {
         this->update_draw_instance_id_buffer();
+        this->update_jungle_point_id_buffer();
     }
 
     void RendererDonut::create_draw_instance_id_upload_buffers() {
@@ -196,6 +241,71 @@ namespace rndr {
         }
 
         draw_stream_dirty_ = false;
+    }
+
+    void RendererDonut::create_jungle_point_id_upload_buffers() {
+        util::Logger::g_logger.assert_with_log(
+            jungle_scene_gpu_ != nullptr &&
+            jungle_scene_gpu_->point_instance_id_capacity > 0,
+            "Jungle compact point ID capacity is invalid.");
+
+        const uint64_t byte_size =
+            static_cast<uint64_t>(
+                jungle_scene_gpu_->
+                    point_instance_id_capacity) *
+            sizeof(uint32_t);
+        for (auto& upload :
+            jungle_point_id_upload_buffers_) {
+            upload = dxutl::create_buffer(
+                device_.Get(),
+                byte_size,
+                D3D12_HEAP_TYPE_UPLOAD,
+                D3D12_RESOURCE_STATE_GENERIC_READ);
+        }
+    }
+
+    void RendererDonut::update_jungle_point_id_buffer() {
+        if (!jungle_draw_stream_dirty_) {
+            return;
+        }
+
+        util::Logger::g_logger.assert_with_log(
+            jungle_scene_gpu_ != nullptr &&
+            jungle_draw_stream_.
+                point_instance_ids_compacted.size() <=
+                jungle_scene_gpu_->
+                    point_instance_id_capacity,
+            "Jungle compacted point ID stream exceeds GPU capacity.");
+
+        const uint64_t byte_size =
+            static_cast<uint64_t>(
+                jungle_draw_stream_.
+                    point_instance_ids_compacted.size()) *
+            sizeof(uint32_t);
+        if (byte_size > 0) {
+            dxutl::copy_to_upload_buffer(
+                jungle_point_id_upload_buffers_[
+                    frame_index_].Get(),
+                jungle_draw_stream_.
+                    point_instance_ids_compacted.data(),
+                static_cast<size_t>(byte_size));
+            jungle_scene_gpu_->point_instance_id_buffer.transition(
+                command_list_.Get(),
+                D3D12_RESOURCE_STATE_COPY_DEST);
+            command_list_->CopyBufferRegion(
+                jungle_scene_gpu_->
+                    point_instance_id_buffer.get(),
+                0,
+                jungle_point_id_upload_buffers_[
+                    frame_index_].Get(),
+                0,
+                byte_size);
+            jungle_scene_gpu_->point_instance_id_buffer.transition(
+                command_list_.Get(),
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        }
+
+        jungle_draw_stream_dirty_ = false;
     }
 
 }

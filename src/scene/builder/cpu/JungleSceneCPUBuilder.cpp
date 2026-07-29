@@ -1216,7 +1216,8 @@ namespace scene {
     } // namespace
 
     JungleSceneMaterialization JungleSceneCPUBuilder::materialize(
-        SceneSourceData& semantic_scene) {
+        SceneSourceData& semantic_scene,
+        const JungleSceneMaterializationOptions& options) {
 
         JungleSceneMaterialization result{};
         SceneSourceData& legacy = result.legacy_scene;
@@ -1243,9 +1244,10 @@ namespace scene {
             }
             point_instance_total += instancer.logical_instance_count;
         }
-        if (semantic_scene.nodes.size() >
-            (std::numeric_limits<uint32_t>::max)() -
-                point_instance_total) {
+        if (options.expand_point_instancers &&
+            semantic_scene.nodes.size() >
+                (std::numeric_limits<uint32_t>::max)() -
+                    point_instance_total) {
             fail_materialization(
                 semantic_scene,
                 {},
@@ -1253,11 +1255,17 @@ namespace scene {
                 "Expanded point instances plus ordinary scene nodes exceed "
                 "the legacy 32-bit instance contract.");
         }
-        result.expanded_point_instance_count = point_instance_total;
+        result.logical_point_instance_count = point_instance_total;
+        result.expanded_point_instance_count =
+            options.expand_point_instancers
+            ? point_instance_total
+            : 0;
         result.native_instance_count =
             semantic_scene.native_instances.size();
-        legacy.instances.resize(
-            static_cast<size_t>(point_instance_total));
+        if (options.expand_point_instancers) {
+            legacy.instances.resize(
+                static_cast<size_t>(point_instance_total));
+        }
 
         std::vector<uint8_t> excluded(
             semantic_scene.nodes.size(),
@@ -1656,11 +1664,19 @@ namespace scene {
                         semantic_scene,
                         source::ConversionSeverity::Info,
                         instancer.source,
-                        "point_instance_visibility_legacy_expansion",
-                        "Inactive/invisible IDs remain in semantic data; all "
-                        "logical PointInstancer entries are explicitly "
-                        "expanded because the legacy instance contract has "
-                        "no per-instance visibility field.");
+                        options.expand_point_instancers
+                            ? "point_instance_visibility_legacy_expansion"
+                            : "point_instance_visibility_compact_stream",
+                        options.expand_point_instancers
+                            ? "Inactive/invisible IDs remain in semantic "
+                                "data; all logical PointInstancer entries "
+                                "are explicitly expanded because the legacy "
+                                "instance contract has no per-instance "
+                                "visibility field."
+                            : "Inactive/invisible IDs remain in semantic "
+                                "data and the compact PointInstancer stream "
+                                "keeps every logical entry without an "
+                                "implicit skip or cap.");
                 }
                 if (instancer.time_varying) {
                     append_diagnostic(
@@ -1735,11 +1751,27 @@ namespace scene {
                             source::ConversionSeverity::Info,
                             semantic_scene.nodes[
                                 prototype_root_id].source,
-                            "point_prototype_matrix_materialized",
-                            "The PointInstancer prototype root transform is "
-                            "composed into an explicit affine legacy "
-                            "instance matrix so non-TRS transforms remain "
-                            "exact.");
+                            options.expand_point_instancers
+                                ? "point_prototype_matrix_materialized"
+                                : "point_prototype_affine_preserved",
+                            options.expand_point_instancers
+                                ? "The PointInstancer prototype root "
+                                    "transform is composed into an explicit "
+                                    "affine legacy instance matrix so "
+                                    "non-TRS transforms remain exact."
+                                : "The PointInstancer prototype root affine "
+                                    "transform remains separate from compact "
+                                    "point TRS data so shear stays exact "
+                                    "without geometry or instance expansion.");
+                    }
+                    result.point_prototypes.push_back({
+                        point_instancer_id,
+                        prototype_index,
+                        prototype_node.mesh_id,
+                        prototype_local_transforms[prototype_index]
+                    });
+                    if (!options.expand_point_instancers) {
+                        continue;
                     }
                     prototype_node.first_instance =
                         static_cast<uint32_t>(
@@ -1758,64 +1790,66 @@ namespace scene {
                         prototype_node_id);
                 }
 
-                for (uint32_t source_index = 0;
-                    source_index <
-                        instancer.logical_instance_count;
-                    ++source_index) {
-                    const uint32_t prototype_index =
-                        static_cast<uint32_t>(
-                            instancer.proto_indices[
-                                source_index]);
-                    const uint64_t destination_index =
-                        offsets[prototype_index] +
-                        cursors[prototype_index]++;
-                    source::InstanceTransform& destination =
-                        legacy.instances[
-                            static_cast<size_t>(
-                                destination_index)];
-                    const DirectX::XMFLOAT3 translation =
-                        instancer.positions[source_index];
-                    const DirectX::XMFLOAT4 rotation =
-                        instancer.orientations.empty()
-                        ? default_orientation()
-                        : instancer.orientations[
-                            source_index];
-                    const DirectX::XMFLOAT3 scale =
-                        instancer.scales.empty()
-                        ? default_scale()
-                        : instancer.scales[source_index];
-                    destination.translation = translation;
-                    destination.rotation = rotation;
-                    destination.scale = scale;
-                    destination.source_index = source_index;
-                    if (prototype_has_transform[
-                            prototype_index]) {
-                        const DirectX::XMMATRIX point_transform =
-                            DirectX::XMMatrixMultiply(
-                                DirectX::XMMatrixScaling(
-                                    scale.x,
-                                    scale.y,
-                                    scale.z),
+                if (options.expand_point_instancers) {
+                    for (uint32_t source_index = 0;
+                        source_index <
+                            instancer.logical_instance_count;
+                        ++source_index) {
+                        const uint32_t prototype_index =
+                            static_cast<uint32_t>(
+                                instancer.proto_indices[
+                                    source_index]);
+                        const uint64_t destination_index =
+                            offsets[prototype_index] +
+                            cursors[prototype_index]++;
+                        source::InstanceTransform& destination =
+                            legacy.instances[
+                                static_cast<size_t>(
+                                    destination_index)];
+                        const DirectX::XMFLOAT3 translation =
+                            instancer.positions[source_index];
+                        const DirectX::XMFLOAT4 rotation =
+                            instancer.orientations.empty()
+                            ? default_orientation()
+                            : instancer.orientations[
+                                source_index];
+                        const DirectX::XMFLOAT3 scale =
+                            instancer.scales.empty()
+                            ? default_scale()
+                            : instancer.scales[source_index];
+                        destination.translation = translation;
+                        destination.rotation = rotation;
+                        destination.scale = scale;
+                        destination.source_index = source_index;
+                        if (prototype_has_transform[
+                                prototype_index]) {
+                            const DirectX::XMMATRIX point_transform =
                                 DirectX::XMMatrixMultiply(
-                                    DirectX::XMMatrixRotationQuaternion(
-                                        DirectX::XMLoadFloat4(
-                                            &rotation)),
-                                    DirectX::XMMatrixTranslation(
-                                        translation.x,
-                                        translation.y,
-                                        translation.z)));
-                        DirectX::XMStoreFloat4x4(
-                            &destination.matrix,
-                            DirectX::XMMatrixMultiply(
-                                DirectX::XMLoadFloat4x4(
-                                    &prototype_local_transforms[
-                                        prototype_index]),
-                                point_transform));
-                        destination.has_matrix = true;
+                                    DirectX::XMMatrixScaling(
+                                        scale.x,
+                                        scale.y,
+                                        scale.z),
+                                    DirectX::XMMatrixMultiply(
+                                        DirectX::XMMatrixRotationQuaternion(
+                                            DirectX::XMLoadFloat4(
+                                                &rotation)),
+                                        DirectX::XMMatrixTranslation(
+                                            translation.x,
+                                            translation.y,
+                                            translation.z)));
+                            DirectX::XMStoreFloat4x4(
+                                &destination.matrix,
+                                DirectX::XMMatrixMultiply(
+                                    DirectX::XMLoadFloat4x4(
+                                        &prototype_local_transforms[
+                                            prototype_index]),
+                                    point_transform));
+                            destination.has_matrix = true;
+                        }
                     }
+                    instance_write_base +=
+                        instancer.logical_instance_count;
                 }
-                instance_write_base +=
-                    instancer.logical_instance_count;
             }
             return legacy_node_id;
         };
@@ -1823,7 +1857,8 @@ namespace scene {
         clone_node(
             semantic_scene.root_node_id,
             INVALID_INDEX);
-        if (instance_write_base != point_instance_total) {
+        if (options.expand_point_instancers &&
+            instance_write_base != point_instance_total) {
             fail_materialization(
                 semantic_scene,
                 {},
@@ -1920,6 +1955,8 @@ namespace scene {
             legacy.meshes.size() <<
             ", native_instances=" <<
             result.native_instance_count <<
+            ", logical_point_instances=" <<
+            result.logical_point_instance_count <<
             ", expanded_point_instances=" <<
             result.expanded_point_instance_count <<
             ", materialized_instances=" <<
@@ -1938,6 +1975,241 @@ namespace scene {
             materialize(semantic_scene);
         return SceneCPUBuilder::build(
             materialized.legacy_scene);
+    }
+
+    JungleSceneCPUData JungleSceneCPUBuilder::build_compact(
+        SceneSourceData& semantic_scene) {
+
+        JungleSceneMaterializationOptions options{};
+        options.expand_point_instancers = false;
+        JungleSceneMaterialization materialized =
+            materialize(semantic_scene, options);
+
+        JungleSceneCPUData result{};
+        result.scene = SceneCPUBuilder::build(
+            materialized.legacy_scene);
+        result.logical_point_instance_count =
+            materialized.logical_point_instance_count;
+        result.point_instances.reserve(
+            static_cast<size_t>(
+                materialized.logical_point_instance_count));
+        result.point_instance_ids_by_prototype.resize(
+            static_cast<size_t>(
+                materialized.logical_point_instance_count));
+        result.point_prototypes.reserve(
+            materialized.point_prototypes.size());
+
+        const auto prototype_key =
+            [](uint32_t point_instancer_id,
+                uint32_t prototype_index) -> uint64_t {
+            return (
+                static_cast<uint64_t>(point_instancer_id) << 32) |
+                prototype_index;
+        };
+        std::unordered_map<
+            uint64_t,
+            const JunglePointPrototypeMaterialization*>
+            materialized_prototypes;
+        for (const auto& prototype :
+            materialized.point_prototypes) {
+            materialized_prototypes.emplace(
+                prototype_key(
+                    prototype.point_instancer_id,
+                    prototype.prototype_index),
+                &prototype);
+        }
+
+        uint64_t point_instance_base = 0;
+        uint64_t point_id_base = 0;
+        for (uint32_t point_instancer_id = 0;
+            point_instancer_id <
+                semantic_scene.point_instancers.size();
+            ++point_instancer_id) {
+            const source::PointInstancer& instancer =
+                semantic_scene.point_instancers[
+                    point_instancer_id];
+            if (instancer.node_id >= semantic_scene.nodes.size()) {
+                fail_materialization(
+                    semantic_scene,
+                    instancer.source,
+                    "compact_instancer_node_invalid",
+                    "A compact Jungle PointInstancer references an invalid "
+                    "semantic node.");
+            }
+
+            for (uint32_t source_index = 0;
+                source_index < instancer.logical_instance_count;
+                ++source_index) {
+                JungleSceneCPUData::PointInstance instance{};
+                instance.translation =
+                    instancer.positions[source_index];
+                instance.source_index = source_index;
+                instance.rotation =
+                    instancer.orientations.empty()
+                    ? default_orientation()
+                    : instancer.orientations[source_index];
+                instance.scale =
+                    instancer.scales.empty()
+                    ? default_scale()
+                    : instancer.scales[source_index];
+                result.point_instances.push_back(instance);
+            }
+
+            std::vector<uint64_t> offsets(
+                instancer.prototype_source_ids.size(),
+                0);
+            std::vector<uint64_t> cursors(
+                instancer.prototype_source_ids.size(),
+                0);
+            uint64_t local_offset = 0;
+            for (uint32_t prototype_index = 0;
+                prototype_index <
+                    instancer.prototype_source_ids.size();
+                ++prototype_index) {
+                const auto found =
+                    materialized_prototypes.find(
+                        prototype_key(
+                            point_instancer_id,
+                            prototype_index));
+                if (found == materialized_prototypes.end()) {
+                    fail_materialization(
+                        semantic_scene,
+                        instancer.source,
+                        "compact_prototype_missing",
+                        "A compact Jungle PointInstancer prototype has no "
+                        "materialized shared mesh.");
+                }
+
+                offsets[prototype_index] =
+                    point_id_base + local_offset;
+                const uint64_t prototype_count =
+                    instancer.prototype_instance_counts[
+                        prototype_index];
+                if (offsets[prototype_index] >
+                        (std::numeric_limits<uint32_t>::max)() ||
+                    prototype_count >
+                        (std::numeric_limits<uint32_t>::max)()) {
+                    fail_materialization(
+                        semantic_scene,
+                        instancer.source,
+                        "compact_prototype_range_overflow",
+                        "A compact Jungle prototype instance range exceeds "
+                        "32-bit GPU indexing.");
+                }
+
+                JungleSceneCPUData::PointPrototype prototype{};
+                prototype.mesh_id = found->second->mesh_id;
+                prototype.first_instance_id =
+                    static_cast<uint32_t>(
+                        offsets[prototype_index]);
+                prototype.instance_count =
+                    static_cast<uint32_t>(
+                        prototype_count);
+                prototype.point_instancer_id =
+                    point_instancer_id;
+                prototype.prototype_local_transform =
+                    found->second->prototype_local_transform;
+                prototype.instancer_world_transform =
+                    semantic_scene.nodes[
+                        instancer.node_id].world_transform;
+                result.point_prototypes.push_back(prototype);
+                local_offset += prototype_count;
+            }
+
+            for (uint32_t source_index = 0;
+                source_index < instancer.logical_instance_count;
+                ++source_index) {
+                const int32_t authored_prototype_index =
+                    instancer.proto_indices[source_index];
+                if (authored_prototype_index < 0 ||
+                    static_cast<size_t>(
+                        authored_prototype_index) >=
+                        instancer.prototype_source_ids.size()) {
+                    fail_materialization(
+                        semantic_scene,
+                        instancer.source,
+                        "compact_proto_index_invalid",
+                        "A compact Jungle PointInstancer entry references "
+                        "an invalid prototype index.");
+                }
+                const uint32_t prototype_index =
+                    static_cast<uint32_t>(
+                        authored_prototype_index);
+                const uint64_t destination_index =
+                    offsets[prototype_index] +
+                    cursors[prototype_index]++;
+                const uint64_t point_instance_id =
+                    point_instance_base + source_index;
+                if (destination_index >=
+                        result.point_instance_ids_by_prototype.size() ||
+                    point_instance_id >
+                        (std::numeric_limits<uint32_t>::max)()) {
+                    fail_materialization(
+                        semantic_scene,
+                        instancer.source,
+                        "compact_point_id_overflow",
+                        "A compact Jungle PointInstancer ID exceeds the "
+                        "allocated 32-bit stream.");
+                }
+                result.point_instance_ids_by_prototype[
+                    static_cast<size_t>(destination_index)] =
+                        static_cast<uint32_t>(
+                            point_instance_id);
+            }
+
+            for (uint32_t prototype_index = 0;
+                prototype_index < cursors.size();
+                ++prototype_index) {
+                if (cursors[prototype_index] !=
+                    instancer.prototype_instance_counts[
+                        prototype_index]) {
+                    fail_materialization(
+                        semantic_scene,
+                        instancer.source,
+                        "compact_prototype_count_mismatch",
+                        "Compact Jungle PointInstancer grouping did not "
+                        "consume the authored prototype count.");
+                }
+            }
+            point_instance_base +=
+                instancer.logical_instance_count;
+            point_id_base +=
+                instancer.logical_instance_count;
+        }
+
+        if (point_instance_base !=
+                materialized.logical_point_instance_count ||
+            point_id_base !=
+                materialized.logical_point_instance_count ||
+            result.point_instances.size() !=
+                materialized.logical_point_instance_count) {
+            fail_materialization(
+                semantic_scene,
+                {},
+                "compact_point_instance_count_mismatch",
+                "Compact Jungle PointInstancer materialization did not "
+                "preserve every logical instance.");
+        }
+
+        const uint64_t compact_bytes =
+            static_cast<uint64_t>(
+                result.point_instances.size()) *
+                sizeof(JungleSceneCPUData::PointInstance) +
+            static_cast<uint64_t>(
+                result.point_instance_ids_by_prototype.size()) *
+                sizeof(uint32_t) +
+            static_cast<uint64_t>(
+                result.point_prototypes.size()) *
+                sizeof(JungleSceneCPUData::PointPrototype);
+        util::Logger::g_logger <<
+            "Jungle compact CPU stream: ordinary_instances=" <<
+            result.scene.instances.size() <<
+            ", logical_point_instances=" <<
+            result.logical_point_instance_count <<
+            ", point_prototypes=" <<
+            result.point_prototypes.size() <<
+            ", compact_bytes=" << compact_bytes << '\n';
+        return result;
     }
 
 } // namespace scene

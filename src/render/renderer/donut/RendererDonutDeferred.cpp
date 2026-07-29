@@ -105,6 +105,11 @@ namespace rndr {
 			gbuffer.constant_buffers[i] = &gbuffer_constant_resources_[i];
 		gbuffer.scene = scene_gpu_.get();
 		gbuffer.draw_stream = &draw_stream_;
+		gbuffer.jungle_scene = jungle_scene_gpu_.get();
+		gbuffer.jungle_draw_stream =
+			jungle_scene_gpu_ != nullptr
+			? &jungle_draw_stream_
+			: nullptr;
 
 		if (do_prepass_) {
 			PassDonutDepthPreResources depth{};
@@ -116,6 +121,11 @@ namespace rndr {
 				depth.constant_buffers[i] = &depth_constant_resources_[i];
 			depth.scene = scene_gpu_.get();
 			depth.draw_stream = &draw_stream_;
+			depth.jungle_scene = jungle_scene_gpu_.get();
+			depth.jungle_draw_stream =
+				jungle_scene_gpu_ != nullptr
+				? &jungle_draw_stream_
+				: nullptr;
 			pass_depth_pre_.init(device_.Get(), program_argument_, depth);
 		}
 

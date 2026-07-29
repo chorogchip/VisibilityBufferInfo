@@ -629,6 +629,7 @@ if(TVBPERF_BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/JungleSceneCPUBuilderTest.cpp"
         "${TVBPERF_SRC_DIR}/scene/builder/source/JungleSceneSourceBuilder.cpp"
         "${TVBPERF_SRC_DIR}/scene/builder/cpu/JungleSceneCPUBuilder.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/cpu/JungleSceneCPUDrawStreamBuilder.cpp"
         "${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUBuilder.cpp"
         "${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUValidator.cpp"
         "${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceDataValidator.cpp"

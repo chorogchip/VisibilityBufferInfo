@@ -4,7 +4,9 @@
 #include "ProgramArgument.h"
 #include "engine/GraphicsPipeline.h"
 #include "scene/data/cpu/SceneCPUDrawStream.h"
+#include "scene/data/cpu/JungleSceneCPUDrawStream.h"
 #include "scene/data/gpu/DonutSceneGPUData.h"
+#include "scene/data/gpu/JungleSceneGPUData.h"
 
 namespace eng {
     class GPUResource;
@@ -23,6 +25,9 @@ namespace rndr {
         eng::GPUResource* constant_buffers[util::Constants::FRAME_COUNT]{};
         const scene::DonutSceneGPUData* scene = nullptr;
         const scene::SceneCPUDrawStream* draw_stream = nullptr;
+        const scene::JungleSceneGPUData* jungle_scene = nullptr;
+        const scene::JungleSceneCPUDrawStream*
+            jungle_draw_stream = nullptr;
     };
 
     class PassDonutDepthPre {
@@ -45,5 +50,6 @@ namespace rndr {
     private:
         PassDonutDepthPreResources resources_{};
         eng::GraphicsPipeline pso_;
+        eng::GraphicsPipeline jungle_point_pso_;
     };
 }

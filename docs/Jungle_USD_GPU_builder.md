@@ -235,14 +235,153 @@ VFC를 사용해 실제 CPU->GPU 경로 도달만 확인한 값이며 Jungle 전
 
 ## 남은 확장 과제
 
-- 현재 GPU entry는 generic Benchmark/Donut layout을 재사용한다. 전용 GPU
-  PointInstancer/prototype layout을 추가하면 8.67M CPU instance expansion과
-  22.4M geometry-instance materialization을 피할 수 있다.
-- 선택적 affine matrix로 정확성을 유지했지만 legacy instance 하나의 CPU 크기가
-  커졌다. dedicated GPU compact affine/TRS stream이 필요하다.
+- 전용 GPU PointInstancer/prototype layout은 아래 2026-07-29 후속 단계에서
+  구현했다. Benchmark renderer는 아직 legacy expanded CPU/GPU layout을 사용한다.
 - VFC를 끈 전체 Jungle 제출은 현 GPU에서 TDR을 일으킨다. GPU-driven culling,
   residency/streaming 또는 prototype-native draw 구조가 필요하다.
 - Benchmark renderer의 Jungle 전용 entry는 build/fixture로 검증했지만 실제
   JungleRuins 실행은 Donut variant 7에서 수행했다.
 - 실제 resolved texture upload, 더 넓은 USD shader graph subset, alpha/transmission
   등은 후속 과제다.
+
+## 2026-07-29: compact PointInstancer CPU/GPU 경로
+
+### 목적과 계약
+
+기존 legacy 경로는 8,674,676개 PointInstancer logical instance를
+`SceneCPUData::InstanceData`로 확장한 뒤 prototype의 submesh별로 다시 복제해
+22,410,338개 generic draw instance를 만들었다. 의미 보존에는 유효했지만 CPU/GPU
+메모리와 draw 제출 구조가 Jungle 규모에 맞지 않았다.
+
+Donut variants 7/8의 Jungle 분기에 다음 전용 계약을 추가했다.
+
+- semantic `SceneSourceData`의 PointInstancer와 shader graph는 수정하거나
+  확장하지 않는다.
+- ordinary/native instance와 공유 triangle geometry만 기존 `SceneCPUData`와
+  `DonutSceneGPUData`로 내린다.
+- PointInstancer entry는 translation, quaternion, scale과 source index를 담은
+  48-byte `PointInstance` 한 개로 유지한다.
+- prototype root의 affine matrix와 instancer world matrix는 prototype별로 한 번만
+  저장한다. 이 때문에 shear를 손실 없이 유지하면서 geometry를 공유할 수 있다.
+- logical instance ID는 prototype별 contiguous range로 한 번만 group한다. 같은
+  prototype의 여러 submesh draw가 이 ID range를 공유한다.
+- silent skip, cap, 원본 삭제는 없다. logical count와 32-bit buffer/draw 계약을
+  materialization 전에 검증하며 위반은 fatal diagnostic이다.
+- 기존 expanded materialization API는 fixture와 Benchmark 호환을 위해 유지한다.
+  Donut Jungle 경로만 명시적으로 `build_compact()`를 선택한다.
+
+실제 JungleRuins의 compact 계약 수치는 다음과 같다.
+
+```text
+ordinary/native instances        142
+generic draw instances           162
+logical point instances    8,674,676
+point prototypes                 778
+PointInstance bytes      416,384,448
+prototype-grouped ID bytes 34,698,704
+GPU prototype matrix bytes    99,584
+compact point GPU bytes  451,182,736
+```
+
+CPU prototype record는 진단용 ID와 range도 포함하므로 전체 compact CPU point
+stream은 451,195,184 bytes다. 기존 8,674,818개 legacy instance와
+22,410,338개 draw-instance 배열은 Donut Jungle 경로에서 더 이상 생성하지 않는다.
+
+### draw stream, VFC와 shader
+
+`JungleSceneCPUDrawStreamBuilder`는 prototype/submesh별 compact draw call을 만들고
+`DrawIndexedInstanced`의 hardware instance count로 logical instance를 제출한다.
+
+- VFC off: prototype에 속한 전체 logical range를 그대로 사용한다.
+- VFC on: prototype group을 한 번 순회하고 conservative transformed bounding
+  sphere로 visibility를 판정해 compact ID buffer만 갱신한다.
+- profile index count는 ordinary draw와 point draw의 visible index 수를 합산한다.
+
+PointInstancer 전용 GBuffer/depth vertex shader는 다음 순서로 world transform을
+재구성한다.
+
+```text
+prototype affine -> authored point scale/rotation/translation -> instancer world
+```
+
+GBuffer와 depth-prepass는 각각 전용 PSO를 가지지만 material/texture pixel shader와
+ordinary Assimp draw 경로는 기존 구현을 그대로 사용한다. 새 GPU binding은 vertex
+stream `t11`, compact point record `t14`, prototype matrices `t15`, visible point ID
+stream `t16`이다.
+
+### build와 자동화 검증
+
+다음 명령이 Debug/Release 모두 성공했다.
+
+```powershell
+cmake --build out/build/x64-Debug --config Debug
+ctest --test-dir out/build/x64-Debug -C Debug --output-on-failure
+cmake --build out/build/x64-Release --config Release
+ctest --test-dir out/build/x64-Release -C Release --output-on-failure
+```
+
+`JungleSceneCPUBuilderTest`는 기존 expanded 결과에 더해 compact logical count,
+prototype grouping, shared geometry, affine prototype matrix와 compact draw call을
+검증한다. 신규 GBuffer/depth vertex shader는 DXC `vs_6_5` standalone compile과
+실제 runtime PSO 생성 양쪽을 통과했다.
+
+### 실제 Jungle GPU 검증
+
+Jungle root:
+
+```text
+assets/scenes/unpacked/JungleRuins/USD/JungleRuins_Karma.usda
+```
+
+공통 실행 조건은 `scene-importer=jungle`, `to-load-texture=true`, `use-vfc=true`,
+1920x1080, warm-up 1 frame, measure 1 frame이었다. 두 실행 모두 exit code 0,
+CSV 생성, compact upload 완료, assert/device removed/shader/PSO 오류 없음으로
+끝났다.
+
+```text
+variant 7 DonutDeferred
+  total     26.79018 ms
+  geometry  26.40131 ms
+
+variant 8 DonutDeferredPrepass
+  total          48.73142 ms
+  depth_prepass  16.67136 ms
+  geometry       31.65898 ms
+```
+
+위 시간은 `(0, 0, -10)` 고정 free camera의 integration 결과이며 Jungle 전체
+성능 결론으로 사용하면 안 된다. 640x360 capture 실행도 별도로 성공해 Jungle
+compact renderer 경로가 textured geometry를 실제 framebuffer에 출력하는 것을
+확인했다.
+다만 이 고정 카메라는 지형 내부 위치이므로 발표용 카메라 경로가 필요하다.
+
+`palm_bark_nor_gl_4k.exr`은 DirectXTex 경로에서 `0x88982F50`으로 세 번 실패했고
+기존 fallback texture가 사용됐다. 나머지 실행은 계속 완료됐으며 이 EXR 지원은
+resolved asset path 보존과 별개의 texture-decoder 후속 과제다.
+
+### 기존 Donut 회귀 검증
+
+pass/root signature 변경이 Assimp 경로에 영향을 주지 않는지 texture와 VFC를 켠
+1920x1080 camera playback을 마지막 measurement frame까지 실행했다.
+
+```text
+Sponza variants 7/8: 60 warm-up + 2,500 measurement frames
+Bistro variants 7/8: 60 warm-up + 5,500 measurement frames
+```
+
+네 실행 모두 exit code 0, main CSV, 10-frame windowed sidecar와 첫/마지막 capture를
+생성했다. 첫 capture는 두 scene과 두 variant에서 정상 geometry/texture를
+표시했다. 마지막 capture slot은 네 실행 모두 검은 이미지였으므로 Jungle 분기와
+독립적인 기존 camera playback 종료/capture timing 항목으로 분리한다.
+
+### 후속 과제
+
+- Benchmark renderer의 Jungle 경로도 compact point contract로 전환한다.
+- PointInstancer VFC를 CPU 순회에서 GPU-driven culling/indirect draw로 옮긴다.
+- 전 scene resident vertex/index buffer를 streaming/residency 구조로 확장한다.
+- USD up-axis/unit과 authored camera를 renderer camera 계약으로 정규화해 반복 가능한
+  Jungle playback/capture를 만든다.
+- affine shear/non-uniform scale에서 정확한 inverse-transpose normal/tangent basis를
+  dedicated shader ABI에 추가한다.
+- EXR을 포함한 resolved texture decoder와 alpha/transmission material subset을
+  확장한다.

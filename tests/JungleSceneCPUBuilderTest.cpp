@@ -1,4 +1,5 @@
 #include "scene/builder/cpu/JungleSceneCPUBuilder.h"
+#include "scene/builder/cpu/JungleSceneCPUDrawStreamBuilder.h"
 #include "scene/builder/cpu/SceneCPUBuilder.h"
 #include "scene/builder/source/JungleSceneSourceBuilder.h"
 
@@ -12,6 +13,13 @@ int main() {
         semantic->material_graphs.size();
     const size_t point_instancer_count =
         semantic->point_instancers.size();
+
+    scene::JungleSceneCPUData compact =
+        scene::JungleSceneCPUBuilder::build_compact(*semantic);
+    scene::JungleSceneCPUDrawStream compact_draw_stream{};
+    scene::JungleSceneCPUDrawStreamBuilder::build_all(
+        compact,
+        compact_draw_stream);
 
     scene::JungleSceneMaterialization materialized =
         scene::JungleSceneCPUBuilder::materialize(*semantic);
@@ -88,6 +96,20 @@ int main() {
         }
     }
 
+    bool compact_has_affine_prototype = false;
+    for (const auto& prototype : compact.point_prototypes) {
+        const DirectX::XMFLOAT4X4& matrix =
+            prototype.prototype_local_transform;
+        compact_has_affine_prototype =
+            compact_has_affine_prototype ||
+            matrix._11 != 1.0f ||
+            matrix._22 != 1.0f ||
+            matrix._33 != 1.0f ||
+            matrix._41 != 0.0f ||
+            matrix._42 != 0.0f ||
+            matrix._43 != 0.0f;
+    }
+
     bool has_triangulated_quad = false;
     bool has_vertex_attributes = false;
     for (const auto& mesh :
@@ -114,6 +136,17 @@ int main() {
             logical_instance_count == 2 &&
         materialized.expanded_point_instance_count == 2 &&
         materialized.legacy_scene.instances.size() == 2 &&
+        compact.logical_point_instance_count == 2 &&
+        compact.point_instances.size() == 2 &&
+        compact.point_instance_ids_by_prototype.size() == 2 &&
+        compact.point_prototypes.size() == 2 &&
+        compact.scene.instances.size() == 4 &&
+        compact.scene.draw_instances.size() == 4 &&
+        compact_draw_stream.point_instance_ids_compacted.size() == 2 &&
+        compact_draw_stream.point_draw_calls_compacted.size() == 2 &&
+        scene::JungleSceneCPUDrawStreamBuilder::count_indices(
+            compact_draw_stream) > 0 &&
+        compact_has_affine_prototype &&
         materialized.native_instance_count == 4 &&
         materialized.materialized_instance_count == 6 &&
         materialized.materialized_draw_instance_count == 6 &&
@@ -144,6 +177,18 @@ int main() {
             materialized.expanded_point_instance_count <<
             ", legacy_instances=" <<
             materialized.legacy_scene.instances.size() <<
+            ", compact_instances=" <<
+            compact.scene.instances.size() <<
+            ", compact_point_instances=" <<
+            compact.point_instances.size() <<
+            ", compact_point_ids=" <<
+            compact.point_instance_ids_by_prototype.size() <<
+            ", compact_prototypes=" <<
+            compact.point_prototypes.size() <<
+            ", compact_draws=" <<
+            compact_draw_stream.point_draw_calls_compacted.size() <<
+            ", compact_affine=" <<
+            compact_has_affine_prototype <<
             ", native_instances=" <<
             materialized.native_instance_count <<
             ", materialized_instances=" <<

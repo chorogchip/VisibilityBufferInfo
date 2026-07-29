@@ -6,9 +6,11 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include "scene/data/cpu/JungleSceneCPUData.h"
 #include "scene/data/cpu/SceneCPUData.h"
 #include "scene/data/gpu/BenchmarkSceneGPUData.h"
 #include "scene/data/gpu/DonutSceneGPUData.h"
+#include "scene/data/gpu/JungleSceneGPUData.h"
 
 namespace scene {
 
@@ -27,6 +29,15 @@ namespace scene {
 
         static DonutSceneGPUData build_donut(
             const SceneCPUData& source,
+            ID3D12Device* device,
+            ID3D12GraphicsCommandList* command_list,
+            std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
+                used_upload_heaps,
+            const std::function<void()>& flush_uploads = {},
+            bool load_textures = true);
+
+        static JungleDonutSceneGPUData build_donut_compact(
+            const JungleSceneCPUData& source,
             ID3D12Device* device,
             ID3D12GraphicsCommandList* command_list,
             std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&
