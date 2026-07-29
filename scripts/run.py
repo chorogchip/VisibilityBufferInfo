@@ -15,6 +15,8 @@ from __future__ import annotations
 import csv
 import itertools
 import json
+import math
+import re
 import shutil
 import subprocess
 import sys
@@ -27,6 +29,45 @@ from typing import Any, Iterator
 
 ERROR_TEXT_LIMIT = 8000
 PROGRAM_RESULT_PASS_COUNT = 32
+PROGRAM_RESULT_REQUIRED_VALUE_FIELDS = (
+    "pass_name_0",
+    "pass_0_time_avg_ms",
+    "renderer_name",
+    "run_current_time",
+    "camera-mode-name",
+    "total_time_min_ms",
+    "total_time_median_ms",
+    "total_time_max_ms",
+    "total_time_avg_ms",
+    "total_time_p01_ms",
+    "total_time_p10_ms",
+    "total_time_p90_ms",
+    "total_time_p99_ms",
+)
+PROGRAM_RESULT_REQUIRED_NUMERIC_FIELDS = (
+    "pass_0_time_avg_ms",
+    "total_time_min_ms",
+    "total_time_median_ms",
+    "total_time_max_ms",
+    "total_time_avg_ms",
+    "total_time_p01_ms",
+    "total_time_p10_ms",
+    "total_time_p90_ms",
+    "total_time_p99_ms",
+)
+PROGRAM_RESULT_STRICTLY_POSITIVE_FIELDS = (
+    "total_time_median_ms",
+    "total_time_avg_ms",
+    "total_time_p90_ms",
+    "total_time_p99_ms",
+)
+UNTRUSTWORTHY_STDERR_PATTERNS = (
+    re.compile(r"\bdevice removed\b", re.IGNORECASE),
+    re.compile(r"\bDXGI_ERROR_DEVICE_(?:HUNG|REMOVED|RESET)\b", re.IGNORECASE),
+    re.compile(r"\bshader (?:compile|compilation) failed\b", re.IGNORECASE),
+    re.compile(r"\bPSO (?:creation|initialization) failed\b", re.IGNORECASE),
+    re.compile(r"\bassert(?:ion)? failed\b", re.IGNORECASE),
+)
 
 
 PROGRAM_RESULT_FIELDS = (
@@ -87,6 +128,23 @@ def trim_error(value: Any) -> str:
     if len(text) <= ERROR_TEXT_LIMIT:
         return text
     return text[-ERROR_TEXT_LIMIT:]
+
+
+def diagnostic_text(value: Any) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace").strip()
+    return str(value or "").strip()
+
+
+def untrustworthy_stderr_error(stderr_text: str) -> str:
+    for pattern in UNTRUSTWORTHY_STDERR_PATTERNS:
+        match = pattern.search(stderr_text)
+        if match:
+            return (
+                "Renderer emitted an untrustworthy diagnostic: "
+                f"{match.group(0)}"
+            )
+    return ""
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -269,14 +327,54 @@ def read_result_rows(path: Path) -> list[dict[str, str]]:
             )
 
         rows: list[dict[str, str]] = []
-        for row in reader:
+        for row_index, row in enumerate(reader, start=2):
             normalized = {
                 str(key): "" if value is None else str(value)
                 for key, value in row.items()
                 if key is not None
             }
-            if any(value != "" for value in normalized.values()):
-                rows.append(normalized)
+            if not any(value != "" for value in normalized.values()):
+                continue
+
+            empty_fields = [
+                field_name
+                for field_name in PROGRAM_RESULT_REQUIRED_VALUE_FIELDS
+                if not normalized.get(field_name, "").strip()
+            ]
+            if empty_fields:
+                fail(
+                    f"Benchmark output CSV row {row_index} has empty required "
+                    "ProgramResult fields: " + ", ".join(empty_fields)
+                )
+
+            numeric_values: dict[str, float] = {}
+            for field_name in PROGRAM_RESULT_REQUIRED_NUMERIC_FIELDS:
+                try:
+                    value = float(normalized[field_name])
+                except (TypeError, ValueError) as error:
+                    fail(
+                        f"Benchmark output CSV row {row_index} has a non-numeric "
+                        f"{field_name}: {normalized[field_name]!r} ({error})"
+                    )
+                if not math.isfinite(value) or value < 0:
+                    fail(
+                        f"Benchmark output CSV row {row_index} has an invalid "
+                        f"{field_name}: {normalized[field_name]!r}"
+                    )
+                numeric_values[field_name] = value
+
+            non_positive_fields = [
+                field_name
+                for field_name in PROGRAM_RESULT_STRICTLY_POSITIVE_FIELDS
+                if numeric_values[field_name] <= 0
+            ]
+            if non_positive_fields:
+                fail(
+                    f"Benchmark output CSV row {row_index} has non-positive "
+                    "timing fields: " + ", ".join(non_positive_fields)
+                )
+
+            rows.append(normalized)
         return rows
 
 
@@ -368,8 +466,8 @@ def execute(
     command: list[str],
     cwd: Path,
     timeout_seconds: float | None,
-) -> tuple[int | None, str, str, bool]:
-    """Return return_code, process_error, stderr_text, interrupted."""
+) -> tuple[int | None, str, str, str, bool]:
+    """Return return_code, process_error, stderr_text, failure_kind, interrupted."""
     try:
         completed = subprocess.run(
             command,
@@ -380,24 +478,69 @@ def execute(
             errors="replace",
             timeout=timeout_seconds,
         )
-        stderr_text = trim_error(completed.stderr)
+        stderr_text = diagnostic_text(completed.stderr)
         process_error = (
             ""
             if completed.returncode == 0
             else f"Process exited with code {completed.returncode}."
         )
-        return completed.returncode, process_error, stderr_text, False
+        failure_kind = "" if completed.returncode == 0 else "nonzero_exit"
+        return (
+            completed.returncode,
+            process_error,
+            stderr_text,
+            failure_kind,
+            False,
+        )
     except subprocess.TimeoutExpired as error:
         return (
             None,
             f"Process timed out after {timeout_seconds} second(s).",
-            trim_error(error.stderr),
+            diagnostic_text(error.stderr),
+            "timeout",
             False,
         )
     except KeyboardInterrupt:
-        return None, "Interrupted by user.", "", True
+        return None, "Interrupted by user.", "", "interrupted", True
     except Exception as error:
-        return None, f"Could not execute benchmark: {error}", "", False
+        return (
+            None,
+            f"Could not execute benchmark: {error}",
+            "",
+            "start_failure",
+            False,
+        )
+
+
+def classify_run(
+    *,
+    raw_rows: list[dict[str, str]],
+    return_code: int | None,
+    process_error: str,
+    read_error: str,
+    stderr_text: str,
+    failure_kind: str,
+    raw_path: Path,
+) -> tuple[str, str]:
+    """Classify a run without treating ordinary stderr diagnostics as errors."""
+    trust_error = untrustworthy_stderr_error(stderr_text)
+    runner_error = " | ".join(
+        part for part in (process_error, read_error, trust_error) if part
+    )
+
+    if failure_kind in {"timeout", "start_failure", "interrupted"}:
+        return "failed", runner_error
+    if trust_error or read_error:
+        return "failed", runner_error
+    if return_code == 0 and raw_rows:
+        return "success", ""
+    if failure_kind == "nonzero_exit" and raw_rows:
+        return "salvaged", runner_error
+
+    no_result_error = runner_error or (
+        f"Benchmark output CSV was not created or had no valid rows: {raw_path}"
+    )
+    return "failed", no_result_error
 
 
 def build_csv_rows(
@@ -408,54 +551,131 @@ def build_csv_rows(
     repeat: int,
     run_index: int,
     return_code: int | None,
-    combined_error: str,
-    raw_path: Path,
+    run_status: str,
+    runner_error: str,
+    stderr_text: str,
     report: dict[str, Any],
-) -> tuple[str, list[dict[str, Any]]]:
-    """Apply the runner's success/salvage/failure policy to one run."""
+) -> list[dict[str, Any]]:
+    """Create consolidated rows and increment exactly one run-status counter."""
     parameter_columns = {
         f"param_{name}": render_argument(value)
         for name, value in combination.items()
     }
 
-    if raw_rows:
-        run_status = "salvaged" if combined_error else "success"
-        counter_key = (
-            "successful_runs" if run_status == "success" else "salvaged_runs"
-        )
-        report[counter_key] += 1
-        rows = [
-            {
-                **result_row,
-                **parameter_columns,
-                "runner_experiment": experiment_name,
-                "runner_repeat": repeat,
-                "runner_run_index": run_index,
-                "runner_result_row": result_row_index,
-                "runner_status": run_status,
-                "runner_return_code": "" if return_code is None else return_code,
-                "runner_error": combined_error,
-            }
-            for result_row_index, result_row in enumerate(raw_rows)
-        ]
-        return run_status, rows
-
-    report["failed_runs"] += 1
-    no_result_error = combined_error or (
-        f"Benchmark output CSV was not created or had no rows: {raw_path}"
-    )
-    return "failed", [
+    counter_keys = {
+        "success": "successful_runs",
+        "salvaged": "salvaged_runs",
+        "failed": "failed_runs",
+    }
+    report[counter_keys[run_status]] += 1
+    result_rows: list[dict[str, str] | dict[str, Any]] = raw_rows or [{}]
+    return [
         {
+            **result_row,
             **parameter_columns,
             "runner_experiment": experiment_name,
             "runner_repeat": repeat,
             "runner_run_index": run_index,
-            "runner_result_row": "",
-            "runner_status": "failed",
+            "runner_result_row": result_row_index if raw_rows else "",
+            "runner_status": run_status,
             "runner_return_code": "" if return_code is None else return_code,
-            "runner_error": no_result_error,
+            "runner_error": runner_error,
+            "runner_stderr": stderr_text,
+            "runner_skip_reason": "",
+            "runner_missing_assets": "",
         }
+        for result_row_index, result_row in enumerate(result_rows)
     ]
+
+
+def build_skipped_csv_row(
+    *,
+    combination: dict[str, Any],
+    experiment_name: str,
+    repeat: int,
+    run_index: int,
+    missing_assets: list[dict[str, str]],
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    parameter_columns = {
+        f"param_{name}": render_argument(value)
+        for name, value in combination.items()
+    }
+    missing_paths = [asset["resolved_path"] for asset in missing_assets]
+    skip_reason = "Missing required asset(s): " + "; ".join(missing_paths)
+    report["skipped_runs"] += 1
+    return {
+        **parameter_columns,
+        "runner_experiment": experiment_name,
+        "runner_repeat": repeat,
+        "runner_run_index": run_index,
+        "runner_result_row": "",
+        "runner_status": "skipped_missing_asset",
+        "runner_return_code": "",
+        "runner_error": "",
+        "runner_stderr": "",
+        "runner_skip_reason": skip_reason,
+        "runner_missing_assets": ";".join(missing_paths),
+    }
+
+
+def resolve_runtime_path(value: Any, runtime_dir: Path) -> Path:
+    path = Path(str(value))
+    if path.is_absolute():
+        return path.resolve()
+    return (runtime_dir / path).resolve()
+
+
+def missing_combination_assets(
+    combination: dict[str, Any],
+    runtime_dir: Path,
+) -> list[dict[str, str]]:
+    required: list[tuple[str, Any]] = []
+    if argument_enabled(combination.get("to_use_scene", False)):
+        required.append(("scene_path", combination.get("scene_path", "")))
+
+    try:
+        camera_mode = int(combination.get("camera_mode", 0))
+    except (TypeError, ValueError):
+        camera_mode = -1
+    if camera_mode in {1, 2}:
+        required.append(
+            ("camera_filepath", combination.get("camera_filepath", ""))
+        )
+
+    missing: list[dict[str, str]] = []
+    for argument_name, raw_value in required:
+        if not str(raw_value).strip():
+            resolved = runtime_dir / "<empty>"
+        else:
+            resolved = resolve_runtime_path(raw_value, runtime_dir)
+        if not resolved.exists() or not resolved.is_file():
+            missing.append(
+                {
+                    "argument": argument_name,
+                    "configured_path": str(raw_value),
+                    "resolved_path": str(resolved),
+                }
+            )
+    return missing
+
+
+def validate_runtime_files(executable: Path) -> None:
+    runtime_dir = executable.parent
+    required_files = (
+        runtime_dir / "dxcompiler.dll",
+        runtime_dir / "dxil.dll",
+    )
+    missing = [
+        str(path)
+        for path in required_files
+        if not path.exists() or not path.is_file()
+    ]
+    shader_dir = runtime_dir / "assets" / "shaders"
+    if not shader_dir.exists() or not shader_dir.is_dir():
+        missing.append(str(shader_dir))
+    if missing:
+        fail("TVBPerf runtime dependency is missing: " + "; ".join(missing))
 
 
 def run_experiment(
@@ -497,12 +717,14 @@ def run_experiment(
             "successful_runs": 0,
             "salvaged_runs": 0,
             "failed_runs": 0,
+            "skipped_runs": 0,
         }
     )
     safe_write_json(report_json, report)
 
     if not executable.exists() or not executable.is_file():
         fail(f"TVBPerf executable does not exist or is not a file: {executable}")
+    validate_runtime_files(executable)
 
     individual_dir = output_dir / f"{output_csv.stem}_runs"
     temporary_dir = Path(tempfile.mkdtemp(prefix="tvbperf_"))
@@ -512,6 +734,73 @@ def run_experiment(
         for repeat in range(repeat_count):
             for combination in combinations:
                 raw_path = temporary_dir / f"run_{run_index:05d}.csv"
+                started_at = now_iso()
+                missing_assets = missing_combination_assets(
+                    combination,
+                    executable.parent,
+                )
+                if missing_assets:
+                    csv_row = build_skipped_csv_row(
+                        combination=combination,
+                        experiment_name=experiment_name,
+                        repeat=repeat,
+                        run_index=run_index,
+                        missing_assets=missing_assets,
+                        report=report,
+                    )
+                    csv_write_error = ""
+                    try:
+                        append_rows_flexible(output_csv, [csv_row])
+                    except Exception as error:
+                        csv_write_error = trim_error(error)
+                        print(
+                            f"ERROR: Could not append skipped run {run_index} "
+                            f"to {output_csv}: {csv_write_error}",
+                            file=sys.stderr,
+                        )
+
+                    missing_paths = [
+                        asset["resolved_path"] for asset in missing_assets
+                    ]
+                    skip_reason = (
+                        "Missing required asset(s): " + "; ".join(missing_paths)
+                    )
+                    report["runs"].append(
+                        {
+                            "run_index": run_index,
+                            "repeat": repeat,
+                            "status": "skipped_missing_asset",
+                            "started_at": started_at,
+                            "finished_at": now_iso(),
+                            "return_code": None,
+                            "command": None,
+                            "parameters": combination,
+                            "raw_csv": None,
+                            "individual_csv": None,
+                            "artifact_csvs": [],
+                            "artifact_dirs": [],
+                            "capture_output_dir": None,
+                            "raw_row_count": 0,
+                            "error": None,
+                            "stderr": None,
+                            "failure_kind": None,
+                            "skip_reason": skip_reason,
+                            "missing_assets": missing_assets,
+                            "csv_write_error": csv_write_error or None,
+                            "individual_copy_error": None,
+                            "artifact_copy_errors": [],
+                        }
+                    )
+                    report["completed_runs"] = len(report["runs"])
+                    report["last_updated_at"] = now_iso()
+                    safe_write_json(report_json, report)
+                    print(
+                        f"[{run_index + 1}/{total}] "
+                        f"skipped_missing_asset: {skip_reason}"
+                    )
+                    run_index += 1
+                    continue
+
                 capture_requested = argument_enabled(
                     combination.get("capture_frames", False)
                 )
@@ -533,12 +822,13 @@ def run_experiment(
                 command = command_for(executable, arguments)
                 print(f"[{run_index + 1}/{total}] {subprocess.list2cmdline(command)}")
 
-                started_at = now_iso()
-                return_code, process_error, stderr_text, interrupted = execute(
-                    command,
-                    executable.parent,
-                    timeout_seconds,
-                )
+                (
+                    return_code,
+                    process_error,
+                    stderr_text,
+                    failure_kind,
+                    interrupted,
+                ) = execute(command, executable.parent, timeout_seconds)
                 if stderr_text:
                     print(stderr_text, file=sys.stderr)
 
@@ -549,20 +839,25 @@ def run_experiment(
                     raw_rows = []
                     read_error = f"Could not read benchmark CSV: {error}"
 
-                combined_error = " | ".join(
-                    part
-                    for part in (process_error, read_error)
-                    if part
+                run_status, runner_error = classify_run(
+                    raw_rows=raw_rows,
+                    return_code=return_code,
+                    process_error=process_error,
+                    read_error=read_error,
+                    stderr_text=stderr_text,
+                    failure_kind=failure_kind,
+                    raw_path=raw_path,
                 )
-                run_status, csv_rows = build_csv_rows(
+                csv_rows = build_csv_rows(
                     raw_rows=raw_rows,
                     combination=combination,
                     experiment_name=experiment_name,
                     repeat=repeat,
                     run_index=run_index,
                     return_code=return_code,
-                    combined_error=combined_error,
-                    raw_path=raw_path,
+                    run_status=run_status,
+                    runner_error=runner_error,
+                    stderr_text=stderr_text,
                     report=report,
                 )
 
@@ -628,7 +923,11 @@ def run_experiment(
                             str(raw_capture_dir) if raw_capture_dir is not None else None
                         ),
                         "raw_row_count": len(raw_rows),
-                        "error": combined_error or None,
+                        "error": runner_error or None,
+                        "stderr": stderr_text or None,
+                        "failure_kind": failure_kind or None,
+                        "skip_reason": None,
+                        "missing_assets": [],
                         "csv_write_error": csv_write_error or None,
                         "individual_copy_error": individual_copy_error or None,
                         "artifact_copy_errors": artifact_copy_errors,
@@ -640,7 +939,7 @@ def run_experiment(
 
                 print(
                     f"  -> {run_status}: {len(raw_rows)} result row(s)"
-                    + (f"; {combined_error}" if combined_error else "")
+                    + (f"; {runner_error}" if runner_error else "")
                 )
 
                 run_index += 1
@@ -672,6 +971,7 @@ def initial_report(
         "successful_runs": 0,
         "salvaged_runs": 0,
         "failed_runs": 0,
+        "skipped_runs": 0,
         "runs": [],
         "fatal_error": None,
         "spec_copy_error": None,
@@ -706,8 +1006,14 @@ def handle_fatal_error(
             "raw_csv": None,
             "individual_csv": None,
             "artifact_csvs": [],
+            "artifact_dirs": [],
+            "capture_output_dir": None,
             "raw_row_count": 0,
             "error": str(error),
+            "stderr": None,
+            "failure_kind": "fatal_error",
+            "skip_reason": None,
+            "missing_assets": [],
             "csv_write_error": None,
             "individual_copy_error": None,
             "artifact_copy_errors": [],
@@ -726,6 +1032,9 @@ def handle_fatal_error(
                     "runner_result_row": "",
                     "runner_return_code": "",
                     "runner_error": str(error),
+                    "runner_stderr": "",
+                    "runner_skip_reason": "",
+                    "runner_missing_assets": "",
                 }
             ],
         )
@@ -749,7 +1058,8 @@ def print_summary(
         "Runs: "
         f"success={report.get('successful_runs', 0)}, "
         f"salvaged={report.get('salvaged_runs', 0)}, "
-        f"failed={report.get('failed_runs', 0)}"
+        f"failed={report.get('failed_runs', 0)}, "
+        f"skipped={report.get('skipped_runs', 0)}"
     )
 
 
@@ -787,9 +1097,12 @@ def main() -> int:
             report_json,
             report,
         )
-        report["status"] = (
-            "completed" if exit_code == 0 else "completed_with_errors"
-        )
+        if exit_code != 0:
+            report["status"] = "completed_with_errors"
+        elif report.get("skipped_runs", 0):
+            report["status"] = "completed_with_skips"
+        else:
+            report["status"] = "completed"
     except KeyboardInterrupt:
         report["status"] = "interrupted"
         report["fatal_error"] = "Interrupted by user."

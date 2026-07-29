@@ -18,6 +18,15 @@ if(NOT MSVC)
     message(FATAL_ERROR "TVBPerf currently requires the MSVC toolchain.")
 endif()
 
+# Ninja discovers MSVC header dependencies by parsing /showIncludes output.
+# CMake 4.x can misdecode the Korean VS 2026 prefix while probing cl.exe,
+# leaving every object with zero tracked headers. Set the actual compiler
+# prefix explicitly so ProgramArgument layout changes cannot leave stale
+# objects in the same executable.
+if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(CMAKE_CL_SHOWINCLUDES_PREFIX "참고: 포함 파일: ")
+endif()
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR "TVBPerf supports only 64-bit builds.")
 endif()
