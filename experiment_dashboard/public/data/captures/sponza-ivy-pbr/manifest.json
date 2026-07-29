@@ -1,0 +1,69 @@
+{
+  "id": "sponza-ivy-pbr",
+  "label": "Sponza + Ivy · PBR",
+  "scene": "SponzaIvy",
+  "view": "pbr",
+  "viewLabel": "PBR shaded",
+  "viewKind": "beauty",
+  "renderer": "DonutVisGBuffer",
+  "rendererVariant": 9,
+  "debugMode": null,
+  "description": "Textured PBR anchor frames from the Sponza + Ivy camera path.",
+  "profileId": "sponza-ivy-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "runIndex": 7,
+    "width": 1920,
+    "height": 1080,
+    "warmupFrames": 60,
+    "measureFrames": 600,
+    "captureStride": 120,
+    "captureFps": 60,
+    "capturedFrames": 5,
+    "sourceExperiment": "31_capture_representative_frames.json"
+  },
+  "excludedBlankFrames": [],
+  "frameCount": 5,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "renderFrame": 60,
+      "measurementFrame": 0,
+      "src": "/data/captures/sponza-ivy-pbr/0000.webp",
+      "bytes": 27310,
+      "sha256": "81c5640343df8eb29504a3e6238c3dd7348b7fa701bf43977c9795aff5c176fe"
+    },
+    {
+      "imageIndex": 1,
+      "renderFrame": 180,
+      "measurementFrame": 120,
+      "src": "/data/captures/sponza-ivy-pbr/0001.webp",
+      "bytes": 54072,
+      "sha256": "f1eb9032b4f2803b0f22a7a22865840c41dcbf7f86b89c7ba89806dc8a0513ba"
+    },
+    {
+      "imageIndex": 2,
+      "renderFrame": 300,
+      "measurementFrame": 240,
+      "src": "/data/captures/sponza-ivy-pbr/0002.webp",
+      "bytes": 60120,
+      "sha256": "24f47bfc037d1d123cc320173021d8c1e183ce78629b4be109e5e3f283c373f0"
+    },
+    {
+      "imageIndex": 3,
+      "renderFrame": 420,
+      "measurementFrame": 360,
+      "src": "/data/captures/sponza-ivy-pbr/0003.webp",
+      "bytes": 61508,
+      "sha256": "fff34e9afa16bc4a96056886474b34b59a69a62c01b3f479163463c0ac5ccbb4"
+    },
+    {
+      "imageIndex": 4,
+      "renderFrame": 540,
+      "measurementFrame": 480,
+      "src": "/data/captures/sponza-ivy-pbr/0004.webp",
+      "bytes": 24628,
+      "sha256": "a2244ad5a05fd68f1e95d4be2274218daffbbe00743a8118233a7a436f67c917"
+    }
+  ]
+}

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "TVB Performance Atlas";
+const title = "TVB Camera Atlas";
 const description =
-  "Explore Triangle Visibility Buffer measurements alongside synchronized camera-path and debug-view captures.";
+  "Compare normal output, raster-reference and VisBuf debug frames, pass timing, and software-raster workload along synchronized camera paths.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

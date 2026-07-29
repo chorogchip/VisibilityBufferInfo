@@ -25,6 +25,9 @@
 | 5 | Sponza barycentrics | DonutVisDebug | 3 | 42 | 39 |
 | 6 | Bistro geometry + primitives | DonutVisDebug | 2 | 46 | 46 |
 
+The dashboard additionally reuses five existing Sponza + Ivy PBR anchor frames
+from material experiment 31. They are not a new renderer run.
+
 The three final frames (image indexes 39–41) of each Sponza sequence and the
 final Bistro beauty frame (image index 91) have no meaningful RGB variation
 after the camera path finishes. Geometry-instance frame 15 is also a single
@@ -48,6 +51,13 @@ viewer frames.
 
 Renderer variants 12 and 13 receive this value instead of always selecting
 mode 2. The default remains 2, so prior debug-view behavior is preserved.
+
+The later raster-reference validation extended the comparable reconstruction
+modes through mode 9 and produced 910 clean raster/VisBuf pairs across Sponza,
+Sponza + Ivy, and Bistro. Those results are reused by the dashboard without
+rerunning barycentric validation. The aggregate validation result remains:
+0 coverage-mismatch pixels, 0.018412 LSB mean interior MAE, and 98.3831%
+bit-exact interior channels.
 
 ## Validation
 

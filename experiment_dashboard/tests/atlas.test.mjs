@@ -39,9 +39,9 @@ test("server renders the finished atlas shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>TVB Performance Atlas<\/title>/i);
-  assert.match(html, /Loading the evidence bundle/);
-  assert.match(html, /Preparing 396 benchmark results/);
+  assert.match(html, /<title>TVB Camera Atlas<\/title>/i);
+  assert.match(html, /Loading synchronized evidence/);
+  assert.match(html, /Preparing capture frames, pass timings, and raster workload/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
   assert.doesNotMatch(html, /react-loading-skeleton/i);
 });
@@ -57,7 +57,7 @@ test("dashboard bundle preserves campaign and capture invariants", async () => {
   assert.equal(dashboard.provenance.campaignSalvagedRuns, 0);
   assert.equal(dashboard.provenance.campaignFailedRuns, 0);
   assert.equal(dashboard.provenance.campaignSkippedRuns, 0);
-  assert.equal(dashboard.schemaVersion, 2);
+  assert.equal(dashboard.schemaVersion, 3);
   assert.equal(dashboard.hardware.id, "manual-20260729-rtx5060ti16");
   assert.equal(
     dashboard.hardware.gpu.name,
@@ -89,12 +89,12 @@ test("dashboard bundle preserves campaign and capture invariants", async () => {
     6,
   );
 
-  assert.equal(dashboard.sequences.length, 7);
-  assert.equal(dashboard.summary.captureFrames, 348);
-  assert.equal(dashboard.summary.playableFrames, 331);
+  assert.equal(dashboard.sequences.length, 8);
+  assert.equal(dashboard.summary.captureFrames, 353);
+  assert.equal(dashboard.summary.playableFrames, 336);
   assert.deepEqual(
     dashboard.sequences.map((sequence) => sequence.frameCount),
-    [39, 91, 38, 39, 39, 39, 46],
+    [39, 91, 38, 39, 39, 39, 46, 5],
   );
   assert.deepEqual(
     dashboard.sequences.flatMap((sequence) => sequence.excludedBlankFrames),
@@ -107,10 +107,35 @@ test("dashboard bundle preserves campaign and capture invariants", async () => {
       39, 40, 41,
     ],
   );
-  assert.equal(dashboard.profiles.length, 4);
+  assert.equal(dashboard.profiles.length, 6);
   assert.deepEqual(
     dashboard.profiles.map((profile) => profile.samples.length),
-    [42, 42, 92, 92],
+    [42, 42, 92, 92, 42, 42],
+  );
+  assert.equal(dashboard.validationSequences.length, 21);
+  assert.equal(dashboard.summary.validationPairs, 910);
+  assert.equal(dashboard.summary.playableValidationPairs, 868);
+  assert.equal(
+    dashboard.validationSequences.reduce(
+      (sum, sequence) => sum + sequence.frameCount,
+      0,
+    ),
+    868,
+  );
+  assert.equal(
+    dashboard.validationSequences.reduce(
+      (sum, sequence) => sum + sequence.validatedPairCount,
+      0,
+    ),
+    910,
+  );
+  assert.equal(dashboard.rasterTimeline.length, 176);
+  assert.ok(
+    dashboard.profiles.every((profile) =>
+      profile.samples.every(
+        (sample) => !Object.prototype.hasOwnProperty.call(sample.passes, "clear"),
+      ),
+    ),
   );
 });
 
@@ -137,6 +162,30 @@ test("every deployable frame matches its manifest digest", async () => {
       assert.equal(await sha256(path), frame.sha256);
     }
   }
+
+  for (const sequence of dashboard.validationSequences) {
+    const manifestPath = new URL(
+      `../public/data/validation/${sequence.id}/manifest.json`,
+      import.meta.url,
+    );
+    const manifest = JSON.parse(await readFile(manifestPath));
+    assert.equal(manifest.frameCount, sequence.frameCount);
+    assert.deepEqual(manifest.frames, sequence.frames);
+    for (const frame of sequence.frames) {
+      const comparisonPath = join(
+        publicRoot,
+        frame.comparisonSrc.replace(/^\/+/, ""),
+      );
+      const differencePath = join(
+        publicRoot,
+        frame.differenceSrc.replace(/^\/+/, ""),
+      );
+      await access(comparisonPath);
+      await access(differencePath);
+      assert.equal(await sha256(comparisonPath), frame.comparisonSha256);
+      assert.equal(await sha256(differencePath), frame.differenceSha256);
+    }
+  }
 });
 
 test("interactive controls and debug disclosure remain in source", async () => {
@@ -151,13 +200,19 @@ test("interactive controls and debug disclosure remain in source", async () => {
     'aria-label="Capture scene"',
     'aria-label="Capture output view"',
     'aria-label="Playback speed"',
+    'aria-label="Timeline workload metric"',
     "Infinite loop",
-    "Debug mode",
-    "not the debug renderer's capture overhead",
-    "GPU provenance",
+    "Camera Timeline",
+    "clear is intentionally not measured",
+    "Raster | VisBuf",
+    "|difference|",
+    "interior MAE",
+    "depth prepass",
+    "Visibility",
+    "G-buffer",
     "RTX 5060 Ti 16GB",
     "RTX 5070",
-    "never pooled across GPUs",
+    "never pooled",
   ]) {
     assert.match(source, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }

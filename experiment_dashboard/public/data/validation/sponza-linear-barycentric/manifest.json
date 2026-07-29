@@ -1,0 +1,695 @@
+{
+  "id": "sponza-linear-barycentric",
+  "scene": "Sponza",
+  "mode": 3,
+  "modeName": "linear_barycentric",
+  "label": "Linear barycentrics",
+  "shortLabel": "Linear bary",
+  "order": 0,
+  "description": "No-perspective barycentric coordinates reconstructed from the visibility buffer.",
+  "profileId": "sponza-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "referenceRenderer": "DonutRasterDebugReference",
+    "referenceRendererVariant": 14,
+    "visbufRenderer": "DonutVisDebug",
+    "visbufRendererVariant": 13,
+    "width": 1920,
+    "height": 1080,
+    "deployWidth": 720,
+    "deployHeight": 405,
+    "captureStride": 60
+  },
+  "validatedPairCount": 42,
+  "excludedBlankFrames": [
+    2340,
+    2400,
+    2460
+  ],
+  "frameCount": 39,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "measurementFrame": 0,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0000.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0000.webp",
+      "comparisonBytes": 52370,
+      "differenceBytes": 4954,
+      "comparisonSha256": "bb96fe7061cf5c1525af862dd9750cf1972898b053967c1f7f880b938f42ff66",
+      "differenceSha256": "fa2cb352209ddb12a0f73be727d5137eb7f89999919e2e8e4961c3169e6ac799",
+      "metrics": {
+        "interiorMaeLsb": 0.026932599022984505,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 40,
+        "interiorExactRatio": 0.9755350679193102,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 1,
+      "measurementFrame": 60,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0001.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0001.webp",
+      "comparisonBytes": 73780,
+      "differenceBytes": 6056,
+      "comparisonSha256": "1531f741c20ea679a261a9b2e11f04d395392f86172bf53e60be34d2608c9396",
+      "differenceSha256": "4306ba4c1b532dffc24f4d9e0ace0d8209cba3f93852215b8eed59ff8e389bb4",
+      "metrics": {
+        "interiorMaeLsb": 0.023147132247686386,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 41,
+        "interiorExactRatio": 0.9785736046834717,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 2,
+      "measurementFrame": 120,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0002.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0002.webp",
+      "comparisonBytes": 82672,
+      "differenceBytes": 5484,
+      "comparisonSha256": "90117a7fe0fe2fba66f11c2f4f99dfb3f20cd053d763ded63eef84bfe893f5ff",
+      "differenceSha256": "43fd33a53b30485b67f28cd76063776537afe4ede820168a4263090b1e27687f",
+      "metrics": {
+        "interiorMaeLsb": 0.020546071231365204,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 58,
+        "interiorExactRatio": 0.9804648919753086,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 3,
+      "measurementFrame": 180,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0003.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0003.webp",
+      "comparisonBytes": 92066,
+      "differenceBytes": 6570,
+      "comparisonSha256": "5de4a4804940996d3b3ca476c3910f5ba650436638daf687f5d07d85421c628a",
+      "differenceSha256": "3fa2bbdb1254900aae55d202488bea02a8acaf9f6a9386ba2fff1763bdf16dd5",
+      "metrics": {
+        "interiorMaeLsb": 0.02257685363292694,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 49,
+        "interiorExactRatio": 0.9795837138651564,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 4,
+      "measurementFrame": 240,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0004.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0004.webp",
+      "comparisonBytes": 46652,
+      "differenceBytes": 2336,
+      "comparisonSha256": "22d25ae34ff249106dfea6290c724067750cfa9a4ca499c2577fed60bdb05269",
+      "differenceSha256": "685107a9f6baa8e7607df0edffa1a705bb5aaad215d366620b41748a58860b9d",
+      "metrics": {
+        "interiorMaeLsb": 0.00871511735022068,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 26,
+        "interiorExactRatio": 0.9913551311728395,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 5,
+      "measurementFrame": 300,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0005.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0005.webp",
+      "comparisonBytes": 60462,
+      "differenceBytes": 1984,
+      "comparisonSha256": "6921fab6d66f58d6801ea4a23e0b8d2e9f5445223f5e2af3a442035b7cfbb8a6",
+      "differenceSha256": "43ea32c0411071479c97b8e8f3bdd286fd009a0132e9183205176a93f862dc7f",
+      "metrics": {
+        "interiorMaeLsb": 0.0059268902987241745,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 13,
+        "interiorExactRatio": 0.9941766332304527,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 6,
+      "measurementFrame": 360,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0006.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0006.webp",
+      "comparisonBytes": 53170,
+      "differenceBytes": 2132,
+      "comparisonSha256": "026dfb137cef231a4de130b1134f1377190eed98e51aee4e121198ca5131967f",
+      "differenceSha256": "39ff2f7eade53e4677b6549684bfdbf7479eacbbe09c2e053859bf3184e53979",
+      "metrics": {
+        "interiorMaeLsb": 0.007395243737846613,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 19,
+        "interiorExactRatio": 0.9927706524368827,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 7,
+      "measurementFrame": 420,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0007.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0007.webp",
+      "comparisonBytes": 82668,
+      "differenceBytes": 3982,
+      "comparisonSha256": "d635a31fb195dae951ec93ab7ce715d39e3bf85f2b42720576654223ba43ab30",
+      "differenceSha256": "eef493e5932b56cc4b2cd7368682c22592dd8a6413dfb2ac7cfdcf10816f423a",
+      "metrics": {
+        "interiorMaeLsb": 0.016820646822452545,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 44,
+        "interiorExactRatio": 0.9839364216411695,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 8,
+      "measurementFrame": 480,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0008.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0008.webp",
+      "comparisonBytes": 114856,
+      "differenceBytes": 1680,
+      "comparisonSha256": "73ff2e833238a89045ff03b74db0abafc17ad1d87e92effa173af4c99f08a697",
+      "differenceSha256": "7eb9381bf110708d65f7a61f2a1eaaa4f2bb963678897c3bad23e20feb4c8b16",
+      "metrics": {
+        "interiorMaeLsb": 0.006521186791360378,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 12,
+        "interiorExactRatio": 0.9935281635802469,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 9,
+      "measurementFrame": 540,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0009.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0009.webp",
+      "comparisonBytes": 109870,
+      "differenceBytes": 1652,
+      "comparisonSha256": "0f84dde19e5bad4990c6898cbb05b0dcb5a8d949d34a1df5e08bc7b56ebe1894",
+      "differenceSha256": "7f160a66131516689cbf3ee3227b42cb63e7f5e6db50661fedb0c748eb991a2e",
+      "metrics": {
+        "interiorMaeLsb": 0.006311406847089529,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 13,
+        "interiorExactRatio": 0.9937401941872428,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 10,
+      "measurementFrame": 600,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0010.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0010.webp",
+      "comparisonBytes": 74210,
+      "differenceBytes": 6908,
+      "comparisonSha256": "e5683471b023738f339ca49d6c275d7151efac2f37414cea4c86070e1e159e28",
+      "differenceSha256": "8a71c689dfcad9d458d53ec072dae152a3071b210fabf63536b6300005f4cb8f",
+      "metrics": {
+        "interiorMaeLsb": 0.02416200563311577,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 86,
+        "interiorExactRatio": 0.9778210198045267,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 11,
+      "measurementFrame": 660,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0011.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0011.webp",
+      "comparisonBytes": 122768,
+      "differenceBytes": 10834,
+      "comparisonSha256": "2bf0e516b3d7eef37e0f165923024f2dbe80ab38156dbe74ed9355e6432f84c3",
+      "differenceSha256": "484d8ab56bdb6cc10a8d89bb810817398bbca83cb2fc33f25426d7271e516be0",
+      "metrics": {
+        "interiorMaeLsb": 0.039776235818862915,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 64,
+        "interiorExactRatio": 0.9624856931584362,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 12,
+      "measurementFrame": 720,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0012.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0012.webp",
+      "comparisonBytes": 126864,
+      "differenceBytes": 11356,
+      "comparisonSha256": "cdd33cbc7ee3aa2b64c61368d9f9bfe4647f47c3d89d8ce7f0ae5e95ec7399d1",
+      "differenceSha256": "bd5f376a94eef52220536e2dd13f55046f8160a27f384cc1a43bebcae7d5ad17",
+      "metrics": {
+        "interiorMaeLsb": 0.04529564455151558,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 83,
+        "interiorExactRatio": 0.9569267395188256,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 13,
+      "measurementFrame": 780,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0013.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0013.webp",
+      "comparisonBytes": 114040,
+      "differenceBytes": 11988,
+      "comparisonSha256": "c3a13eff74476bbb67c2266f9ca72393a33b37edc71655bd7e100583b156ecc8",
+      "differenceSha256": "16b0724c19bbcd719d022bb99cd9baa23f3968debb58be92e96301209ba09e66",
+      "metrics": {
+        "interiorMaeLsb": 0.05081307888031006,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 92,
+        "interiorExactRatio": 0.9512959747942387,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 14,
+      "measurementFrame": 840,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0014.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0014.webp",
+      "comparisonBytes": 110108,
+      "differenceBytes": 9376,
+      "comparisonSha256": "7514b2d5b174c85b346aa86ecc81f23e8ec54a21efa532f0eddef6fd992c9406",
+      "differenceSha256": "bca5a4b96247dcb058aedf3a65d4e45932eff8ad8ac7cf75f524715cfbba0331",
+      "metrics": {
+        "interiorMaeLsb": 0.03678928688168526,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 44,
+        "interiorExactRatio": 0.9652135998985212,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 15,
+      "measurementFrame": 900,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0015.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0015.webp",
+      "comparisonBytes": 67952,
+      "differenceBytes": 960,
+      "comparisonSha256": "48243eb4ce044f0e38524c9aca2cb10fcd64c434679086a51e4e84f87a3e8327",
+      "differenceSha256": "471ff1f13152e193d7eb040b2f5832385cfaa1766e0682ee50aa940e9fdbbefd",
+      "metrics": {
+        "interiorMaeLsb": 0.0030947788618505,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 1,
+        "interiorExactRatio": 0.9969052211934156,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 16,
+      "measurementFrame": 960,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0016.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0016.webp",
+      "comparisonBytes": 139404,
+      "differenceBytes": 8720,
+      "comparisonSha256": "9a0ad73b86febe92875bf7dc84793aecb86b7dd097c23bfc51f38d91cf514526",
+      "differenceSha256": "999b865498d71bf9d35c522cb32feb694282f9b92bf2e9e72f0b7fde483215be",
+      "metrics": {
+        "interiorMaeLsb": 0.03963759168982506,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 56,
+        "interiorExactRatio": 0.9621092190709856,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 17,
+      "measurementFrame": 1020,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0017.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0017.webp",
+      "comparisonBytes": 80064,
+      "differenceBytes": 6408,
+      "comparisonSha256": "f7f025a1a80023c1b0d61392b5662e9e87fffeae3cb942b8f3a991a6a4a15f21",
+      "differenceSha256": "c1450c1ab8bd411a7fcb54801fd2b64aba4fa969911ab08768ed82013a21f961",
+      "metrics": {
+        "interiorMaeLsb": 0.02654918283224106,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 236,
+        "interiorExactRatio": 0.9746595576444016,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 18,
+      "measurementFrame": 1080,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0018.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0018.webp",
+      "comparisonBytes": 111704,
+      "differenceBytes": 9516,
+      "comparisonSha256": "b159fea61c6c8312cb940f4c8e4f47e1993725296467815cef0c778470d3ab41",
+      "differenceSha256": "357eb0a4ae5622aa4fd1d7adfe2a862e151d9792aa9e87d8956b5728dc619817",
+      "metrics": {
+        "interiorMaeLsb": 0.04005497694015503,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 35,
+        "interiorExactRatio": 0.961536779835391,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 19,
+      "measurementFrame": 1140,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0019.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0019.webp",
+      "comparisonBytes": 96484,
+      "differenceBytes": 5090,
+      "comparisonSha256": "770cc78fc511cedf8744580674d493e3dc00bbb1e1ff01ad9e00d5a873021b28",
+      "differenceSha256": "658df87ded8f3e19bd7d8d3b99d99806df8d09963f62e8aa1ac5ecba019794ea",
+      "metrics": {
+        "interiorMaeLsb": 0.01994582638144493,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 78,
+        "interiorExactRatio": 0.9803036586934156,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 20,
+      "measurementFrame": 1200,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0020.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0020.webp",
+      "comparisonBytes": 82476,
+      "differenceBytes": 4930,
+      "comparisonSha256": "53b2a4aaaa4ba7d0d7fca7f7131429a2b1cc6e8956701a4af6c532d62aaed7f5",
+      "differenceSha256": "5743aa5343f2acd22ca00df4b0c8a6b777a28387cae37ca89c042ea4c6dcaf4a",
+      "metrics": {
+        "interiorMaeLsb": 0.020265400409698486,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 15,
+        "interiorExactRatio": 0.9800467785493827,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 21,
+      "measurementFrame": 1260,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0021.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0021.webp",
+      "comparisonBytes": 87372,
+      "differenceBytes": 5048,
+      "comparisonSha256": "3ef15b2e594323eba61c4c45b12e7ba70c0dd7494e75ea24ef69a7dab881768b",
+      "differenceSha256": "143640ff6f211999d0c063eb23f10aa82b64c673a7c8a8b8f561cd7393c10d79",
+      "metrics": {
+        "interiorMaeLsb": 0.019814975559711456,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 25,
+        "interiorExactRatio": 0.9803922325102881,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 22,
+      "measurementFrame": 1320,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0022.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0022.webp",
+      "comparisonBytes": 52850,
+      "differenceBytes": 1800,
+      "comparisonSha256": "9c000970d51540d62580d48ddd170f6bd1fce184c479e488072218a2ceacc14f",
+      "differenceSha256": "e9dac4d01ab048c16f3f980237f6e0bf27eab5030a885d4e8d987dace137ac3d",
+      "metrics": {
+        "interiorMaeLsb": 0.006251285783946514,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 3,
+        "interiorExactRatio": 0.993781507201646,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 23,
+      "measurementFrame": 1380,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0023.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0023.webp",
+      "comparisonBytes": 87620,
+      "differenceBytes": 5060,
+      "comparisonSha256": "eff3b871ebcf66489cc588b460764dc738afdcbca1dc66a42e5d43552311a7f1",
+      "differenceSha256": "4e1f53e06e068cb6342a8759e9fd648834420bba77dc68f6116776c4e4ff15a3",
+      "metrics": {
+        "interiorMaeLsb": 0.02115226350724697,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 61,
+        "interiorExactRatio": 0.9794720936213992,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 24,
+      "measurementFrame": 1440,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0024.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0024.webp",
+      "comparisonBytes": 113814,
+      "differenceBytes": 8588,
+      "comparisonSha256": "7cc214e5ee948d704e0d21a11ba195c7269da752888ac36c0c034ab4c620bd85",
+      "differenceSha256": "19875dbe14a3c23d1220a1fa22bb18c9f9f1a7dfb23b9fca841e7eb2be482cdd",
+      "metrics": {
+        "interiorMaeLsb": 0.047762416303157806,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 56,
+        "interiorExactRatio": 0.9537391702554598,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 25,
+      "measurementFrame": 1500,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0025.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0025.webp",
+      "comparisonBytes": 111362,
+      "differenceBytes": 10458,
+      "comparisonSha256": "9dd317c8dcb24196335a2f6e0e29641f2be62c9ed1d0fe68ed855fe6095f0521",
+      "differenceSha256": "96d10aeb1c07658526c56b35cc8df517e77ccc43294e2940e07d34f6bc14034c",
+      "metrics": {
+        "interiorMaeLsb": 0.05261923745274544,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 75,
+        "interiorExactRatio": 0.9495151355535696,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 26,
+      "measurementFrame": 1560,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0026.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0026.webp",
+      "comparisonBytes": 84340,
+      "differenceBytes": 8122,
+      "comparisonSha256": "313b482a640b6838384be842a41ca583de9aa72ee28ce3ada2199eb9b65cb8c2",
+      "differenceSha256": "3b859cfff6b098bd9a4bde5d798ee186d504f278ce443ca3467bb0429b442468",
+      "metrics": {
+        "interiorMaeLsb": 0.05135691538453102,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 64,
+        "interiorExactRatio": 0.9506972202179284,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 27,
+      "measurementFrame": 1620,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0027.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0027.webp",
+      "comparisonBytes": 48266,
+      "differenceBytes": 4108,
+      "comparisonSha256": "2339f4058397cf106c28d1636b46ffa153ffeaeecd147f4753986f33917f02ab",
+      "differenceSha256": "22784e80dbd92beafc295537ca54e6f7a3ab961d4c405120dc45742067b4559e",
+      "metrics": {
+        "interiorMaeLsb": 0.027204034850001335,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 28,
+        "interiorExactRatio": 0.9737284258868594,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 28,
+      "measurementFrame": 1680,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0028.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0028.webp",
+      "comparisonBytes": 47288,
+      "differenceBytes": 2880,
+      "comparisonSha256": "7f47e938230ed350044b09b6127310aa3292c7181f61a3f3aff14845378dce0f",
+      "differenceSha256": "758755edcf5cb1a530ad8f0df3e4b9a3724bb3e11dacfaa33813c2f0eb2400fd",
+      "metrics": {
+        "interiorMaeLsb": 0.02473769150674343,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 145,
+        "interiorExactRatio": 0.9763104961342158,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 29,
+      "measurementFrame": 1740,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0029.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0029.webp",
+      "comparisonBytes": 39624,
+      "differenceBytes": 2650,
+      "comparisonSha256": "2857190507dbc7f6aa050e38203f2c5dcec7d34a95bb006997c97191cd5a39e3",
+      "differenceSha256": "3cc31063076c6a83f07e563bf0b9f8c5591dee7a9059b9cf8c45c5e9b7b089a9",
+      "metrics": {
+        "interiorMaeLsb": 0.027451837435364723,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 34,
+        "interiorExactRatio": 0.9740030134064472,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 30,
+      "measurementFrame": 1800,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0030.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0030.webp",
+      "comparisonBytes": 31198,
+      "differenceBytes": 2822,
+      "comparisonSha256": "e6f2d9345c656e0df937998472c0d5869e5286c4b1867d448f846a2badbef8bc",
+      "differenceSha256": "c3d9a3ce044fe23d9c32160997f9619ac918369bf934a336f803c8f2401cd5cb",
+      "metrics": {
+        "interiorMaeLsb": 0.0432356521487236,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 63,
+        "interiorExactRatio": 0.9597018680306313,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 31,
+      "measurementFrame": 1860,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0031.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0031.webp",
+      "comparisonBytes": 34300,
+      "differenceBytes": 3574,
+      "comparisonSha256": "7395fc864ffa87e2d951776273908b3db5d4ba3ebc74539f2af2edd7ce2c869b",
+      "differenceSha256": "c84b1cf96af8e1c0e66c1e3ff8c3c71a06235dd0e1d90e3f267ceb385ed0adde",
+      "metrics": {
+        "interiorMaeLsb": 0.04921308904886246,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 96,
+        "interiorExactRatio": 0.9541129195291413,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 32,
+      "measurementFrame": 1920,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0032.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0032.webp",
+      "comparisonBytes": 43042,
+      "differenceBytes": 4106,
+      "comparisonSha256": "0f5b79b2150c686b29e434e99c045a421a51be126d48cd6c16d083c3200d5c46",
+      "differenceSha256": "1fd7633b94012a0398339076d268769b3526cb2923572f501923945ac56283f4",
+      "metrics": {
+        "interiorMaeLsb": 0.041207749396562576,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 59,
+        "interiorExactRatio": 0.9607959086366251,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 33,
+      "measurementFrame": 1980,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0033.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0033.webp",
+      "comparisonBytes": 54162,
+      "differenceBytes": 4184,
+      "comparisonSha256": "7dbead13fcf4f88360a3f4613514d9e51713dd0dd3aa1309ac6f14c049032221",
+      "differenceSha256": "0c5772a9cffe14dda66dfa6b0df6a77d4cddaac87a949f71a3a47fcee5458ddf",
+      "metrics": {
+        "interiorMaeLsb": 0.02938210964202881,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 198,
+        "interiorExactRatio": 0.9716941649352102,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 34,
+      "measurementFrame": 2040,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0034.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0034.webp",
+      "comparisonBytes": 83866,
+      "differenceBytes": 5788,
+      "comparisonSha256": "f17674bf2dad5b2f996cd0c332f94c079e388d5fba0d44440a43d7322ec62c11",
+      "differenceSha256": "9e7e477c6b2e03b414cab017d1a3ee02ebf8f5980a3a327d64c1209900f32c26",
+      "metrics": {
+        "interiorMaeLsb": 0.0377085916697979,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 35,
+        "interiorExactRatio": 0.9632053062566175,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 35,
+      "measurementFrame": 2100,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0035.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0035.webp",
+      "comparisonBytes": 90238,
+      "differenceBytes": 3744,
+      "comparisonSha256": "1f55a75661ba9de93ce8759caa7c02a0930af1bcc109a672cbe73ad96b5c74f8",
+      "differenceSha256": "4469335d8bcb22fcc5983fa6d551abba11169ac9dbdf5c8a4b496d9234277f16",
+      "metrics": {
+        "interiorMaeLsb": 0.02237163856625557,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 40,
+        "interiorExactRatio": 0.9779353646477342,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 36,
+      "measurementFrame": 2160,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0036.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0036.webp",
+      "comparisonBytes": 144554,
+      "differenceBytes": 5530,
+      "comparisonSha256": "b730280fadc9a0d9509172a1a06218bd886547f94ae778b6be23590848cc7cb9",
+      "differenceSha256": "7d0739481d606e1130d7a819dc6332903c1b5ca0bd402d768b8475d3532e4850",
+      "metrics": {
+        "interiorMaeLsb": 0.027314072474837303,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 56,
+        "interiorExactRatio": 0.9735178565871195,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 37,
+      "measurementFrame": 2220,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0037.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0037.webp",
+      "comparisonBytes": 14726,
+      "differenceBytes": 694,
+      "comparisonSha256": "25e4f692cb6b24f4900297469db38d3ed047a4b29fdbf93e5cd299e0b42a3a4a",
+      "differenceSha256": "1ed29e28b7ed5307b0e040132d1149950677cc35484c19de46850face4c88501",
+      "metrics": {
+        "interiorMaeLsb": 0.0034381155855953693,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 3,
+        "interiorExactRatio": 0.996582370482797,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 38,
+      "measurementFrame": 2280,
+      "comparisonSrc": "/data/validation/sponza-linear-barycentric/comparison/0038.webp",
+      "differenceSrc": "/data/validation/sponza-linear-barycentric/difference/0038.webp",
+      "comparisonBytes": 5668,
+      "differenceBytes": 714,
+      "comparisonSha256": "9cd9a833d3b29c18118d739f7b71b141f7d23a2ece877e9d1e9b815da9032be4",
+      "differenceSha256": "1e5a1c1e8b6f16a3acfe110142f7110e62193f22adc0e8ac5b5eeeeeb21ddba0",
+      "metrics": {
+        "interiorMaeLsb": 0.011769748292863369,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 2,
+        "interiorExactRatio": 0.9882391812969942,
+        "coverageMismatchRatio": 0
+      }
+    }
+  ]
+}

@@ -34,9 +34,34 @@ const CAPTURE_RUNS = join(
 );
 const PUBLIC_DATA = join(PROJECT_ROOT, "public", "data");
 const PUBLIC_CAPTURES = join(PUBLIC_DATA, "captures");
+const PUBLIC_VALIDATION = join(PUBLIC_DATA, "validation");
 const DASHBOARD_JSON = join(PUBLIC_DATA, "dashboard.json");
 const CURRENT_DATASET_ID = "manual-20260729-rtx5060ti16";
 const HISTORICAL_DATASET_ID = "historical-rtx5070";
+const BARYCENTRIC_ROOT = join(
+  REPOSITORY_ROOT,
+  "scripts",
+  "barycentric_validation",
+);
+const BARYCENTRIC_FRAME_METRICS = join(
+  BARYCENTRIC_ROOT,
+  "analysis",
+  "data",
+  "frame_metrics.csv",
+);
+const BARYCENTRIC_HEATMAPS = join(
+  BARYCENTRIC_ROOT,
+  "analysis",
+  "local_heatmaps",
+);
+const SOFTWARE_RASTER_FRAMES = join(
+  REPOSITORY_ROOT,
+  "scripts",
+  "followup_experiments",
+  "plots",
+  "data",
+  "18_software_raster_frames.csv",
+);
 
 const HISTORICAL_CAMERA_BASELINES = [
   {
@@ -300,6 +325,84 @@ const SEQUENCES = [
   },
 ];
 
+const SUPPLEMENTAL_SEQUENCES = [
+  {
+    id: "sponza-ivy-pbr",
+    label: "Sponza + Ivy · PBR",
+    scene: "SponzaIvy",
+    viewKind: "beauty",
+    view: "pbr",
+    viewLabel: "PBR shaded",
+    renderer: "DonutVisGBuffer",
+    rendererVariant: 9,
+    debugMode: null,
+    description:
+      "Textured PBR anchor frames from the Sponza + Ivy camera path.",
+    expectedFrames: 5,
+    profileId: "sponza-ivy-visbuf",
+    sourceDir: join(
+      CAMPAIGN_ROOT,
+      "results",
+      "31_capture_representative_frames",
+      "31_capture_representative_frames_runs",
+      "run_00007_capture",
+    ),
+    sourceRunIndex: 7,
+  },
+];
+
+const VALIDATION_MODES = {
+  linear_barycentric: {
+    order: 0,
+    label: "Linear barycentrics",
+    shortLabel: "Linear bary",
+    description:
+      "No-perspective barycentric coordinates reconstructed from the visibility buffer.",
+  },
+  perspective_barycentric: {
+    order: 1,
+    label: "Perspective barycentrics",
+    shortLabel: "Perspective bary",
+    description:
+      "Perspective-correct barycentric coordinates used by attribute reconstruction.",
+  },
+  linear_barycentric_dx: {
+    order: 2,
+    label: "Barycentric ddx",
+    shortLabel: "Bary ddx",
+    description:
+      "Screen-space x derivative of reconstructed linear barycentrics.",
+  },
+  linear_barycentric_dy: {
+    order: 3,
+    label: "Barycentric ddy",
+    shortLabel: "Bary ddy",
+    description:
+      "Screen-space y derivative of reconstructed linear barycentrics.",
+  },
+  uv_dx: {
+    order: 4,
+    label: "UV ddx",
+    shortLabel: "UV ddx",
+    description:
+      "Screen-space x derivative of the reconstructed texture coordinates.",
+  },
+  uv_dy: {
+    order: 5,
+    label: "UV ddy",
+    shortLabel: "UV ddy",
+    description:
+      "Screen-space y derivative of the reconstructed texture coordinates.",
+  },
+  uv_lod_proxy_1024px: {
+    order: 6,
+    label: "Texture LOD proxy",
+    shortLabel: "LOD proxy",
+    description:
+      "A 1024 px texture-footprint proxy derived from the reconstructed UV gradients.",
+  },
+};
+
 const PROFILE_SOURCES = [
   {
     id: "sponza-deferred",
@@ -324,6 +427,18 @@ const PROFILE_SOURCES = [
     scene: "Bistro",
     renderer: "DonutVisGBuffer",
     runIndex: 5,
+  },
+  {
+    id: "sponza-ivy-deferred",
+    scene: "SponzaIvy",
+    renderer: "DonutDeferredPrepass",
+    runIndex: 8,
+  },
+  {
+    id: "sponza-ivy-visbuf",
+    scene: "SponzaIvy",
+    renderer: "DonutVisGBuffer",
+    runIndex: 9,
   },
 ];
 
@@ -421,6 +536,23 @@ async function exists(path) {
   } catch {
     return false;
   }
+}
+
+async function writeFileWithRetry(path, contents) {
+  let lastError;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await writeFile(path, contents);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!["EPERM", "EBUSY", "UNKNOWN"].includes(error?.code)) throw error;
+      await new Promise((resolvePromise) =>
+        setTimeout(resolvePromise, 100 * (attempt + 1)),
+      );
+    }
+  }
+  throw lastError;
 }
 
 function resultRows(records) {
@@ -748,6 +880,327 @@ async function captureSequences({ write }) {
   return { sequences, captureReport };
 }
 
+async function supplementalCaptureSequences({ write }) {
+  const sequences = [];
+  for (const sequence of SUPPLEMENTAL_SEQUENCES) {
+    const sourceFrames = join(sequence.sourceDir, "frames");
+    const sourceManifest = await readJson(
+      join(sequence.sourceDir, "capture_manifest.json"),
+    );
+    const sourceFiles = (await readdir(sourceFrames))
+      .filter((name) => extname(name).toLowerCase() === ".png")
+      .sort();
+    if (
+      sourceManifest.captured_frame_count !== sequence.expectedFrames ||
+      sourceFiles.length !== sequence.expectedFrames ||
+      sourceManifest.frames.length !== sequence.expectedFrames
+    ) {
+      throw new Error(
+        `${sequence.id}: expected ${sequence.expectedFrames} supplemental frames, found ${sourceFiles.length}.`,
+      );
+    }
+
+    const targetDir = join(PUBLIC_CAPTURES, sequence.id);
+    if (write) await mkdir(targetDir, { recursive: true });
+    const frameRecords = [];
+    await mapWithConcurrency(sourceManifest.frames, 4, async (sourceFrame) => {
+      const sourceName = `frame_${String(sourceFrame.image_index).padStart(6, "0")}.png`;
+      const targetName = `${String(sourceFrame.image_index).padStart(4, "0")}.webp`;
+      const sourcePath = join(sourceFrames, sourceName);
+      const targetPath = join(targetDir, targetName);
+      if (!sourceFiles.includes(sourceName)) {
+        throw new Error(`${sequence.id}: missing ${sourceName}.`);
+      }
+      if (write) {
+        const rgb = await sharp(sourcePath, { failOn: "error" })
+          .removeAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        await sharp(rgb.data, {
+          raw: {
+            width: rgb.info.width,
+            height: rgb.info.height,
+            channels: 3,
+          },
+        })
+          .resize(960, 540, { fit: "fill" })
+          .webp({ quality: 84, effort: 6, smartSubsample: true })
+          .toFile(targetPath);
+      }
+      const metadata = await sharp(targetPath).metadata();
+      if (metadata.width !== 960 || metadata.height !== 540) {
+        throw new Error(
+          `${sequence.id}/${targetName}: expected 960x540, found ${metadata.width}x${metadata.height}.`,
+        );
+      }
+      const imageStats = await sharp(targetPath).stats();
+      const meanRgb =
+        imageStats.channels
+          .slice(0, 3)
+          .reduce((sum, channel) => sum + channel.mean, 0) / 3;
+      const variationRgb =
+        imageStats.channels
+          .slice(0, 3)
+          .reduce((sum, channel) => sum + channel.stdev, 0) / 3;
+      if (meanRgb < 1 || variationRgb < 0.25) {
+        throw new Error(
+          `${sequence.id}/${targetName}: deployable frame is effectively blank.`,
+        );
+      }
+      const fileStat = await stat(targetPath);
+      frameRecords[sourceFrame.image_index] = {
+        imageIndex: sourceFrame.image_index,
+        renderFrame: sourceFrame.render_frame,
+        measurementFrame: sourceFrame.measurement_frame,
+        src: `/data/captures/${sequence.id}/${targetName}`,
+        bytes: fileStat.size,
+        sha256: await sha256(targetPath),
+      };
+    });
+
+    const publicManifest = {
+      id: sequence.id,
+      label: sequence.label,
+      scene: sequence.scene,
+      view: sequence.view,
+      viewLabel: sequence.viewLabel,
+      viewKind: sequence.viewKind,
+      renderer: sequence.renderer,
+      rendererVariant: sequence.rendererVariant,
+      debugMode: sequence.debugMode,
+      description: sequence.description,
+      profileId: sequence.profileId,
+      source: {
+        hardwareId: CURRENT_DATASET_ID,
+        runIndex: sequence.sourceRunIndex,
+        width: sourceManifest.width,
+        height: sourceManifest.height,
+        warmupFrames: sourceManifest.warmup_frames,
+        measureFrames: sourceManifest.measure_frames,
+        captureStride: sourceManifest.capture_stride,
+        captureFps: sourceManifest.capture_fps,
+        capturedFrames: sourceManifest.captured_frame_count,
+        sourceExperiment: "31_capture_representative_frames.json",
+      },
+      excludedBlankFrames: [],
+      frameCount: frameRecords.length,
+      frames: frameRecords,
+    };
+    if (write) {
+      await writeFile(join(targetDir, "manifest.json"), json(publicManifest));
+    }
+    sequences.push(publicManifest);
+  }
+  return sequences;
+}
+
+function validationSceneKey(scene) {
+  if (scene === "Sponza Ivy") return "SponzaIvy";
+  return scene;
+}
+
+function validationSceneFolder(scene) {
+  if (scene === "Sponza Ivy") return "sponza_ivy";
+  return scene.toLowerCase();
+}
+
+async function barycentricValidationSequences({ write }) {
+  const records = await readCsv(BARYCENTRIC_FRAME_METRICS);
+  if (records.length !== 910) {
+    throw new Error(
+      `Expected 910 barycentric validation pairs, found ${records.length}.`,
+    );
+  }
+  if (write) {
+    await rm(PUBLIC_VALIDATION, { recursive: true, force: true });
+    await mkdir(PUBLIC_VALIDATION, { recursive: true });
+  }
+
+  const grouped = new Map();
+  for (const record of records) {
+    const metadata = VALIDATION_MODES[record.mode_name];
+    if (!metadata) {
+      throw new Error(`Unknown validation mode: ${record.mode_name}.`);
+    }
+    const scene = validationSceneKey(record.scene);
+    const id = `${scene.toLowerCase()}-${record.mode_name.replaceAll("_", "-")}`;
+    const group = grouped.get(id) ?? {
+      id,
+      scene,
+      mode: Number(record.mode),
+      modeName: record.mode_name,
+      label: metadata.label,
+      shortLabel: metadata.shortLabel,
+      order: metadata.order,
+      description: metadata.description,
+      profileId: `${scene.toLowerCase().replace("sponzaivy", "sponza-ivy")}-visbuf`,
+      source: {
+        hardwareId: CURRENT_DATASET_ID,
+        referenceRenderer: "DonutRasterDebugReference",
+        referenceRendererVariant: 14,
+        visbufRenderer: "DonutVisDebug",
+        visbufRendererVariant: 13,
+        width: Number(record.width),
+        height: Number(record.height),
+        deployWidth: 720,
+        deployHeight: 405,
+        captureStride: Number(record.capture_stride),
+      },
+      frames: [],
+    };
+    group.frames.push(record);
+    grouped.set(id, group);
+  }
+
+  const sequences = [];
+  for (const group of [...grouped.values()].sort(
+    (left, right) =>
+      left.scene.localeCompare(right.scene) || left.order - right.order,
+  )) {
+    group.frames.sort(
+      (left, right) =>
+        Number(left.measurement_frame) - Number(right.measurement_frame),
+    );
+    const excludedBlankFrames = group.frames
+      .filter((record) => Number(record.foreground_pixels_raster) === 0)
+      .map((record) => Number(record.measurement_frame));
+    const playableSourceFrames = group.frames.filter(
+      (record) => Number(record.foreground_pixels_raster) > 0,
+    );
+    const targetDir = join(PUBLIC_VALIDATION, group.id);
+    const comparisonDir = join(targetDir, "comparison");
+    const differenceDir = join(targetDir, "difference");
+    if (write) {
+      await mkdir(comparisonDir, { recursive: true });
+      await mkdir(differenceDir, { recursive: true });
+    }
+
+    const frameRecords = [];
+    await mapWithConcurrency(playableSourceFrames, 4, async (record, index) => {
+      const targetName = `${String(index).padStart(4, "0")}.webp`;
+      const comparisonPath = join(comparisonDir, targetName);
+      const differencePath = join(differenceDir, targetName);
+      const rasterPath = join(BARYCENTRIC_ROOT, record.raster_path);
+      const visbufPath = join(BARYCENTRIC_ROOT, record.visbuf_path);
+      const heatmapPath = join(
+        BARYCENTRIC_HEATMAPS,
+        validationSceneFolder(record.scene),
+        record.mode_name,
+        `frame_${String(record.capture_index).padStart(6, "0")}.webp`,
+      );
+
+      if (write) {
+        const [rasterFrame, visbufRightHalf] = await Promise.all([
+          sharp(rasterPath, { failOn: "error" })
+            .removeAlpha()
+            .resize(720, 405, { fit: "fill" })
+            .toBuffer(),
+          sharp(visbufPath, { failOn: "error" })
+            .removeAlpha()
+            .resize(720, 405, { fit: "fill" })
+            .extract({ left: 360, top: 0, width: 360, height: 405 })
+            .toBuffer(),
+        ]);
+        await sharp(rasterFrame)
+          .composite([{ input: visbufRightHalf, left: 360, top: 0 }])
+          .webp({ quality: 82, effort: 6, smartSubsample: true })
+          .toFile(comparisonPath);
+        await sharp(heatmapPath, { failOn: "error" })
+          .resize(720, 405, { fit: "fill" })
+          .webp({ quality: 82, effort: 6, smartSubsample: true })
+          .toFile(differencePath);
+      }
+
+      for (const path of [comparisonPath, differencePath]) {
+        const metadata = await sharp(path).metadata();
+        if (metadata.width !== 720 || metadata.height !== 405) {
+          throw new Error(
+            `${group.id}/${targetName}: expected 720x405, found ${metadata.width}x${metadata.height}.`,
+          );
+        }
+      }
+      const [
+        comparisonStats,
+        differenceStats,
+        comparisonSha256,
+        differenceSha256,
+      ] = await Promise.all([
+        stat(comparisonPath),
+        stat(differencePath),
+        sha256(comparisonPath),
+        sha256(differencePath),
+      ]);
+      frameRecords[index] = {
+        imageIndex: Number(record.capture_index),
+        measurementFrame: Number(record.measurement_frame),
+        comparisonSrc: `/data/validation/${group.id}/comparison/${targetName}`,
+        differenceSrc: `/data/validation/${group.id}/difference/${targetName}`,
+        comparisonBytes: comparisonStats.size,
+        differenceBytes: differenceStats.size,
+        comparisonSha256,
+        differenceSha256,
+        metrics: {
+          interiorMaeLsb: Number(record.interior_mae_lsb),
+          interiorP99Lsb: Number(record.interior_p99_lsb),
+          interiorMaxLsb: Number(record.interior_max_lsb),
+          interiorExactRatio: Number(record.interior_exact_ratio),
+          coverageMismatchRatio: Number(record.coverage_mismatch_ratio),
+        },
+      };
+    });
+
+    const publicManifest = {
+      id: group.id,
+      scene: group.scene,
+      mode: group.mode,
+      modeName: group.modeName,
+      label: group.label,
+      shortLabel: group.shortLabel,
+      order: group.order,
+      description: group.description,
+      profileId: group.profileId,
+      source: group.source,
+      validatedPairCount: group.frames.length,
+      excludedBlankFrames,
+      frameCount: frameRecords.length,
+      frames: frameRecords,
+    };
+    if (write) {
+      await writeFile(join(targetDir, "manifest.json"), json(publicManifest));
+    }
+    sequences.push(publicManifest);
+  }
+  return sequences;
+}
+
+async function softwareRasterTimeline() {
+  const records = await readCsv(SOFTWARE_RASTER_FRAMES);
+  const timeline = records
+    .filter((record) => Number(record.measurement_frame) % 60 === 0)
+    .map((record) => ({
+      scene: validationSceneKey(record.scene),
+      measurementFrame: Number(record.measurement_frame),
+      triangleCount: Number(record.triangle_count),
+      totalFragments: Number(record.total_fragments),
+      coveredPixels: Number(record.covered_pixels),
+      overdrawExtra: Number(record.overdraw_extra),
+      averageOverdraw: Number(record.avg_overdraw),
+      maximumOverdraw: Number(record.max_overdraw),
+      rasterizedTriangles: Number(record.rasterized_triangles),
+      skippedTriangles: Number(record.skipped_triangles),
+      quadInstances: Number(record.quad_instances),
+      quadCoveredLanes: Number(record.quad_covered_lanes),
+      quadWasteLanes: Number(record.quad_waste_lanes),
+      quadEfficiency: Number(record.quad_efficiency),
+    }));
+  if (timeline.length !== 176) {
+    throw new Error(
+      `Expected 176 software-raster profile-window rows, found ${timeline.length}.`,
+    );
+  }
+  return timeline;
+}
+
 async function buildBundle({ write }) {
   const [normalized, campaignManifest, qualityReport, profiles] =
     await Promise.all([
@@ -780,10 +1233,17 @@ async function buildBundle({ write }) {
     seenConditions.add(condition);
   }
 
-  const { sequences, captureReport } = await captureSequences({ write });
-  const comparison = await hardwareComparison(rows);
+  const { sequences: primarySequences, captureReport } =
+    await captureSequences({ write });
+  const supplementalSequences = await supplementalCaptureSequences({ write });
+  const sequences = [...primarySequences, ...supplementalSequences];
+  const [comparison, validationSequences, rasterTimeline] = await Promise.all([
+    hardwareComparison(rows),
+    barycentricValidationSequences({ write }),
+    softwareRasterTimeline(),
+  ]);
   const bundle = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     title: "TVB Performance Atlas",
     subtitle: "Visibility-buffer evidence, frame by frame",
     provenance: {
@@ -812,6 +1272,12 @@ async function buildBundle({ write }) {
         (sum, sequence) => sum + sequence.frameCount,
         0,
       ),
+      validationSequences: validationSequences.length,
+      validationPairs: 910,
+      playableValidationPairs: validationSequences.reduce(
+        (sum, sequence) => sum + sequence.frameCount,
+        0,
+      ),
       scenes: [...new Set(rows.map((row) => row.scene))],
       renderers: [...new Set(rows.map((row) => row.renderer))],
       experiments: Object.keys(EXPERIMENT_META).length,
@@ -820,11 +1286,13 @@ async function buildBundle({ write }) {
     results: rows,
     profiles,
     sequences,
+    validationSequences,
+    rasterTimeline,
     hardwareComparison: comparison,
   };
   if (write) {
     await mkdir(PUBLIC_DATA, { recursive: true });
-    await writeFile(DASHBOARD_JSON, json(bundle));
+    await writeFileWithRetry(DASHBOARD_JSON, json(bundle));
   }
   return bundle;
 }
@@ -849,14 +1317,26 @@ const bundle = verifyOnly
   : await buildBundle({ write: true });
 const deployableBytes = (
   await Promise.all(
-    bundle.sequences.flatMap((sequence) =>
-      sequence.frames.map(async (frame) => (await stat(join(PROJECT_ROOT, "public", frame.src))).size),
+    [
+      ...bundle.sequences.flatMap((sequence) =>
+        sequence.frames.map((frame) => frame.src),
+      ),
+      ...bundle.validationSequences.flatMap((sequence) =>
+        sequence.frames.flatMap((frame) => [
+          frame.comparisonSrc,
+          frame.differenceSrc,
+        ]),
+      ),
+    ].map(
+      async (src) =>
+        (await stat(join(PROJECT_ROOT, "public", src.replace(/^\/+/, "")))).size,
     ),
   )
 ).reduce((sum, size) => sum + size, 0);
 console.log(
   `${verifyOnly ? "Verified" : "Generated"} ${bundle.summary.resultRows} results, ` +
     `${bundle.summary.playableFrames}/${bundle.summary.captureFrames} playable/captured frames ` +
-    `across ${bundle.summary.captureSequences} sequences ` +
+    `across ${bundle.summary.captureSequences} beauty/debug sequences and ` +
+    `${bundle.summary.validationPairs} raster/VisBuf validation pairs ` +
     `(${deployableBytes} deployable bytes).`,
 );

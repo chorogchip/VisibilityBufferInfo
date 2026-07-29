@@ -2,11 +2,10 @@
 
 ## Product goal
 
-The dashboard combines the completed material experiment campaign with
-representative camera-path imagery. A viewer can scrub or autoplay the rendered
-path, switch between normal and visibility-buffer debug views, and compare the
-same scene against measured renderer timing, distribution, and pass breakdown
-data.
+The dashboard combines the completed camera-path measurements with normal,
+visibility-ID, and raster-reference/VisBuf reconstruction imagery. A viewer can
+scrub or autoplay the path while keeping the normal frame, selected debug
+frame, and measured pass timeline visible in the same viewport.
 
 The frame player is a visual explanation surface. Capture runs are not used as
 replacement performance measurements; charts continue to use the validated
@@ -33,10 +32,28 @@ window. They retain the original 60 warm-up frames, scene textures, VFC, and
 PBR material assignment. The capture-only resolution is 1280x720 because image
 quality, not timing comparability, is the goal.
 
-Sponza Ivy is not selected for a new sequence: the completed campaign found
-that the existing camera path did not reveal a useful visible difference from
-base Sponza. Synthetic cases are static rather than camera-work experiments and
-are represented by the already captured reference frame.
+The existing material-campaign capture supplies five Sponza + Ivy PBR anchors.
+The completed barycentric validation supplies 42 debug frames for each of seven
+reconstruction modes. No renderer run is repeated for the dashboard.
+
+## Reconstruction validation reuse
+
+The already completed validation contributes 910 synchronized frame pairs:
+
+| Scene | Frames per mode | Modes | Raster/VisBuf pairs |
+|---|---:|---:|---:|
+| Sponza | 42 | 7 | 294 |
+| Sponza + Ivy | 42 | 7 | 294 |
+| Bistro | 46 | 7 | 322 |
+
+Each pair is preserved as a center-split raster-reference/VisBuf frame and an
+absolute pixel-difference heatmap. The timeline continues to use the measured
+DonutDeferredPrepass and DonutVisGBuffer profiles; debug-renderer execution
+time is never presented as performance evidence.
+
+The final three blank camera windows in each Sponza mode remain part of the 910
+validated-pair provenance but are listed as excluded in the deployable
+manifests. Autoplay therefore traverses 868 non-blank validation frames.
 
 ## Data contract
 
@@ -48,6 +65,12 @@ are represented by the already captured reference frame.
   captured PNG frames.
 - `public/data/captures/<sequence>/manifest.json`: image index to measurement
   frame mapping and source provenance.
+- `public/data/validation/<scene-mode>/comparison/*.webp`: raster on the left,
+  VisBuf on the right, synchronized by measurement frame.
+- `public/data/validation/<scene-mode>/difference/*.webp`: per-frame absolute
+  pixel difference.
+- `rasterTimeline` in `dashboard.json`: matching software-raster triangle,
+  fragment, overdraw, and quad-efficiency rows sampled at profile windows.
 
 Raw PNGs remain under `capture_specs/results` and are excluded from Git. The
 derived WebP files are committed so a clone can build and deploy without local
@@ -64,16 +87,17 @@ flat ID color. No measured timing row is removed.
 - Starts in autoplay and loops indefinitely.
 - Play/pause, previous/next, direct frame slider, playback speed, and keyboard
   controls.
-- Scene and view selectors keep the closest normalized camera position when
-  changing sequence.
-- Normal, geometry-instance, primitive, combined-ID, and barycentric views.
-- Campaign filters for experiment, scene, and renderer.
-- Renderer comparison, percentile distribution, pass breakdown, and scaling
-  charts use measured rows only.
-- A hardware-provenance view compares only matched camera baselines and labels
-  RTX 5060 Ti 16GB (today) separately from RTX 5070 (previous).
-- Hardware and run-condition panels distinguish static machine capabilities
-  from measured timing data.
+- Scene and debug selectors preserve normalized camera progress.
+- Normal, geometry-instance, primitive, combined-ID, barycentric, derivative,
+  UV-gradient, and LOD-proxy views.
+- One Camera Timeline only. Deferred and VisBuf totals and every measured pass
+  can be toggled independently; pass controls follow execution order.
+- Depth prepass and visibility use related blue hues. Histogram/prefix/flatten
+  share an orange family, compute G-buffer is purple, and common post passes
+  are neutral. Clear is not plotted.
+- One optional secondary workload trace and a cursor-local workload readout.
+- Hardware provenance labels RTX 5060 Ti 16GB as current and RTX 5070 as the
+  earlier archive. Samples are never pooled across GPUs.
 - Missing or unavailable views are disclosed rather than synthesized.
 
 ## Acceptance criteria
@@ -84,6 +108,6 @@ flat ID color. No measured timing row is removed.
    dimensions.
 3. Dashboard result counts equal the source campaign: 396 success, no duplicate
    run conditions, and no failed/skipped rows treated as measurements.
-4. Frame scrubbing, autoplay, loop, scene/view switching, filters, and chart
-   tooltips work with keyboard and pointer input.
+4. Frame scrubbing, autoplay, loop, scene/debug switching, pass toggles,
+   timeline seeking, and chart tooltips work with keyboard and pointer input.
 5. A clean data sync and production build reproduce the committed bundle.

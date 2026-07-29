@@ -1,0 +1,810 @@
+{
+  "id": "bistro-linear-barycentric",
+  "scene": "Bistro",
+  "mode": 3,
+  "modeName": "linear_barycentric",
+  "label": "Linear barycentrics",
+  "shortLabel": "Linear bary",
+  "order": 0,
+  "description": "No-perspective barycentric coordinates reconstructed from the visibility buffer.",
+  "profileId": "bistro-visbuf",
+  "source": {
+    "hardwareId": "manual-20260729-rtx5060ti16",
+    "referenceRenderer": "DonutRasterDebugReference",
+    "referenceRendererVariant": 14,
+    "visbufRenderer": "DonutVisDebug",
+    "visbufRendererVariant": 13,
+    "width": 1920,
+    "height": 1080,
+    "deployWidth": 720,
+    "deployHeight": 405,
+    "captureStride": 120
+  },
+  "validatedPairCount": 46,
+  "excludedBlankFrames": [],
+  "frameCount": 46,
+  "frames": [
+    {
+      "imageIndex": 0,
+      "measurementFrame": 0,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0000.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0000.webp",
+      "comparisonBytes": 53864,
+      "differenceBytes": 3022,
+      "comparisonSha256": "9131b5c26d5a9227fb1cb52c2582318f3056504d9bbac09aa970d63ae70bd213",
+      "differenceSha256": "094c0965e04959674b5e96feb4d2fbf9b1ec0247d83e26a3fcb6637221d9b3f1",
+      "metrics": {
+        "interiorMaeLsb": 0.01768604852259159,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 26,
+        "interiorExactRatio": 0.9828363840750888,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 1,
+      "measurementFrame": 120,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0001.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0001.webp",
+      "comparisonBytes": 108708,
+      "differenceBytes": 5718,
+      "comparisonSha256": "43f0726b20cfee1339854e2c55f039fcd86b0d4096465af4a1a23c86a5b31e84",
+      "differenceSha256": "876c488252b1e5fd8d7029216bd9dbae2cb059f0a8f0aa26b8a87b55190fc51f",
+      "metrics": {
+        "interiorMaeLsb": 0.019662100821733475,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 48,
+        "interiorExactRatio": 0.9809161201131688,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 2,
+      "measurementFrame": 240,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0002.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0002.webp",
+      "comparisonBytes": 99158,
+      "differenceBytes": 3164,
+      "comparisonSha256": "8c917c0759196c4d1cf4a8b907095ee222ddb5ba3ffeec44e520cd3723aaa8c1",
+      "differenceSha256": "699a75a394cb746e63b89c27cdd0d3e66014a61ea47cb5d0e4e6455b5e4da663",
+      "metrics": {
+        "interiorMaeLsb": 0.011318640783429146,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 58,
+        "interiorExactRatio": 0.988872974537037,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 3,
+      "measurementFrame": 360,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0003.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0003.webp",
+      "comparisonBytes": 127554,
+      "differenceBytes": 6978,
+      "comparisonSha256": "0bb93066419ace8cb70defbf67b9b4296bbdb5834017a2555ec1fd8dd4b936a6",
+      "differenceSha256": "4e01b4cad512fa71204283b71ba16063b4edd235f583a40f6a12a062be70fdfe",
+      "metrics": {
+        "interiorMaeLsb": 0.025193024426698685,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 79,
+        "interiorExactRatio": 0.9771365528763573,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 4,
+      "measurementFrame": 480,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0004.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0004.webp",
+      "comparisonBytes": 121694,
+      "differenceBytes": 4994,
+      "comparisonSha256": "1ce123d413974d88711a451be9aaaa8bfebd7c6b39862237e69c261fe610f8e2",
+      "differenceSha256": "9dd60acc0b0ce12b56f03a3eb509fc552ddf9986128cd3e2073d19481afaaf57",
+      "metrics": {
+        "interiorMaeLsb": 0.01811009831726551,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 160,
+        "interiorExactRatio": 0.9824557386461702,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 5,
+      "measurementFrame": 600,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0005.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0005.webp",
+      "comparisonBytes": 113160,
+      "differenceBytes": 5894,
+      "comparisonSha256": "6693d907c5ad0ba782f91a343237ae3ec833e74f794689f9ac08f05cbb9909d2",
+      "differenceSha256": "880bee0baae06624202d430ae3a9e45e59606bbf31afc0228f50ed7bd8e8fa6f",
+      "metrics": {
+        "interiorMaeLsb": 0.021369555965065956,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 98,
+        "interiorExactRatio": 0.9793660938471402,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 6,
+      "measurementFrame": 720,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0006.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0006.webp",
+      "comparisonBytes": 90950,
+      "differenceBytes": 2160,
+      "comparisonSha256": "e08f4d81fd7de6c092704271cfaaebe365a69b2c33ff741d5641e6709e7edfac",
+      "differenceSha256": "39c234655543b0feaa14023ac8c20de1c9e8df8e19943d62c452bc77d1912c2d",
+      "metrics": {
+        "interiorMaeLsb": 0.008585069328546524,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 19,
+        "interiorExactRatio": 0.9915650720164609,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 7,
+      "measurementFrame": 840,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0007.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0007.webp",
+      "comparisonBytes": 48932,
+      "differenceBytes": 926,
+      "comparisonSha256": "fa4f00b080e38c0e579df9f1c960695305ab17a3073e4eae93df21277a008017",
+      "differenceSha256": "9e9a810646e3a318ec742a6d1d5c2b8f90555474cd1feb399d73b40f1e536262",
+      "metrics": {
+        "interiorMaeLsb": 0.002072402276098728,
+        "interiorP99Lsb": 0,
+        "interiorMaxLsb": 14,
+        "interiorExactRatio": 0.9979513888888889,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 8,
+      "measurementFrame": 960,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0008.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0008.webp",
+      "comparisonBytes": 87190,
+      "differenceBytes": 5138,
+      "comparisonSha256": "92a60ca8ff7776ce2b06ccca51134317928791d538236165147b3fa1df3a6540",
+      "differenceSha256": "897129521420f63a4742eb5a1e6cd4d89d566d6917fe60e4a6f6517ca410f9d9",
+      "metrics": {
+        "interiorMaeLsb": 0.018749196082353592,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 109,
+        "interiorExactRatio": 0.9819989390432099,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 9,
+      "measurementFrame": 1080,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0009.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0009.webp",
+      "comparisonBytes": 106442,
+      "differenceBytes": 7540,
+      "comparisonSha256": "bb5eacddc3a2ee1b67940acb5f628bdd2ee05657b2adbc855c4630e5821f95b5",
+      "differenceSha256": "a994485b03c2d92fa2a31e0a7b19a10feb225170e4b9671e2caf6d84cd84aadb",
+      "metrics": {
+        "interiorMaeLsb": 0.02911381423473358,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 98,
+        "interiorExactRatio": 0.9725240602500196,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 10,
+      "measurementFrame": 1200,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0010.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0010.webp",
+      "comparisonBytes": 136696,
+      "differenceBytes": 11162,
+      "comparisonSha256": "ab6de0c9819d5326d816cb6e43f015a4bcad103957e3eb8adc4d3a6d8e1d836a",
+      "differenceSha256": "0cae6da27fce47e8434c9d0a950c308a2c49d480cab7fd6cd7d1658842c16cd6",
+      "metrics": {
+        "interiorMaeLsb": 0.038405537605285645,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 83,
+        "interiorExactRatio": 0.9651242184265845,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 11,
+      "measurementFrame": 1320,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0011.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0011.webp",
+      "comparisonBytes": 125452,
+      "differenceBytes": 10102,
+      "comparisonSha256": "b0aed3bca32164221dcc7311bdd5e0afb00af17b7a3de3e64003ff83d5b3219c",
+      "differenceSha256": "2dd8d14f0a7cb9196580f1e18c73fad87a1a4290bc54107e8d6b2dc4c703953d",
+      "metrics": {
+        "interiorMaeLsb": 0.037011388689279556,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 98,
+        "interiorExactRatio": 0.9664831557165983,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 12,
+      "measurementFrame": 1440,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0012.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0012.webp",
+      "comparisonBytes": 139664,
+      "differenceBytes": 9322,
+      "comparisonSha256": "667d9e31a057e2b1313a63a0000c6b21471587b410d4f0a621abbe603eb1d0e3",
+      "differenceSha256": "5be9a9a85249f7d378c72b83d51a6f21abf54924c20574e4d3ec07ca5aff56a2",
+      "metrics": {
+        "interiorMaeLsb": 0.03160750865936279,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 112,
+        "interiorExactRatio": 0.9707833909958953,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 13,
+      "measurementFrame": 1560,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0013.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0013.webp",
+      "comparisonBytes": 147486,
+      "differenceBytes": 11132,
+      "comparisonSha256": "f4bd6bbae9155d6e990da8c1a65f1b3a27b17f34f76f69bbbd2341178932e236",
+      "differenceSha256": "e7254b18c9d1690e6b994d2b5b8ac93f6583fa4cd343cae946eb670bbfee1d66",
+      "metrics": {
+        "interiorMaeLsb": 0.03754549100995064,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 106,
+        "interiorExactRatio": 0.9656817451131687,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 14,
+      "measurementFrame": 1680,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0014.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0014.webp",
+      "comparisonBytes": 136326,
+      "differenceBytes": 10460,
+      "comparisonSha256": "b1a35b7dbfccebd87c0d56a89ceb727ad571097e070ff7a474d1d7e53e68b988",
+      "differenceSha256": "f6ac7ee278278e03aa05bb0ed4ee08ebd71347a886100492f59ab015a9bb7940",
+      "metrics": {
+        "interiorMaeLsb": 0.03517739474773407,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 68,
+        "interiorExactRatio": 0.9680787325104231,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 15,
+      "measurementFrame": 1800,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0015.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0015.webp",
+      "comparisonBytes": 114456,
+      "differenceBytes": 8812,
+      "comparisonSha256": "3859b8de4ac9bbdcbb493ef409821df448b0f586eadb803a2802e52d4a19f1df",
+      "differenceSha256": "dc7e5d5ac115d334a231495d388803d47ff5d6b2956c71a31e6eea6176c84c51",
+      "metrics": {
+        "interiorMaeLsb": 0.027773598209023476,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 90,
+        "interiorExactRatio": 0.9751175090020576,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 16,
+      "measurementFrame": 1920,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0016.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0016.webp",
+      "comparisonBytes": 122692,
+      "differenceBytes": 9148,
+      "comparisonSha256": "1f780de6246185a6c36c71c587d74ef5fa331528919b8931f81d1775275d149c",
+      "differenceSha256": "18b590d8baa8828c9fa70da2a5f4dc5c59e559bbb698d2262f3cbf428a47570a",
+      "metrics": {
+        "interiorMaeLsb": 0.029282500967383385,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 37,
+        "interiorExactRatio": 0.9726921819344496,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 17,
+      "measurementFrame": 2040,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0017.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0017.webp",
+      "comparisonBytes": 116438,
+      "differenceBytes": 9194,
+      "comparisonSha256": "2da04fb7bbb8efa265100fdc0bc5cf7fca2dc16f2129462836e90396c1183594",
+      "differenceSha256": "e584d9ae56f3bac1f64313674fc8429e44333d12dc434e34646c417041efb52a",
+      "metrics": {
+        "interiorMaeLsb": 0.02872958779335022,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 99,
+        "interiorExactRatio": 0.9726177276790803,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 18,
+      "measurementFrame": 2160,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0018.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0018.webp",
+      "comparisonBytes": 109538,
+      "differenceBytes": 7788,
+      "comparisonSha256": "15c3c3d48aced9194c92b9770340f9f259e9cd0b52cb7735e10db4da10755760",
+      "differenceSha256": "ec021822451b03a7648af6f0154b92e4a90721787213c6dcc806c4f22295b0e4",
+      "metrics": {
+        "interiorMaeLsb": 0.024047289043664932,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 200,
+        "interiorExactRatio": 0.9769505076678657,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 19,
+      "measurementFrame": 2280,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0019.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0019.webp",
+      "comparisonBytes": 87116,
+      "differenceBytes": 7314,
+      "comparisonSha256": "9a071e149ba84aa217dcdf63196b6e83d6b19e327689e92ff2413a3b0e323d01",
+      "differenceSha256": "2deb510a5a4e0d0c12107980b7221ba8ff73de8144cd7bec46b22f00a3cc3cbf",
+      "metrics": {
+        "interiorMaeLsb": 0.0218837708234787,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 60,
+        "interiorExactRatio": 0.9788118565857087,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 20,
+      "measurementFrame": 2400,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0020.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0020.webp",
+      "comparisonBytes": 91220,
+      "differenceBytes": 8200,
+      "comparisonSha256": "829e0075fd68dfaa80a38ef34514ca32e852633805e505cea03a42a4c80d3d67",
+      "differenceSha256": "4fa81c2595cf52b50b1480803fbff2d2343e56893c8ea7eb17587d5870d87ad1",
+      "metrics": {
+        "interiorMaeLsb": 0.029615234583616257,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 42,
+        "interiorExactRatio": 0.9731654050014644,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 21,
+      "measurementFrame": 2520,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0021.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0021.webp",
+      "comparisonBytes": 124278,
+      "differenceBytes": 8696,
+      "comparisonSha256": "099ea4768a4a971f2bf78f391755ac4d6faa15d2e407512063380fc07ca08d19",
+      "differenceSha256": "9e6aadb06f34b4c71e317e36166690075ee011eb4f62de18366d2ff83458ec3e",
+      "metrics": {
+        "interiorMaeLsb": 0.03134661167860031,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 119,
+        "interiorExactRatio": 0.9711765367798354,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 22,
+      "measurementFrame": 2640,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0022.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0022.webp",
+      "comparisonBytes": 118796,
+      "differenceBytes": 5788,
+      "comparisonSha256": "bc2fc333ca2cb96653df74fa27d74231d270efdfc7a34e721081c2b23c90c25a",
+      "differenceSha256": "0d6bdf8427f8c8b921163104133e8403ae3016f18e71f2bba7e1bd4561a7e593",
+      "metrics": {
+        "interiorMaeLsb": 0.022093622013926506,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 84,
+        "interiorExactRatio": 0.9790618569958848,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 23,
+      "measurementFrame": 2760,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0023.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0023.webp",
+      "comparisonBytes": 125564,
+      "differenceBytes": 9572,
+      "comparisonSha256": "c2517a5af66cb21edbf46f348f4fdcdca427c53e643f26fdcee753f0572ad8f5",
+      "differenceSha256": "ec5798e06018f434923cb81596b58484ab790463a5d8b0314dff96b1171a962c",
+      "metrics": {
+        "interiorMaeLsb": 0.03654063865542412,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 34,
+        "interiorExactRatio": 0.9648276748971193,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 24,
+      "measurementFrame": 2880,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0024.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0024.webp",
+      "comparisonBytes": 125898,
+      "differenceBytes": 6794,
+      "comparisonSha256": "1ea0716441f08236a6ae5d4fd68630d4649ff72332f5f5ef2d90d99f1594c16e",
+      "differenceSha256": "43ecd77502990458b67a24da32daa9ce830af1ead52c299cede98d234f3c638a",
+      "metrics": {
+        "interiorMaeLsb": 0.024598443880677223,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 22,
+        "interiorExactRatio": 0.976108699845679,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 25,
+      "measurementFrame": 3000,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0025.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0025.webp",
+      "comparisonBytes": 104744,
+      "differenceBytes": 5316,
+      "comparisonSha256": "446a76eb134fee7424de259eaa6b91a835f39bf6764220d306e0f874cd9e06db",
+      "differenceSha256": "5605ece89bbda17583f497e8e225c00bf8f931624d24e4d1ae63494202ae7ceb",
+      "metrics": {
+        "interiorMaeLsb": 0.019590139389038086,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 65,
+        "interiorExactRatio": 0.981268908644193,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 26,
+      "measurementFrame": 3120,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0026.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0026.webp",
+      "comparisonBytes": 126776,
+      "differenceBytes": 10294,
+      "comparisonSha256": "65864f48cbfdec30a05620230e9d306c2c18db1a4ae7705cd01377c2f18d06e1",
+      "differenceSha256": "c5ab82c950694f23aab79366cc606a602e378c9f50784dc51e54e529cf3e3a81",
+      "metrics": {
+        "interiorMaeLsb": 0.03675376623868942,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 64,
+        "interiorExactRatio": 0.9661435391393071,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 27,
+      "measurementFrame": 3240,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0027.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0027.webp",
+      "comparisonBytes": 132358,
+      "differenceBytes": 8900,
+      "comparisonSha256": "6f1c6a2e2051f139e16ffc78097cbde73280e05145c8275069f849e556cbd904",
+      "differenceSha256": "91b137dd66764294216ed34db2b0be3993c160c16dc019cc2c9875a9dbe5dbdb",
+      "metrics": {
+        "interiorMaeLsb": 0.03301000967621803,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 82,
+        "interiorExactRatio": 0.9694965348700256,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 28,
+      "measurementFrame": 3360,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0028.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0028.webp",
+      "comparisonBytes": 131916,
+      "differenceBytes": 7928,
+      "comparisonSha256": "6119643f0d93c44824334371a9b9151f0f595a3b026d7ddbf635d6b0f65825e4",
+      "differenceSha256": "4cfe2e7bcef2d34380bd53f4b659db94aa64af983b0aec602f5fb22c514c1047",
+      "metrics": {
+        "interiorMaeLsb": 0.02783179096877575,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 147,
+        "interiorExactRatio": 0.9739858217592593,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 29,
+      "measurementFrame": 3480,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0029.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0029.webp",
+      "comparisonBytes": 121428,
+      "differenceBytes": 5622,
+      "comparisonSha256": "82e2d7baf320e440c81bcc2724e1d1e01a1e3fdb5dead1944d31be9694133774",
+      "differenceSha256": "cfbdd644951797bc5c916a16e65d2b7c8f845a5f1e798ab75265afddc42719b4",
+      "metrics": {
+        "interiorMaeLsb": 0.021854102611541748,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 60,
+        "interiorExactRatio": 0.9797061471193416,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 30,
+      "measurementFrame": 3600,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0030.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0030.webp",
+      "comparisonBytes": 101544,
+      "differenceBytes": 5748,
+      "comparisonSha256": "42bfa636ebb39539977adb4d08142772dea82656f7972e088f9358f3a4a35485",
+      "differenceSha256": "31cc0cbfa131c7c0828a356ea8476ccd1ce0946eda1de5b44066e84ffe56ee11",
+      "metrics": {
+        "interiorMaeLsb": 0.02185811847448349,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 118,
+        "interiorExactRatio": 0.980189139284491,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 31,
+      "measurementFrame": 3720,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0031.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0031.webp",
+      "comparisonBytes": 112074,
+      "differenceBytes": 10144,
+      "comparisonSha256": "d6fdc03f1c4cec24deaab8cddecd1387d5d94a600d812c0c729d2ab647194354",
+      "differenceSha256": "d51b54213bb43186ecae42bc7196927e251388ca6def0066342279eebd083d5a",
+      "metrics": {
+        "interiorMaeLsb": 0.04296809434890747,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 87,
+        "interiorExactRatio": 0.9613718607454729,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 32,
+      "measurementFrame": 3840,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0032.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0032.webp",
+      "comparisonBytes": 108268,
+      "differenceBytes": 10216,
+      "comparisonSha256": "fda8ea74040ecf5409ca47d2915116a58f50941c12fddebcdc985ab943f9ab62",
+      "differenceSha256": "103c3102c8375126283ee99f4478d4162986298ae67e4dab9b6d2e7245f0c28a",
+      "metrics": {
+        "interiorMaeLsb": 0.04723659157752991,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 39,
+        "interiorExactRatio": 0.9569294332967939,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 33,
+      "measurementFrame": 3960,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0033.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0033.webp",
+      "comparisonBytes": 117422,
+      "differenceBytes": 9268,
+      "comparisonSha256": "a0c5ab3871325a987afa16a536c2447a71a0a64eecf78158460a9b33e9187f05",
+      "differenceSha256": "67025c4e35fdd7bfb2e4f23f48391d82968964db1f9e6700efde8741ab6177fc",
+      "metrics": {
+        "interiorMaeLsb": 0.04444846138358116,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 135,
+        "interiorExactRatio": 0.9586247158890232,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 34,
+      "measurementFrame": 4080,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0034.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0034.webp",
+      "comparisonBytes": 134044,
+      "differenceBytes": 9344,
+      "comparisonSha256": "953222f25015cd62584be1bbd4004c985dc7e56a7454fbb0588ef587dc62c12c",
+      "differenceSha256": "686bb13268bd9b8ce1987432da299465b0ef280850b4fc5c2fef155a6a966fee",
+      "metrics": {
+        "interiorMaeLsb": 0.03676954284310341,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 68,
+        "interiorExactRatio": 0.965028528395036,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 35,
+      "measurementFrame": 4200,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0035.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0035.webp",
+      "comparisonBytes": 117930,
+      "differenceBytes": 10620,
+      "comparisonSha256": "307f42fc92ed308c9adc081efda0a0fc0907c4e6013c7090420a24b7f4e44fd4",
+      "differenceSha256": "ff38e55fb265d2b3e02b0b1ec586e16eb9cce3846b07328f3206b228b493fc00",
+      "metrics": {
+        "interiorMaeLsb": 0.04594869166612625,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 67,
+        "interiorExactRatio": 0.9561443696281349,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 36,
+      "measurementFrame": 4320,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0036.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0036.webp",
+      "comparisonBytes": 122168,
+      "differenceBytes": 6580,
+      "comparisonSha256": "df06d4e67998bf463505b982b9cf9212941c49e7ba0e732e8b52259ca049f36b",
+      "differenceSha256": "445f41946642edd5416547c03f2ee524dbd1149779dd3a76488e49ede9ef031f",
+      "metrics": {
+        "interiorMaeLsb": 0.025477105751633644,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 93,
+        "interiorExactRatio": 0.9767709117369342,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 37,
+      "measurementFrame": 4440,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0037.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0037.webp",
+      "comparisonBytes": 94372,
+      "differenceBytes": 3048,
+      "comparisonSha256": "50eb1782f11e9c5de599478961803f6d467cfedc388bdf6d83947949c6e89ba8",
+      "differenceSha256": "01ed3f36ead62e78fe180c6bd5a9f9e8b8c5761f08ecd44db4b4de20336e178f",
+      "metrics": {
+        "interiorMaeLsb": 0.013826882466673851,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 16,
+        "interiorExactRatio": 0.986391698823017,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 38,
+      "measurementFrame": 4560,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0038.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0038.webp",
+      "comparisonBytes": 89848,
+      "differenceBytes": 8482,
+      "comparisonSha256": "01d853b7aad70a61f072d9f68540e613ed6ad63c762670fde4f2b4b53b33afc1",
+      "differenceSha256": "f455010578ffd2185048d690039ac29e1296c6523afae62e34e4d2472bc4cf01",
+      "metrics": {
+        "interiorMaeLsb": 0.037926919758319855,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 25,
+        "interiorExactRatio": 0.9632949266791153,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 39,
+      "measurementFrame": 4680,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0039.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0039.webp",
+      "comparisonBytes": 98554,
+      "differenceBytes": 5908,
+      "comparisonSha256": "47e5a1170a72e1f4bf75f14392af3ae95af471736ac4e02e61ea7c78f74101a3",
+      "differenceSha256": "f3b1dcbb180254a76274e047a3bfca11a2d295280595724a6e415dc0aafc1bde",
+      "metrics": {
+        "interiorMaeLsb": 0.03268731012940407,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 90,
+        "interiorExactRatio": 0.9693226649786043,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 40,
+      "measurementFrame": 4800,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0040.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0040.webp",
+      "comparisonBytes": 80394,
+      "differenceBytes": 5800,
+      "comparisonSha256": "3cffbf49a04b3a31b4209de15efbbecf7e718120cd0a7b7a4bdf93b9ca73d9c5",
+      "differenceSha256": "43ba9e198ec85d64ef9f0d96f2f433bba9261d33e53ce484594c88529a6cf09b",
+      "metrics": {
+        "interiorMaeLsb": 0.027905067428946495,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 68,
+        "interiorExactRatio": 0.9750910478617274,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 41,
+      "measurementFrame": 4920,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0041.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0041.webp",
+      "comparisonBytes": 57386,
+      "differenceBytes": 6852,
+      "comparisonSha256": "5dba3cd42e399493585184196d2af3571f7e0b517e7a15d75d8629a785fc3764",
+      "differenceSha256": "50f0ddbf07708a65222f60eb02c8d2e7dde5a8c3b84dbe876f60e47f0052060f",
+      "metrics": {
+        "interiorMaeLsb": 0.044922709465026855,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 82,
+        "interiorExactRatio": 0.9641124170117396,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 42,
+      "measurementFrame": 5040,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0042.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0042.webp",
+      "comparisonBytes": 68788,
+      "differenceBytes": 6952,
+      "comparisonSha256": "76334422a152e14bf16b9f7b581c03608123148ea6af5472d54820904a12d348",
+      "differenceSha256": "c075f0bb12ec0d546267fe3849675e53b1ae34ded9143a2a465a3306eb9b9f0c",
+      "metrics": {
+        "interiorMaeLsb": 0.04198848083615303,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 58,
+        "interiorExactRatio": 0.9652760760026573,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 43,
+      "measurementFrame": 5160,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0043.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0043.webp",
+      "comparisonBytes": 63524,
+      "differenceBytes": 6992,
+      "comparisonSha256": "b2e2d577cc908868b8e3b581e441d203b513e2efad4b186b64123ff3210540dd",
+      "differenceSha256": "76df8f0e33b19a5ac9c172769c0df678ce5ba24eff9cd328be84373cc2a8c56e",
+      "metrics": {
+        "interiorMaeLsb": 0.04059232026338577,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 186,
+        "interiorExactRatio": 0.9670851115258576,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 44,
+      "measurementFrame": 5280,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0044.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0044.webp",
+      "comparisonBytes": 57702,
+      "differenceBytes": 6942,
+      "comparisonSha256": "4961ed51d211a46eeb059cb80e04c51bb7729a1dc92c87effacb2452987fd6e0",
+      "differenceSha256": "75c5abc2314526ba5266210961fab84f80d405264e98653364f47abdce841b7f",
+      "metrics": {
+        "interiorMaeLsb": 0.049350131303071976,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 122,
+        "interiorExactRatio": 0.9617466895706285,
+        "coverageMismatchRatio": 0
+      }
+    },
+    {
+      "imageIndex": 45,
+      "measurementFrame": 5400,
+      "comparisonSrc": "/data/validation/bistro-linear-barycentric/comparison/0045.webp",
+      "differenceSrc": "/data/validation/bistro-linear-barycentric/difference/0045.webp",
+      "comparisonBytes": 15980,
+      "differenceBytes": 2702,
+      "comparisonSha256": "87db0ede8905885dde5c60bbadba2ecd3b7ffe96ffb5a6eb7c5fd148d71546fe",
+      "differenceSha256": "3e90caa2c61946cf985b2960a6f72c4150e7c4871206e0c9d5ef68e0d26196cf",
+      "metrics": {
+        "interiorMaeLsb": 0.06312255561351776,
+        "interiorP99Lsb": 1,
+        "interiorMaxLsb": 140,
+        "interiorExactRatio": 0.9512482592549611,
+        "coverageMismatchRatio": 0
+      }
+    }
+  ]
+}

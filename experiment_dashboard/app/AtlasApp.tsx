@@ -1,38 +1,37 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- renderer frames are pre-sized WebP assets and must swap without a Next image loader */
+
 import {
-  Boxes,
   ChevronLeft,
   ChevronRight,
-  Cpu,
-  Gauge,
-  MonitorPlay,
+  GitCompareArrows,
   Pause,
   Play,
   RefreshCcw,
   ScanLine,
 } from "lucide-react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
-  Legend,
   Line,
   LineChart,
   ReferenceLine,
   ResponsiveContainer,
-  Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
-  ZAxis,
 } from "recharts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type MetricKey = "avgMs" | "medianMs" | "p90Ms" | "p99Ms";
-type EvidenceTab = "camera" | "experiments" | "hardware" | "runs";
+type SceneKey = "Sponza" | "SponzaIvy" | "Bistro";
+type ValidationView = "comparison" | "difference";
+type WorkloadKey =
+  | "none"
+  | "indexCount"
+  | "triangleCount"
+  | "totalFragments"
+  | "averageOverdraw"
+  | "quadEfficiency";
 
 interface FrameRecord {
   imageIndex: number;
@@ -44,7 +43,7 @@ interface FrameRecord {
 interface CaptureSequence {
   id: string;
   label: string;
-  scene: string;
+  scene: SceneKey;
   view: string;
   viewLabel: string;
   viewKind: "beauty" | "debug";
@@ -60,213 +59,348 @@ interface CaptureSequence {
     measureFrames: number;
     captureStride: number;
     captureFps: number;
+    sourceExperiment?: string;
   };
   frameCount: number;
   frames: FrameRecord[];
+}
+
+interface ValidationFrame {
+  imageIndex: number;
+  measurementFrame: number;
+  comparisonSrc: string;
+  differenceSrc: string;
+  metrics: {
+    interiorMaeLsb: number;
+    interiorP99Lsb: number;
+    interiorMaxLsb: number;
+    interiorExactRatio: number;
+    coverageMismatchRatio: number;
+  };
+}
+
+interface ValidationSequence {
+  id: string;
+  scene: SceneKey;
+  mode: number;
+  modeName: string;
+  label: string;
+  shortLabel: string;
+  order: number;
+  description: string;
+  profileId: string;
+  source: {
+    hardwareId: string;
+    referenceRenderer: string;
+    referenceRendererVariant: number;
+    visbufRenderer: string;
+    visbufRendererVariant: number;
+    width: number;
+    height: number;
+    captureStride: number;
+  };
+  frameCount: number;
+  frames: ValidationFrame[];
 }
 
 interface ProfileSample {
   frame: number;
   totalMs: number;
   indexCount: number;
-  passes: Record<string, number>;
+  passes: Record<string, number | null>;
 }
 
 interface CameraProfile {
   id: string;
   hardwareId: string;
-  scene: string;
+  scene: SceneKey;
   renderer: string;
   runIndex: number;
   samples: ProfileSample[];
 }
 
-interface ResultRow {
-  id: string;
-  hardwareId: string;
-  config: string;
-  scene: string;
-  renderer: string;
-  status: string;
-  runIndex: number;
-  repeat: number;
-  metrics: Record<MetricKey | "minMs" | "maxMs", number>;
-  parameters: Record<string, string | number | null>;
-  passes: Array<{ name: string; timeAvgMs: number }>;
-}
-
-interface Experiment {
-  config: string;
-  title: string;
-  group: string;
-  xKey: string;
-  xLabel: string;
-  secondaryKey?: string;
-  secondaryLabel?: string;
-  rowCount: number;
-}
-
-interface Dataset {
-  id: string;
-  label: string;
-  gpu: string;
-  role: "current" | "historical";
-  measuredOn: string | null;
-  scope: string;
-  includedInExperimentExplorer: boolean;
-  attributionNote?: string;
-}
-
-interface HardwareComparisonRow {
-  id: string;
-  datasetId: string;
-  hardwareLabel: string;
-  scene: string;
-  renderer: string;
-  rendererVariant: number;
-  resolution: string;
-  warmupFrames: number;
-  measureFrames: number;
-  profileWindowFrames: number;
-  vfc: number;
-  textures: number;
-  metrics: Record<MetricKey, number>;
-  source: string;
+interface RasterSample {
+  scene: SceneKey;
+  measurementFrame: number;
+  triangleCount: number;
+  totalFragments: number;
+  coveredPixels: number;
+  overdrawExtra: number;
+  averageOverdraw: number;
+  maximumOverdraw: number;
+  rasterizedTriangles: number;
+  skippedTriangles: number;
+  quadInstances: number;
+  quadCoveredLanes: number;
+  quadWasteLanes: number;
+  quadEfficiency: number;
 }
 
 interface AtlasData {
-  title: string;
-  subtitle: string;
+  schemaVersion: number;
   provenance: {
     campaignStatus: string;
-    campaignStartedAt: string;
-    campaignFinishedAt: string;
-    captureFinishedAt: string;
-    campaignExpectedRuns: number;
-    campaignSuccessfulRuns: number;
-    campaignSalvagedRuns: number;
-    campaignFailedRuns: number;
-    campaignSkippedRuns: number;
     sourceBranch: string;
     baseCommit: string;
   };
   hardware: {
-    id: string;
     gpu: {
       name: string;
       driver: string;
       memoryMiB: number;
-      powerLimitW: number;
-      maxGraphicsClockMHz: number;
-      maxMemoryClockMHz: number;
-      computeCapability: string;
-    };
-    cpu: {
-      name: string;
-      cores: number;
-      logicalProcessors: number;
-      maxClockMHz: number;
-    };
-    system: {
-      memoryBytes: number;
-      os: string;
-      build: string;
-    };
-    toolchain: {
-      visualStudio: string;
-      msvc: string;
-      python: string;
-      build: string;
     };
   };
-  datasets: Dataset[];
   summary: {
     resultRows: number;
-    captureSequences: number;
-    captureFrames: number;
-    playableFrames: number;
-    scenes: string[];
-    renderers: string[];
-    experiments: number;
+    validationPairs: number;
   };
-  experiments: Experiment[];
-  results: ResultRow[];
   profiles: CameraProfile[];
   sequences: CaptureSequence[];
-  hardwareComparison: HardwareComparisonRow[];
+  validationSequences: ValidationSequence[];
+  rasterTimeline: RasterSample[];
 }
 
-const COLORS = ["#77dcff", "#ffbb63", "#ff7199", "#77e0a3", "#b595ff"];
-const RENDERER_COLORS: Record<string, string> = {
-  DonutVisGBuffer: "#77dcff",
-  DonutDeferred: "#b595ff",
-  DonutDeferredPrepass: "#ffbb63",
+interface DebugChoice {
+  id: string;
+  scene: SceneKey;
+  label: string;
+  description: string;
+  kind: "identity" | "validation";
+  capture?: CaptureSequence;
+  validation?: ValidationSequence;
+}
+
+interface SeriesSpec {
+  key: string;
+  renderer: "Deferred" | "VisBuf";
+  label: string;
+  shortLabel: string;
+  pass: string | null;
+  color: string;
+  width: number;
+  dash?: string;
+}
+
+const SCENE_LABELS: Record<SceneKey, string> = {
+  Sponza: "Sponza",
+  SponzaIvy: "Sponza + Ivy",
+  Bistro: "Bistro",
 };
-const HARDWARE_COLORS = {
-  "RTX 5060 Ti 16GB": "#77dcff",
-  "RTX 5070": "#ffbb63",
-};
-const METRIC_LABELS: Record<MetricKey, string> = {
-  avgMs: "Average",
-  medianMs: "Median",
-  p90Ms: "P90",
-  p99Ms: "P99",
+
+const SERIES_SPECS: SeriesSpec[] = [
+  {
+    key: "d:total",
+    renderer: "Deferred",
+    label: "Deferred · total",
+    shortLabel: "Total",
+    pass: null,
+    color: "#f0b75d",
+    width: 2.6,
+  },
+  {
+    key: "d:depth_prepass",
+    renderer: "Deferred",
+    label: "Deferred · depth prepass",
+    shortLabel: "Depth prepass",
+    pass: "depth_prepass",
+    color: "#70b9f2",
+    width: 1.8,
+  },
+  {
+    key: "d:geometry",
+    renderer: "Deferred",
+    label: "Deferred · geometry",
+    shortLabel: "Geometry",
+    pass: "geometry",
+    color: "#55c987",
+    width: 1.8,
+  },
+  {
+    key: "d:lighting",
+    renderer: "Deferred",
+    label: "Deferred · lighting",
+    shortLabel: "Lighting",
+    pass: "lighting",
+    color: "#c9ced6",
+    width: 1.5,
+  },
+  {
+    key: "d:tonemap",
+    renderer: "Deferred",
+    label: "Deferred · tonemap",
+    shortLabel: "Tonemap",
+    pass: "tonemap",
+    color: "#8c949f",
+    width: 1.4,
+  },
+  {
+    key: "v:total",
+    renderer: "VisBuf",
+    label: "VisBuf · total",
+    shortLabel: "Total",
+    pass: null,
+    color: "#6ee1ff",
+    width: 2.6,
+  },
+  {
+    key: "v:visibility",
+    renderer: "VisBuf",
+    label: "VisBuf · visibility",
+    shortLabel: "Visibility",
+    pass: "visibility",
+    color: "#438fd4",
+    width: 1.8,
+  },
+  {
+    key: "v:visutil_histogram",
+    renderer: "VisBuf",
+    label: "VisBuf · histogram",
+    shortLabel: "Histogram",
+    pass: "visutil_histogram",
+    color: "#f09b45",
+    width: 1.5,
+  },
+  {
+    key: "v:visutil_prefix",
+    renderer: "VisBuf",
+    label: "VisBuf · prefix",
+    shortLabel: "Prefix",
+    pass: "visutil_prefix",
+    color: "#ffc66a",
+    width: 1.5,
+  },
+  {
+    key: "v:visutil_flatten",
+    renderer: "VisBuf",
+    label: "VisBuf · flatten",
+    shortLabel: "Flatten",
+    pass: "visutil_flatten",
+    color: "#d97835",
+    width: 1.5,
+  },
+  {
+    key: "v:gbuffer",
+    renderer: "VisBuf",
+    label: "VisBuf · compute G-buffer",
+    shortLabel: "G-buffer",
+    pass: "gbuffer",
+    color: "#a885ef",
+    width: 1.8,
+  },
+  {
+    key: "v:lighting",
+    renderer: "VisBuf",
+    label: "VisBuf · lighting",
+    shortLabel: "Lighting",
+    pass: "lighting",
+    color: "#aeb6c1",
+    width: 1.5,
+  },
+  {
+    key: "v:tonemap",
+    renderer: "VisBuf",
+    label: "VisBuf · tonemap",
+    shortLabel: "Tonemap",
+    pass: "tonemap",
+    color: "#717a86",
+    width: 1.4,
+  },
+];
+
+const DEFAULT_SERIES = new Set([
+  "d:total",
+  "d:depth_prepass",
+  "d:geometry",
+  "v:total",
+  "v:visibility",
+  "v:gbuffer",
+]);
+
+const WORKLOAD_META: Record<
+  Exclude<WorkloadKey, "none">,
+  { label: string; shortLabel: string; color: string; formatter: (value: number) => string }
+> = {
+  indexCount: {
+    label: "Visible index count",
+    shortLabel: "indices",
+    color: "#ef7da4",
+    formatter: formatCompact,
+  },
+  triangleCount: {
+    label: "Input triangles",
+    shortLabel: "triangles",
+    color: "#7dd9b1",
+    formatter: formatCompact,
+  },
+  totalFragments: {
+    label: "Generated fragments",
+    shortLabel: "fragments",
+    color: "#f29e66",
+    formatter: formatCompact,
+  },
+  averageOverdraw: {
+    label: "Average overdraw",
+    shortLabel: "overdraw",
+    color: "#d892ff",
+    formatter: (value) => `${value.toFixed(2)}×`,
+  },
+  quadEfficiency: {
+    label: "Quad-lane efficiency",
+    shortLabel: "quad efficiency",
+    color: "#84c8ff",
+    formatter: (value) => `${(value * 100).toFixed(1)}%`,
+  },
 };
 
 function formatMs(value: number | null | undefined, digits = 3) {
-  return value === null || value === undefined
+  return value === null || value === undefined || !Number.isFinite(value)
     ? "—"
     : `${value.toFixed(digits)} ms`;
 }
 
 function formatCompact(value: number | null | undefined) {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("en", {
     notation: "compact",
     maximumFractionDigits: 2,
   }).format(value);
 }
 
-function average(values: number[]) {
-  return values.length
-    ? values.reduce((sum, value) => sum + value, 0) / values.length
-    : 0;
-}
-
-function nearestSample(profile: CameraProfile | undefined, frame: number) {
-  if (!profile?.samples.length) return undefined;
-  return profile.samples.reduce((nearest, sample) =>
-    Math.abs(sample.frame - frame) < Math.abs(nearest.frame - frame)
-      ? sample
+function nearestByFrame<T>(
+  values: T[],
+  frame: number,
+  getFrame: (value: T) => number,
+) {
+  if (!values.length) return undefined;
+  return values.reduce((nearest, value) =>
+    Math.abs(getFrame(value) - frame) < Math.abs(getFrame(nearest) - frame)
+      ? value
       : nearest,
   );
 }
 
-function tooltipStyle() {
-  return {
-    background: "#111820",
-    border: "1px solid rgba(178, 196, 218, 0.22)",
-    borderRadius: "9px",
-    color: "#f4f7fb",
-    fontSize: "11px",
-  };
+function choiceFrames(choice: DebugChoice | undefined) {
+  if (!choice) return [];
+  return choice.kind === "identity"
+    ? (choice.capture?.frames ?? [])
+    : (choice.validation?.frames ?? []);
 }
 
 export function AtlasApp() {
   const [data, setData] = useState<AtlasData | null>(null);
   const [error, setError] = useState("");
-  const [sequenceId, setSequenceId] = useState("sponza-pbr");
+  const [scene, setScene] = useState<SceneKey>("Sponza");
+  const [debugId, setDebugId] = useState("sponza-geometry-primitive");
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [loop, setLoop] = useState(true);
   const [playbackFps, setPlaybackFps] = useState(8);
-  const [tab, setTab] = useState<EvidenceTab>("camera");
-  const [experimentConfig, setExperimentConfig] = useState(
-    "30_final_selected_full_camera.json",
+  const [validationView, setValidationView] =
+    useState<ValidationView>("comparison");
+  const [visibleSeries, setVisibleSeries] = useState<Set<string>>(
+    () => new Set(DEFAULT_SERIES),
   );
-  const [sceneFilter, setSceneFilter] = useState("All");
-  const [rendererFilter, setRendererFilter] = useState("All");
-  const [metric, setMetric] = useState<MetricKey>("avgMs");
+  const [workloadKey, setWorkloadKey] = useState<WorkloadKey>("indexCount");
 
   useEffect(() => {
     let live = true;
@@ -280,9 +414,7 @@ export function AtlasApp() {
       })
       .catch((reason: unknown) => {
         if (live) {
-          setError(
-            reason instanceof Error ? reason.message : "Unknown data error",
-          );
+          setError(reason instanceof Error ? reason.message : "Unknown data error");
         }
       });
     return () => {
@@ -290,60 +422,232 @@ export function AtlasApp() {
     };
   }, []);
 
-  const sequence = useMemo(
-    () => data?.sequences.find((item) => item.id === sequenceId),
-    [data, sequenceId],
+  const debugChoices = useMemo<DebugChoice[]>(() => {
+    if (!data) return [];
+    const identity = data.sequences
+      .filter((sequence) => sequence.scene === scene && sequence.viewKind === "debug")
+      .map((sequence) => ({
+        id: sequence.id,
+        scene,
+        label: sequence.viewLabel,
+        description: sequence.description,
+        kind: "identity" as const,
+        capture: sequence,
+      }));
+    const validation = data.validationSequences
+      .filter((sequence) => sequence.scene === scene)
+      .sort((left, right) => left.order - right.order)
+      .map((sequence) => ({
+        id: sequence.id,
+        scene,
+        label: sequence.label,
+        description: sequence.description,
+        kind: "validation" as const,
+        validation: sequence,
+      }));
+    return [...identity, ...validation];
+  }, [data, scene]);
+
+  const debugChoice = useMemo(
+    () => debugChoices.find((choice) => choice.id === debugId) ?? debugChoices[0],
+    [debugChoices, debugId],
   );
-  const frame = sequence?.frames[frameIndex];
-  const profile = useMemo(
-    () => data?.profiles.find((item) => item.id === sequence?.profileId),
-    [data, sequence],
-  );
-  const sample = useMemo(
-    () => nearestSample(profile, frame?.measurementFrame ?? 0),
-    [profile, frame],
-  );
+  const frames = useMemo(() => choiceFrames(debugChoice), [debugChoice]);
+  const activeFrame = frames[Math.min(frameIndex, Math.max(0, frames.length - 1))];
+  const measurementFrame = activeFrame?.measurementFrame ?? 0;
 
   useEffect(() => {
-    if (!playing || !sequence) return;
+    if (!playing || frames.length < 2) return;
     const timer = window.setInterval(() => {
       setFrameIndex((current) => {
-        if (current + 1 < sequence.frameCount) return current + 1;
+        if (current + 1 < frames.length) return current + 1;
         if (loop) return 0;
         setPlaying(false);
         return current;
       });
     }, 1000 / playbackFps);
     return () => window.clearInterval(timer);
-  }, [loop, playbackFps, playing, sequence]);
+  }, [frames.length, loop, playbackFps, playing]);
 
   useEffect(() => {
-    if (!sequence) return;
-    for (const offset of [1, 2]) {
-      const next = sequence.frames[(frameIndex + offset) % sequence.frameCount];
-      if (next) {
-        const image = new Image();
-        image.src = next.src;
-      }
+    for (const offset of [0, 1, 2]) {
+      const candidate = frames[(frameIndex + offset) % Math.max(1, frames.length)];
+      if (!candidate) continue;
+      const src =
+        "src" in candidate
+          ? candidate.src
+          : validationView === "comparison"
+            ? candidate.comparisonSrc
+            : candidate.differenceSrc;
+      const image = new Image();
+      image.src = src;
     }
-  }, [frameIndex, sequence]);
+  }, [frameIndex, frames, validationView]);
+
+  const normalSequence = useMemo(
+    () =>
+      data?.sequences.find(
+        (sequence) => sequence.scene === scene && sequence.viewKind === "beauty",
+      ),
+    [data, scene],
+  );
+  const normalFrame = useMemo(() => {
+    if (!normalSequence?.frames.length) return undefined;
+    const nearest = nearestByFrame(
+      normalSequence.frames,
+      measurementFrame,
+      (frame) => frame.measurementFrame,
+    );
+    if (
+      nearest &&
+      Math.abs(nearest.measurementFrame - measurementFrame) <=
+        Math.max(normalSequence.source.captureStride * 2, 120)
+    ) {
+      return nearest;
+    }
+    const progress = frames.length > 1 ? frameIndex / (frames.length - 1) : 0;
+    return normalSequence.frames[
+      Math.round(progress * (normalSequence.frames.length - 1))
+    ];
+  }, [frameIndex, frames.length, measurementFrame, normalSequence]);
+
+  const sceneProfiles = useMemo(
+    () => data?.profiles.filter((profile) => profile.scene === scene) ?? [],
+    [data, scene],
+  );
+  const deferredProfile = sceneProfiles.find(
+    (profile) => profile.renderer === "DonutDeferredPrepass",
+  );
+  const visbufProfile = sceneProfiles.find(
+    (profile) => profile.renderer === "DonutVisGBuffer",
+  );
+  const deferredSample = nearestByFrame(
+    deferredProfile?.samples ?? [],
+    measurementFrame,
+    (sample) => sample.frame,
+  );
+  const visbufSample = nearestByFrame(
+    visbufProfile?.samples ?? [],
+    measurementFrame,
+    (sample) => sample.frame,
+  );
+  const rasterSamples = useMemo(
+    () => data?.rasterTimeline.filter((sample) => sample.scene === scene) ?? [],
+    [data, scene],
+  );
+  const rasterSample = nearestByFrame(
+    rasterSamples,
+    measurementFrame,
+    (sample) => sample.measurementFrame,
+  );
+
+  const timeline = useMemo(() => {
+    const frameNumbers = [
+      ...new Set(
+        sceneProfiles.flatMap((profile) =>
+          profile.samples.map((sample) => sample.frame),
+        ),
+      ),
+    ].sort((left, right) => left - right);
+    return frameNumbers.map((frame) => {
+      const row: Record<string, number> = { frame };
+      for (const profile of sceneProfiles) {
+        const sample = profile.samples.find((entry) => entry.frame === frame);
+        if (!sample) continue;
+        const prefix =
+          profile.renderer === "DonutDeferredPrepass" ? "d" : "v";
+        row[`${prefix}:total`] = sample.totalMs;
+        for (const [pass, value] of Object.entries(sample.passes)) {
+          if (pass === "clear" || value === null || value <= 0) continue;
+          row[`${prefix}:${pass}`] = value;
+        }
+        if (profile.renderer === "DonutVisGBuffer") {
+          row.indexCount = sample.indexCount;
+        }
+      }
+      const raster = rasterSamples.find(
+        (sample) => sample.measurementFrame === frame,
+      );
+      if (raster) {
+        row.triangleCount = raster.triangleCount;
+        row.totalFragments = raster.totalFragments;
+        row.averageOverdraw = raster.averageOverdraw;
+        row.quadEfficiency = raster.quadEfficiency;
+      }
+      return row;
+    });
+  }, [rasterSamples, sceneProfiles]);
+
+  const availableSeries = useMemo(
+    () =>
+      SERIES_SPECS.filter((series) =>
+        timeline.some((row) => Number.isFinite(row[series.key])),
+      ),
+    [timeline],
+  );
 
   const moveFrame = useCallback(
     (delta: number) => {
-      if (!sequence) return;
+      if (!frames.length) return;
       setFrameIndex((current) => {
         const next = current + delta;
-        if (loop) {
-          return (next + sequence.frameCount) % sequence.frameCount;
-        }
-        return Math.max(0, Math.min(sequence.frameCount - 1, next));
+        if (loop) return (next + frames.length) % frames.length;
+        return Math.max(0, Math.min(frames.length - 1, next));
       });
     },
-    [loop, sequence],
+    [frames.length, loop],
   );
 
+  const setFrameForMeasurement = useCallback(
+    (target: number) => {
+      if (!frames.length) return;
+      let bestIndex = 0;
+      for (let index = 1; index < frames.length; index += 1) {
+        if (
+          Math.abs(frames[index].measurementFrame - target) <
+          Math.abs(frames[bestIndex].measurementFrame - target)
+        ) {
+          bestIndex = index;
+        }
+      }
+      setFrameIndex(bestIndex);
+    },
+    [frames],
+  );
+
+  const changeScene = useCallback(
+    (nextScene: SceneKey) => {
+      if (nextScene === scene) return;
+      setScene(nextScene);
+      setFrameIndex(0);
+      setPlaying(true);
+    },
+    [scene],
+  );
+
+  const changeDebug = useCallback(
+    (nextId: string) => {
+      const next = debugChoices.find((choice) => choice.id === nextId);
+      if (!next) return;
+      const progress = frames.length > 1 ? frameIndex / (frames.length - 1) : 0;
+      const nextFrames = choiceFrames(next);
+      setDebugId(nextId);
+      setFrameIndex(Math.round(progress * Math.max(0, nextFrames.length - 1)));
+    },
+    [debugChoices, frameIndex, frames.length],
+  );
+
+  const toggleSeries = useCallback((key: string) => {
+    setVisibleSeries((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
   const onPlayerKey = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
+    (event: React.KeyboardEvent<HTMLElement>) => {
       if (event.key === " ") {
         event.preventDefault();
         setPlaying((current) => !current);
@@ -358,1043 +662,483 @@ export function AtlasApp() {
     [moveFrame],
   );
 
-  const changeSequence = useCallback(
-    (nextId: string) => {
-      if (!data || !sequence) return;
-      const next = data.sequences.find((item) => item.id === nextId);
-      if (!next) return;
-      const progress =
-        sequence.frameCount > 1 ? frameIndex / (sequence.frameCount - 1) : 0;
-      setSequenceId(next.id);
-      setFrameIndex(Math.round(progress * Math.max(0, next.frameCount - 1)));
-    },
-    [data, frameIndex, sequence],
-  );
-
-  const changeScene = useCallback(
-    (scene: string) => {
-      if (!data || !sequence) return;
-      const matchingView = data.sequences.find(
-        (item) => item.scene === scene && item.view === sequence.view,
-      );
-      const fallback = data.sequences.find(
-        (item) => item.scene === scene && item.viewKind === "beauty",
-      );
-      const next = matchingView ?? fallback;
-      if (next) changeSequence(next.id);
-    },
-    [changeSequence, data, sequence],
-  );
-
-  const sceneSequences = useMemo(
-    () =>
-      data?.sequences.filter((item) => item.scene === sequence?.scene) ?? [],
-    [data, sequence],
-  );
-
-  const experiment = useMemo(
-    () =>
-      data?.experiments.find((item) => item.config === experimentConfig),
-    [data, experimentConfig],
-  );
-
-  const filteredResults = useMemo(() => {
-    if (!data) return [];
-    return data.results.filter(
-      (row) =>
-        row.config === experimentConfig &&
-        (sceneFilter === "All" || row.scene === sceneFilter) &&
-        (rendererFilter === "All" || row.renderer === rendererFilter),
-    );
-  }, [data, experimentConfig, rendererFilter, sceneFilter]);
-
-  const experimentSeries = useMemo(() => {
-    if (!experiment) return [];
-    const groups = new Map<
-      string,
-      Array<{ x: number; y: number; label: string }>
-    >();
-    for (const row of filteredResults) {
-      const rawX = row.parameters[experiment.xKey] ?? row.runIndex;
-      const x = typeof rawX === "number" ? rawX : row.runIndex;
-      const key = `${row.renderer} · ${row.scene}`;
-      const points = groups.get(key) ?? [];
-      points.push({
-        x,
-        y: row.metrics[metric],
-        label: `${row.scene} · ${row.renderer}`,
-      });
-      groups.set(key, points);
-    }
-    return [...groups.entries()].map(([name, points]) => ({
-      name,
-      points: points.sort((a, b) => a.x - b.x),
-    }));
-  }, [experiment, filteredResults, metric]);
-
-  const rendererSummary = useMemo(() => {
-    const values = new Map<string, number[]>();
-    for (const row of filteredResults) {
-      const list = values.get(row.renderer) ?? [];
-      list.push(row.metrics[metric]);
-      values.set(row.renderer, list);
-    }
-    return [...values.entries()].map(([renderer, samples]) => ({
-      renderer,
-      value: average(samples),
-    }));
-  }, [filteredResults, metric]);
-
-  const percentileSummary = useMemo(() => {
-    const metricValues = (key: MetricKey) =>
-      average(filteredResults.map((row) => row.metrics[key]));
-    return {
-      avgMs: metricValues("avgMs"),
-      medianMs: metricValues("medianMs"),
-      p90Ms: metricValues("p90Ms"),
-      p99Ms: metricValues("p99Ms"),
-    };
-  }, [filteredResults]);
-
-  const passSummary = useMemo(() => {
-    const values = new Map<string, number[]>();
-    for (const row of filteredResults) {
-      for (const pass of row.passes) {
-        if (pass.name === "total") continue;
-        const list = values.get(pass.name) ?? [];
-        list.push(pass.timeAvgMs);
-        values.set(pass.name, list);
-      }
-    }
-    return [...values.entries()]
-      .map(([name, samples]) => ({ name, value: average(samples) }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 9);
-  }, [filteredResults]);
-
-  const hardwareComparisonChart = useMemo(() => {
-    if (!data) return [];
-    const grouped = new Map<
-      string,
-      {
-        label: string;
-        scene: string;
-        renderer: string;
-        "RTX 5060 Ti 16GB"?: number;
-        "RTX 5070"?: number;
-      }
-    >();
-    for (const row of data.hardwareComparison) {
-      const key = `${row.scene}:${row.renderer}`;
-      const entry = grouped.get(key) ?? {
-        label: `${row.scene} · ${row.renderer.replace("Donut", "")}`,
-        scene: row.scene,
-        renderer: row.renderer,
-      };
-      entry[row.hardwareLabel as keyof typeof HARDWARE_COLORS] =
-        row.metrics[metric];
-      grouped.set(key, entry);
-    }
-    return [...grouped.values()];
-  }, [data, metric]);
-
-  const cameraTimeline = useMemo(() => {
-    if (!data || !sequence) return [];
-    const sceneProfiles = data.profiles.filter(
-      (item) => item.scene === sequence.scene,
-    );
-    const frames = [
-      ...new Set(
-        sceneProfiles.flatMap((item) => item.samples.map((entry) => entry.frame)),
-      ),
-    ].sort((a, b) => a - b);
-    return frames.map((profileFrame) => {
-      const row: Record<string, number> = { frame: profileFrame };
-      for (const item of sceneProfiles) {
-        const profileSample = item.samples.find(
-          (candidate) => candidate.frame === profileFrame,
-        );
-        if (profileSample) row[item.renderer] = profileSample.totalMs;
-      }
-      return row;
-    });
-  }, [data, sequence]);
-
-  const activePasses = useMemo(() => {
-    if (!sample) return [];
-    return Object.entries(sample.passes)
-      .filter(([, value]) => value !== null && value > 0)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [sample]);
-
   if (error) {
     return (
-      <main className="error-shell">
-        <section className="error-card">
+      <main className="state-shell">
+        <section className="state-card">
           <p className="eyebrow">Data bundle unavailable</p>
-          <h1>Could not open the experiment atlas.</h1>
-          <p className="subtitle">{error}</p>
+          <h1>Could not open the camera atlas.</h1>
+          <p>{error}</p>
         </section>
       </main>
     );
   }
 
-  if (!data || !sequence || !frame) {
+  if (!data || !debugChoice || !activeFrame || !normalFrame) {
     return (
-      <main className="loading-shell">
-        <section className="loading-card" role="status">
-          <p className="eyebrow">TVB Performance Atlas</p>
-          <h1>Loading the evidence bundle</h1>
-          <p className="subtitle">
-            Preparing 396 benchmark results and synchronized frame captures.
-          </p>
-          <div className="loading-track" />
+      <main className="state-shell">
+        <section className="state-card" role="status">
+          <p className="eyebrow">TVB Camera Atlas</p>
+          <h1>Loading synchronized evidence</h1>
+          <p>Preparing capture frames, pass timings, and raster workload.</p>
+          <div className="loading-line" />
         </section>
       </main>
     );
   }
 
-  const scenes = [...new Set(data.sequences.map((item) => item.scene))];
-  const profileRenderers = data.profiles
-    .filter((item) => item.scene === sequence.scene)
-    .map((item) => item.renderer);
-  const maxPass = Math.max(...activePasses.map((item) => item.value), 0.001);
-  const maxSummaryPass = Math.max(
-    ...passSummary.map((item) => item.value),
-    0.001,
-  );
+  const validationFrame =
+    debugChoice.kind === "validation" ? (activeFrame as ValidationFrame) : null;
+  const debugSrc =
+    debugChoice.kind === "identity"
+      ? (activeFrame as FrameRecord).src
+      : validationView === "comparison"
+        ? validationFrame?.comparisonSrc
+        : validationFrame?.differenceSrc;
+  const delta =
+    (visbufSample?.totalMs ?? 0) - (deferredSample?.totalMs ?? 0);
 
   return (
-    <main className="atlas-shell">
-      <header className="topbar">
-        <div className="brand-block">
-          <div className="brand-mark" aria-hidden="true">
-            <ScanLine size={22} strokeWidth={1.8} />
-          </div>
+    <main
+      className="atlas"
+      tabIndex={0}
+      onKeyDown={onPlayerKey}
+      aria-label="TVB synchronized camera and timing atlas"
+    >
+      <header className="masthead">
+        <div className="brand">
+          <span className="brand-icon" aria-hidden="true">
+            <ScanLine size={18} />
+          </span>
           <div>
-            <p className="eyebrow">Triangle visibility buffer · research viewer</p>
-            <h1>{data.title}</h1>
-            <p className="subtitle">{data.subtitle}</p>
+            <p className="eyebrow">VisibilityBufferInfo · evidence viewer</p>
+            <h1>TVB Camera Atlas</h1>
           </div>
         </div>
-        <div className="campaign-status">
-          <span className="status-pill">
-            <span className="status-dot" />
-            Campaign verified
+        <div className="provenance" aria-label="Dataset hardware provenance">
+          <span className="dataset-current">
+            Measured · RTX 5060 Ti 16GB
           </span>
-          <span className="status-copy">
-            {data.provenance.campaignSuccessfulRuns}/
-            {data.provenance.campaignExpectedRuns} success
-            <br />
-            {data.summary.captureFrames} captured frames · RTX 5060 Ti 16GB
-          </span>
+          <span>Earlier archive · RTX 5070 · never pooled</span>
         </div>
       </header>
 
-      <section className="hero-grid" aria-label="Synchronized frame viewer">
-        <article
-          className="viewer-card"
-          tabIndex={0}
-          onKeyDown={onPlayerKey}
-          data-testid="frame-player"
-        >
-          <div className="viewer-stage">
-            {/* Captures are already resized and content-addressed by the data pipeline. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="viewer-frame"
-              src={frame.src}
-              alt={`${sequence.label}, frame ${frame.imageIndex + 1}`}
-            />
-            <div className="viewer-topline">
-              <span className="frame-badge accent">
-                <MonitorPlay size={13} />
-                {sequence.scene}
-              </span>
-              <span className="frame-badge">{sequence.viewLabel}</span>
-            </div>
-            <div className="viewer-bottomline">
-              <span className="frame-badge">{sequence.renderer}</span>
-              <div className="live-readout">
-                <div className="readout-cell">
-                  <span className="readout-label">Camera window</span>
-                  <span className="readout-value">
-                    {frame.measurementFrame.toLocaleString()}
-                  </span>
-                </div>
-                <div className="readout-cell">
-                  <span className="readout-label">GPU total</span>
-                  <span className="readout-value">
-                    {formatMs(sample?.totalMs)}
-                  </span>
-                </div>
-                <div className="readout-cell">
-                  <span className="readout-label">Visible indices</span>
-                  <span className="readout-value">
-                    {formatCompact(sample?.indexCount)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="viewer-footer">
-            <div className="frame-controls">
-              <div className="transport">
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label="Previous frame"
-                  onClick={() => moveFrame(-1)}
-                >
-                  <ChevronLeft size={17} />
-                </button>
-                <button
-                  className="icon-button primary"
-                  type="button"
-                  aria-label={playing ? "Pause playback" : "Start playback"}
-                  onClick={() => setPlaying((current) => !current)}
-                >
-                  {playing ? <Pause size={16} /> : <Play size={16} />}
-                </button>
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label="Next frame"
-                  onClick={() => moveFrame(1)}
-                >
-                  <ChevronRight size={17} />
-                </button>
-                <button
-                  className={`icon-button ${loop ? "is-active" : ""}`}
-                  type="button"
-                  aria-label="Toggle infinite loop"
-                  aria-pressed={loop}
-                  onClick={() => setLoop((current) => !current)}
-                >
-                  <RefreshCcw size={15} />
-                </button>
-              </div>
-              <input
-                className="frame-slider"
-                aria-label="Select frame"
-                type="range"
-                min={0}
-                max={sequence.frameCount - 1}
-                value={frameIndex}
-                onChange={(event) => {
-                  setFrameIndex(Number(event.target.value));
-                  setPlaying(false);
-                }}
-              />
-              <span className="frame-index">
-                {String(frameIndex + 1).padStart(2, "0")} /{" "}
-                {String(sequence.frameCount).padStart(2, "0")}
-              </span>
-            </div>
-            <div className="sequence-note">
-              <span>{sequence.description}</span>
-              <code>
-                stride {sequence.source.captureStride} · 1280×720 source
-              </code>
-            </div>
-          </div>
-        </article>
-
-        <aside className="control-card">
-          <div>
-            <div className="section-kicker">
-              <h2>Playback laboratory</h2>
-              <span>SPACE / ← / →</span>
-            </div>
-            <div className="field-grid">
-              <label className="field-label">
-                Scene
-                <select
-                  className="field-select"
-                  aria-label="Capture scene"
-                  value={sequence.scene}
-                  onChange={(event) => changeScene(event.target.value)}
-                >
-                  {scenes.map((scene) => (
-                    <option key={scene}>{scene}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="field-label">
-                Output / debug view
-                <select
-                  className="field-select"
-                  aria-label="Capture output view"
-                  value={sequence.id}
-                  onChange={(event) => changeSequence(event.target.value)}
-                >
-                  {sceneSequences.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.viewLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field-label">
-                Playback speed
-                <select
-                  className="field-select"
-                  aria-label="Playback speed"
-                  value={playbackFps}
-                  onChange={(event) =>
-                    setPlaybackFps(Number(event.target.value))
-                  }
-                >
-                  <option value={2}>2 fps · inspect</option>
-                  <option value={4}>4 fps · slow</option>
-                  <option value={8}>8 fps · default</option>
-                  <option value={12}>12 fps · capture rate</option>
-                </select>
-              </label>
-              <div className="toggle-row">
-                <label className="toggle">
-                  Autoplay
-                  <input
-                    type="checkbox"
-                    checked={playing}
-                    onChange={(event) => setPlaying(event.target.checked)}
-                  />
-                </label>
-                <label className="toggle">
-                  Infinite loop
-                  <input
-                    type="checkbox"
-                    checked={loop}
-                    onChange={(event) => setLoop(event.target.checked)}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-          <div>
-            <p className="sequence-description">
-              {sequence.viewKind === "debug"
-                ? `Debug mode ${sequence.debugMode}. ${sequence.description} Timing below remains the matching validated VisBuf camera profile, not the debug renderer's capture overhead.`
-                : `${sequence.description} The timing window below is synchronized by measurement-frame index.`}
-            </p>
-            <div className="mini-metrics">
-              <div className="mini-metric">
-                <span>Window total</span>
-                <strong>{formatMs(sample?.totalMs)}</strong>
-              </div>
-              <div className="mini-metric">
-                <span>Index workload</span>
-                <strong>{formatCompact(sample?.indexCount)}</strong>
-              </div>
-              <div className="mini-metric">
-                <span>Renderer variant</span>
-                <strong>{sequence.rendererVariant}</strong>
-              </div>
-              <div className="mini-metric">
-                <span>Measurement frame</span>
-                <strong>{frame.measurementFrame}</strong>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </section>
-
-      <section className="camera-strip" aria-label="Current camera metrics">
-        <div className="camera-stat">
-          <span>GPU total</span>
-          <strong className="cyan">{formatMs(sample?.totalMs)}</strong>
-        </div>
-        <div className="camera-stat">
-          <span>Visibility pass</span>
-          <strong>{formatMs(sample?.passes.visibility)}</strong>
-        </div>
-        <div className="camera-stat">
-          <span>G-buffer / geometry</span>
-          <strong>
-            {formatMs(
-              sample?.passes.gbuffer ??
-                sample?.passes.geometry ??
-                sample?.passes.depth_prepass,
-            )}
-          </strong>
-        </div>
-        <div className="camera-stat">
-          <span>Visible index count</span>
-          <strong>{formatCompact(sample?.indexCount)}</strong>
-        </div>
-      </section>
-
-      <section className="evidence-section" aria-labelledby="evidence-title">
-        <div className="evidence-heading">
-          <div>
-            <p className="eyebrow">Measured evidence</p>
-            <h2 id="evidence-title">The numbers beneath the image</h2>
-            <p>
-              Camera-window profiles and the complete validated material campaign.
-            </p>
-          </div>
-          <span className="evidence-count">
-            {data.summary.resultRows} rows · {data.summary.experiments} experiments ·{" "}
-            {data.summary.scenes.length} scene classes · RTX 5060 Ti 16GB
-          </span>
-        </div>
-
-        <div className="tab-list" role="tablist" aria-label="Evidence view">
-          {[
-            ["camera", "Camera timeline"],
-            ["experiments", "Experiment explorer"],
-            ["hardware", "GPU provenance"],
-            ["runs", "Run ledger"],
-          ].map(([value, label]) => (
+      <section className="command-bar" aria-label="Camera playback controls">
+        <div className="scene-switcher" aria-label="Capture scene">
+          {(Object.keys(SCENE_LABELS) as SceneKey[]).map((sceneKey) => (
             <button
-              key={value}
-              className={`tab-button ${tab === value ? "active" : ""}`}
               type="button"
-              role="tab"
-              aria-selected={tab === value}
-              onClick={() => setTab(value as EvidenceTab)}
+              key={sceneKey}
+              className={scene === sceneKey ? "scene-button active" : "scene-button"}
+              aria-pressed={scene === sceneKey}
+              onClick={() => changeScene(sceneKey)}
             >
-              {label}
+              {SCENE_LABELS[sceneKey]}
             </button>
           ))}
         </div>
 
-        {tab === "camera" && (
-          <div className="evidence-grid">
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>{sequence.scene} camera-path GPU time</h3>
-                <span>60-frame measurement windows</span>
-              </div>
-              <div className="chart-shell">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={cameraTimeline}
-                    margin={{ top: 8, right: 18, left: -16, bottom: 2 }}
-                  >
-                    <CartesianGrid stroke="rgba(178,196,218,.10)" vertical={false} />
-                    <XAxis
-                      dataKey="frame"
-                      stroke="#6f7b89"
-                      tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#6f7b89"
-                      tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value: number) => `${value.toFixed(1)}`}
-                    />
-                    <Tooltip
-                      contentStyle={tooltipStyle()}
-                      labelStyle={{ color: "#8e9aaa" }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "10px", color: "#8e9aaa" }} />
-                    {profileRenderers.map((rendererName, index) => (
-                      <Line
-                        key={rendererName}
-                        type="monotone"
-                        dataKey={rendererName}
-                        dot={false}
-                        stroke={
-                          RENDERER_COLORS[rendererName] ?? COLORS[index % COLORS.length]
-                        }
-                        strokeWidth={1.8}
-                        connectNulls
-                      />
-                    ))}
-                    <ReferenceLine
-                      x={frame.measurementFrame}
-                      stroke="#f4f7fb"
-                      strokeDasharray="3 4"
-                      strokeOpacity={0.62}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </article>
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>Current pass anatomy</h3>
-                <span>frame {sample?.frame ?? "—"}</span>
-              </div>
-              <div className="percentile-grid">
-                <div className="percentile-cell">
-                  <span>Total GPU</span>
-                  <strong>{formatMs(sample?.totalMs)}</strong>
-                </div>
-                <div className="percentile-cell">
-                  <span>Index count</span>
-                  <strong>{formatCompact(sample?.indexCount)}</strong>
-                </div>
-              </div>
-              <div className="pass-list">
-                {activePasses.map((item) => (
-                  <div className="pass-row" key={item.name}>
-                    <span>{item.name}</span>
-                    <div className="pass-track">
-                      <div
-                        className="pass-fill"
-                        style={{ width: `${(item.value / maxPass) * 100}%` }}
-                      />
-                    </div>
-                    <span className="pass-value">{item.value.toFixed(3)} ms</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
-        )}
+        <div className="transport">
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Previous frame"
+            onClick={() => moveFrame(-1)}
+          >
+            <ChevronLeft size={17} />
+          </button>
+          <button
+            type="button"
+            className="icon-button primary"
+            aria-label={playing ? "Pause playback" : "Play capture"}
+            onClick={() => setPlaying((current) => !current)}
+          >
+            {playing ? <Pause size={17} /> : <Play size={17} />}
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Next frame"
+            onClick={() => moveFrame(1)}
+          >
+            <ChevronRight size={17} />
+          </button>
+          <label className="loop-control">
+            <input
+              type="checkbox"
+              checked={loop}
+              onChange={(event) => setLoop(event.target.checked)}
+            />
+            <RefreshCcw size={13} />
+            Infinite loop
+          </label>
+          <label className="compact-field">
+            <span>Rate</span>
+            <select
+              aria-label="Playback speed"
+              value={playbackFps}
+              onChange={(event) => setPlaybackFps(Number(event.target.value))}
+            >
+              {[2, 4, 8, 12].map((fps) => (
+                <option value={fps} key={fps}>
+                  {fps} fps
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-        {(tab === "experiments" || tab === "runs") && (
-          <div className="filter-bar">
-            <label className="field-label">
-              Experiment
-              <select
-                className="field-select"
-                value={experimentConfig}
-                onChange={(event) => setExperimentConfig(event.target.value)}
-              >
-                {data.experiments.map((item) => (
-                  <option key={item.config} value={item.config}>
-                    {item.title} · {item.rowCount}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field-label">
-              Scene
-              <select
-                className="field-select"
-                value={sceneFilter}
-                onChange={(event) => setSceneFilter(event.target.value)}
-              >
-                <option>All</option>
-                {data.summary.scenes.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field-label">
-              Renderer
-              <select
-                className="field-select"
-                value={rendererFilter}
-                onChange={(event) => setRendererFilter(event.target.value)}
-              >
-                <option>All</option>
-                {data.summary.renderers.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field-label">
-              Metric
-              <select
-                className="field-select"
-                value={metric}
-                onChange={(event) => setMetric(event.target.value as MetricKey)}
-              >
-                {Object.entries(METRIC_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
+        <div className="frame-control">
+          <span>
+            frame {String(frameIndex + 1).padStart(2, "0")} /{" "}
+            {String(frames.length).padStart(2, "0")}
+          </span>
+          <input
+            aria-label="Select frame"
+            type="range"
+            min={0}
+            max={Math.max(0, frames.length - 1)}
+            value={frameIndex}
+            onChange={(event) => setFrameIndex(Number(event.target.value))}
+          />
+          <strong>measurement {measurementFrame}</strong>
+        </div>
+      </section>
 
-        {tab === "experiments" && (
-          <div className="evidence-grid">
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>{experiment?.title}</h3>
-                <span>
-                  RTX 5060 Ti 16GB · x {experiment?.xLabel} / y{" "}
-                  {METRIC_LABELS[metric]} GPU ms
-                </span>
-              </div>
-              {experimentSeries.length ? (
-                <div className="chart-shell">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart
-                      margin={{ top: 10, right: 18, left: -15, bottom: 4 }}
-                    >
-                      <CartesianGrid stroke="rgba(178,196,218,.10)" />
-                      <XAxis
-                        type="number"
-                        dataKey="x"
-                        name={experiment?.xLabel}
-                        stroke="#6f7b89"
-                        tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        type="number"
-                        dataKey="y"
-                        name={`${METRIC_LABELS[metric]} (ms)`}
-                        stroke="#6f7b89"
-                        tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                        tickLine={false}
-                      />
-                      <ZAxis range={[34, 34]} />
-                      <Tooltip
-                        cursor={{ strokeDasharray: "3 3" }}
-                        contentStyle={tooltipStyle()}
-                      />
-                      <Legend
-                        wrapperStyle={{ fontSize: "10px", color: "#8e9aaa" }}
-                      />
-                      {experimentSeries.map((item, index) => (
-                        <Scatter
-                          key={item.name}
-                          name={item.name}
-                          data={item.points}
-                          fill={COLORS[index % COLORS.length]}
-                          line
-                        />
-                      ))}
-                    </ScatterChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="chart-empty">No measured rows match these filters.</div>
-              )}
-            </article>
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>Renderer aggregate</h3>
-                <span>{filteredResults.length} measured rows</span>
-              </div>
-              <div className="percentile-grid">
-                {Object.entries(percentileSummary).map(([key, value]) => (
-                  <div className="percentile-cell" key={key}>
-                    <span>{METRIC_LABELS[key as MetricKey]}</span>
-                    <strong>{formatMs(value)}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className="chart-shell compact">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={rendererSummary}
-                    layout="vertical"
-                    margin={{ top: 0, right: 18, left: 22, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      stroke="rgba(178,196,218,.10)"
-                      horizontal={false}
-                    />
-                    <XAxis
-                      type="number"
-                      tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="renderer"
-                      width={116}
-                      tick={{ fill: "#b7c1ce", fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip contentStyle={tooltipStyle()} />
-                    <Bar dataKey="value" radius={[0, 5, 5, 0]}>
-                      {rendererSummary.map((item, index) => (
-                        <Cell
-                          key={item.renderer}
-                          fill={
-                            RENDERER_COLORS[item.renderer] ??
-                            COLORS[index % COLORS.length]
-                          }
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </article>
-          </div>
-        )}
-
-        {tab === "hardware" && (
-          <>
-            <div className="hardware-filter">
+      <section className="viewer-grid">
+        <article className="viewer-panel">
+          <div className="viewer-heading">
+            <div>
+              <span className="panel-number">01</span>
               <div>
-                <p className="eyebrow">Matched camera baselines</p>
-                <p>
-                  Same scene, renderer, resolution, camera length, textures, and VFC;
-                  hardware and repository revision may differ.
-                </p>
+                <p className="panel-label">Normal output</p>
+                <h2>{SCENE_LABELS[scene]} · textured PBR</h2>
               </div>
-              <label className="field-label">
-                Metric
+            </div>
+            <span className="renderer-badge">VisBuf G-buffer</span>
+          </div>
+          <div className="image-stage">
+            <img
+              src={normalFrame.src}
+              alt={`${SCENE_LABELS[scene]} textured PBR at measurement frame ${measurementFrame}`}
+            />
+            <div className="stage-overlay top">
+              <span>camera frame {measurementFrame}</span>
+              <span>{normalSequence?.frameCount} capture anchors</span>
+            </div>
+            <div className="stage-overlay bottom metric-overlay">
+              <span>
+                Deferred <strong>{formatMs(deferredSample?.totalMs)}</strong>
+              </span>
+              <span>
+                VisBuf <strong>{formatMs(visbufSample?.totalMs)}</strong>
+              </span>
+              <span className={delta <= 0 ? "positive" : "negative"}>
+                Δ <strong>{delta >= 0 ? "+" : ""}{delta.toFixed(3)} ms</strong>
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <article className="viewer-panel">
+          <div className="viewer-heading debug-heading">
+            <div>
+              <span className="panel-number">02</span>
+              <label className="debug-select">
+                <span>Debug output</span>
                 <select
-                  className="field-select"
-                  value={metric}
-                  onChange={(event) => setMetric(event.target.value as MetricKey)}
+                  aria-label="Capture output view"
+                  value={debugChoice.id}
+                  onChange={(event) => changeDebug(event.target.value)}
                 >
-                  {Object.entries(METRIC_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
+                  {debugChoices.map((choice) => (
+                    <option value={choice.id} key={choice.id}>
+                      {choice.label}
                     </option>
                   ))}
                 </select>
               </label>
             </div>
-            <div className="evidence-grid">
-              <article className="evidence-card">
-                <div className="section-kicker">
-                  <h3>Current vs previous GPU evidence</h3>
-                  <span>{METRIC_LABELS[metric]} total GPU time · lower is better</span>
-                </div>
-                <div className="chart-shell hardware-chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={hardwareComparisonChart}
-                      layout="vertical"
-                      margin={{ top: 8, right: 20, left: 48, bottom: 4 }}
-                    >
-                      <CartesianGrid
-                        stroke="rgba(178,196,218,.10)"
-                        horizontal={false}
-                      />
-                      <XAxis
-                        type="number"
-                        unit=" ms"
-                        tick={{ fill: "#8e9aaa", fontSize: 10 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="label"
-                        width={156}
-                        tick={{ fill: "#b7c1ce", fontSize: 9 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={tooltipStyle()}
-                        formatter={(value) => formatMs(Number(value))}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "10px", color: "#8e9aaa" }} />
-                      {Object.entries(HARDWARE_COLORS).map(([hardwareLabel, color]) => (
-                        <Bar
-                          key={hardwareLabel}
-                          dataKey={hardwareLabel}
-                          fill={color}
-                          radius={[0, 4, 4, 0]}
-                          barSize={8}
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </article>
-              <article className="evidence-card dataset-card">
-                <div className="section-kicker">
-                  <h3>Dataset boundaries</h3>
-                  <span>never pooled across GPUs</span>
-                </div>
-                <div className="dataset-list">
-                  {data.datasets.map((dataset) => (
-                    <div className="dataset-row" key={dataset.id}>
-                      <span
-                        className={`dataset-swatch ${dataset.role}`}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <strong>{dataset.label}</strong>
-                        <p>{dataset.scope}</p>
-                        {dataset.attributionNote && (
-                          <small>{dataset.attributionNote}</small>
-                        )}
-                      </div>
-                    </div>
+            {debugChoice.kind === "validation" ? (
+              <div className="view-toggle" aria-label="Validation display">
+                <button
+                  type="button"
+                  className={validationView === "comparison" ? "active" : ""}
+                  aria-pressed={validationView === "comparison"}
+                  onClick={() => setValidationView("comparison")}
+                >
+                  <GitCompareArrows size={13} />
+                  Raster | VisBuf
+                </button>
+                <button
+                  type="button"
+                  className={validationView === "difference" ? "active" : ""}
+                  aria-pressed={validationView === "difference"}
+                  onClick={() => setValidationView("difference")}
+                >
+                  |difference|
+                </button>
+              </div>
+            ) : (
+              <span className="renderer-badge">VisBuf debug</span>
+            )}
+          </div>
+          <div className="image-stage debug-stage">
+            <img
+              src={debugSrc}
+              alt={`${debugChoice.label} debug output at measurement frame ${measurementFrame}`}
+            />
+            {debugChoice.kind === "validation" &&
+              validationView === "comparison" && (
+                <>
+                  <span className="split-label left">Raster reference</span>
+                  <span className="split-label right">VisBuf analytic</span>
+                  <span className="split-rule" aria-hidden="true" />
+                </>
+              )}
+            {debugChoice.kind === "validation" &&
+              validationView === "difference" && (
+                <span className="difference-label">
+                  Absolute difference · 8 LSB = white
+                </span>
+              )}
+            <div className="stage-overlay bottom">
+              {validationFrame ? (
+                <>
+                  <span>
+                    interior MAE{" "}
+                    <strong>{validationFrame.metrics.interiorMaeLsb.toFixed(4)} LSB</strong>
+                  </span>
+                  <span>
+                    exact{" "}
+                    <strong>
+                      {(validationFrame.metrics.interiorExactRatio * 100).toFixed(2)}%
+                    </strong>
+                  </span>
+                  <span>
+                    coverage mismatch{" "}
+                    <strong>
+                      {(validationFrame.metrics.coverageMismatchRatio * 100).toFixed(4)}%
+                    </strong>
+                  </span>
+                </>
+              ) : (
+                <span>{debugChoice.description}</span>
+              )}
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="timeline-panel">
+        <header className="timeline-heading">
+          <div>
+            <p className="panel-label">Camera Timeline</p>
+            <h2>GPU pass time along the measured camera path</h2>
+            <p>
+              Debug capture cost is excluded. Passes are ordered by execution;
+              clear is intentionally not measured.
+            </p>
+          </div>
+          <label className="workload-select">
+            <span>Secondary workload trace</span>
+            <select
+              aria-label="Timeline workload metric"
+              value={workloadKey}
+              onChange={(event) =>
+                setWorkloadKey(event.target.value as WorkloadKey)
+              }
+            >
+              <option value="none">None</option>
+              {Object.entries(WORKLOAD_META).map(([key, metadata]) => (
+                <option value={key} key={key}>
+                  {metadata.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </header>
+
+        <div className="timeline-body">
+          <div className="chart-wrap" data-testid="camera-timeline">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={timeline}
+                margin={{ top: 10, right: workloadKey === "none" ? 14 : 58, bottom: 0, left: 0 }}
+                onClick={(state: { activeLabel?: string | number } | null) => {
+                  if (state?.activeLabel !== undefined) {
+                    setFrameForMeasurement(Number(state.activeLabel));
+                  }
+                }}
+              >
+                <CartesianGrid stroke="rgba(172, 191, 213, 0.10)" vertical={false} />
+                <XAxis
+                  dataKey="frame"
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  tick={{ fill: "#798898", fontSize: 10 }}
+                  axisLine={{ stroke: "rgba(172, 191, 213, 0.17)" }}
+                  tickLine={false}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <YAxis
+                  yAxisId="gpu"
+                  width={47}
+                  tick={{ fill: "#798898", fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => `${Number(value).toFixed(1)}`}
+                  label={{
+                    value: "GPU ms",
+                    angle: -90,
+                    position: "insideLeft",
+                    fill: "#798898",
+                    fontSize: 10,
+                  }}
+                />
+                {workloadKey !== "none" && (
+                  <YAxis
+                    yAxisId="workload"
+                    orientation="right"
+                    width={54}
+                    tick={{ fill: WORKLOAD_META[workloadKey].color, fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) =>
+                      WORKLOAD_META[workloadKey].formatter(Number(value))
+                    }
+                  />
+                )}
+                <Tooltip
+                  contentStyle={{
+                    background: "#0d1319",
+                    border: "1px solid rgba(172, 191, 213, 0.2)",
+                    borderRadius: 10,
+                    fontSize: 11,
+                  }}
+                  labelFormatter={(value) => `Measurement frame ${value}`}
+                  formatter={(value, name) => {
+                    const numeric = Number(value);
+                    if (name === "__workload" && workloadKey !== "none") {
+                      return [
+                        WORKLOAD_META[workloadKey].formatter(numeric),
+                        WORKLOAD_META[workloadKey].label,
+                      ];
+                    }
+                    const series = SERIES_SPECS.find((item) => item.key === name);
+                    return [formatMs(numeric), series?.label ?? name];
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="gpu"
+                  x={measurementFrame}
+                  stroke="#ffffff"
+                  strokeWidth={1.2}
+                  strokeDasharray="3 4"
+                  ifOverflow="extendDomain"
+                />
+                {availableSeries
+                  .filter((series) => visibleSeries.has(series.key))
+                  .map((series) => (
+                    <Line
+                      key={series.key}
+                      yAxisId="gpu"
+                      type="monotone"
+                      dataKey={series.key}
+                      name={series.key}
+                      stroke={series.color}
+                      strokeWidth={series.width}
+                      strokeDasharray={series.dash}
+                      dot={false}
+                      activeDot={{ r: 3 }}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
                   ))}
-                </div>
-                <p className="comparison-caution">
-                  This view preserves the recorded milliseconds. It does not normalize
-                  one GPU to the other or claim an architectural speedup because the
-                  archived run also predates today&apos;s code revision. Historical
-                  profiles used 10-frame windows; today&apos;s campaign used 60-frame
-                  windows, so percentile shapes are contextual rather than strict A/B
-                  evidence.
-                </p>
-              </article>
-            </div>
-          </>
-        )}
+                {workloadKey !== "none" && (
+                  <Line
+                    yAxisId="workload"
+                    type="monotone"
+                    dataKey={workloadKey}
+                    name="__workload"
+                    stroke={WORKLOAD_META[workloadKey].color}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    dot={false}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-        {tab === "runs" && (
-          <div className="evidence-grid">
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>Measured run ledger</h3>
-                <span>success rows only · no synthetic failures</span>
-              </div>
-              <div className="run-table-wrap">
-                <table className="run-table">
-                  <thead>
-                    <tr>
-                      <th>Run</th>
-                      <th>GPU</th>
-                      <th>Scene</th>
-                      <th>Renderer</th>
-                      <th>Average</th>
-                      <th>Median</th>
-                      <th>P90</th>
-                      <th>P99</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredResults.map((row) => (
-                      <tr key={row.id}>
-                        <td className="numeric">{row.runIndex}</td>
-                        <td>RTX 5060 Ti 16GB</td>
-                        <td>{row.scene}</td>
-                        <td>{row.renderer}</td>
-                        <td className="numeric">{formatMs(row.metrics.avgMs)}</td>
-                        <td className="numeric">
-                          {formatMs(row.metrics.medianMs)}
-                        </td>
-                        <td className="numeric">{formatMs(row.metrics.p90Ms)}</td>
-                        <td className="numeric">{formatMs(row.metrics.p99Ms)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-            <article className="evidence-card">
-              <div className="section-kicker">
-                <h3>Mean pass breakdown</h3>
-                <span>filtered rows</span>
-              </div>
-              <div className="pass-list">
-                {passSummary.map((item) => (
-                  <div className="pass-row" key={item.name}>
-                    <span>{item.name}</span>
-                    <div className="pass-track">
-                      <div
-                        className="pass-fill"
-                        style={{
-                          width: `${(item.value / maxSummaryPass) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="pass-value">{item.value.toFixed(3)} ms</span>
-                  </div>
+          <aside className="cursor-readout" aria-label="Current camera workload">
+            <div>
+              <span>Visible indices</span>
+              <strong>{formatCompact(visbufSample?.indexCount)}</strong>
+            </div>
+            <div>
+              <span>Input triangles</span>
+              <strong>{formatCompact(rasterSample?.triangleCount)}</strong>
+            </div>
+            <div>
+              <span>Fragments</span>
+              <strong>{formatCompact(rasterSample?.totalFragments)}</strong>
+            </div>
+            <div>
+              <span>Overdraw</span>
+              <strong>
+                {rasterSample ? `${rasterSample.averageOverdraw.toFixed(2)}×` : "—"}
+              </strong>
+            </div>
+            <div>
+              <span>Quad efficiency</span>
+              <strong>
+                {rasterSample
+                  ? `${(rasterSample.quadEfficiency * 100).toFixed(1)}%`
+                  : "—"}
+              </strong>
+            </div>
+          </aside>
+        </div>
+
+        <div className="pass-controls" aria-label="GPU pass visibility controls">
+          {(["Deferred", "VisBuf"] as const).map((renderer) => (
+            <div className="pass-group" key={renderer}>
+              <span className="pass-group-name">{renderer}</span>
+              {availableSeries
+                .filter((series) => series.renderer === renderer)
+                .map((series) => (
+                  <button
+                    type="button"
+                    key={series.key}
+                    className={visibleSeries.has(series.key) ? "pass-chip active" : "pass-chip"}
+                    aria-pressed={visibleSeries.has(series.key)}
+                    onClick={() => toggleSeries(series.key)}
+                  >
+                    <span
+                      className="pass-swatch"
+                      style={{ backgroundColor: series.color }}
+                    />
+                    {series.shortLabel}
+                  </button>
                 ))}
-              </div>
-            </article>
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="hardware-section" aria-label="Hardware and provenance">
-        <article className="hardware-card">
-          <div className="hardware-title">
-            <Gauge size={15} />
-            Today&apos;s measurement GPU
-          </div>
-          <div className="hardware-list">
-            <div className="hardware-line">
-              <span>Device</span>
-              <strong>{data.hardware.gpu.name}</strong>
-            </div>
-            <div className="hardware-line">
-              <span>VRAM</span>
-              <strong>
-                {(data.hardware.gpu.memoryMiB / 1024).toFixed(1)} GiB
-              </strong>
-            </div>
-            <div className="hardware-line">
-              <span>Power limit</span>
-              <strong>{data.hardware.gpu.powerLimitW} W</strong>
-            </div>
-            <div className="hardware-line">
-              <span>Max graphics clock</span>
-              <strong>{data.hardware.gpu.maxGraphicsClockMHz} MHz</strong>
-            </div>
-            <div className="hardware-line">
-              <span>Driver / compute</span>
-              <strong>
-                {data.hardware.gpu.driver} / {data.hardware.gpu.computeCapability}
-              </strong>
-            </div>
-          </div>
-        </article>
-        <article className="hardware-card">
-          <div className="hardware-title">
-            <Cpu size={15} />
-            Host
-          </div>
-          <div className="hardware-list">
-            <div className="hardware-line">
-              <span>CPU</span>
-              <strong>{data.hardware.cpu.name}</strong>
-            </div>
-            <div className="hardware-line">
-              <span>Cores / threads</span>
-              <strong>
-                {data.hardware.cpu.cores} /{" "}
-                {data.hardware.cpu.logicalProcessors}
-              </strong>
-            </div>
-            <div className="hardware-line">
-              <span>System memory</span>
-              <strong>
-                {(data.hardware.system.memoryBytes / 2 ** 30).toFixed(1)} GiB
-              </strong>
-            </div>
-            <div className="hardware-line">
-              <span>OS build</span>
-              <strong>{data.hardware.system.build}</strong>
-            </div>
-          </div>
-        </article>
-        <article className="hardware-card">
-          <div className="hardware-title">
-            <Boxes size={15} />
-            Evidence provenance
-          </div>
-          <div className="hardware-list">
-            <div className="hardware-line">
-              <span>Current / previous</span>
-              <strong>RTX 5060 Ti 16GB / RTX 5070</strong>
-            </div>
-            <div className="hardware-line">
-              <span>Campaign</span>
-              <strong>
-                {data.provenance.campaignSuccessfulRuns}/
-                {data.provenance.campaignExpectedRuns}
-              </strong>
-            </div>
-            <div className="hardware-line">
-              <span>Capture</span>
-              <strong>
-                {data.summary.captureSequences} paths /{" "}
-                {data.summary.playableFrames} playable
-              </strong>
-            </div>
-            <div className="hardware-line">
-              <span>Build</span>
-              <strong>{data.hardware.toolchain.build}</strong>
-            </div>
-            <div className="hardware-line">
-              <span>Base commit</span>
-              <strong>{data.provenance.baseCommit}</strong>
-            </div>
-          </div>
-        </article>
-      </section>
+      <footer className="atlas-footer">
+        <span>
+          {data.summary.resultRows} successful campaign rows ·{" "}
+          {data.summary.validationPairs} raster/VisBuf frame pairs
+        </span>
+        <span>
+          {data.hardware.gpu.name} · driver {data.hardware.gpu.driver} · branch{" "}
+          {data.provenance.sourceBranch}
+        </span>
+      </footer>
     </main>
   );
 }
