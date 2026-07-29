@@ -12,6 +12,7 @@ artifacts out of the temporary directory before that directory is deleted.
 
 from __future__ import annotations
 
+import builtins
 import csv
 import itertools
 import json
@@ -25,6 +26,19 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
+
+
+def resilient_print(*args: Any, **kwargs: Any) -> None:
+    """Do not let a detached/closed console terminate an active campaign."""
+    try:
+        builtins.print(*args, **kwargs)
+    except (BrokenPipeError, OSError, ValueError):
+        pass
+
+
+# Long-running campaigns can outlive the terminal that started them. Keep all
+# existing progress/diagnostic output best-effort while reports remain durable.
+print = resilient_print
 
 
 ERROR_TEXT_LIMIT = 8000

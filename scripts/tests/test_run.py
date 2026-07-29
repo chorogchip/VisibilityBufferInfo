@@ -40,6 +40,16 @@ def valid_program_result_row() -> dict[str, str]:
 
 
 class RunPolicyTests(unittest.TestCase):
+    def test_closed_diagnostic_stream_does_not_abort_runner(self) -> None:
+        class ClosedStream:
+            def write(self, _: str) -> int:
+                raise OSError(22, "Invalid argument")
+
+            def flush(self) -> None:
+                raise OSError(22, "Invalid argument")
+
+        run.resilient_print("diagnostic", file=ClosedStream())
+
     def test_bom_json_is_accepted(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "spec.json"
