@@ -4,43 +4,204 @@ project(TVBPerf LANGUAGES CXX RC)
 
 include(ExternalProject)
 include(FetchContent)
+include(CheckIPOSupported)
 
-# Visual Studio 멀티 구성 generator용 구성 명시
-if(CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+# =============================================================================
+# Supported build environment
+# =============================================================================
+
+if(NOT WIN32)
+    message(FATAL_ERROR "TVBPerf is a Windows-only Direct3D 12 project.")
 endif()
 
-# C++20
+if(NOT MSVC)
+    message(FATAL_ERROR "TVBPerf currently requires the MSVC toolchain.")
+endif()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(FATAL_ERROR "TVBPerf supports only 64-bit builds.")
+endif()
+
+# The repository's CMakeSettings.json uses one Ninja build tree per
+# configuration. Keep that contract explicit because OpenUSD and oneTBB are
+# installed into configuration-specific SDK directories.
+if(CMAKE_CONFIGURATION_TYPES)
+    message(FATAL_ERROR
+        "TVBPerf requires a single-config generator. "
+        "Use the x64-Debug or x64-Release Ninja configuration from CMakeSettings.json."
+    )
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build configuration" FORCE)
+endif()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release)
+
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND
+   NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(FATAL_ERROR
+        "Unsupported CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'. "
+        "TVBPerf supports Debug and Release."
+    )
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Visual Studio 폴더 정리용
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# 경로
-set(TVBPERF_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(TVBPERF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(TVBPERF_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
-set(TVBPERF_SHADER_DIR ${TVBPERF_ASSETS_DIR}/shaders)
-set(TVBPERF_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external)
-set(TVBPERF_ASSIMP_DIR ${TVBPERF_EXTERNAL_DIR}/assimp)
-set(TVBPERF_OPENUSD_DIR ${TVBPERF_EXTERNAL_DIR}/OpenUSD)
-set(TVBPERF_ONE_TBB_DIR ${TVBPERF_EXTERNAL_DIR}/oneTBB)
+# Keep all in-tree libraries on the same CRT. Resolve the concrete value again
+# below when configuring ExternalProject dependencies.
+set(CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+)
 
-# static third-party libraries
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(TVBPERF_EXTERNAL_MSVC_RUNTIME "MultiThreadedDebugDLL")
+    set(TVBPERF_TBB_LIBRARY_NAME "tbb12_debug.lib")
+else()
+    set(TVBPERF_EXTERNAL_MSVC_RUNTIME "MultiThreadedDLL")
+    set(TVBPERF_TBB_LIBRARY_NAME "tbb12.lib")
+endif()
 
-# ------------------------------------------------------------
+# Avoid remote update checks after a dependency has been populated. Version
+# changes in this file still cause the appropriate dependency to be refreshed.
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL
+    "Do not contact remotes for already-populated FetchContent dependencies"
+    FORCE
+)
+
+# Third-party libraries are linked statically except for the prebuilt DXC DLL.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static third-party libraries" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "Disable third-party tests" FORCE)
+
+# =============================================================================
+# Project options and paths
+# =============================================================================
+
+option(TVBPERF_BUILD_OPENUSD
+    "Build the OpenUSD SDK required by the current Jungle USD importer"
+    ON
+)
+option(TVBPERF_BUILD_TOOLS
+    "Build standalone Jungle/OpenUSD inspection tools"
+    ON
+)
+option(TVBPERF_BUILD_TESTS
+    "Build TVBPerf Jungle/OpenUSD regression tests"
+    ON
+)
+option(TVBPERF_ENABLE_IPO
+    "Enable interprocedural optimization for the Release renderer"
+    ON
+)
+
+# The current master source tree always compiles SceneSourceFactory and
+# JungleSceneSourceBuilder, so disabling OpenUSD would leave unresolved symbols.
+# Keep the old option for cache compatibility, but reject an invalid build.
+if(NOT TVBPERF_BUILD_OPENUSD)
+    message(FATAL_ERROR
+        "TVBPERF_BUILD_OPENUSD=OFF is not supported by the current source tree. "
+        "SceneSourceFactory routes .usd/.usda files through the Jungle OpenUSD importer."
+    )
+endif()
+
+set(TVBPERF_SRC_DIR      "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(TVBPERF_INCLUDE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(TVBPERF_ASSETS_DIR   "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(TVBPERF_SHADER_DIR   "${TVBPERF_ASSETS_DIR}/shaders")
+set(TVBPERF_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
+
+# Optional local source overrides. When left empty, an existing source tree in
+# external/ is reused; otherwise CMake downloads the pinned revision.
+set(TVBPERF_ASSIMP_SOURCE_DIR "" CACHE PATH
+    "Optional local Assimp source directory"
+)
+set(TVBPERF_ONETBB_SOURCE_DIR "" CACHE PATH
+    "Optional local oneTBB source directory"
+)
+set(TVBPERF_OPENUSD_SOURCE_DIR "" CACHE PATH
+    "Optional local OpenUSD source directory"
+)
+mark_as_advanced(
+    TVBPERF_ASSIMP_SOURCE_DIR
+    TVBPERF_ONETBB_SOURCE_DIR
+    TVBPERF_OPENUSD_SOURCE_DIR
+)
+
+function(tvbperf_resolve_local_source output_variable override_path fallback_path)
+    set(_resolved "")
+
+    if(NOT "${override_path}" STREQUAL "")
+        get_filename_component(_resolved
+            "${override_path}"
+            ABSOLUTE
+            BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+        if(NOT EXISTS "${_resolved}/CMakeLists.txt")
+            message(FATAL_ERROR
+                "Local dependency source '${_resolved}' does not contain CMakeLists.txt."
+            )
+        endif()
+    elseif(EXISTS "${fallback_path}/CMakeLists.txt")
+        get_filename_component(_resolved "${fallback_path}" ABSOLUTE)
+    endif()
+
+    set(${output_variable} "${_resolved}" PARENT_SCOPE)
+endfunction()
+
+tvbperf_resolve_local_source(
+    TVBPERF_ASSIMP_LOCAL_SOURCE
+    "${TVBPERF_ASSIMP_SOURCE_DIR}"
+    "${TVBPERF_EXTERNAL_DIR}/assimp"
+)
+tvbperf_resolve_local_source(
+    TVBPERF_ONETBB_LOCAL_SOURCE
+    "${TVBPERF_ONETBB_SOURCE_DIR}"
+    "${TVBPERF_EXTERNAL_DIR}/oneTBB"
+)
+tvbperf_resolve_local_source(
+    TVBPERF_OPENUSD_LOCAL_SOURCE
+    "${TVBPERF_OPENUSD_SOURCE_DIR}"
+    "${TVBPERF_EXTERNAL_DIR}/OpenUSD"
+)
+
+# =============================================================================
+# Common project compile settings
+# =============================================================================
+
+add_library(TVBPerfProjectOptions INTERFACE)
+add_library(TVBPerf::ProjectOptions ALIAS TVBPerfProjectOptions)
+
+set_target_properties(TVBPerfProjectOptions PROPERTIES FOLDER "CMake")
+
+target_compile_features(TVBPerfProjectOptions INTERFACE cxx_std_20)
+target_compile_definitions(TVBPerfProjectOptions INTERFACE
+    UNICODE
+    _UNICODE
+    NOMINMAX
+    "$<$<CONFIG:Debug>:_DEBUG>"
+    "$<$<CONFIG:Release>:NDEBUG>"
+)
+target_compile_options(TVBPerfProjectOptions INTERFACE
+    /W3
+    /sdl
+    /permissive-
+    /Zc:__cplusplus
+    /utf-8
+)
+
+# =============================================================================
 # DirectXTex
-# ------------------------------------------------------------
+# =============================================================================
+
 # Texture decoding only. GPU resources and uploads are managed by TVBPerf.
 set(BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(BUILD_SAMPLE OFF CACHE BOOL "" FORCE)
 set(BUILD_DX11 OFF CACHE BOOL "" FORCE)
 set(BUILD_DX12 OFF CACHE BOOL "" FORCE)
 set(BC_USE_OPENMP OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     directxtex
@@ -50,11 +211,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(directxtex)
 
+if(NOT TARGET DirectXTex)
+    message(FATAL_ERROR "DirectXTex did not create the expected DirectXTex target.")
+endif()
 set_target_properties(DirectXTex PROPERTIES FOLDER "External/DirectXTex")
 
-# ------------------------------------------------------------
+# =============================================================================
 # fastgltf
-# ------------------------------------------------------------
+# =============================================================================
+
 set(FASTGLTF_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(FASTGLTF_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(FASTGLTF_ENABLE_DOCS OFF CACHE BOOL "" FORCE)
@@ -72,198 +237,427 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fastgltf)
 
+if(NOT TARGET fastgltf)
+    message(FATAL_ERROR "fastgltf did not create the expected fastgltf target.")
+endif()
 set_target_properties(fastgltf PROPERTIES FOLDER "External/fastgltf")
 
-# ------------------------------------------------------------
-# DirectX Shader Compiler
-# ------------------------------------------------------------
-# Use the official binary package. Building DXC from source would pull in
-# LLVM and is far heavier than this runtime shader-compilation use case.
+# =============================================================================
+# DirectX Shader Compiler (official prebuilt NuGet package)
+# =============================================================================
+
 FetchContent_Declare(
     dxc
     URL https://www.nuget.org/api/v2/package/Microsoft.Direct3D.DXC/1.8.2505.32
     URL_HASH SHA256=C6E82B70C14552F1DD58E4A79C93EEAB1567EEB0A9EE63A51564C410429BCE3E
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-
 FetchContent_MakeAvailable(dxc)
 
-set(TVBPERF_DXC_ROOT ${dxc_SOURCE_DIR}/build/native)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(TVBPERF_DXC_ARCH x64)
-else()
-    set(TVBPERF_DXC_ARCH x86)
-endif()
+set(TVBPERF_DXC_ROOT "${dxc_SOURCE_DIR}/build/native")
+set(TVBPERF_DXC_ARCH x64)
+set(TVBPERF_DXCOMPILER_DLL
+    "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxcompiler.dll"
+)
+set(TVBPERF_DXIL_DLL
+    "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxil.dll"
+)
+
+foreach(_required_dxc_file IN ITEMS
+    "${TVBPERF_DXC_ROOT}/include/dxcapi.h"
+    "${TVBPERF_DXC_ROOT}/lib/${TVBPERF_DXC_ARCH}/dxcompiler.lib"
+    "${TVBPERF_DXCOMPILER_DLL}"
+    "${TVBPERF_DXIL_DLL}"
+)
+    if(NOT EXISTS "${_required_dxc_file}")
+        message(FATAL_ERROR "DXC package file is missing: ${_required_dxc_file}")
+    endif()
+endforeach()
 
 add_library(DXC::dxcompiler SHARED IMPORTED GLOBAL)
 set_target_properties(DXC::dxcompiler PROPERTIES
     IMPORTED_IMPLIB
         "${TVBPERF_DXC_ROOT}/lib/${TVBPERF_DXC_ARCH}/dxcompiler.lib"
     IMPORTED_LOCATION
-        "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxcompiler.dll"
+        "${TVBPERF_DXCOMPILER_DLL}"
     INTERFACE_INCLUDE_DIRECTORIES
         "${TVBPERF_DXC_ROOT}/include"
 )
 
-# ------------------------------------------------------------
+# =============================================================================
 # Assimp
-# ------------------------------------------------------------
+# =============================================================================
+
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-
-# Exporter 필요 없으면 OFF
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(${TVBPERF_ASSIMP_DIR})
+if(TVBPERF_ASSIMP_LOCAL_SOURCE)
+    message(STATUS "Using local Assimp source: ${TVBPERF_ASSIMP_LOCAL_SOURCE}")
+    add_subdirectory(
+        "${TVBPERF_ASSIMP_LOCAL_SOURCE}"
+        "${CMAKE_BINARY_DIR}/external/assimp-build"
+        EXCLUDE_FROM_ALL
+    )
+else()
+    message(STATUS "Fetching Assimp v5.4.3")
+    FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v5.4.3
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(assimp)
+endif()
 
+if(NOT TARGET assimp)
+    message(FATAL_ERROR "Assimp did not create the expected assimp target.")
+endif()
 set_target_properties(assimp PROPERTIES FOLDER "External/assimp")
 
 if(TARGET zlibstatic)
     set_target_properties(zlibstatic PROPERTIES FOLDER "External/assimp")
 endif()
-
 if(TARGET UpdateAssimpLibsDebugSymbolsAndDLLs)
-    set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "External/assimp")
+    set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES
+        FOLDER "External/assimp"
+    )
 endif()
 
-# ------------------------------------------------------------
-# OpenUSD
-# ------------------------------------------------------------
-# OpenUSD is prepared as a standalone installed SDK for a future USD scene
-# importer. It is intentionally not linked to TVBPerf until that importer exists.
-option(TVBPERF_BUILD_OPENUSD "Build the OpenUSD core SDK for future USD scene import" ON)
+# =============================================================================
+# OpenUSD and its dedicated oneTBB SDK
+# =============================================================================
 
-if(TVBPERF_BUILD_OPENUSD)
-    set(TVBPERF_OPENUSD_BUILD_DIR ${CMAKE_BINARY_DIR}/external/OpenUSD-build)
-    set(TVBPERF_OPENUSD_INSTALL_DIR ${CMAKE_BINARY_DIR}/external/OpenUSD-install)
-    set(TVBPERF_ONE_TBB_BUILD_DIR ${CMAKE_BINARY_DIR}/external/oneTBB-build)
-    set(TVBPERF_ONE_TBB_INSTALL_DIR ${CMAKE_BINARY_DIR}/external/oneTBB-install)
+set(TVBPERF_EXTERNAL_BUILD_ROOT "${CMAKE_BINARY_DIR}/external")
+set(TVBPERF_ONETBB_PREFIX_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/OpenUSD_oneTBB-prefix"
+)
+set(TVBPERF_ONETBB_BUILD_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/oneTBB-build"
+)
+set(TVBPERF_ONETBB_INSTALL_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/oneTBB-install"
+)
+set(TVBPERF_OPENUSD_PREFIX_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/OpenUSD-prefix"
+)
+set(TVBPERF_OPENUSD_BUILD_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/OpenUSD-build"
+)
+set(TVBPERF_OPENUSD_INSTALL_DIR
+    "${TVBPERF_EXTERNAL_BUILD_ROOT}/OpenUSD-install"
+)
 
-    # OpenUSD's direct CMake build requires an installed TBB package. Keep both
-    # source trees in external/ so a local checkout is reused when present.
-    ExternalProject_Add(OpenUSD_oneTBB
-        PREFIX ${CMAKE_BINARY_DIR}/external/OpenUSD_oneTBB-prefix
-        SOURCE_DIR ${TVBPERF_ONE_TBB_DIR}
-        BINARY_DIR ${TVBPERF_ONE_TBB_BUILD_DIR}
-        INSTALL_DIR ${TVBPERF_ONE_TBB_INSTALL_DIR}
-        BUILD_BYPRODUCTS
-            "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12.lib"
-            "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12_debug.lib"
+set(TVBPERF_TBB_LIBRARY
+    "${TVBPERF_ONETBB_INSTALL_DIR}/lib/${TVBPERF_TBB_LIBRARY_NAME}"
+)
+set(TVBPERF_OPENUSD_LIBRARY
+    "${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib"
+)
+
+# External projects use the same compiler, Ninja executable, configuration and
+# CRT as the renderer. INSTALL_DIR is a token replaced by ExternalProject.
+set(TVBPERF_EXTERNAL_COMMON_CMAKE_ARGS
+    "-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>"
+    "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
+    "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
+    "-DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=${TVBPERF_EXTERNAL_MSVC_RUNTIME}"
+    "-DCMAKE_POLICY_DEFAULT_CMP0091:STRING=NEW"
+)
+if(CMAKE_RC_COMPILER)
+    list(APPEND TVBPERF_EXTERNAL_COMMON_CMAKE_ARGS
+        "-DCMAKE_RC_COMPILER:FILEPATH=${CMAKE_RC_COMPILER}"
+    )
+endif()
+
+if(TVBPERF_ONETBB_LOCAL_SOURCE)
+    message(STATUS "Using local oneTBB source: ${TVBPERF_ONETBB_LOCAL_SOURCE}")
+    set(TVBPERF_ONETBB_SOURCE_ARGS
+        SOURCE_DIR "${TVBPERF_ONETBB_LOCAL_SOURCE}"
+    )
+else()
+    set(TVBPERF_ONETBB_SOURCE_ARGS
         GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
         GIT_TAG v2021.9.0
         GIT_SHALLOW TRUE
         UPDATE_DISCONNECTED TRUE
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-            -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
-            -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
-            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-            # oneTBB v2021.9.0 declares CMake 3.1 compatibility. Newer CMake
-            # releases require this explicit compatibility floor.
-            -DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5
-            -DBUILD_SHARED_LIBS:BOOL=OFF
-            -DTBB_TEST:BOOL=OFF
-            -DTBB_EXAMPLES:BOOL=OFF
-            -DTBB_STRICT:BOOL=OFF
     )
+endif()
 
-    ExternalProject_Add(OpenUSD
-        DEPENDS OpenUSD_oneTBB
-        PREFIX ${CMAKE_BINARY_DIR}/external/OpenUSD-prefix
-        SOURCE_DIR ${TVBPERF_OPENUSD_DIR}
-        BINARY_DIR ${TVBPERF_OPENUSD_BUILD_DIR}
-        INSTALL_DIR ${TVBPERF_OPENUSD_INSTALL_DIR}
-        BUILD_BYPRODUCTS "${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib"
+ExternalProject_Add(OpenUSD_oneTBB
+    ${TVBPERF_ONETBB_SOURCE_ARGS}
+    PREFIX "${TVBPERF_ONETBB_PREFIX_DIR}"
+    BINARY_DIR "${TVBPERF_ONETBB_BUILD_DIR}"
+    INSTALL_DIR "${TVBPERF_ONETBB_INSTALL_DIR}"
+
+    # These libraries are produced by the install step. Declare only the
+    # library for this build configuration; declaring both Debug and Release
+    # makes Ninja rebuild oneTBB forever because one file can never exist.
+    INSTALL_BYPRODUCTS "${TVBPERF_TBB_LIBRARY}"
+
+    CMAKE_ARGS
+        ${TVBPERF_EXTERNAL_COMMON_CMAKE_ARGS}
+        "-DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5"
+        "-DBUILD_SHARED_LIBS:BOOL=OFF"
+        "-DTBB_TEST:BOOL=OFF"
+        "-DTBB_EXAMPLES:BOOL=OFF"
+        "-DTBB_STRICT:BOOL=OFF"
+)
+
+if(TVBPERF_OPENUSD_LOCAL_SOURCE)
+    message(STATUS "Using local OpenUSD source: ${TVBPERF_OPENUSD_LOCAL_SOURCE}")
+    set(TVBPERF_OPENUSD_SOURCE_ARGS
+        SOURCE_DIR "${TVBPERF_OPENUSD_LOCAL_SOURCE}"
+    )
+else()
+    set(TVBPERF_OPENUSD_SOURCE_ARGS
         GIT_REPOSITORY https://github.com/PixarAnimationStudios/OpenUSD.git
         GIT_TAG v26.05
         GIT_SHALLOW TRUE
         UPDATE_DISCONNECTED TRUE
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-            -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
-            -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
-            -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-            -DTBB_ROOT_DIR:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
-            -DCMAKE_PREFIX_PATH:PATH=${TVBPERF_ONE_TBB_INSTALL_DIR}
-            -DBUILD_SHARED_LIBS:BOOL=OFF
-            -DPXR_BUILD_MONOLITHIC:BOOL=ON
-            -DPXR_BUILD_TESTS:BOOL=OFF
-            -DPXR_BUILD_EXAMPLES:BOOL=OFF
-            -DPXR_BUILD_TUTORIALS:BOOL=OFF
-            -DPXR_BUILD_USD_TOOLS:BOOL=OFF
-            -DPXR_BUILD_IMAGING:BOOL=OFF
-            -DPXR_BUILD_USD_IMAGING:BOOL=OFF
-            -DPXR_BUILD_USD_VALIDATION:BOOL=OFF
-            -DPXR_BUILD_EXEC:BOOL=OFF
-            -DPXR_BUILD_USDVIEW:BOOL=OFF
-            -DPXR_ENABLE_PYTHON_SUPPORT:BOOL=OFF
-            -DPXR_ENABLE_GL_SUPPORT:BOOL=OFF
-            -DPXR_ENABLE_PRECOMPILED_HEADERS:BOOL=OFF
     )
-
-    set_target_properties(OpenUSD_oneTBB OpenUSD PROPERTIES FOLDER "External/OpenUSD")
 endif()
 
-# ------------------------------------------------------------
-# 소스 자동 수집
-# ------------------------------------------------------------
+ExternalProject_Add(OpenUSD
+    ${TVBPERF_OPENUSD_SOURCE_ARGS}
+    DEPENDS OpenUSD_oneTBB
+    PREFIX "${TVBPERF_OPENUSD_PREFIX_DIR}"
+    BINARY_DIR "${TVBPERF_OPENUSD_BUILD_DIR}"
+    INSTALL_DIR "${TVBPERF_OPENUSD_INSTALL_DIR}"
+
+    # usd_m.lib is installed by `cmake --install`, not generated directly by
+    # the ExternalProject build step.
+    INSTALL_BYPRODUCTS "${TVBPERF_OPENUSD_LIBRARY}"
+
+    CMAKE_ARGS
+        ${TVBPERF_EXTERNAL_COMMON_CMAKE_ARGS}
+        "-DTBB_ROOT_DIR:PATH=${TVBPERF_ONETBB_INSTALL_DIR}"
+        "-DTBB_DIR:PATH=${TVBPERF_ONETBB_INSTALL_DIR}/lib/cmake/TBB"
+        "-DCMAKE_PREFIX_PATH:PATH=${TVBPERF_ONETBB_INSTALL_DIR}"
+        "-DBUILD_SHARED_LIBS:BOOL=OFF"
+        "-DPXR_BUILD_MONOLITHIC:BOOL=ON"
+        "-DPXR_BUILD_TESTS:BOOL=OFF"
+        "-DPXR_BUILD_EXAMPLES:BOOL=OFF"
+        "-DPXR_BUILD_TUTORIALS:BOOL=OFF"
+        "-DPXR_BUILD_USD_TOOLS:BOOL=OFF"
+        "-DPXR_BUILD_IMAGING:BOOL=OFF"
+        "-DPXR_BUILD_USD_IMAGING:BOOL=OFF"
+        "-DPXR_BUILD_USD_VALIDATION:BOOL=OFF"
+        "-DPXR_BUILD_EXEC:BOOL=OFF"
+        "-DPXR_BUILD_USDVIEW:BOOL=OFF"
+        "-DPXR_ENABLE_PYTHON_SUPPORT:BOOL=OFF"
+        "-DPXR_ENABLE_GL_SUPPORT:BOOL=OFF"
+        "-DPXR_ENABLE_PRECOMPILED_HEADERS:BOOL=OFF"
+)
+
+set_target_properties(OpenUSD_oneTBB OpenUSD PROPERTIES
+    FOLDER "External/OpenUSD"
+)
+
+# CMake validates imported include directories during generation. The actual
+# headers are populated by the ExternalProject install steps before compilation.
+file(MAKE_DIRECTORY
+    "${TVBPERF_OPENUSD_INSTALL_DIR}/include"
+    "${TVBPERF_ONETBB_INSTALL_DIR}/include"
+)
+
+add_library(TVBPerfOpenUSD STATIC IMPORTED GLOBAL)
+add_library(TVBPerf::OpenUSD ALIAS TVBPerfOpenUSD)
+set_target_properties(TVBPerfOpenUSD PROPERTIES
+    IMPORTED_LOCATION "${TVBPERF_OPENUSD_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES
+        "${TVBPERF_OPENUSD_INSTALL_DIR}/include;${TVBPERF_ONETBB_INSTALL_DIR}/include"
+)
+target_compile_definitions(TVBPerfOpenUSD INTERFACE
+    PXR_STATIC
+    NOMINMAX
+)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(TVBPerfOpenUSD INTERFACE TBB_USE_DEBUG)
+endif()
+target_link_libraries(TVBPerfOpenUSD INTERFACE
+    "${TVBPERF_TBB_LIBRARY}"
+    Shlwapi
+    Dbghelp
+    Ws2_32
+)
+target_link_options(TVBPerfOpenUSD INTERFACE
+    "/WHOLEARCHIVE:${TVBPERF_OPENUSD_LIBRARY}"
+)
+
+# =============================================================================
+# Source discovery
+# =============================================================================
+
 file(GLOB_RECURSE TVBPERF_CPP_FILES
     CONFIGURE_DEPENDS
-    ${TVBPERF_SRC_DIR}/*.cpp
+    "${TVBPERF_SRC_DIR}/*.cpp"
 )
-
 file(GLOB_RECURSE TVBPERF_HEADER_FILES
     CONFIGURE_DEPENDS
-    ${TVBPERF_INCLUDE_DIR}/*.h
-    ${TVBPERF_INCLUDE_DIR}/*.hpp
+    "${TVBPERF_INCLUDE_DIR}/*.h"
+    "${TVBPERF_INCLUDE_DIR}/*.hpp"
 )
-
 file(GLOB_RECURSE TVBPERF_RC_FILES
     CONFIGURE_DEPENDS
-    ${TVBPERF_SRC_DIR}/*.rc
+    "${TVBPERF_SRC_DIR}/*.rc"
+)
+file(GLOB_RECURSE TVBPERF_SHADER_FILES
+    CONFIGURE_DEPENDS
+    "${TVBPERF_SHADER_DIR}/*.hlsl"
+    "${TVBPERF_SHADER_DIR}/*.hlsli"
+    "${TVBPERF_SHADER_DIR}/*.fx"
+    "${TVBPERF_SHADER_DIR}/*.vs"
+    "${TVBPERF_SHADER_DIR}/*.ps"
+    "${TVBPERF_SHADER_DIR}/*.cs"
 )
 
-if(TVBPERF_BUILD_OPENUSD)
-    set(TVBPERF_SCENE_RAW_JUNGLE_CPP
-        ${TVBPERF_SRC_DIR}/scene/raw/SceneRawJungle.cpp
+foreach(_source_list IN ITEMS
+    TVBPERF_CPP_FILES
+    TVBPERF_HEADER_FILES
+    TVBPERF_RC_FILES
+)
+    list(FILTER ${_source_list} EXCLUDE REGEX "[/\\\\]trashes[/\\\\]")
+    list(SORT ${_source_list})
+endforeach()
+list(SORT TVBPERF_SHADER_FILES)
+
+# These implementations belong to dedicated OpenUSD targets and must not also
+# be compiled directly into TVBPerf.
+set(TVBPERF_SCENE_RAW_JUNGLE_CPP
+    "${TVBPERF_SRC_DIR}/scene/raw/SceneRawJungle.cpp"
+)
+set(TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP
+    "${TVBPERF_SRC_DIR}/scene/builder/source/SceneRawJungleToSource.cpp"
+)
+list(REMOVE_ITEM TVBPERF_CPP_FILES
+    "${TVBPERF_SCENE_RAW_JUNGLE_CPP}"
+    "${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}"
+)
+
+# =============================================================================
+# OpenUSD scene targets
+# =============================================================================
+
+add_library(SceneRawJungle STATIC
+    "${TVBPERF_SCENE_RAW_JUNGLE_CPP}"
+    "${TVBPERF_INCLUDE_DIR}/scene/raw/SceneRawJungle.h"
+    "${TVBPERF_INCLUDE_DIR}/scene/raw/SceneRawJungleUsdAccess.h"
+)
+target_link_libraries(SceneRawJungle
+    PRIVATE
+        TVBPerf::ProjectOptions
+        TVBPerf::OpenUSD
+)
+target_include_directories(SceneRawJungle PUBLIC "${TVBPERF_INCLUDE_DIR}")
+target_compile_definitions(SceneRawJungle PRIVATE
+    "TVBPERF_OPENUSD_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd\""
+    "TVBPERF_OPENUSD_SHADER_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/plugin/usd\""
+)
+add_dependencies(SceneRawJungle OpenUSD)
+set_target_properties(SceneRawJungle PROPERTIES FOLDER "TVBPerf/OpenUSD")
+
+# The standalone conversion tools do not link the renderer executable, so keep
+# semantic validation and bounds implementation self-contained.
+add_library(SceneRawJungleToSource STATIC
+    "${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}"
+    "${TVBPERF_INCLUDE_DIR}/scene/builder/source/SceneRawJungleToSource.h"
+    "${TVBPERF_SRC_DIR}/math/AABB.cpp"
+    "${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceSemanticValidator.cpp"
+    "${TVBPERF_SRC_DIR}/util/Logger.cpp"
+)
+target_link_libraries(SceneRawJungleToSource
+    PUBLIC
+        SceneRawJungle
+    PRIVATE
+        TVBPerf::ProjectOptions
+        TVBPerf::OpenUSD
+)
+target_include_directories(SceneRawJungleToSource PUBLIC "${TVBPERF_INCLUDE_DIR}")
+add_dependencies(SceneRawJungleToSource OpenUSD)
+set_target_properties(SceneRawJungleToSource PROPERTIES FOLDER "TVBPerf/OpenUSD")
+
+if(TVBPERF_BUILD_TOOLS)
+    add_executable(SceneRawJungleInspect
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/SceneRawJungleInspect.cpp"
     )
-    set(TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP
-        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneRawJungleToSource.cpp
+    target_link_libraries(SceneRawJungleInspect PRIVATE
+        TVBPerf::ProjectOptions
+        SceneRawJungle
     )
-    list(REMOVE_ITEM TVBPERF_CPP_FILES
-        ${TVBPERF_SCENE_RAW_JUNGLE_CPP}
-        ${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}
+    set_target_properties(SceneRawJungleInspect PROPERTIES FOLDER "TVBPerf/Tools")
+
+    add_executable(SceneRawJungleToSourceInspect
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/SceneRawJungleToSourceInspect.cpp"
+    )
+    target_link_libraries(SceneRawJungleToSourceInspect PRIVATE
+        TVBPerf::ProjectOptions
+        SceneRawJungleToSource
+    )
+    set_target_properties(SceneRawJungleToSourceInspect PROPERTIES
+        FOLDER "TVBPerf/Tools"
     )
 endif()
 
-# ------------------------------------------------------------
-# trashes 디렉터리 제외
-# ------------------------------------------------------------
-list(FILTER TVBPERF_CPP_FILES EXCLUDE REGEX
-    "[/\\\\]trashes[/\\\\]"
-)
+if(TVBPERF_BUILD_TESTS)
+    enable_testing()
 
-list(FILTER TVBPERF_HEADER_FILES EXCLUDE REGEX
-    "[/\\\\]trashes[/\\\\]"
-)
+    add_executable(SceneRawJungleToSourceTest
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/SceneRawJungleToSourceTest.cpp"
+    )
+    target_link_libraries(SceneRawJungleToSourceTest PRIVATE
+        TVBPerf::ProjectOptions
+        SceneRawJungleToSource
+    )
+    target_compile_definitions(SceneRawJungleToSourceTest PRIVATE
+        "SCENE_RAW_JUNGLE_SOURCE_FIXTURE=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
+    )
+    set_target_properties(SceneRawJungleToSourceTest PROPERTIES
+        FOLDER "TVBPerf/Tests"
+    )
+    add_test(
+        NAME SceneRawJungleToSourceTest
+        COMMAND "$<TARGET_FILE:SceneRawJungleToSourceTest>"
+    )
 
-list(FILTER TVBPERF_RC_FILES EXCLUDE REGEX
-    "[/\\\\]trashes[/\\\\]"
-)
+    add_executable(JungleSceneCPUBuilderTest
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/JungleSceneCPUBuilderTest.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/source/JungleSceneSourceBuilder.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/cpu/JungleSceneCPUBuilder.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUBuilder.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUValidator.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceDataValidator.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceGeometryValidator.cpp"
+        "${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceHierarchyValidator.cpp"
+    )
+    target_link_libraries(JungleSceneCPUBuilderTest PRIVATE
+        TVBPerf::ProjectOptions
+        SceneRawJungleToSource
+    )
+    target_include_directories(JungleSceneCPUBuilderTest PRIVATE
+        "${TVBPERF_INCLUDE_DIR}"
+    )
+    target_compile_definitions(JungleSceneCPUBuilderTest PRIVATE
+        "JUNGLE_SCENE_CPU_SOURCE_FIXTURE=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
+    )
+    set_target_properties(JungleSceneCPUBuilderTest PROPERTIES
+        FOLDER "TVBPerf/Tests"
+    )
+    add_test(
+        NAME JungleSceneCPUBuilderTest
+        COMMAND "$<TARGET_FILE:JungleSceneCPUBuilderTest>"
+    )
+endif()
 
-file(GLOB_RECURSE TVBPERF_SHADER_FILES
-    CONFIGURE_DEPENDS
-    ${TVBPERF_SHADER_DIR}/*.hlsl
-    ${TVBPERF_SHADER_DIR}/*.hlsli
-    ${TVBPERF_SHADER_DIR}/*.fx
-    ${TVBPERF_SHADER_DIR}/*.vs
-    ${TVBPERF_SHADER_DIR}/*.ps
-    ${TVBPERF_SHADER_DIR}/*.cs
-)
+# =============================================================================
+# Renderer executable
+# =============================================================================
 
-# 실행 파일
 add_executable(TVBPerf WIN32
     ${TVBPERF_CPP_FILES}
     ${TVBPERF_HEADER_FILES}
@@ -271,280 +665,196 @@ add_executable(TVBPerf WIN32
     ${TVBPERF_SHADER_FILES}
 )
 
-target_compile_features(TVBPerf PRIVATE cxx_std_20)
-
-if(TVBPERF_BUILD_OPENUSD)
-    # ExternalProject installs these after generation. CMake validates imported
-    # include directories during generation, so ensure their install roots exist.
-    file(MAKE_DIRECTORY
-        "${TVBPERF_OPENUSD_INSTALL_DIR}/include"
-        "${TVBPERF_ONE_TBB_INSTALL_DIR}/include"
-    )
-
-    add_library(TVBPerfOpenUSD STATIC IMPORTED GLOBAL)
-    set_target_properties(TVBPerfOpenUSD PROPERTIES
-        IMPORTED_LOCATION "${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib"
-        INTERFACE_INCLUDE_DIRECTORIES
-            "${TVBPERF_OPENUSD_INSTALL_DIR}/include;${TVBPERF_ONE_TBB_INSTALL_DIR}/include"
-    )
-    target_compile_definitions(TVBPerfOpenUSD INTERFACE
-        PXR_STATIC
-        NOMINMAX
-        "$<$<CONFIG:Debug>:TBB_USE_DEBUG>"
-    )
-    target_link_libraries(TVBPerfOpenUSD INTERFACE
-        debug "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12_debug.lib"
-        optimized "${TVBPERF_ONE_TBB_INSTALL_DIR}/lib/tbb12.lib"
-        Shlwapi
-        Dbghelp
-        Ws2_32
-    )
-    # usd_m is a static monolith. Keep plugin/schema registration translation
-    # units that have no ordinary symbol reference from being discarded.
-    target_link_options(TVBPerfOpenUSD INTERFACE
-        "$<$<CXX_COMPILER_ID:MSVC>:/WHOLEARCHIVE:${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd_m.lib>"
-    )
-
-    add_library(SceneRawJungle STATIC ${TVBPERF_SCENE_RAW_JUNGLE_CPP})
-    target_compile_features(SceneRawJungle PUBLIC cxx_std_20)
-    target_include_directories(SceneRawJungle PUBLIC ${TVBPERF_INCLUDE_DIR})
-    target_compile_definitions(SceneRawJungle PRIVATE
-        "TVBPERF_OPENUSD_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/lib/usd\""
-        "TVBPERF_OPENUSD_SHADER_PLUGIN_ROOT=\"${TVBPERF_OPENUSD_INSTALL_DIR}/plugin/usd\""
-    )
-    target_link_libraries(SceneRawJungle PUBLIC TVBPerfOpenUSD)
-    add_dependencies(SceneRawJungle OpenUSD)
-
-    # The standalone conversion tools do not link the renderer executable, so
-    # keep their semantic validation and bounds implementation self-contained.
-    add_library(SceneRawJungleToSource STATIC
-        ${TVBPERF_SCENE_RAW_JUNGLE_TO_SOURCE_CPP}
-        ${TVBPERF_SRC_DIR}/math/AABB.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceSemanticValidator.cpp
-        ${TVBPERF_SRC_DIR}/util/Logger.cpp
-    )
-    target_compile_features(SceneRawJungleToSource PUBLIC cxx_std_20)
-    target_include_directories(SceneRawJungleToSource PUBLIC ${TVBPERF_INCLUDE_DIR})
-    target_link_libraries(SceneRawJungleToSource PUBLIC SceneRawJungle)
-    add_dependencies(SceneRawJungleToSource OpenUSD)
-
-    add_executable(SceneRawJungleInspect
-        tools/SceneRawJungleInspect.cpp
-    )
-    target_compile_features(SceneRawJungleInspect PRIVATE cxx_std_20)
-    target_link_libraries(SceneRawJungleInspect PRIVATE SceneRawJungle)
-    add_dependencies(SceneRawJungleInspect OpenUSD)
-
-    add_executable(SceneRawJungleToSourceInspect
-        tools/SceneRawJungleToSourceInspect.cpp
-    )
-    target_compile_features(SceneRawJungleToSourceInspect PRIVATE cxx_std_20)
-    target_link_libraries(SceneRawJungleToSourceInspect PRIVATE SceneRawJungleToSource)
-    add_dependencies(SceneRawJungleToSourceInspect OpenUSD)
-
-    add_executable(SceneRawJungleToSourceTest
-        tests/SceneRawJungleToSourceTest.cpp
-    )
-    target_compile_features(SceneRawJungleToSourceTest PRIVATE cxx_std_20)
-    target_compile_definitions(SceneRawJungleToSourceTest PRIVATE
-        "SCENE_RAW_JUNGLE_SOURCE_FIXTURE=\"${CMAKE_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
-    )
-    target_link_libraries(SceneRawJungleToSourceTest PRIVATE SceneRawJungleToSource)
-    add_dependencies(SceneRawJungleToSourceTest OpenUSD)
-
-    add_executable(JungleSceneCPUBuilderTest
-        tests/JungleSceneCPUBuilderTest.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/source/JungleSceneSourceBuilder.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/cpu/JungleSceneCPUBuilder.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUBuilder.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/cpu/SceneCPUValidator.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceDataValidator.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceGeometryValidator.cpp
-        ${TVBPERF_SRC_DIR}/scene/builder/source/SceneSourceHierarchyValidator.cpp
-    )
-    target_compile_features(JungleSceneCPUBuilderTest PRIVATE cxx_std_20)
-    target_compile_definitions(JungleSceneCPUBuilderTest PRIVATE
-        "JUNGLE_SCENE_CPU_SOURCE_FIXTURE=\"${CMAKE_SOURCE_DIR}/tests/assets/scene_raw_jungle_to_source_fixture.usda\""
-    )
-    target_include_directories(JungleSceneCPUBuilderTest PRIVATE
-        ${TVBPERF_INCLUDE_DIR}
-    )
-    target_link_libraries(JungleSceneCPUBuilderTest PRIVATE
-        SceneRawJungleToSource
-    )
-    add_dependencies(JungleSceneCPUBuilderTest OpenUSD)
-
-    # The runtime Jungle source builder calls the semantic converter, which
-    # already links the raw OpenUSD stage target transitively.
-    target_link_libraries(TVBPerf PRIVATE SceneRawJungleToSource)
-endif()
-
-# include 경로
-target_include_directories(TVBPerf
-    PRIVATE
-        ${TVBPERF_INCLUDE_DIR}
-        ${TVBPERF_ASSIMP_DIR}/include
-        ${TVBPERF_SHADER_DIR}
+target_link_libraries(TVBPerf PRIVATE
+    TVBPerf::ProjectOptions
+    SceneRawJungleToSource
+    assimp
+    DirectXTex
+    fastgltf::fastgltf
+    DXC::dxcompiler
+    d3d12
+    dxgi
+    d3dcompiler
+    user32
+    gdi32
+    kernel32
+    ole32
+    windowscodecs
+    Shell32
 )
 
-# 전처리기 정의
-target_compile_definitions(TVBPerf
-    PRIVATE
-        _CONSOLE
-        UNICODE
-        _UNICODE
-
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<CONFIG:Release>:NDEBUG>
-
-        $<$<AND:$<PLATFORM_ID:Windows>,$<EQUAL:${CMAKE_SIZEOF_VOID_P},4>>:WIN32>
+target_include_directories(TVBPerf PRIVATE
+    "${TVBPERF_INCLUDE_DIR}"
+    "${TVBPERF_SHADER_DIR}"
 )
 
-# ------------------------------------------------------------
-# MSVC 컴파일 옵션
-# ------------------------------------------------------------
-if(MSVC)
-    target_compile_options(TVBPerf
-        PRIVATE
-            /W3
-            /sdl
-            /permissive-
-
-            # Debug 옵션
-            $<$<CONFIG:Debug>:/Od>
-            $<$<CONFIG:Debug>:/Zi>
-
-            # Release 옵션
-            $<$<CONFIG:Release>:/O2>
-            $<$<CONFIG:Release>:/Ob2>
-            $<$<CONFIG:Release>:/Oi>
-            $<$<CONFIG:Release>:/Ot>
-            $<$<CONFIG:Release>:/Gy>
-            $<$<CONFIG:Release>:/DNDEBUG>
-    )
-
-    # Debug=/MDd, Release=/MD
-    set_property(TARGET TVBPerf PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
-    )
-
-    # Release Whole Program Optimization
-    set_property(TARGET TVBPerf PROPERTY
-        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-    )
-endif()
-
-# 링크 라이브러리
-target_link_libraries(TVBPerf
-    PRIVATE
-        assimp
-        DirectXTex
-        fastgltf::fastgltf
-        DXC::dxcompiler
-        d3d12
-        dxgi
-        d3dcompiler
-        user32
-        gdi32
-        kernel32
-        ole32
-        windowscodecs
-        Shell32
+# CMake already supplies the standard /Od,/Zi and /O2 configuration flags.
+# Keep only the additional release tuning used by the benchmark.
+target_compile_options(TVBPerf PRIVATE
+    "$<$<CONFIG:Release>:/Oi>"
+    "$<$<CONFIG:Release>:/Ot>"
+    "$<$<CONFIG:Release>:/Gy>"
 )
 
-# ------------------------------------------------------------
-# 링커 옵션
-# ------------------------------------------------------------
-if(MSVC)
-    target_link_options(TVBPerf
-        PRIVATE
-            /SUBSYSTEM:WINDOWS
-            /DEBUG
+target_link_options(TVBPerf PRIVATE
+    /DEBUG
+    "$<$<CONFIG:Debug>:/INCREMENTAL>"
+    "$<$<CONFIG:Release>:/INCREMENTAL:NO>"
+    "$<$<CONFIG:Release>:/OPT:REF>"
+    "$<$<CONFIG:Release>:/OPT:ICF>"
+)
 
-            # Debug
-            $<$<CONFIG:Debug>:/INCREMENTAL>
-
-            # Release
-            $<$<CONFIG:Release>:/INCREMENTAL:NO>
-            $<$<CONFIG:Release>:/OPT:REF>
-            $<$<CONFIG:Release>:/OPT:ICF>
-            $<$<CONFIG:Release>:/LTCG>
-    )
+if(TVBPERF_ENABLE_IPO)
+    check_ipo_supported(RESULT TVBPERF_IPO_SUPPORTED OUTPUT TVBPERF_IPO_ERROR)
+    if(TVBPERF_IPO_SUPPORTED)
+        set_property(TARGET TVBPerf PROPERTY
+            INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+        )
+    else()
+        message(WARNING "Release IPO is unavailable: ${TVBPERF_IPO_ERROR}")
+    endif()
 endif()
 
-# ------------------------------------------------------------
-# 셰이더는 직접 컴파일하지 않음
-# Visual Studio에서도 빌드 도구로 처리하지 않도록 설정
-# ------------------------------------------------------------
-if(TVBPERF_SHADER_FILES)
-    set_source_files_properties(
-        ${TVBPERF_SHADER_FILES}
-        PROPERTIES
-            VS_TOOL_OVERRIDE "None"
-            HEADER_FILE_ONLY TRUE
-    )
-endif()
-
-# ------------------------------------------------------------
-# 출력 디렉터리
-# Debug/Release 별도 폴더
-# ------------------------------------------------------------
+set(TVBPERF_RUNTIME_OUTPUT_DIR
+    "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+)
 set_target_properties(TVBPerf PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release
+    RUNTIME_OUTPUT_DIRECTORY "${TVBPERF_RUNTIME_OUTPUT_DIR}"
+    PDB_OUTPUT_DIRECTORY "${TVBPERF_RUNTIME_OUTPUT_DIR}"
+    VS_DEBUGGER_WORKING_DIRECTORY "${TVBPERF_RUNTIME_OUTPUT_DIR}"
+    FOLDER "TVBPerf"
 )
 
-# ------------------------------------------------------------
-# 빌드 결과물에 assets/shaders만 복사
-# 전체 assets 복사 금지
-# ------------------------------------------------------------
-add_custom_target(CopyShaders ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-        "$<TARGET_FILE_DIR:TVBPerf>/assets/shaders"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${TVBPERF_SHADER_DIR}"
-        "$<TARGET_FILE_DIR:TVBPerf>/assets/shaders"
-    COMMENT "Copying assets/shaders to output directory"
-)
-
-add_dependencies(CopyShaders TVBPerf)
-
-add_custom_command(TARGET TVBPerf POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:DXC::dxcompiler>"
-        "$<TARGET_FILE_DIR:TVBPerf>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${TVBPERF_DXC_ROOT}/bin/${TVBPERF_DXC_ARCH}/dxil.dll"
-        "$<TARGET_FILE_DIR:TVBPerf>"
-    COMMENT "Copying DXC runtime DLLs to output directory"
-)
-
-# 작업 디렉터리 설정
-set_property(TARGET TVBPerf PROPERTY
-    VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:TVBPerf>"
-)
-
-# ------------------------------------------------------------
-# Visual Studio 솔루션 탐색기 필터 정리
-# ------------------------------------------------------------
-source_group(TREE ${TVBPERF_SRC_DIR}
-    PREFIX "Source"
-    FILES
-        ${TVBPERF_CPP_FILES}
-        ${TVBPERF_RC_FILES}
-)
-
-source_group(TREE ${TVBPERF_INCLUDE_DIR}
-    PREFIX "Include"
-    FILES
-        ${TVBPERF_HEADER_FILES}
-)
-
+# HLSL is compiled at runtime by DXC. Keep shader files visible in the IDE but
+# prevent Visual Studio from assigning a build tool to them.
 if(TVBPERF_SHADER_FILES)
-    source_group(TREE ${TVBPERF_SHADER_DIR}
-        PREFIX "Shader Files"
-        FILES
-            ${TVBPERF_SHADER_FILES}
+    set_source_files_properties(${TVBPERF_SHADER_FILES} PROPERTIES
+        VS_TOOL_OVERRIDE "None"
+        HEADER_FILE_ONLY TRUE
     )
 endif()
+
+# =============================================================================
+# Incremental runtime-file deployment
+# =============================================================================
+
+# The previous ALL custom target copied the complete shader directory on every
+# build. These stamp commands run only when a source shader, DXC binary, or the
+# generated shader manifest changes. BYPRODUCTS also lets Ninja restore a
+# deleted runtime file without rebuilding unrelated C++ targets.
+set(TVBPERF_RUNTIME_STAMP_DIR "${CMAKE_BINARY_DIR}/runtime-stamps")
+file(MAKE_DIRECTORY "${TVBPERF_RUNTIME_STAMP_DIR}")
+
+set(TVBPERF_RUNTIME_DEPLOY_STAMPS "")
+
+if(TVBPERF_SHADER_FILES)
+    set(TVBPERF_SHADER_OUTPUT_DIR
+        "${TVBPERF_RUNTIME_OUTPUT_DIR}/assets/shaders"
+    )
+    set(TVBPERF_SHADER_MANIFEST
+        "${TVBPERF_RUNTIME_STAMP_DIR}/shader-manifest.txt"
+    )
+    set(TVBPERF_SHADER_STAMP
+        "${TVBPERF_RUNTIME_STAMP_DIR}/shaders.stamp"
+    )
+    set(TVBPERF_SHADER_OUTPUT_FILES "")
+    set(_tvbperf_shader_manifest_content "")
+
+    foreach(_shader IN LISTS TVBPERF_SHADER_FILES)
+        file(RELATIVE_PATH _shader_relative
+            "${TVBPERF_SHADER_DIR}"
+            "${_shader}"
+        )
+        list(APPEND TVBPERF_SHADER_OUTPUT_FILES
+            "${TVBPERF_SHADER_OUTPUT_DIR}/${_shader_relative}"
+        )
+        string(APPEND _tvbperf_shader_manifest_content
+            "${_shader_relative}\n"
+        )
+    endforeach()
+
+    # file(CONFIGURE) preserves the timestamp when the manifest content did not
+    # change, so a normal CMake regeneration does not force another copy.
+    file(CONFIGURE
+        OUTPUT "${TVBPERF_SHADER_MANIFEST}"
+        CONTENT "${_tvbperf_shader_manifest_content}"
+        @ONLY
+    )
+
+    add_custom_command(
+        OUTPUT "${TVBPERF_SHADER_STAMP}"
+        BYPRODUCTS ${TVBPERF_SHADER_OUTPUT_FILES}
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${TVBPERF_SHADER_OUTPUT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${TVBPERF_SHADER_OUTPUT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${TVBPERF_SHADER_DIR}"
+            "${TVBPERF_SHADER_OUTPUT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E touch "${TVBPERF_SHADER_STAMP}"
+        DEPENDS
+            ${TVBPERF_SHADER_FILES}
+            "${TVBPERF_SHADER_MANIFEST}"
+        COMMENT "Updating runtime shaders"
+        VERBATIM
+    )
+    list(APPEND TVBPERF_RUNTIME_DEPLOY_STAMPS "${TVBPERF_SHADER_STAMP}")
+endif()
+
+set(TVBPERF_DXC_STAMP "${TVBPERF_RUNTIME_STAMP_DIR}/dxc-runtime.stamp")
+set(TVBPERF_DEPLOYED_DXCOMPILER
+    "${TVBPERF_RUNTIME_OUTPUT_DIR}/dxcompiler.dll"
+)
+set(TVBPERF_DEPLOYED_DXIL
+    "${TVBPERF_RUNTIME_OUTPUT_DIR}/dxil.dll"
+)
+
+add_custom_command(
+    OUTPUT "${TVBPERF_DXC_STAMP}"
+    BYPRODUCTS
+        "${TVBPERF_DEPLOYED_DXCOMPILER}"
+        "${TVBPERF_DEPLOYED_DXIL}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "${TVBPERF_RUNTIME_OUTPUT_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${TVBPERF_DXCOMPILER_DLL}"
+        "${TVBPERF_DEPLOYED_DXCOMPILER}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${TVBPERF_DXIL_DLL}"
+        "${TVBPERF_DEPLOYED_DXIL}"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${TVBPERF_DXC_STAMP}"
+    DEPENDS
+        "${TVBPERF_DXCOMPILER_DLL}"
+        "${TVBPERF_DXIL_DLL}"
+    COMMENT "Updating DXC runtime DLLs"
+    VERBATIM
+)
+list(APPEND TVBPERF_RUNTIME_DEPLOY_STAMPS "${TVBPERF_DXC_STAMP}")
+
+add_custom_target(TVBPerfRuntimeFiles
+    DEPENDS ${TVBPERF_RUNTIME_DEPLOY_STAMPS}
+)
+add_dependencies(TVBPerf TVBPerfRuntimeFiles)
+set_target_properties(TVBPerfRuntimeFiles PROPERTIES FOLDER "TVBPerf")
+
+# =============================================================================
+# IDE source groups
+# =============================================================================
+
+source_group(TREE "${TVBPERF_SRC_DIR}"
+    PREFIX "Source"
+    FILES ${TVBPERF_CPP_FILES} ${TVBPERF_RC_FILES}
+)
+source_group(TREE "${TVBPERF_INCLUDE_DIR}"
+    PREFIX "Include"
+    FILES ${TVBPERF_HEADER_FILES}
+)
+if(TVBPERF_SHADER_FILES)
+    source_group(TREE "${TVBPERF_SHADER_DIR}"
+        PREFIX "Shader Files"
+        FILES ${TVBPERF_SHADER_FILES}
+    )
+endif()
+
+message(STATUS "TVBPerf configuration: ${CMAKE_BUILD_TYPE}")
+message(STATUS "TVBPerf runtime directory: ${TVBPERF_RUNTIME_OUTPUT_DIR}")
+message(STATUS "OpenUSD library: ${TVBPERF_OPENUSD_LIBRARY}")
+message(STATUS "oneTBB library: ${TVBPERF_TBB_LIBRARY}")
