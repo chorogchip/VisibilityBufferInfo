@@ -12,6 +12,7 @@ namespace scene {
         enum class EnumAssignStrategy : uint8_t {
             RANDOM = 0,
             PBR_FEATURE = 1,
+            BALANCED = 2,
         };
 
         struct Params {

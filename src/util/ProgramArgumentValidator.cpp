@@ -96,7 +96,7 @@ namespace util {
             "object_count and geometry_div produce too much geometry");
 
         logger.assert_with_log(
-            arg.material_assign_strategy == 0 || arg.material_assign_strategy == 1,
+            arg.material_assign_strategy <= 2,
             "Unknown virtual material assignment strategy.");
 
         logger.assert_with_log(

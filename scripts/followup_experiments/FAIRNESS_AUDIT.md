@@ -31,7 +31,13 @@ Hardware for the new campaigns in this directory is **NVIDIA GeForce RTX
    - `false`: end-to-end renderer behavior. Deferred uses sRGB RTV/ROP encoding;
      VisBuf performs shader `LinearToSrgb` and writes UNORM UAVs.
    - `true`: both renderers use linear G-buffer channels, removing the
-     sRGB-encoding-path difference when isolating reconstruction and scheduling.
+   sRGB-encoding-path difference when isolating reconstruction and scheduling.
+5. `material_assign_strategy=2` is a deterministic balanced control for
+   real-scene class-count sweeps. It permutes materials and bins using the
+   requested seed, then assigns materials round-robin so every reported active
+   bin is occupied whenever the requested count does not exceed the source
+   material count. The existing RANDOM and PBR_FEATURE strategies are
+   unchanged.
 
 ## Differences intentionally retained
 

@@ -92,6 +92,39 @@ namespace scene {
 
             scene.active_material_class_count = mat_bin;
         }
+
+        void assign_balanced(
+            SceneSourceData& scene,
+            const VirtualMaterialClassBuilder::Params& params) {
+
+            const uint32_t active_bin_count =
+                static_cast<uint32_t>((std::min)(
+                    scene.materials.size(),
+                    static_cast<size_t>(params.max_material_real_open)));
+
+            if (active_bin_count == 0) return;
+
+            math::MyRNG rng(params.seed);
+            const std::vector<uint32_t> material_permutation =
+                rng.generate_permutation(
+                    static_cast<uint32_t>(scene.materials.size()));
+            const std::vector<uint32_t> bin_permutation =
+                rng.generate_permutation(active_bin_count);
+
+            for (size_t assignment_index = 0;
+                assignment_index < material_permutation.size();
+                ++assignment_index) {
+                const uint32_t material_id =
+                    material_permutation[assignment_index];
+                const uint32_t logical_bin =
+                    static_cast<uint32_t>(
+                        assignment_index % active_bin_count);
+                scene.materials[material_id].virtual_shader_id =
+                    bin_permutation[logical_bin];
+            }
+
+            scene.active_material_class_count = active_bin_count;
+        }
     }
 
     void VirtualMaterialClassBuilder::assign_materials(
@@ -102,6 +135,8 @@ namespace scene {
             assign_random(scene, params);
         } else if (params.strategy == EnumAssignStrategy::PBR_FEATURE) {
             assign_pbr_features(scene, params);
+        } else if (params.strategy == EnumAssignStrategy::BALANCED) {
+            assign_balanced(scene, params);
         }
     }
 }
