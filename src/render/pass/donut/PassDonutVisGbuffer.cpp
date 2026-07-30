@@ -48,7 +48,8 @@ namespace rndr {
     void PassDonutVisGBuffer::init(
         ID3D12Device* device,
         const util::ProgramArgument& arguments,
-        const PassDonutVisGBufferResources& resources) {
+        const PassDonutVisGBufferResources& resources,
+        std::optional<DonutCompactDebugMode> compact_debug_mode) {
 
         resources_ = resources;
         use_motion_vectors_ = false;
@@ -117,7 +118,7 @@ namespace rndr {
             scene::DonutSceneGPUData::MAX_MATERIAL_TEXTURE_DESCRIPTOR_COUNT,
             "Donut visibility G-buffer material texture descriptor count exceeds shader limit");
 
-        const std::vector<std::wstring> cs_defines = {
+        std::vector<std::wstring> cs_defines = {
             std::wstring(L"MYDONUT_MATERIAL_TEXTURE_DESCRIPTOR_COUNT=") +
                 std::to_wstring(material_tex_desc_cnt),
             std::wstring(L"DONUT_LINEAR_GBUFFER=") +
@@ -125,6 +126,17 @@ namespace rndr {
                     arguments.donut_linear_gbuffer ? 1 : 0)
         };
 
+        const wchar_t* shader_path =
+            L"assets/shaders/mydonut/donut_vis_gbuffer_CS.hlsl";
+        if (compact_debug_mode.has_value()) {
+            shader_path =
+                L"assets/shaders/mydonut/donut_vis_compact_debug_CS.hlsl";
+            cs_defines.emplace_back(
+                std::wstring(L"DONUT_COMPACT_DEBUG_MODE=") +
+                std::to_wstring(
+                    static_cast<std::uint32_t>(
+                        compact_debug_mode.value()) + 1));
+        }
 
         shader_count_ = resources_.scene->active_material_class_count;
         std::vector<Microsoft::WRL::ComPtr<IDxcBlob>> cs;
@@ -132,7 +144,7 @@ namespace rndr {
 
         for (uint32_t i = 0; i < shader_count_; ++i) {
             cs.emplace_back(dxutl::compile_shader(
-                L"assets/shaders/mydonut/donut_vis_gbuffer_CS.hlsl",
+                shader_path,
                 L"cs_6_5", L"main", cs_defines));
         }
 

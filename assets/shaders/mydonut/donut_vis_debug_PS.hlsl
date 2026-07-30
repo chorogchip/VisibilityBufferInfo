@@ -15,6 +15,8 @@
 #define DEBUG_UV_DX                  7
 #define DEBUG_UV_DY                  8
 #define DEBUG_UV_LOD_PROXY           9
+#define DEBUG_MATERIAL_ID_HASH      10
+#define DEBUG_MATERIAL_BIN_HASH     11
 
 struct PSInput
 {
@@ -45,6 +47,8 @@ StructuredBuffer<SubmeshData> t_Submeshes :
     register(t24, space1);
 StructuredBuffer<GeometryInstanceData> t_GeometryInstances :
     register(t25, space1);
+StructuredBuffer<MaterialData> t_Materials :
+    register(t26, space1);
 
 float3 hash_color(uint value)
 {
@@ -162,6 +166,12 @@ float4 main(PSInput input) : SV_Target
     const float encoded_lod =
         encode_lod_proxy(texcoord_grad.dx, texcoord_grad.dy);
     return float4(encoded_lod, encoded_lod, encoded_lod, 1.0f);
+#elif VISIBILITY_DEBUG_MODE == DEBUG_MATERIAL_ID_HASH
+    return float4(hash_color(submesh.materialID ^ 0xA511E9B3u), 1.0f);
+#elif VISIBILITY_DEBUG_MODE == DEBUG_MATERIAL_BIN_HASH
+    const MaterialData material = t_Materials[submesh.materialID];
+    return float4(hash_color(
+        material.virtual_shader_id ^ 0x63D83595u), 1.0f);
 #else
     return float4(1.0f, 0.0f, 1.0f, 1.0f);
 #endif

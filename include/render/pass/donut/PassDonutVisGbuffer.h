@@ -1,9 +1,12 @@
 #pragma once
 
+#include <optional>
+
 #include "util/Constants.h"
 #include "ProgramArgument.h"
 #include "engine/GPUResource.h"
 #include "engine/GraphicsPipeline.h"
+#include "render/renderer/donut/DonutCompactDebugMode.h"
 #include "scene/data/gpu/DonutSceneGPUData.h"
 
 namespace eng {
@@ -43,7 +46,9 @@ namespace rndr {
         void init(
             ID3D12Device* device,
             const util::ProgramArgument& arguments,
-            const PassDonutVisGBufferResources& resources);
+            const PassDonutVisGBufferResources& resources,
+            std::optional<DonutCompactDebugMode> compact_debug_mode =
+                std::nullopt);
 
         void render(
             ID3D12GraphicsCommandList* command_list,

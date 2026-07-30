@@ -88,6 +88,21 @@ namespace rndr {
             graphics_queue_.wait_idle();
         }
 
+        util::Logger::g_logger.assert_with_log(
+            scene_gpu_->material_data.size() <=
+                (std::numeric_limits<std::uint32_t>::max)(),
+            "Benchmark source material count exceeds ProgramResult capacity");
+        program_result_.source_material_count =
+            static_cast<std::uint32_t>(scene_gpu_->material_data.size());
+        program_result_.active_material_bin_count =
+            scene_gpu_->active_material_class_count;
+        program_result_.material_bin_compaction_ratio =
+            program_result_.source_material_count > 0
+                ? static_cast<double>(
+                    program_result_.active_material_bin_count) /
+                    program_result_.source_material_count
+                : 0.0;
+
         this->wrap_scene_resources();
         this->create_draw_instance_id_upload_buffers();
 

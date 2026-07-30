@@ -82,6 +82,9 @@ namespace util {
     X(double, total_time_p10_ms, total_time_p10_ms) \
     X(double, total_time_p90_ms, total_time_p90_ms) \
     X(double, total_time_p99_ms, total_time_p99_ms) \
+    X(std::uint32_t, source_material_count, source_material_count) \
+    X(std::uint32_t, active_material_bin_count, active_material_bin_count) \
+    X(double, material_bin_compaction_ratio, material_bin_compaction_ratio) \
     X(std::uint32_t, variable_geometry_count, variable-geometry-count) \
     X(std::uint32_t, variable_overdraw_count, variable-overdraw-count) \
     X(std::uint32_t, variable_waste_quad_count, variable-waste-quad-count) \

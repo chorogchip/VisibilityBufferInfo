@@ -13,7 +13,9 @@
 namespace rndr {
 
     void RendererDonutVisGBuffer::init2_() {
-        program_result_.renderer_name = "DonutVisGBuffer";
+        program_result_.renderer_name = compact_debug_mode_.has_value()
+            ? "DonutVisCompactDebug"
+            : "DonutVisGBuffer";
         program_result_.pass_names[1] = "visibility";
         program_result_.pass_names[2] = "visutil_histogram";
         program_result_.pass_names[3] = "visutil_prefix";
@@ -158,7 +160,11 @@ namespace rndr {
         for (UINT i = 0; i < util::Constants::FRAME_COUNT; ++i)
             gbuffer.constant_buffers[i] = &gbuffer_constant_resources_[i];
         gbuffer.scene = scene_gpu_.get();
-        pass_gbuffer_.init(device_.Get(), program_argument_, gbuffer);
+        pass_gbuffer_.init(
+            device_.Get(),
+            program_argument_,
+            gbuffer,
+            compact_debug_mode_);
 
         PassDonutDeferredLightingResources lighting{};
         lighting.shader_manager = &resource_manager_shader_;

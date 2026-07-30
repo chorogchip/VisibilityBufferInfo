@@ -22,6 +22,7 @@ namespace rndr {
             INSTANCE_BUFFER,
             SUBMESH_BUFFER,
             GEOMETRY_INSTANCE_BUFFER,
+            MATERIAL_BUFFER,
         };
 
         struct VertexLayoutConstants {
@@ -80,6 +81,7 @@ namespace rndr {
             .root_srv().reg(23).spc(1).vis_pxl().add() // INSTANCE_BUFFER
             .root_srv().reg(24).spc(1).vis_pxl().add() // SUBMESH_BUFFER
             .root_srv().reg(25).spc(1).vis_pxl().add() // GEOMETRY_INSTANCE_BUFFER
+            .root_srv().reg(26).spc(1).vis_pxl().add() // MATERIAL_BUFFER
             .build(device);
         pso_.set_root_signature(root_signature.Get());
         pso_.set_shader_vertex(vs.Get());
@@ -135,6 +137,9 @@ namespace rndr {
             static_cast<UINT>(RootParam::GEOMETRY_INSTANCE_BUFFER),
             resources_.scene->geometry_instance_buffer.get()->
                 GetGPUVirtualAddress());
+        command_list->SetGraphicsRootShaderResourceView(
+            static_cast<UINT>(RootParam::MATERIAL_BUFFER),
+            resources_.scene->material_buffer.get()->GetGPUVirtualAddress());
 
         command_list->RSSetViewports(1, &viewport);
         command_list->RSSetScissorRects(1, &scissor_rect);

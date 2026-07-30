@@ -57,6 +57,9 @@ PROGRAM_RESULT_REQUIRED_VALUE_FIELDS = (
     "total_time_p10_ms",
     "total_time_p90_ms",
     "total_time_p99_ms",
+    "source_material_count",
+    "active_material_bin_count",
+    "material_bin_compaction_ratio",
 )
 PROGRAM_RESULT_REQUIRED_NUMERIC_FIELDS = (
     "pass_0_time_avg_ms",
@@ -68,6 +71,9 @@ PROGRAM_RESULT_REQUIRED_NUMERIC_FIELDS = (
     "total_time_p10_ms",
     "total_time_p90_ms",
     "total_time_p99_ms",
+    "source_material_count",
+    "active_material_bin_count",
+    "material_bin_compaction_ratio",
 )
 PROGRAM_RESULT_STRICTLY_POSITIVE_FIELDS = (
     "total_time_median_ms",
@@ -105,6 +111,9 @@ PROGRAM_RESULT_FIELDS = (
         "total_time_p10_ms",
         "total_time_p90_ms",
         "total_time_p99_ms",
+        "source_material_count",
+        "active_material_bin_count",
+        "material_bin_compaction_ratio",
         "variable-geometry-count",
         "variable-overdraw-count",
         "variable-waste-quad-count",

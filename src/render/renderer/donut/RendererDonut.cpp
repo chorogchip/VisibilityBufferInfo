@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -119,6 +120,21 @@ namespace rndr {
                     flush_uploads,
                     program_argument_.to_load_texture));
         }
+
+        util::Logger::g_logger.assert_with_log(
+            scene_gpu_->material_data.size() <=
+                (std::numeric_limits<std::uint32_t>::max)(),
+            "Donut source material count exceeds ProgramResult capacity");
+        program_result_.source_material_count =
+            static_cast<std::uint32_t>(scene_gpu_->material_data.size());
+        program_result_.active_material_bin_count =
+            scene_gpu_->active_material_class_count;
+        program_result_.material_bin_compaction_ratio =
+            program_result_.source_material_count > 0
+                ? static_cast<double>(
+                    program_result_.active_material_bin_count) /
+                    program_result_.source_material_count
+                : 0.0;
 
         to_profile_index_count_ = true;
         profile_index_count_ = static_cast<double>(

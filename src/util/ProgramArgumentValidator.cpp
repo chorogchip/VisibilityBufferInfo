@@ -13,8 +13,8 @@ namespace util {
 
         logger.assert_with_log(arg.renderer_variant >= 1,
             "renderer_variant must be biffer than 1 ");
-        logger.assert_with_log(arg.visibility_debug_mode <= 9,
-            "visibility_debug_mode must be between 0 and 9");
+        logger.assert_with_log(arg.visibility_debug_mode <= 11,
+            "visibility_debug_mode must be between 0 and 11");
         logger.assert_with_log(arg.window_width > 0, "window_width must be greater than 0");
         logger.assert_with_log(arg.window_height > 0, "window_height must be greater than 0");
         logger.assert_with_log(arg.measure_frames > 0, "measure_frames must be greater than 0");

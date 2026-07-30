@@ -8,7 +8,6 @@ const RESULTS_ROOT = resolve(
   PROJECT_ROOT,
   "capture_specs",
   "results",
-  "dashboard_camera_capture",
 );
 const REPOSITORY_TOKEN = "${REPOSITORY_ROOT}";
 const RUN_TEMP_TOKEN = "${RUN_TEMP}";

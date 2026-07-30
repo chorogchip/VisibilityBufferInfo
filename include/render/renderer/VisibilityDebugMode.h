@@ -15,6 +15,8 @@ namespace rndr {
         UvDx,
         UvDy,
         UvLodProxy,
+        MaterialIdHash,
+        MaterialBinHash,
     };
 
 }

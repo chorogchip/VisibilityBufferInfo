@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 
 #include "dx_util/UploadConstBuf.h"
 #include "engine/GPUResource.h"
@@ -10,6 +11,7 @@
 #include "render/pass/donut/PassDonutVisibility.h"
 #include "render/pass/donut/PassDonutVisUtil.h"
 #include "render/pass/donut/PassDonutVisGbuffer.h"
+#include "render/renderer/donut/DonutCompactDebugMode.h"
 #include "render/renderer/donut/DonutNeutralResources.h"
 #include "render/renderer/donut/RendererDonut.h"
 #include "scene/donut/DonutRenderConstants.h"
@@ -19,6 +21,9 @@ namespace rndr {
     class RendererDonutVisGBuffer : public RendererDonut {
     public:
         RendererDonutVisGBuffer() = default;
+        explicit RendererDonutVisGBuffer(
+            DonutCompactDebugMode compact_debug_mode)
+            : compact_debug_mode_(compact_debug_mode) {}
         ~RendererDonutVisGBuffer() override = default;
 
     private:
@@ -55,5 +60,6 @@ namespace rndr {
         scene::DonutPlanarViewConstants previous_view_constants_{};
         bool has_previous_view_constants_ = false;
         std::uint32_t donut_frame_index_ = 0;
+        std::optional<DonutCompactDebugMode> compact_debug_mode_;
     };
 }

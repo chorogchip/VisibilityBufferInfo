@@ -10,6 +10,7 @@
 #include "render/renderer/donut/RendererDonutDeferred.h"
 #include "render/renderer/donut/RendererDonutRasterDebug.h"
 #include "render/renderer/donut/RendererDonutVisDebug.h"
+#include "render/renderer/donut/RendererDonutVisCompactDebug.h"
 #include "render/renderer/donut/RendererDonutVisGBuffer.h"
 
 namespace rndr {
@@ -35,6 +36,13 @@ namespace rndr {
         case 12: return std::make_unique<RendererVisBufDebug>(debug_mode);
         case 13: return std::make_unique<RendererDonutVisDebug>(debug_mode);
         case 14: return std::make_unique<RendererDonutRasterDebug>(debug_mode);
+        case 15:
+            util::Logger::g_logger.assert_with_log(
+                visibility_debug_mode <= static_cast<std::uint32_t>(
+                    DonutCompactDebugMode::GroupThread),
+                "Donut compact debug mode must be between 0 and 3");
+            return std::make_unique<RendererDonutVisCompactDebug>(
+                static_cast<DonutCompactDebugMode>(visibility_debug_mode));
         default:
             util::Logger::g_logger.assert_with_log(false, "invalid renderer variant");
             return nullptr;
