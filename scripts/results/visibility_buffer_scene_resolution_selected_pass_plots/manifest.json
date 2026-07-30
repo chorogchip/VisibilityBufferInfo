@@ -1,0 +1,60 @@
+{
+  "input": "/mnt/data/37_real_scene_resolution_16x9_to_8k.zip",
+  "combination_count": 36,
+  "figure_contents": {
+    "variant_8_deferred_dashed": [
+      "total",
+      "depth_prepass",
+      "geometry"
+    ],
+    "variant_9_visbuf_solid": [
+      "total",
+      "visibility",
+      "gbuffer"
+    ]
+  },
+  "colors": {
+    "total": "black",
+    "prepass_visibility": "red",
+    "geometry_gbuffer": "orange"
+  },
+  "created_files": [
+    "bistro_exterior_16x9_selected_pass_timeline.png",
+    "bistro_exterior_64x36_selected_pass_timeline.png",
+    "bistro_exterior_256x144_selected_pass_timeline.png",
+    "bistro_exterior_1024x576_selected_pass_timeline.png",
+    "bistro_exterior_4096x2304_selected_pass_timeline.png",
+    "bistro_exterior_8192x4608_selected_pass_timeline.png",
+    "bistro_interior_wine_16x9_selected_pass_timeline.png",
+    "bistro_interior_wine_64x36_selected_pass_timeline.png",
+    "bistro_interior_wine_256x144_selected_pass_timeline.png",
+    "bistro_interior_wine_1024x576_selected_pass_timeline.png",
+    "bistro_interior_wine_4096x2304_selected_pass_timeline.png",
+    "bistro_interior_wine_8192x4608_selected_pass_timeline.png",
+    "san_miguel_16x9_selected_pass_timeline.png",
+    "san_miguel_64x36_selected_pass_timeline.png",
+    "san_miguel_256x144_selected_pass_timeline.png",
+    "san_miguel_1024x576_selected_pass_timeline.png",
+    "san_miguel_4096x2304_selected_pass_timeline.png",
+    "san_miguel_8192x4608_selected_pass_timeline.png",
+    "sponza_16x9_selected_pass_timeline.png",
+    "sponza_64x36_selected_pass_timeline.png",
+    "sponza_256x144_selected_pass_timeline.png",
+    "sponza_1024x576_selected_pass_timeline.png",
+    "sponza_4096x2304_selected_pass_timeline.png",
+    "sponza_8192x4608_selected_pass_timeline.png",
+    "sun_temple_16x9_selected_pass_timeline.png",
+    "sun_temple_64x36_selected_pass_timeline.png",
+    "sun_temple_256x144_selected_pass_timeline.png",
+    "sun_temple_1024x576_selected_pass_timeline.png",
+    "sun_temple_4096x2304_selected_pass_timeline.png",
+    "sun_temple_8192x4608_selected_pass_timeline.png",
+    "zero_day_measure_one_16x9_selected_pass_timeline.png",
+    "zero_day_measure_one_64x36_selected_pass_timeline.png",
+    "zero_day_measure_one_256x144_selected_pass_timeline.png",
+    "zero_day_measure_one_1024x576_selected_pass_timeline.png",
+    "zero_day_measure_one_4096x2304_selected_pass_timeline.png",
+    "zero_day_measure_one_8192x4608_selected_pass_timeline.png",
+    "scene_resolution_selected_pass_summary.csv"
+  ]
+}

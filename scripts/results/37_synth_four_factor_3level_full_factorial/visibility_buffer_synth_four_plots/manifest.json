@@ -1,0 +1,23 @@
+{
+  "factorial_input": "/mnt/data/37_synth_four_factor_3level_full_factorial.zip",
+  "dense_input": "/mnt/data/38_synth_four_one_dimensional_dense_sweeps.zip",
+  "successful_runs": {
+    "37_full_factorial": 162,
+    "38_dense_sweeps": 156
+  },
+  "failed_runs": {
+    "37_full_factorial": 0,
+    "38_dense_sweeps": 0
+  },
+  "inferred_dense_baseline": {
+    "material-assign-max-open": 64.0,
+    "geometry-div": 64.0,
+    "material-assign-locality": 0.5,
+    "material-assign-diversity": 0.5
+  },
+  "renderers": {
+    "DonutDeferredPrepass": "Deferred + prepass (variant 8)",
+    "DonutVisGBuffer": "Visibility + G-buffer (variant 9)"
+  },
+  "metric": "total_time_avg_ms"
+}

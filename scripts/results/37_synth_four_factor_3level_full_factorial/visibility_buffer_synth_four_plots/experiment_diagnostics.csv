@@ -1,0 +1,11 @@
+experiment,metric,unique_values,minimum,maximum
+37_full_factorial,source_material_count,1,1.0,1.0
+37_full_factorial,active_material_bin_count,1,1.0,1.0
+37_full_factorial,material_bin_compaction_ratio,1,1.0,1.0
+37_full_factorial,variable-geometry-count,3,81.0,16641.0
+37_full_factorial,variable-waste-quad-count,3,8.0,128.0
+38_dense_sweeps,source_material_count,1,1.0,1.0
+38_dense_sweeps,active_material_bin_count,1,1.0,1.0
+38_dense_sweeps,material_bin_compaction_ratio,1,1.0,1.0
+38_dense_sweeps,variable-geometry-count,16,81.0,16641.0
+38_dense_sweeps,variable-waste-quad-count,16,8.0,128.0

@@ -1,0 +1,9 @@
+renderer_name,category,time_ms
+DonutDeferredPrepass,Front-end / visibility pipeline,0.01161
+DonutDeferredPrepass,Lighting,0.03058
+DonutDeferredPrepass,Tonemap,0.008035
+DonutDeferredPrepass,Unattributed / other,0.011875
+DonutVisGBuffer,Front-end / visibility pipeline,0.0472425
+DonutVisGBuffer,Lighting,0.0303275
+DonutVisGBuffer,Tonemap,0.00799
+DonutVisGBuffer,Unattributed / other,0.030847500000000003

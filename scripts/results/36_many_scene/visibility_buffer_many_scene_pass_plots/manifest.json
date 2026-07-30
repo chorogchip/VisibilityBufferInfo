@@ -1,0 +1,40 @@
+{
+  "input": "/mnt/data/36_many_scene.zip",
+  "scene_count": 6,
+  "scenes": [
+    "Bistro Exterior",
+    "Bistro Interior Wine",
+    "San Miguel",
+    "Sponza",
+    "Sun Temple",
+    "Zero Day Measure One"
+  ],
+  "figure_contents": {
+    "variant_8": [
+      "total",
+      "depth_prepass",
+      "geometry",
+      "lighting",
+      "tonemap"
+    ],
+    "variant_9": [
+      "total",
+      "visibility",
+      "visutil_histogram",
+      "visutil_prefix",
+      "visutil_flatten",
+      "gbuffer",
+      "lighting",
+      "tonemap"
+    ]
+  },
+  "created_files": [
+    "bistro_exterior_all_pass_timeline.png",
+    "bistro_interior_wine_all_pass_timeline.png",
+    "san_miguel_all_pass_timeline.png",
+    "sponza_all_pass_timeline.png",
+    "sun_temple_all_pass_timeline.png",
+    "zero_day_measure_one_all_pass_timeline.png",
+    "many_scene_all_pass_summary.csv"
+  ]
+}

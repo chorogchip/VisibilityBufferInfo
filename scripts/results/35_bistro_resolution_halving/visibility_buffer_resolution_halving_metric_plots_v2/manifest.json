@@ -1,0 +1,24 @@
+{
+  "input": "/mnt/data/35_bistro_resolution_halving.zip",
+  "resolutions": [
+    "240x135",
+    "480x270",
+    "960x540",
+    "1920x1080"
+  ],
+  "figure_contents": [
+    "V8 Total",
+    "V8 G-buffer make",
+    "V8 Depth prepass",
+    "V9 Total",
+    "V9 G-buffer",
+    "V9 Visibility"
+  ],
+  "created_files": [
+    "240x135_variant_8_9_total_gbuffer_prepass_visibility_timeline.png",
+    "480x270_variant_8_9_total_gbuffer_prepass_visibility_timeline.png",
+    "960x540_variant_8_9_total_gbuffer_prepass_visibility_timeline.png",
+    "1920x1080_variant_8_9_total_gbuffer_prepass_visibility_timeline.png",
+    "resolution_halving_sixline_summary.csv"
+  ]
+}

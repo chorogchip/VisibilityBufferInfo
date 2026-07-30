@@ -1,0 +1,17 @@
+{
+  "resolution": "1280x720",
+  "x_axis": [
+    "Texture OFF",
+    "Texture ON"
+  ],
+  "series": [
+    "V8 G-buffer make",
+    "V8 Total",
+    "V9 G-buffer",
+    "V9 Total"
+  ],
+  "created_files": [
+    "texture_on_off_gbuffer_total_compare.png",
+    "texture_on_off_gbuffer_total_summary.csv"
+  ]
+}

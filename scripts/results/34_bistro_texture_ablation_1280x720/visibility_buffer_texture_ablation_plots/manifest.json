@@ -1,0 +1,22 @@
+{
+  "resolution": "1280x720",
+  "layout": {
+    "top": "texture load off",
+    "bottom": "texture load on"
+  },
+  "each_panel_contains": [
+    "variant 8 total and all passes",
+    "variant 9 total and all passes"
+  ],
+  "variant_styles": {
+    "8": "solid",
+    "9": "dashed"
+  },
+  "shared_y_axis_range": true,
+  "files": [
+    "texture_off_variants_8_9_timeline.png",
+    "texture_on_variants_8_9_timeline.png",
+    "texture_off_on_variant_8_9_pass_timeline.png",
+    "texture_ablation_pass_summary.csv"
+  ]
+}

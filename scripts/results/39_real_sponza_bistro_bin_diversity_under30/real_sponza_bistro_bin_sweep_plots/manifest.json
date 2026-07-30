@@ -1,0 +1,24 @@
+{
+  "input": "/mnt/data/39_real_sponza_bistro_bin_diversity_under30.zip",
+  "main_csv": "39_real_sponza_bistro_bin_diversity_under30.csv",
+  "successful_runs": 28,
+  "camera_path_samples": 1876,
+  "scenes": [
+    "Bistro",
+    "Sponza"
+  ],
+  "renderers": [
+    "Deferred + prepass",
+    "Visibility + G-buffer"
+  ],
+  "figures": [
+    "00_sweep_overview.png",
+    "01_total_time_sweep.png",
+    "02_paired_renderer_ratio.png",
+    "03_normalized_to_one_bin.png",
+    "04_visibility_pass_breakdown.png",
+    "05_camera_path_ratio_heatmap.png",
+    "06_matched_diversity_contrast.png",
+    "07_bin_cap_realization.png"
+  ]
+}

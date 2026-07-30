@@ -1,0 +1,711 @@
+{
+  "_description": "6개 실제 scene에서 PBR material과 texture를 사용하여 Donut Deferred+Prepass와 Donut VisBuf+GBuffer의 해상도 scaling을 16x9부터 8K까지 비교한다.",
+  "_status": "runnable_now",
+  "executable": "../out/build/x64-Release/bin/Release/TVBPerf.exe",
+  "repeat": 1,
+  "timeout_seconds": 28800,
+  "keep_individual_csv": true,
+  "base": {
+    "renderer_variant": 8,
+    "variable": 0,
+    "to_use_scene": true,
+    "to_load_texture": true,
+    "use_vfc": true,
+    "scene_variant": 0,
+    "scene_importer": "assimp",
+    "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+    "warmup_frames": 60,
+    "measure_frames": 2500,
+    "vsync": false,
+    "camera_mode": 2,
+    "camera_filepath": "../../../../../scripts/standard_camera.csv",
+    "camera_keyframe_interval": 10,
+    "to_set_start_frame": false,
+    "key_frame": 0,
+    "profile_window_frames": 60,
+    "capture_frames": false,
+    "capture_stride": 1,
+    "capture_fps": 60,
+    "window_width": 16,
+    "window_height": 9,
+    "seed": 0,
+    "material_assign_strategy": 1,
+    "material_assign_max_open": 255,
+    "material_assign_locality": 1.0,
+    "material_assign_diversity": 1.0,
+    "geometry_div": 1,
+    "camera_pos_x": 0.0,
+    "camera_pos_y": 0.0,
+    "camera_pos_z": -10.0,
+    "camera_lookat_x": 0.0,
+    "camera_lookat_y": 0.0,
+    "camera_lookat_z": 0.0,
+    "camera_near_z": 0.1,
+    "camera_far_z": 1000.0,
+    "camera_fov": 0.785,
+    "object_count": 1,
+    "material_count": 1,
+    "geometry_count": 1,
+    "overdraw_count": 0,
+    "to_remain_only_in_camera": false,
+    "z_min": -1.0,
+    "z_max": 1.0,
+    "xy_minmax": 1.0,
+    "radius": 0.5,
+    "gbuffer_cnt": 1,
+    "texture_count": 1,
+    "texture_size": 256,
+    "texture_sampling_count": 1,
+    "alu_calc_count": 100
+  },
+  "samples": [
+    {
+      "variable": 0,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 1,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 2,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 3,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 4,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 5,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 6,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 7,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 8,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 9,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 10,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 11,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
+      "camera_filepath": "../../../../../scripts/standard_camera.csv",
+      "measure_frames": 2500,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 12,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 13,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 14,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 15,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 16,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 17,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 18,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 19,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 20,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 21,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 22,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 23,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+      "measure_frames": 5500,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 24,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 25,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 26,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 27,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 28,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 29,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 30,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 31,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 32,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 33,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 34,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 35,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_bistroin.csv",
+      "measure_frames": 1734,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 36,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 37,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 38,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 39,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 40,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 41,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 42,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 43,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 44,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 45,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 46,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 47,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/San_Miguel/san-miguel.obj",
+      "camera_filepath": "../../../../../scripts/standard_camera_sanmiguel.csv",
+      "measure_frames": 2689,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 48,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 49,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 50,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 51,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 52,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 53,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 54,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 55,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 56,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 57,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 58,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 59,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_suntemple.csv",
+      "measure_frames": 2976,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 60,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 61,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 16,
+      "window_height": 9
+    },
+    {
+      "variable": 62,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 63,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 64,
+      "window_height": 36
+    },
+    {
+      "variable": 64,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 65,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 256,
+      "window_height": 144
+    },
+    {
+      "variable": 66,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 67,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 1024,
+      "window_height": 576
+    },
+    {
+      "variable": 68,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 69,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 4096,
+      "window_height": 2304
+    },
+    {
+      "variable": 70,
+      "renderer_variant": 8,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 8192,
+      "window_height": 4608
+    },
+    {
+      "variable": 71,
+      "renderer_variant": 9,
+      "scene_path": "../../../../../assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx",
+      "camera_filepath": "../../../../../scripts/standard_camera_zeroday.csv",
+      "measure_frames": 834,
+      "window_width": 8192,
+      "window_height": 4608
+    }
+  ]
+}

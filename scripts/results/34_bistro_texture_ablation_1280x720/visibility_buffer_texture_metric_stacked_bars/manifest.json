@@ -1,0 +1,21 @@
+{
+  "resolution": "1280x720",
+  "layout": {
+    "groups": [
+      "Texture OFF",
+      "Texture ON"
+    ],
+    "bars_per_group": [
+      "Variant 8",
+      "Variant 9"
+    ],
+    "stacking": [
+      "G-buffer-like pass",
+      "Total - G-buffer-like pass"
+    ]
+  },
+  "created_files": [
+    "texture_on_off_gbuffer_total_stacked_bars.png",
+    "texture_on_off_gbuffer_total_stacked_summary.csv"
+  ]
+}

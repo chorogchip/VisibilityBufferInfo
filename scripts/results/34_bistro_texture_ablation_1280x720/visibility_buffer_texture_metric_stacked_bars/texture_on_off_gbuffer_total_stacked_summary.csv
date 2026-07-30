@@ -1,0 +1,5 @@
+texture_load,variant,renderer,gbuffer_column,gbuffer_mean_ms,total_mean_ms,remainder_mean_ms
+off,8,DonutDeferredPrepass,geometry,0.099146,0.225615,0.126469
+off,9,DonutVisGBuffer,gbuffer,0.065105,0.305108,0.240003
+on,8,DonutDeferredPrepass,geometry,0.103624,0.231718,0.128094
+on,9,DonutVisGBuffer,gbuffer,0.081301,0.323635,0.242334

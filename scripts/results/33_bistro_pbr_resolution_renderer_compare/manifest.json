@@ -1,0 +1,37 @@
+{
+  "input": "/mnt/data/33_bistro_pbr_resolution_renderer_compare.zip",
+  "resolutions": [
+    "640x360",
+    "1920x1080"
+  ],
+  "variants": [
+    8,
+    9
+  ],
+  "frame_windows": {
+    "640x360": 92,
+    "1920x1080": 92
+  },
+  "color_pairing": {
+    "depth_prepass_visibility": [
+      "#4C78A8",
+      "#72B7B2"
+    ],
+    "geometry_gbuffer": [
+      "#59A14F",
+      "#8CD17D"
+    ],
+    "lighting": "#F28E2B",
+    "tonemap": "#B279A2",
+    "total": "#202124"
+  },
+  "created_files": [
+    "640x360_variant_8_pass_timeline.png",
+    "640x360_variant_9_pass_timeline.png",
+    "640x360_variant_8_9_pass_timeline.png",
+    "1920x1080_variant_8_pass_timeline.png",
+    "1920x1080_variant_9_pass_timeline.png",
+    "1920x1080_variant_8_9_pass_timeline.png",
+    "pass_timeline_summary.csv"
+  ]
+}

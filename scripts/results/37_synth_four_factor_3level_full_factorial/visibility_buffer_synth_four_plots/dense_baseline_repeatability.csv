@@ -1,0 +1,9 @@
+sweep,variable,renderer_name,total_time_avg_ms,renderer_mean_ms,deviation_percent
+geometry-div,27,DonutDeferredPrepass,0.06199,0.0621,-0.17713365539452353
+material-assign-diversity,67,DonutDeferredPrepass,0.06218,0.0621,0.12882447665056862
+material-assign-locality,46,DonutDeferredPrepass,0.06224,0.0621,0.22544283413847843
+material-assign-max-open,7,DonutDeferredPrepass,0.06199,0.0621,-0.17713365539452353
+geometry-div,27,DonutVisGBuffer,0.11629,0.1164075,-0.10093851341193005
+material-assign-diversity,67,DonutVisGBuffer,0.11656,0.1164075,0.13100530464102977
+material-assign-locality,46,DonutVisGBuffer,0.11638,0.1164075,-0.02362390739428788
+material-assign-max-open,7,DonutVisGBuffer,0.1164,0.1164075,-0.006442883834800739

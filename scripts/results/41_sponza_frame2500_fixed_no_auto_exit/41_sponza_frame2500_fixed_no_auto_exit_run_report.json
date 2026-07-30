@@ -1,0 +1,23 @@
+{
+  "status": "running",
+  "started_at": "2026-07-30T15:25:02+09:00",
+  "last_updated_at": "2026-07-30T15:25:02+09:00",
+  "finished_at": null,
+  "spec_path": "D:\\project\\TVBPerf\\scripts\\41_sponza_frame2500_fixed_no_auto_exit.json",
+  "spec_copy": "D:\\project\\TVBPerf\\scripts\\results\\41_sponza_frame2500_fixed_no_auto_exit\\41_sponza_frame2500_fixed_no_auto_exit.json",
+  "output_csv": "D:\\project\\TVBPerf\\scripts\\results\\41_sponza_frame2500_fixed_no_auto_exit\\41_sponza_frame2500_fixed_no_auto_exit.csv",
+  "report_json": "D:\\project\\TVBPerf\\scripts\\results\\41_sponza_frame2500_fixed_no_auto_exit\\41_sponza_frame2500_fixed_no_auto_exit_run_report.json",
+  "completed_runs": 0,
+  "successful_runs": 0,
+  "salvaged_runs": 0,
+  "failed_runs": 0,
+  "skipped_runs": 0,
+  "runs": [],
+  "fatal_error": null,
+  "spec_copy_error": null,
+  "experiment": "41_sponza_frame2500_fixed_no_auto_exit",
+  "executable": "D:\\project\\TVBPerf\\out\\build\\x64-Release\\bin\\Release\\TVBPerf.exe",
+  "parameter_source": "base",
+  "parameter_set_count": 1,
+  "total_runs": 1
+}

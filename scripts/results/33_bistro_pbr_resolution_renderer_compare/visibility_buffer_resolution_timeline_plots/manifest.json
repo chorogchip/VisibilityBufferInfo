@@ -1,0 +1,30 @@
+{
+  "layout": {
+    "top": "640x360",
+    "bottom": "1920x1080"
+  },
+  "each_panel_contains": [
+    "variant 8 total and all passes",
+    "variant 9 total and all passes"
+  ],
+  "variant_styles": {
+    "8": "solid",
+    "9": "dashed"
+  },
+  "semantic_color_pairs": {
+    "depth_prepass_visibility": [
+      "#4C78A8",
+      "#72B7B2"
+    ],
+    "gbuffer_make_gbuffer": [
+      "#59A14F",
+      "#8CD17D"
+    ]
+  },
+  "files": [
+    "640x360_variants_8_9_timeline.png",
+    "1920x1080_variants_8_9_timeline.png",
+    "resolution_variant_8_9_pass_timeline.png",
+    "pass_timeline_summary.csv"
+  ]
+}

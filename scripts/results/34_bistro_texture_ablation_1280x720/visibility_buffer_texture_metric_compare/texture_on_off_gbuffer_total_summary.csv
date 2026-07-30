@@ -1,0 +1,9 @@
+texture_load,variant,renderer,metric,pass_name,mean_ms,median_ms,p90_ms,p99_ms
+off,8,DonutDeferredPrepass,V8 G-buffer make,geometry,0.099146,0.082600,0.172151,0.218241
+off,8,DonutDeferredPrepass,V8 Total,total,0.225615,0.198600,0.370845,0.462141
+off,9,DonutVisGBuffer,V9 G-buffer,gbuffer,0.065105,0.070045,0.074052,0.075747
+off,9,DonutVisGBuffer,V9 Total,total,0.305108,0.288100,0.446734,0.509285
+on,8,DonutDeferredPrepass,V8 G-buffer make,geometry,0.103624,0.086105,0.179845,0.223447
+on,8,DonutDeferredPrepass,V8 Total,total,0.231718,0.202105,0.375921,0.469164
+on,9,DonutVisGBuffer,V9 G-buffer,gbuffer,0.081301,0.087575,0.094835,0.098625
+on,9,DonutVisGBuffer,V9 Total,total,0.323635,0.307770,0.473405,0.529652

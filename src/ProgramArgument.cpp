@@ -15,7 +15,7 @@ namespace util {
         : run_id(0),
         run_name("no-run-name"),
         output_filepath("out_result.csv"),
-        renderer_variant(9),
+        renderer_variant(8),
         visibility_debug_mode(2),
         donut_linear_gbuffer(false),
         variable(0),
@@ -25,20 +25,20 @@ namespace util {
         scene_variant(0),
         scene_importer("auto"),
         scene_path(
+            1 ? "assets/scenes/unpacked/San_Miguel/san-miguel.obj" :
+            1 ? "assets/scenes/unpacked/ZeroDay_v1/MEASURE_SEVEN/MEASURE_SEVEN.fbx" :
             1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx" :
             1 ? "assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf" :
             1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroInterior_Wine.fbx" :
             1 ? "assets/scenes/unpacked/breakfast_room/breakfast_room.obj" :
-            1 ? "assets/scenes/unpacked/San_Miguel/san-miguel.obj" :
             1 ? "assets/scenes/unpacked/SunTemple_v4/SunTemple.fbx" :
-            1 ? "assets/scenes/unpacked/ZeroDay_v1/MEASURE_ONE/MEASURE_ONE.fbx" :
             ""),
         warmup_frames(60),
-        measure_frames(5500),
+        measure_frames(55000),
         auto_terminate(false),
         vsync(true),
         camera_mode(0),
-        camera_filepath("standard_camera_bistro.csv"),
+        camera_filepath("standard_camera_zeroday.csv"),
         camera_keyframe_interval(10),
         to_set_start_frame(false),
         key_frame(0),

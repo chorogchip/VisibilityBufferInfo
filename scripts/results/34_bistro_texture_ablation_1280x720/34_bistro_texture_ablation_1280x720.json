@@ -1,0 +1,83 @@
+{
+  "_description": "Bistro scene 1280x720에서 texture loading 여부에 따라 Donut Deferred+Prepass와 Donut VisBuf+GBuffer를 비교한다.",
+  "_status": "runnable_now",
+  "executable": "../out/build/x64-Release/bin/Release/TVBPerf.exe",
+  "repeat": 1,
+  "timeout_seconds": 7200,
+  "keep_individual_csv": true,
+  "base": {
+    "renderer_variant": 8,
+    "variable": 0,
+    "to_use_scene": true,
+    "to_load_texture": true,
+    "use_vfc": true,
+    "scene_variant": 0,
+    "scene_importer": "assimp",
+    "scene_path": "../../../../../assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx",
+    "warmup_frames": 60,
+    "measure_frames": 5500,
+    "vsync": false,
+    "camera_mode": 2,
+    "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
+    "camera_keyframe_interval": 10,
+    "to_set_start_frame": false,
+    "key_frame": 0,
+    "profile_window_frames": 60,
+    "capture_frames": false,
+    "capture_stride": 1,
+    "capture_fps": 60,
+    "window_width": 1280,
+    "window_height": 720,
+    "seed": 0,
+    "material_assign_strategy": 1,
+    "material_assign_max_open": 255,
+    "material_assign_locality": 1.0,
+    "material_assign_diversity": 1.0,
+    "geometry_div": 1,
+    "camera_pos_x": 0.0,
+    "camera_pos_y": 0.0,
+    "camera_pos_z": -10.0,
+    "camera_lookat_x": 0.0,
+    "camera_lookat_y": 0.0,
+    "camera_lookat_z": 0.0,
+    "camera_near_z": 0.1,
+    "camera_far_z": 1000.0,
+    "camera_fov": 0.785,
+    "object_count": 1,
+    "material_count": 1,
+    "geometry_count": 1,
+    "overdraw_count": 0,
+    "to_remain_only_in_camera": false,
+    "z_min": -1.0,
+    "z_max": 1.0,
+    "xy_minmax": 1.0,
+    "radius": 0.5,
+    "gbuffer_cnt": 1,
+    "texture_count": 1,
+    "texture_size": 256,
+    "texture_sampling_count": 1,
+    "alu_calc_count": 100
+  },
+  "samples": [
+    {
+      "variable": 0,
+      "renderer_variant": 8,
+      "to_load_texture": true
+    },
+    {
+      "variable": 1,
+      "renderer_variant": 9,
+      "to_load_texture": true
+    },
+    {
+      "variable": 2,
+      "renderer_variant": 8,
+      "to_load_texture": false
+    },
+    {
+      "variable": 3,
+      "renderer_variant": 9,
+      "to_load_texture": false
+    }
+  ]
+}

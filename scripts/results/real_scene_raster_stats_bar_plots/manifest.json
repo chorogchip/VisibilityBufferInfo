@@ -1,0 +1,40 @@
+{
+  "scene": "Sponza",
+  "resolution": "1280x720",
+  "window_frames": 60,
+  "sample_count": 2500,
+  "window_count": 42,
+  "first_frame": 60,
+  "last_frame": 2559,
+  "aggregation": "arithmetic mean within each profile window",
+  "metrics": [
+    "triangle_count",
+    "total_fragments",
+    "covered_pixels",
+    "overdraw_extra",
+    "avg_overdraw",
+    "max_overdraw",
+    "rasterized_triangles",
+    "skipped_triangles",
+    "quad_instances",
+    "quad_covered_lanes",
+    "quad_waste_lanes",
+    "quad_efficiency"
+  ],
+  "created_files": [
+    "01_triangle_count_bar.png",
+    "02_total_fragments_bar.png",
+    "03_covered_pixels_bar.png",
+    "04_overdraw_extra_bar.png",
+    "05_avg_overdraw_bar.png",
+    "06_max_overdraw_bar.png",
+    "07_rasterized_triangles_bar.png",
+    "08_skipped_triangles_bar.png",
+    "09_quad_instances_bar.png",
+    "10_quad_covered_lanes_bar.png",
+    "11_quad_waste_lanes_bar.png",
+    "12_quad_efficiency_bar.png",
+    "raster_stats_60_frame_window_means.csv",
+    "raster_stats_overall_summary.csv"
+  ]
+}
