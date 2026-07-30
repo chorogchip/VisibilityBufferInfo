@@ -4,6 +4,7 @@
   "_purpose": "Measure how renderer total/pass GPU time changes as the number of occupied generic material classes grows, and separate texture sampling cost from class scheduling/reconstruction.",
   "_hardware": "NVIDIA GeForce RTX 5060 Ti 16GB",
   "_source_material_count": 29,
+  "_camera_last_frame": 2347,
   "_class_counts": [
     1,
     2,
@@ -39,7 +40,7 @@
     "scene_importer": "assimp",
     "scene_path": "../../../../../assets/scenes/unpacked/main_sponza/NewSponza_Main_glTF_003.gltf",
     "warmup_frames": 60,
-    "measure_frames": 2500,
+    "measure_frames": 2348,
     "vsync": false,
     "camera_mode": 2,
     "camera_filepath": "../../../../../scripts/standard_camera.csv",

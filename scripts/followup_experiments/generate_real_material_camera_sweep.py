@@ -19,7 +19,8 @@ SCENES = (
             "NewSponza_Main_glTF_003.gltf"
         ),
         "camera_filepath": "../../../../../scripts/standard_camera.csv",
-        "measure_frames": 2500,
+        "measure_frames": 2348,
+        "camera_last_frame": 2347,
         "source_material_count": 29,
         "class_counts": (1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 29),
     },
@@ -30,7 +31,8 @@ SCENES = (
             "NewSponza_Main_Ivy_glTF.gltf"
         ),
         "camera_filepath": "../../../../../scripts/standard_camera.csv",
-        "measure_frames": 2500,
+        "measure_frames": 2348,
+        "camera_last_frame": 2347,
         "source_material_count": 31,
         "class_counts": (1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 31),
     },
@@ -41,7 +43,8 @@ SCENES = (
             "BistroExterior.fbx"
         ),
         "camera_filepath": "../../../../../scripts/standard_camera_bistro.csv",
-        "measure_frames": 5500,
+        "measure_frames": 5474,
+        "camera_last_frame": 5473,
         "source_material_count": 132,
         "class_counts": (
             1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20,
@@ -136,6 +139,7 @@ def make_spec(scene: dict[str, object], textures: bool) -> dict[str, object]:
         ),
         "_hardware": "NVIDIA GeForce RTX 5060 Ti 16GB",
         "_source_material_count": scene["source_material_count"],
+        "_camera_last_frame": scene["camera_last_frame"],
         "_class_counts": list(scene["class_counts"]),
         "_comparison_renderers": {
             "8": "DonutDeferredPrepass",
