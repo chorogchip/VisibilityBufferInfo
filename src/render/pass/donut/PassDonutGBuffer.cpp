@@ -80,9 +80,6 @@ namespace rndr {
             (resources_.jungle_scene == nullptr) ==
                 (resources_.jungle_draw_stream == nullptr),
             "Donut G-buffer Jungle point resources are incomplete.");
-        util::Logger::g_logger.assert_with_log(
-            shader_count_ > 0,
-            "Donut G-buffer requires at least one material class.");
 
         for (UINT material_id = 0;
             material_id < resources_.scene->material_data.size();
@@ -176,7 +173,8 @@ namespace rndr {
             gbuffer_formats.data());
         if (use_prepass_depth_)
             pso_.set_depth_equal();
-        pso_.set_shader_count(shader_count_);
+        if (shader_count_)
+            pso_.set_shader_count(shader_count_);
         pso_.build();
 
         if (resources_.jungle_scene != nullptr) {
@@ -215,7 +213,8 @@ namespace rndr {
             if (use_prepass_depth_) {
                 jungle_point_pso_.set_depth_equal();
             }
-            jungle_point_pso_.set_shader_count(shader_count_);
+            if (shader_count_)
+                jungle_point_pso_.set_shader_count(shader_count_);
             jungle_point_pso_.build();
         }
     }
@@ -311,7 +310,7 @@ namespace rndr {
                 resources_.scene->material_data[
                     draw.material_id].virtual_shader_id;
             util::Logger::g_logger.assert_with_log(
-                shader_id < shader_count_,
+                !shader_count_ || shader_id < shader_count_,  // due to donut
                 "Donut G-buffer material class ID is invalid.");
             if (shader_id != current_shader_id) {
                 command_list->SetPipelineState(pso_.get(shader_id));
@@ -399,7 +398,7 @@ namespace rndr {
                 resources_.scene->material_data[
                     draw.material_id].virtual_shader_id;
             util::Logger::g_logger.assert_with_log(
-                shader_id < shader_count_,
+                !shader_count_ || shader_id < shader_count_,  // due to donut
                 "Donut Jungle G-buffer material class ID is invalid.");
             if (shader_id != current_shader_id) {
                 command_list->SetPipelineState(

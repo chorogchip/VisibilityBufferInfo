@@ -23,8 +23,9 @@ namespace util {
         to_load_texture(true),
         use_vfc(true),
         scene_variant(0),
-        scene_importer("auto"),
+        scene_importer("jungle"),
         scene_path(
+            1 ? "assets/scenes/unpacked/JungleRuins_1_0_1b/USD/JungleRuins_Karma.usda" :
             1 ? "assets/scenes/unpacked/San_Miguel/san-miguel.obj" :
             1 ? "assets/scenes/unpacked/ZeroDay_v1/MEASURE_SEVEN/MEASURE_SEVEN.fbx" :
             1 ? "assets/scenes/unpacked/Bistro_v5_2/BistroExterior.fbx" :
