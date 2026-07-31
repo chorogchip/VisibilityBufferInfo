@@ -17,7 +17,7 @@ void Win32Window::create(
     wc.lpfnWndProc = Win32Window::WndProc;
     wc.hInstance = h_instance;
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wc.lpszClassName = L"TVBPerf";
+    wc.lpszClassName = L"Visibility Buffer Benchmark";
 
     RegisterClassEx(&wc);
 

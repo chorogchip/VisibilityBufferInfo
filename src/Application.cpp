@@ -39,7 +39,7 @@ void Application::run(HINSTANCE h_instance, int n_show_cmd) {
 
     window_.create(h_instance, n_show_cmd,
         program_argument_.window_width, program_argument_.window_height,
-        L"Visibility Buffer Performance");
+        L"Visibility Buffer Benchmark");
 
     renderer_ = rndr::create_renderer(
         program_argument_.renderer_variant,
